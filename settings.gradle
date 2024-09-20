@@ -23,4 +23,3 @@
 
 include ':libuvccamera'
 include ':app'
-include ':demo'

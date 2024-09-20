@@ -1,41 +1,19 @@
-[![Maven Central](https://img.shields.io/maven-central/v/com.herohan/UVCAndroid.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22com.herohan%22%20AND%20a:%22UVCAndroid%22)
+# Welcome to Openterface Mini-KVM
 
-UVCAndroid
-=========
+Our [Openterface Mini-KVM](https://openterface.com/) crowdfunding campaign is now live on [Crowd Supply](https://www.crowdsupply.com/techxartisan/openterface-mini-kvm)! Check it out and please consider supporting us by backing our project. Cheers!
 
-Library and sample to access UVC camera on non-rooted Android device
+![pre-launch-poster](https://pbs.twimg.com/media/GInpcabbYAAsP9J?format=jpg&name=medium)
 
-[中文文档： UVCAndroid，安卓UVC相机通用开发库](https://blog.csdn.net/hanshiying007/article/details/124118486)
+🚀 **Let's shake things up in KVM technology together!**
 
-How do I use it?
----
+We're hard at work developing [the host applications](https://openterface.com/quick-start/#install-host-application) for this handy gadget. Our team is coding away and tweaking these tools to boost their performance and functionality. We’re all about open hardware and open-source software, and we'll keep sharing updates throughout our campaign.
 
-### Setup
+## 🛠️ Getting Ready for Release
 
-##### Dependencies
-```groovy
-repositories {
-  mavenCentral()
-}
+We're sprucing up our code and getting our repos in shape for everyone to use. We want to make sure everything is neat and user-friendly for you. Plus, we'll open up all repos before the end of our crowdfunding campaign! Just bear with us a little longer!
 
-dependencies {
-    implementation 'com.herohan:UVCAndroid:1.0.7'
-}
-```
-R8 / ProGuard
--------------
+## 🤝 Get Involved
 
-If you are using R8 the shrinking and obfuscation rules are included automatically.
+[Keen to contribute?](https://openterface.com/contributing/) Fancy joining our team? Drop us an [email](mailto:info@techxartisan.com)!
 
-ProGuard users must manually add the below options.
-```groovy
--keep class com.herohan.uvcapp.** { *; }
--keep class com.serenegiant.usb.** { *; }
--keepclassmembers class * implements com.serenegiant.usb.IButtonCallback {*;}
--keepclassmembers class * implements com.serenegiant.usb.IFrameCallback {*;}
--keepclassmembers class * implements com.serenegiant.usb.IStatusCallback {*;}
-```
-
-Requirements
---------------
-Android 5.0+
+Stay tuned for more cool stuff and a huge thanks for your support and enthusiasm for making the Openterface mini-KVM a reality!
