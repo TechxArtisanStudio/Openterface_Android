@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/optionsBar"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:visibility="gone"
+    android:background="@color/white">
+
+    <Button
+        android:id="@+id/Function1"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="F1"
+        android:textColor="@color/black"
+        android:background="@drawable/button_background"
+        android:theme="@style/ButtonTheme"/>
+
+    <Button
+        android:id="@+id/Function2"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="F2"
+        android:textColor="@color/black"
+        android:background="@drawable/button_background"
+        android:theme="@style/ButtonTheme"/>
+
+    <Button
+        android:id="@+id/Function3"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="F3"
+        android:textColor="@color/black"
+        android:background="@drawable/button_background"
+        android:theme="@style/ButtonTheme"/>
+
+    <Button
+        android:id="@+id/Function4"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="F4"
+        android:textColor="@color/black"
+        android:background="@drawable/button_background"
+        android:theme="@style/ButtonTheme"/>
+
+    <Button
+        android:id="@+id/Function5"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="F5"
+        android:textColor="@color/black"
+        android:background="@drawable/button_background"
+        android:theme="@style/ButtonTheme"/>
+
+    <Button
+        android:id="@+id/Function6"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="F6"
+        android:textColor="@color/black"
+        android:background="@drawable/button_background"
+        android:theme="@style/ButtonTheme"/>
+
+    <Button
+        android:id="@+id/Function7"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="F7"
+        android:textColor="@color/black"
+        android:background="@drawable/button_background"
+        android:theme="@style/ButtonTheme"/>
+
+    <Button
+        android:id="@+id/Function8"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="F8"
+        android:textColor="@color/black"
+        android:background="@drawable/button_background"
+        android:theme="@style/ButtonTheme"/>
+
+    <Button
+        android:id="@+id/Function9"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="F9"
+        android:textColor="@color/black"
+        android:background="@drawable/button_background"
+        android:theme="@style/ButtonTheme"/>
+
+    <Button
+        android:id="@+id/Function10"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="F10"
+        android:textColor="@color/black"
+        android:background="@drawable/button_background"
+        android:theme="@style/ButtonTheme"/>
+
+    <Button
+        android:id="@+id/Function11"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="F11"
+        android:textColor="@color/black"
+        android:background="@drawable/button_background"
+        android:theme="@style/ButtonTheme"/>
+
+    <Button
+        android:id="@+id/Function12"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="F12"
+        android:textColor="@color/black"
+        android:background="@drawable/button_background"
+        android:theme="@style/ButtonTheme"/>
+</LinearLayout>
