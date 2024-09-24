@@ -6,7 +6,7 @@ android {
     compileSdkVersion 34
 
     defaultConfig {
-        applicationId "com.herohan.uvcapp"
+        applicationId "com.openterface.AOS"
         minSdkVersion 21
         targetSdkVersion 34
         versionCode 3

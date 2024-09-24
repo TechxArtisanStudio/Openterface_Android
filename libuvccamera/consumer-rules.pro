@@ -1,5 +1,5 @@
 ################libuvccamera##################
--keep class com.herohan.uvcapp.** { *; }
+-keep class com.openterface.AOS.** { *; }
 -keep class com.serenegiant.usb.** { *; }
 -keepclassmembers class * implements com.serenegiant.usb.IButtonCallback {*;}
 -keepclassmembers class * implements com.serenegiant.usb.IFrameCallback {*;}
