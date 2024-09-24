@@ -169,7 +169,9 @@ public class MainActivity extends AppCompatActivity {
 
         // Define button IDs
         int[] buttonIds = {R.id.Function1, R.id.Function2, R.id.Function3, R.id.Function4, R.id.Function5, R.id.Function6,
-                R.id.Function7, R.id.Function8, R.id.Function9, R.id.Function10, R.id.Function11, R.id.Function12};
+                R.id.Function7, R.id.Function8, R.id.Function9, R.id.Function10, R.id.Function11, R.id.Function12,
+                R.id.Win, R.id.PrtSc, R.id.ScrLk, R.id.Pause, R.id.Ins, R.id.Home, R.id.End, R.id.PgUp, R.id.PgDn,
+                R.id.NumLk, R.id.CapsLk, R.id.Esc, R.id.Delete};
 
         // Loop through button IDs and set click listeners
         for (int buttonId : buttonIds) {
@@ -181,6 +183,15 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
+
+        Button CtrlAltDelButton = findViewById(R.id.CtrlAltDel);
+        CtrlAltDelButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                KeyBoardManager.sendKeyBoardFunctionCtrlAltDel();
+            }
+        });
+
     }
 
     @Override

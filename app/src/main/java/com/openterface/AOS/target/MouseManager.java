@@ -34,7 +34,7 @@ public class MouseManager {
     private static UsbDeviceManager usbDeviceManager;
     public static int screenWidth, screenHeight;
 
-    public static void width_height(int width, int height) {//change one
+    public static void width_height(int width, int height) {
         screenWidth = width;
         screenHeight = height;
     }

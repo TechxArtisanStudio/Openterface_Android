@@ -100,6 +100,50 @@ public class KeyBoardManager {
         }
     }
 
+    public static void sendKeyBoardFunctionCtrlAltDel() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    if (UsbDeviceManager.port == null){
+                        Log.d(TAG, "sendKeyBoardFunction port is null");
+                        return;
+                    }
+
+                    //Press Ctrl+Alt+Del
+                    String sendKBData = "";
+                    sendKBData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
+                            CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
+                            CH9329MSKBMap.getKeyCodeMap().get("address") +
+                            CH9329MSKBMap.CmdData().get("CmdKB_HID") +
+                            CH9329MSKBMap.DataLen().get("DataLenKB") +
+                            CH9329MSKBMap.KBFunctionKey().get("FunctionKey") +
+                            CH9329MSKBMap.DataNull().get("DataNull") +
+                            "E0" + "E2" + "4C"+
+                            CH9329MSKBMap.DataNull().get("DataNull") +
+                            CH9329MSKBMap.DataNull().get("DataNull") +
+                            CH9329MSKBMap.DataNull().get("DataNull");
+
+                    sendKBData = sendKBData + CH9329Function.makeChecksum(sendKBData);
+
+                    CH9329Function.checkSendLogData(sendKBData);
+
+                    byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendKBData);
+
+                    try {
+                        UsbDeviceManager.port.write(sendKBDataBytes, 200);
+                        EmptyKeyboard();
+                    } catch (IOException e) {
+                        Log.e(TAG, "Error writing to port: " + e.getMessage());
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
     public static void sendKeyBoardFunction(String keyName) {
         new Thread(new Runnable() {
             @Override
@@ -193,11 +237,15 @@ public class KeyBoardManager {
         int [] buttonIDs = {
                 R.id.Function1, R.id.Function2, R.id.Function3, R.id.Function4,
                 R.id.Function5, R.id.Function6, R.id.Function7, R.id.Function8,
-                R.id.Function9, R.id.Function10, R.id.Function11, R.id.Function12
+                R.id.Function9, R.id.Function10, R.id.Function11, R.id.Function12,
+                R.id.Win, R.id.PrtSc, R.id.ScrLk, R.id.Pause, R.id.Ins, R.id.Home,
+                R.id.End, R.id.PgUp, R.id.PgDn, R.id.NumLk, R.id.CapsLk, R.id.Esc, R.id.Delete
         };
 
         String [] functions = {
-            "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12"
+            "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
+            "Win", "PrtSc", "ScrLk", "Pause", "Ins", "Home", "End", "PgUp", "PgDn", "NumLk",
+            "CapsLk", "Esc", "Delete"
         };
 
         for (int i = 0; i < buttonIDs.length; i++) {

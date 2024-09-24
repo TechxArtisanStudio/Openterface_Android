@@ -75,6 +75,4 @@ public class CH9329Function {
                 (byte) ((value >> 8) & 0xFF)
         };
     }
-
-
 }

@@ -58,6 +58,13 @@ public class CH9329MSKBMap {
         return DataLen;
     }
 
+    public static Map<Object, String> KBFunctionKey() {
+        Map<Object, String> DataLen = new HashMap<>();
+        DataLen.put("FunctionKey", "05");
+
+        return DataLen;
+    }
+
     public static Map<Object, String> MSAbsData() {
         Map<Object, String> MSAbsData = new HashMap<>();
         //first key must is 0x02
@@ -183,13 +190,15 @@ public class CH9329MSKBMap {
         keyCodeMap.put("INSERT", "49");
         keyCodeMap.put("FORWARD_DEL", "4C");
         keyCodeMap.put("MOVE_HOME", "4A");
-        keyCodeMap.put("MOVE_END", "4D");
         keyCodeMap.put("PAGE_UP", "4B");
+        keyCodeMap.put("Delete", "4C");
+        keyCodeMap.put("MOVE_END", "4D");
         keyCodeMap.put("PAGE_DOWN", "4E");
 
         keyCodeMap.put("CTRL_LEFT", "E0");
         keyCodeMap.put("SHIFT_LEFT", "E1");
         keyCodeMap.put("ALT_LEFT", "E2");
+        keyCodeMap.put("Win", "E3");
         keyCodeMap.put("CTRL_RIGHT", "E4");
         keyCodeMap.put("SHIFT_RIGHT", "E5");
         keyCodeMap.put("ALT_RIGHT", "E6");
@@ -198,12 +207,16 @@ public class CH9329MSKBMap {
         keyCodeMap.put("BACK", "29");
         keyCodeMap.put("ENTER", "28");
         keyCodeMap.put("DEL", "2A");
-        keyCodeMap.put("Insert", "49");
+        keyCodeMap.put("Esc", "29");
+        keyCodeMap.put("PrtSc", "46");
+        keyCodeMap.put("ScrLk", "47");
+        keyCodeMap.put("Pause", "48");
+        keyCodeMap.put("Ins", "49");
         keyCodeMap.put("Home", "4A");
         keyCodeMap.put("End", "4D");
         keyCodeMap.put("PgUp", "4B");
-        keyCodeMap.put("PgDo", "4E");
-        keyCodeMap.put("Num Lock", "53");
+        keyCodeMap.put("PgDn", "4E");
+        keyCodeMap.put("NumLk", "53");
 
         keyCodeMap.put("DPAD_LEFT", "50");
         keyCodeMap.put("DPAD_RIGHT", "4F");

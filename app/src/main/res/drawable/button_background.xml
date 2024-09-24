@@ -5,8 +5,8 @@
     <solid android:color="@color/white" />
     <!-- Border color and width -->
     <stroke
-        android:width="8dp"
+        android:width="2dp"
         android:color="@color/black" />
     <!-- fillet radius -->
-    <corners android:radius="4dp" />
+    <corners android:radius="2dp" />
 </shape>
