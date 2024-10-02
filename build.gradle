@@ -36,16 +36,3 @@ ext {
 	javaSourceCompatibility = JavaVersion.VERSION_1_8
 	javaTargetCompatibility = JavaVersion.VERSION_1_8
 }
-
-plugins {
-    id 'org.jetbrains.kotlin.jvm' version '1.7.1'
-}
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.7.1"
-    // other dependencies
-}
