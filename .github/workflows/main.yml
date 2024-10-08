@@ -3,7 +3,7 @@ on:
     branches:
       - master
 
-name: Build My Apps12
+name: Build My Apps1
 
 jobs:
   build:
