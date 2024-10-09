@@ -33,6 +33,6 @@ jobs:
       - name: Push to Releases
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "C:\Users\24452\Desktop\projects\Openterface_Android\app\build\intermediates\apk\debug\app-debug.apk"
+          artifacts: "C:/Users/24452/Desktop/projects/Openterface_Android/app/build/intermediates/apk/debug/app-debug.apk"
           tag: v0.0.1
           token: ${{ secrets.TOKEN }}
