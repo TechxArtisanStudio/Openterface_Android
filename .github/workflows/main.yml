@@ -33,6 +33,12 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew assembleRelease --stacktrace
 
+      - name: Decode Keystore
+        env:
+          ENCODED_STRING: ${{ secrets.SIGNING_KEY }}
+        run: |
+          echo $ENCODED_STRING | base64 -di > keystore.jks
+
       - name: Sign APK
         uses: r0adkll/sign-android-release@v1
         id: sign_app
@@ -42,6 +48,7 @@ jobs:
           alias: ${{ secrets.ALIAS }}
           keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
           keyPassword: ${{ secrets.KEY_PASSWORD }}
+          keystore: keystore.jks
 
       - name: Upload APK
         uses: actions/upload-artifact@v3
