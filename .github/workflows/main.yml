@@ -19,8 +19,18 @@ jobs:
       - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-      - run: flutter pub get
-      - run: flutter build apk --release --split-per-abi
+      
+      # Add this step to navigate to the project directory
+      - name: Navigate to project directory
+        run: |
+          ls -R  # List all files and directories for debugging
+          cd $GITHUB_WORKSPACE  # Navigate to the root of your repository
+
+      - name: Get dependencies
+        run: flutter pub get
+      
+      - name: Build APK
+        run: flutter build apk --release --split-per-abi
 
       - name: Push to Releases
         uses: ncipollo/release-action@v1
