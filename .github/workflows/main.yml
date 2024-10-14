@@ -46,5 +46,6 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v3
         with:
-          name: app-release-signed
+          name: openterface-signed
           path: ${{steps.sign_app.outputs.signedReleaseFile}}
+          if-no-files-found: error
