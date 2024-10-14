@@ -7,7 +7,7 @@ name: Build Android APK
 
 jobs:
   build:
-    name: Build and Release APK
+    name: Build and Save APK
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -17,6 +17,15 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+
+      - name: Install Android Build Tools
+        run: |
+          sdkmanager "build-tools;29.0.3"
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          echo "$ANDROID_HOME/build-tools/29.0.3" >> $GITHUB_PATH
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -34,9 +43,8 @@ jobs:
           keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
           keyPassword: ${{ secrets.KEY_PASSWORD }}
 
-      - name: Push to Releases
-        uses: ncipollo/release-action@v1
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
         with:
-          artifacts: ${{steps.sign_app.outputs.signedReleaseFile}}
-          tag: v1.0.${{ github.run_number }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          name: app-release-signed
+          path: ${{steps.sign_app.outputs.signedReleaseFile}}
