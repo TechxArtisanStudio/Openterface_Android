@@ -3,36 +3,40 @@ on:
     branches:
       - main
 
-name: Build Openterface Android
+name: Build Android APK
 
 jobs:
   build:
-    name: Build and Release new apk
+    name: Build and Release APK
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-java@v2
-        with:
-          distribution: 'zulu'
-          java-version: '11'
 
-      - uses: subosito/flutter-action@v2
+      - name: Set up JDK 11
+        uses: actions/setup-java@v2
         with:
-          channel: 'stable'
-      
-      - name: Get dependencies
-        run: |
-          cd $GITHUB_WORKSPACE
-          flutter pub get
-      
-      - name: Build APK
-        run: |
-          cd $GITHUB_WORKSPACE
-          flutter build apk --release --split-per-abi
+          java-version: '11'
+          distribution: 'adopt'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew assembleRelease
+
+      - name: Sign APK
+        uses: r0adkll/sign-android-release@v1
+        id: sign_app
+        with:
+          releaseDirectory: app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+          alias: ${{ secrets.ALIAS }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
 
       - name: Push to Releases
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "build/app/outputs/apk/release/*"
-          tag: v0.0.1
-          token: ${{ secrets.TOKEN }}
+          artifacts: ${{steps.sign_app.outputs.signedReleaseFile}}
+          tag: v1.0.${{ github.run_number }}
+          token: ${{ secrets.GITHUB_TOKEN }}
