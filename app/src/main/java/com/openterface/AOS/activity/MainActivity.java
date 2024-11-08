@@ -144,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
         mBinding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(mBinding.getRoot());
 
-        setSupportActionBar(mBinding.toolbar);//
+        setSupportActionBar(mBinding.toolbar);
 
         checkCameraHelper();
 
