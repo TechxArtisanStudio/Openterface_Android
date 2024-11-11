@@ -37,6 +37,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 
 import com.openterface.AOS.serial.CustomTouchListener;
 import com.openterface.AOS.serial.UsbDeviceManager;
@@ -75,6 +76,7 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.Switch;
 import android.widget.Toast;
 
 import java.io.File;
@@ -189,6 +191,19 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 KeyBoardManager.sendKeyBoardFunctionCtrlAltDel();
+            }
+        });
+
+        SwitchCompat switchToggle = findViewById(R.id.switchToggle);
+        switchToggle.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                Log.d(TAG, "open abs keyMouse");
+//                switchToggle.setText("ABS");
+//                toggleOptionsBar();
+            } else {
+//                switchToggle.setText("REL");
+                Log.d(TAG, "open rel keyMouse");
+//                toggleOptionsBar();
             }
         });
 

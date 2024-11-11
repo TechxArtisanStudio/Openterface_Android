@@ -58,6 +58,7 @@ public class MouseManager {
                             CH9329MSKBMap.getKeyCodeMap().get("address") +
                             CH9329MSKBMap.CmdData().get("CmdMS_ABS") +
                             CH9329MSKBMap.DataLen().get("DataLenMS") +
+
                             CH9329MSKBMap.MSAbsData().get("FirstData") +
                             CH9329MSKBMap.MSAbsData().get("SecNullData") + //MS key
                             String.format("%02X", xBytes[0]) +
