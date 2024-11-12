@@ -37,8 +37,8 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.SwitchCompat;
 
+import com.kyleduo.switchbutton.SwitchButton;
 import com.openterface.AOS.serial.CustomTouchListener;
 import com.openterface.AOS.serial.UsbDeviceManager;
 import com.openterface.AOS.target.KeyBoardManager;
@@ -76,7 +76,6 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.Switch;
 import android.widget.Toast;
 
 import java.io.File;
@@ -136,6 +135,8 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout optionsBar;
     private boolean isOptionsBarVisible = false;
 
+    private static boolean KeyMouse_state = false;
+
     KeyBoardManager keyBoardManager = new KeyBoardManager(this);
 
     @SuppressLint("ClickableViewAccessibility")
@@ -194,16 +195,16 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        SwitchCompat switchToggle = findViewById(R.id.switchToggle);
-        switchToggle.setOnCheckedChangeListener((buttonView, isChecked) -> {
+        SwitchButton switchButton = findViewById(R.id.switchButton);
+        switchButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
-                Log.d(TAG, "open abs keyMouse");
-//                switchToggle.setText("ABS");
-//                toggleOptionsBar();
+                KeyMouse_state = true;
+                CustomTouchListener.KeyMouse_state(KeyMouse_state);
+                Log.d(TAG, "Change ABS KeyMouse");
             } else {
-//                switchToggle.setText("REL");
-                Log.d(TAG, "open rel keyMouse");
-//                toggleOptionsBar();
+                KeyMouse_state = false;
+                CustomTouchListener.KeyMouse_state(KeyMouse_state);
+                Log.d(TAG, "Change REL KeyMouse");
             }
         });
 

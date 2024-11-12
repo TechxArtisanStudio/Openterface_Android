@@ -28,6 +28,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+
 import com.openterface.AOS.target.MouseManager;
 
 public class CustomTouchListener implements View.OnTouchListener {
@@ -43,6 +44,11 @@ public class CustomTouchListener implements View.OnTouchListener {
     private static final long DOUBLE_CLICK_TIME_DELTA = 300; // milliseconds
     private static UsbDeviceManager usbDeviceManager;
     private Runnable runnable;
+    private static boolean KeyMouse_state;
+
+    public static void KeyMouse_state(boolean keyMouseState) {
+        KeyMouse_state = keyMouseState;
+    }
 
     public CustomTouchListener(UsbDeviceManager usbDeviceManager) {
         this.usbDeviceManager = usbDeviceManager;
@@ -50,6 +56,7 @@ public class CustomTouchListener implements View.OnTouchListener {
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
+        System.out.println("this is KeyMouse Boolean state: " + KeyMouse_state);
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
                 isLongPress = false;
@@ -107,7 +114,12 @@ public class CustomTouchListener implements View.OnTouchListener {
                     x = event.getX();
                     y = event.getY();
                     Log.d(TAG, "Touched at: (" + x + ", " + y + ")");
-                    MouseManager.sendHexData(x, y);
+                    System.out.println("this is KeyMouse Boolean state22: " + KeyMouse_state);
+                    if (KeyMouse_state){
+                        System.out.println("startY1: " + startY1+ "startY2: " + startY2);                        MouseManager.sendHexRelData(x, y);
+                    }else {
+//                        MouseManager.sendHexAbsData(x, y);
+                    }
                 }
                 break;
 

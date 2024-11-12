@@ -46,13 +46,15 @@ public class CH9329MSKBMap {
         Map<Object, String> CmdData = new HashMap<>();
         CmdData.put("CmdKB_HID", "02");
         CmdData.put("CmdMS_ABS", "04");
+        CmdData.put("CmdMS_REL", "05");
 
         return CmdData;
     }
 
     public static Map<Object, String> DataLen() {
         Map<Object, String> DataLen = new HashMap<>();
-        DataLen.put("DataLenMS", "07");
+        DataLen.put("DataLenAbsMS", "05");
+        DataLen.put("DataLenRelMS", "07");
         DataLen.put("DataLenKB", "08");
 
         return DataLen;
@@ -83,6 +85,26 @@ public class CH9329MSKBMap {
         MSAbsData.put("Downward", "82");
 
         return MSAbsData;
+    }
+
+    public static Map<Object, String> MSRelData() {
+        Map<Object, String> MSRelData = new HashMap<>();
+        //first rel key must is 0x01
+        MSRelData.put("FirstData", "01");
+
+        //second key have 3 options,lef,middle, right key
+        MSRelData.put("SecNullData", "00");
+        MSRelData.put("SecLeftData", "01");
+        MSRelData.put("SecRightData", "02");
+        MSRelData.put("SecMiddleData", "04");
+
+        //three and four is x,five and six is y
+
+        //seven is Scroll Wheel
+        MSRelData.put("SlideUp", "02");
+        MSRelData.put("Downward", "82");
+
+        return MSRelData;
     }
 
     public static Map<Object, String> DataNull() {
