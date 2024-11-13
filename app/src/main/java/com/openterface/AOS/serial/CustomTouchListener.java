@@ -45,6 +45,7 @@ public class CustomTouchListener implements View.OnTouchListener {
     private static UsbDeviceManager usbDeviceManager;
     private Runnable runnable;
     private static boolean KeyMouse_state;
+    private float lastX, lastY;
 
     public static void KeyMouse_state(boolean keyMouseState) {
         KeyMouse_state = keyMouseState;
@@ -56,7 +57,6 @@ public class CustomTouchListener implements View.OnTouchListener {
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        System.out.println("this is KeyMouse Boolean state: " + KeyMouse_state);
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
                 isLongPress = false;
@@ -113,12 +113,17 @@ public class CustomTouchListener implements View.OnTouchListener {
                     // For single-finger tracking
                     x = event.getX();
                     y = event.getY();
-                    Log.d(TAG, "Touched at: (" + x + ", " + y + ")");
-                    System.out.println("this is KeyMouse Boolean state22: " + KeyMouse_state);
+//                    Log.d(TAG, "Touched at: (" + x + ", " + y + ")");
+//                    System.out.println("this is KeyMouse Boolean state22: " + KeyMouse_state);
                     if (KeyMouse_state){
-                        System.out.println("startY1: " + startY1+ "startY2: " + startY2);                        MouseManager.sendHexRelData(x, y);
+//                        System.out.println("startY1: " + startY1+ "startY2: " + startY2);
+                        MouseManager.sendHexAbsData(x, y);
+
                     }else {
-//                        MouseManager.sendHexAbsData(x, y);
+                        MouseManager.sendHexRelData(x, y, lastX, lastY);
+                        lastX = x;
+                        lastY = y;
+//                        System.out.println("send REL MS Data");
                     }
                 }
                 break;
@@ -140,13 +145,14 @@ public class CustomTouchListener implements View.OnTouchListener {
                     // deal double click event
                     Log.d(TAG, "click double button ");
                     MouseManager.handleDoubleClick(x, y);
-                } else {
-                    if (!isLongPress) {
-                        // Stop the single click runnable
-                        Log.d(TAG, "one click");
-                        Log.d(TAG, "Touched at: (" + x + ", " + y + ")");
-                    }
                 }
+//                else {
+//                    if (!isLongPress) {
+//                        // Stop the single click runnable
+//                        Log.d(TAG, "one click");
+//                        Log.d(TAG, "Touched at: (" + x + ", " + y + ")");
+//                    }
+//                }
                 lastClickTime = clickTime;
                 isPanning = false;
                 break;

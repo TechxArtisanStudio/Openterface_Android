@@ -104,6 +104,11 @@ public class CH9329MSKBMap {
         MSRelData.put("SlideUp", "02");
         MSRelData.put("Downward", "82");
 
+        MSRelData.put("LeftRel", "FD");
+        MSRelData.put("RightRel", "03");
+        MSRelData.put("UpRel", "FD");
+        MSRelData.put("DownRel", "03");
+
         return MSRelData;
     }
 

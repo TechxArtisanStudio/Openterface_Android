@@ -200,11 +200,11 @@ public class MainActivity extends AppCompatActivity {
             if (isChecked) {
                 KeyMouse_state = true;
                 CustomTouchListener.KeyMouse_state(KeyMouse_state);
-                Log.d(TAG, "Change ABS KeyMouse");
+//                Log.d(TAG, "Change ABS KeyMouse");
             } else {
                 KeyMouse_state = false;
                 CustomTouchListener.KeyMouse_state(KeyMouse_state);
-                Log.d(TAG, "Change REL KeyMouse");
+//                Log.d(TAG, "Change REL KeyMouse");
             }
         });
 
