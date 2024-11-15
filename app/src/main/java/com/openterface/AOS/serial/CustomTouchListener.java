@@ -28,6 +28,7 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+
 import com.openterface.AOS.target.MouseManager;
 
 public class CustomTouchListener implements View.OnTouchListener {
@@ -42,6 +43,13 @@ public class CustomTouchListener implements View.OnTouchListener {
     private long lastClickTime = 0;
     private static final long DOUBLE_CLICK_TIME_DELTA = 300; // milliseconds
     private static UsbDeviceManager usbDeviceManager;
+    private Runnable runnable;
+    private static boolean KeyMouse_state;
+    private float lastX, lastY;
+
+    public static void KeyMouse_state(boolean keyMouseState) {
+        KeyMouse_state = keyMouseState;
+    }
 
     public CustomTouchListener(UsbDeviceManager usbDeviceManager) {
         this.usbDeviceManager = usbDeviceManager;
@@ -55,16 +63,16 @@ public class CustomTouchListener implements View.OnTouchListener {
                 x = event.getX(); // save start x, y
                 y = event.getY();
 
-                handler.postDelayed(longPressRunnable = new Runnable() {
-                    @Override
-                    public void run() {
-                        isLongPress = true;
-                        Log.d(TAG, "Long pressed at: (" + x + ", " + y + ")");
-                        // deal long press event
-                        MouseManager.handleLongPress(x, y);
-                    }
-                }, 1000); // 1000 millisecond trigger long press
-                break;
+//                handler.postDelayed(longPressRunnable = new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        isLongPress = true;
+//                        Log.d(TAG, "Long pressed at: (" + x + ", " + y + ")");
+//                        // deal long press event
+//                        MouseManager.handleLongPress(x, y);
+//                    }
+//                }, 1000); // 1000 millisecond trigger long press
+//                break;
 
             case MotionEvent.ACTION_POINTER_DOWN:
                 if (event.getPointerCount() == 2) {
@@ -98,6 +106,24 @@ public class CustomTouchListener implements View.OnTouchListener {
                         MouseManager.handleDoubleFingerPan(event.getX(1), event.getY(1), rollingGearY);
 
                         hasHandledMove = true; // Set the flag to true after handling the move
+                    }else {
+                        MouseManager.handleLongPress(x, y);
+                    }
+                } else if (!isLongPress) {
+                    // For single-finger tracking
+                    x = event.getX();
+                    y = event.getY();
+//                    Log.d(TAG, "Touched at: (" + x + ", " + y + ")");
+//                    System.out.println("this is KeyMouse Boolean state22: " + KeyMouse_state);
+                    if (KeyMouse_state){
+//                        System.out.println("startY1: " + startY1+ "startY2: " + startY2);
+                        MouseManager.sendHexAbsData(x, y);
+
+                    }else {
+                        MouseManager.sendHexRelData(x, y, lastX, lastY);
+                        lastX = x;
+                        lastY = y;
+//                        System.out.println("send REL MS Data");
                     }
                 }
                 break;
@@ -111,21 +137,22 @@ public class CustomTouchListener implements View.OnTouchListener {
                 break;
 
             case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
                 handler.removeCallbacks(longPressRunnable);
+                handler.removeCallbacks(runnable); // Stop the runnable for single click
                 long clickTime = System.currentTimeMillis();
                 if (clickTime - lastClickTime <= DOUBLE_CLICK_TIME_DELTA) {
                     // deal double click event
                     Log.d(TAG, "click double button ");
                     MouseManager.handleDoubleClick(x, y);
-                } else {
-                    if (!isLongPress) {
-                        x = event.getX();
-                        y = event.getY();
-                        Log.d(TAG, "one click");
-                        Log.d(TAG, "Touched at: (" + x + ", " + y + ")");
-                        MouseManager.sendHexData(x, y);
-                    }
                 }
+//                else {
+//                    if (!isLongPress) {
+//                        // Stop the single click runnable
+//                        Log.d(TAG, "one click");
+//                        Log.d(TAG, "Touched at: (" + x + ", " + y + ")");
+//                    }
+//                }
                 lastClickTime = clickTime;
                 isPanning = false;
                 break;

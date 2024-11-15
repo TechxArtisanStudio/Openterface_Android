@@ -12,4 +12,6 @@
     <color name="gray_400">#FFBDBDBD</color>
     <color name="gray_600">#FF757575</color>
     <color name="ic_openterface_background">#FFFFFF</color>
+
+    <color name="green">#0F9D58</color>
 </resources>

@@ -19,7 +19,20 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="@color/black"
-            app:popupTheme="@style/Theme.Usbvideo.PopupOverlay" />
+            app:popupTheme="@style/Theme.Usbvideo.PopupOverlay">
+
+            <com.kyleduo.switchbutton.SwitchButton
+                android:id="@+id/switchButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/green"
+                app:kswBackColor="@color/gray_400"
+                app:kswTextOn="Abs"
+                app:kswTextOff="Rel"
+                android:layout_gravity="end"
+                />
+
+        </androidx.appcompat.widget.Toolbar>
 
         <include layout="@layout/options_bar" />
 

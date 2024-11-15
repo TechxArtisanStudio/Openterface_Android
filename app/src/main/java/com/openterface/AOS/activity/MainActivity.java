@@ -38,6 +38,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.kyleduo.switchbutton.SwitchButton;
 import com.openterface.AOS.serial.CustomTouchListener;
 import com.openterface.AOS.serial.UsbDeviceManager;
 import com.openterface.AOS.target.KeyBoardManager;
@@ -134,6 +135,8 @@ public class MainActivity extends AppCompatActivity {
     private LinearLayout optionsBar;
     private boolean isOptionsBarVisible = false;
 
+    private static boolean KeyMouse_state = false;
+
     KeyBoardManager keyBoardManager = new KeyBoardManager(this);
 
     @SuppressLint("ClickableViewAccessibility")
@@ -189,6 +192,19 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 KeyBoardManager.sendKeyBoardFunctionCtrlAltDel();
+            }
+        });
+
+        SwitchButton switchButton = findViewById(R.id.switchButton);
+        switchButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                KeyMouse_state = true;
+                CustomTouchListener.KeyMouse_state(KeyMouse_state);
+//                Log.d(TAG, "Change ABS KeyMouse");
+            } else {
+                KeyMouse_state = false;
+                CustomTouchListener.KeyMouse_state(KeyMouse_state);
+//                Log.d(TAG, "Change REL KeyMouse");
             }
         });
 
