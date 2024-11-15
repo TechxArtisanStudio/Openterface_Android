@@ -1,6 +1,7 @@
 package com.openterface.AOS;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.util.Log;
 import android.view.Surface;
 
@@ -360,7 +361,11 @@ final class CameraInternal implements ICameraInternal {
     @Override
     public void startRecording(VideoCapture.OutputFileOptions options, VideoCapture.OnVideoCaptureCallback callback) {
         if (isCameraOpened() && mVideoCapture != null) {
-            mVideoCapture.startRecording(options, callback);
+            if (ContextCompat.checkSelfPermission(mWeakContext.get(), Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                mVideoCapture.startRecording(options, callback);
+            } else {
+                Log.e("CameraInternal", "Permission for audio recording is not granted.");
+            }
         } else {
             String message = "Not bound to a Camera";
             callback.onError(VideoCapture.ERROR_INVALID_CAMERA, message, new IllegalStateException(message));
