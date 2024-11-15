@@ -1,4 +1,9 @@
 // Move buildscript block to the top
+
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.7.1'
+}
+
 buildscript {
     repositories {
         maven { url 'https://maven.aliyun.com/repository/google' }
