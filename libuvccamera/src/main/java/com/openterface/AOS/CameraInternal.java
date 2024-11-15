@@ -1,9 +1,11 @@
 package com.openterface.AOS;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.util.Log;
 import android.view.Surface;
+import androidx.core.content.ContextCompat;
 
 import com.serenegiant.opengl.renderer.RendererHolderCallback;
 import com.serenegiant.usb.Format;
