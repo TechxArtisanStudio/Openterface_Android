@@ -47,6 +47,7 @@ import com.hoho.android.usbserial.driver.Ch34xSerialDriver;
 import com.hoho.android.usbserial.driver.ProbeTable;
 import android.hardware.usb.UsbDeviceConnection;
 import android.widget.TextView;
+import android.os.Build;
 
 public class UsbDeviceManager {
     private static final String TAG = UsbDeviceManager.class.getSimpleName();
@@ -118,7 +119,11 @@ public class UsbDeviceManager {
         IntentFilter filter = new IntentFilter();
         filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
         filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
-        context.registerReceiver(usbReceiver, filter);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.registerReceiver(usbReceiver, filter, Context.RECEIVER_EXPORTED);
+        } else {
+            context.registerReceiver(usbReceiver, filter);
+        }
     }
 
     private void closeDevice() {
