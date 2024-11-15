@@ -4,6 +4,13 @@ Our [Openterface Mini-KVM](https://openterface.com/) crowdfunding campaign is no
 
 ![pre-launch-poster](https://pbs.twimg.com/media/GInpcabbYAAsP9J?format=jpg&name=medium)
 
+# Supported Features
+
+- Basic KVM operations, such as controlling mouse movement, left/right clicking via touch screen, and inputting text using the on-screen keyboard.
+- Support for absolute mouse control (relative mouse control is a work in progress).
+- Function key support.
+- Image adjustments, including brightness, contrast, and hue.
+
 🚀 **Let's shake things up in KVM technology together!**
 
 We're hard at work developing [the host applications](https://openterface.com/quick-start/#install-host-application) for this handy gadget. Our team is coding away and tweaking these tools to boost their performance and functionality. We’re all about open hardware and open-source software, and we'll keep sharing updates throughout our campaign.
