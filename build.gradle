@@ -12,10 +12,6 @@ buildscript {
     }
 }
 
-plugins {
-    id 'org.jetbrains.kotlin.jvm' version '1.7.1'
-}
-
 allprojects {
     repositories {
 		maven { url 'https://maven.aliyun.com/repository/google' }
