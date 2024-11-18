@@ -34,7 +34,7 @@ dependencies {
     // USB serial communication library
     implementation 'com.github.mik3y:usb-serial-for-android:3.8.0'
     // AndroidX AppCompat library for backward compatibility
-    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.appcompat:appcompat:1.6.0'
     // Google Material Design components
     implementation 'com.google.android.material:material:1.10.0'
     // AndroidX ConstraintLayout for complex layouts
@@ -49,15 +49,17 @@ dependencies {
     implementation 'com.github.getActivity:XXPermissions:13.5'
 //    implementation 'com.github.warkiz.widget:indicatorseekbar:2.1.2'
     implementation 'com.github.warkiz:IndicatorSeekBar:v2.1.1'
-
+    // Takt library for logging
     releaseImplementation 'jp.wasabeef:takt-no-op:2.1.1'
+    // Debug implementation for logging
     debugImplementation 'jp.wasabeef:takt:2.1.1'
 
     // Access to UVC web camera on non-rooted Android device
     implementation project(':libuvccamera')
 
-    // 
+    // AndroidX Legacy support for older APIs   
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    // AndroidX RecyclerView for flexible list management
     implementation 'androidx.recyclerview:recyclerview:1.3.0'
 
     // SwitchButton widget in Android.
@@ -66,7 +68,10 @@ dependencies {
     // debugImplementation because LeakCanary should only run in debug builds.
 //    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.8.1'
 
+    // JUnit for unit testing
     testImplementation 'junit:junit:4.13.2'
+    // AndroidX Test JUnit for unit testing
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
+    // AndroidX Test Espresso for UI testing    
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 }
