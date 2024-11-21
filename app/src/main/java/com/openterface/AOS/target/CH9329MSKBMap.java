@@ -258,6 +258,7 @@ public class CH9329MSKBMap {
 
         //release keyboard data
         keyCodeMap.put("release", "57AB00020800000000000000000C");
+        keyCodeMap.put("releaseRel", "57AB0005050100000000");
 
         return keyCodeMap;
     }

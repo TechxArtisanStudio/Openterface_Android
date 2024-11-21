@@ -34,10 +34,15 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
 import android.os.Bundle;
 
+import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 
+import com.google.android.material.appbar.AppBarLayout;
 import com.kyleduo.switchbutton.SwitchButton;
 import com.openterface.AOS.serial.CustomTouchListener;
 import com.openterface.AOS.serial.UsbDeviceManager;
@@ -73,6 +78,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.TextureView;
 import android.view.View;
+import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -137,17 +143,24 @@ public class MainActivity extends AppCompatActivity {
 
     private static boolean KeyMouse_state = false;
 
+    private boolean AppBar = false;
+
     KeyBoardManager keyBoardManager = new KeyBoardManager(this);
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Window window = getWindow();
+        WindowInsetsControllerCompat windowInsetsController =
+                WindowCompat.getInsetsController(window, window.getDecorView());
+        // Hide the system bars.
+        windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
         super.onCreate(savedInstanceState);
 
         mBinding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(mBinding.getRoot());
 
-        setSupportActionBar(mBinding.toolbar);
+//        setSupportActionBar(mBinding.toolbar);
 
         checkCameraHelper();
 
@@ -174,7 +187,7 @@ public class MainActivity extends AppCompatActivity {
         int[] buttonIds = {R.id.Function1, R.id.Function2, R.id.Function3, R.id.Function4, R.id.Function5, R.id.Function6,
                 R.id.Function7, R.id.Function8, R.id.Function9, R.id.Function10, R.id.Function11, R.id.Function12,
                 R.id.Win, R.id.PrtSc, R.id.ScrLk, R.id.Pause, R.id.Ins, R.id.Home, R.id.End, R.id.PgUp, R.id.PgDn,
-                R.id.NumLk, R.id.CapsLk, R.id.Esc, R.id.Delete};
+                R.id.NumLk, R.id.TAB, R.id.CapsLk, R.id.Esc, R.id.Delete, R.id.ENTER};
 
         // Loop through button IDs and set click listeners
         for (int buttonId : buttonIds) {
@@ -195,19 +208,54 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        SwitchButton switchButton = findViewById(R.id.switchButton);
-        switchButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked) {
-                KeyMouse_state = true;
-                CustomTouchListener.KeyMouse_state(KeyMouse_state);
-//                Log.d(TAG, "Change ABS KeyMouse");
-            } else {
-                KeyMouse_state = false;
-                CustomTouchListener.KeyMouse_state(KeyMouse_state);
-//                Log.d(TAG, "Change REL KeyMouse");
-            }
-        });
+//        SwitchButton switchButton = findViewById(R.id.switchButton);
+//        switchButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
+//            if (isChecked) {
+//                KeyMouse_state = true;
+//                CustomTouchListener.KeyMouse_state(KeyMouse_state);
+////                Log.d(TAG, "Change ABS KeyMouse");
+//            } else {
+//                KeyMouse_state = false;
+//                CustomTouchListener.KeyMouse_state(KeyMouse_state);
+////                Log.d(TAG, "Change REL KeyMouse");
+//            }
+//        });
 
+//        Button btnToggleAppBar = findViewById(R.id.btnToggleAppBar);
+//        final AppBarLayout HideAppBarLayout = findViewById(R.id.HideAppBarLayout);
+//
+//        Button btnOpenAppBar = findViewById(R.id.btnOpenAppBar);
+//        btnOpenAppBar.setVisibility(View.GONE);
+//
+//        btnToggleAppBar.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                if (HideAppBarLayout.getVisibility() == View.VISIBLE) {
+//                    AppBar = true;
+//                    HideAppBarLayout.setVisibility(View.GONE);
+////                    btnOpenAppBar.setVisibility(View.VISIBLE);
+//                    Log.d(TAG, "toggle is GONE");
+//                } else {
+//                    AppBar = false;
+//                    HideAppBarLayout.setVisibility(View.VISIBLE);
+////                    btnOpenAppBar.setVisibility(View.GONE);
+//                    Log.d(TAG, "toggle is visible");
+//                }
+//            }
+//        });
+//
+//        btnOpenAppBar.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                if (HideAppBarLayout.getVisibility() == View.VISIBLE){
+//                    HideAppBarLayout.setVisibility(View.GONE);
+//                    btnOpenAppBar.setVisibility(View.VISIBLE);
+//                }else {
+//                    HideAppBarLayout.setVisibility(View.VISIBLE);
+//                    btnOpenAppBar.setVisibility(View.GONE);
+//                }
+//            }
+//        });
     }
 
     @Override
@@ -671,8 +719,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void resizePreviewView(Size size) {
         // Update the preview size
-        mPreviewWidth = size.width;
-        mPreviewHeight = size.height;
+//        mPreviewWidth = size.width;
+//        mPreviewHeight = size.height;
+        mPreviewWidth = 2880;//test
+        mPreviewHeight = 1800;
         Log.d(TAG, "22mPreviewWidth: " + mPreviewWidth + " mPreviewHeight: " + mPreviewHeight);
         // Set the aspect ratio of TextureView to match the aspect ratio of the camera
         mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);

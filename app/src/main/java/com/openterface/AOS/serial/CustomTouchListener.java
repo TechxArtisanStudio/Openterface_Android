@@ -34,7 +34,7 @@ public class CustomTouchListener implements View.OnTouchListener {
 
     private static final String TAG = CustomTouchListener.class.getSimpleName();
     private static final long DOUBLE_CLICK_TIME_DELTA = 300; // milliseconds
-    private static final long TWO_FINGER_PRESS_DELAY = 500; // 0.5 second
+    private static final long TWO_FINGER_PRESS_DELAY = 750; // 0.5 second
     private static final float CLICK_POSITION_THRESHOLD = 50.0f;
     private static UsbDeviceManager usbDeviceManager;
     private static boolean KeyMouse_state;
@@ -50,9 +50,10 @@ public class CustomTouchListener implements View.OnTouchListener {
     private boolean isDoubleClickHandled = false;
     private long lastDoubleClickTime = 0;
 
-    final long DOUBLE_CLICK_COOLDOWN = 500;
+    private long lastMoveTime = 0; // To store the last execution time
+    private static final long MOVE_DELAY = 50; // 0.05 seconds in milliseconds
 
-
+    private long ignoreMoveUntil = 0;
 
     public static void KeyMouse_state(boolean keyMouseState) {
         KeyMouse_state = keyMouseState;
@@ -114,28 +115,32 @@ public class CustomTouchListener implements View.OnTouchListener {
     }
 
     private void handActionMoveMouse(MotionEvent event){
+        long currentTime = System.currentTimeMillis();
         if (isPanning && event.getPointerCount() == 2) {
             float y1 = event.getY(0) - startY1;
             float y2 = event.getY(1) - startY2;
-
-//                    String rollingGearY;
-//                    if (y1 > 0 && y2 > 0) {
-//                        rollingGearY = "SlideUp";
-//                    } else {
-//                        rollingGearY = "Downward";
-//                    }
             StartMoveMSY = event.getY();
-            Log.d(TAG, "ACTION_MOVE1111");
-            if (((y1 > 0 && y2 > 0) || (y1 < 0 && y2 < 0))) {
-                handler.removeCallbacks(twoFingerPressRunnable);
-                Log.d(TAG, "ACTION_MOVE");
-                MouseManager.handleDoubleFingerPan(StartMoveMSY, LastMoveMSY);
-                hasHandledMove = true;
-                LastMoveMSY = StartMoveMSY;
+            if (((y1 > 100 && y2 > 100) || (y1 < -100 && y2 < -100))) {
+                // Check if enough time has elapsed since the last move
+                if (currentTime - lastMoveTime >= MOVE_DELAY) {
+                    handler.removeCallbacks(twoFingerPressRunnable);
+                    Log.d(TAG, "ACTION_MOVE");
+
+                    MouseManager.handleDoubleFingerPan(StartMoveMSY, LastMoveMSY);
+                    hasHandledMove = true;
+                    LastMoveMSY = StartMoveMSY;
+
+                    // Update lastMoveTime to the current time
+                    lastMoveTime = currentTime;
+                }
             }
         } else if (!isLongPress) {
             StartMoveMSX = event.getX();
             StartMoveMSY = event.getY();
+            if (currentTime < ignoreMoveUntil) {
+                return;
+            }
+
             if (KeyMouse_state) {
                 MouseManager.sendHexAbsData(StartMoveMSX, StartMoveMSY);
             } else {
@@ -152,14 +157,13 @@ public class CustomTouchListener implements View.OnTouchListener {
             isPanning = false;
             hasHandledMove = false;
             Log.d(TAG, "ACTION_POINTER_UP");
+            ignoreMoveUntil = System.currentTimeMillis() + 200;
         }
     }
 
     private void handActionUpMouse(MotionEvent event){
         long clickTime = System.currentTimeMillis();
         if (clickTime - lastClickTime <= DOUBLE_CLICK_TIME_DELTA) {
-            if (!isDoubleClickHandled && Math.abs(StartMoveMSX - LastClickX) <= CLICK_POSITION_THRESHOLD
-                    && Math.abs(StartMoveMSY - LastClickY) <= CLICK_POSITION_THRESHOLD) {
                 Log.d(TAG, "Double click at the same position");
 
                 if (KeyMouse_state) {
@@ -171,12 +175,6 @@ public class CustomTouchListener implements View.OnTouchListener {
                 isDoubleClickHandled = true;
                 lastDoubleClickTime = clickTime;
 
-                new Handler().postDelayed(() -> {
-                    isDoubleClickHandled = false;
-                }, DOUBLE_CLICK_COOLDOWN);
-            } else {
-                Log.d(TAG, "Double click at different positions");
-            }
         }
         LastMoveMSX = 0;
         LastMoveMSY = 0;

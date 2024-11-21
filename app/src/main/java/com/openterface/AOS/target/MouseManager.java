@@ -58,7 +58,6 @@ public class MouseManager {
                             CH9329MSKBMap.getKeyCodeMap().get("address") +
                             CH9329MSKBMap.CmdData().get("CmdMS_ABS") +
                             CH9329MSKBMap.DataLen().get("DataLenAbsMS") +
-
                             CH9329MSKBMap.MSAbsData().get("FirstData") +
                             CH9329MSKBMap.MSAbsData().get("SecNullData") + //MS key
                             String.format("%02X", xBytes[0]) +
@@ -74,7 +73,7 @@ public class MouseManager {
                     byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendMSData);
 
                     try {
-                        usbDeviceManager.port.write(sendKBDataBytes, 10);
+                        usbDeviceManager.port.write(sendKBDataBytes, 20);
                         Log.d(TAG, "send data successful");
                     } catch (IOException e) {
                         Log.e(TAG, "Error writing to port: " + e.getMessage());
@@ -126,7 +125,7 @@ public class MouseManager {
                     byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendMSDoubleClickData);
 
                     try {
-                        usbDeviceManager.port.write(sendKBDataBytes, 200);
+                        usbDeviceManager.port.write(sendKBDataBytes, 20);
                         Log.d(TAG, "send data successful");
                         releaseMSAbsData(xBytes0, xBytes1, yBytes0, yBytes1);
                     } catch (IOException e) {
@@ -149,15 +148,15 @@ public class MouseManager {
                     String sendMSDoubleClickData = "";
                     sendMSDoubleClickData =
                             CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
-                            CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
-                            CH9329MSKBMap.getKeyCodeMap().get("address") +
-                            CH9329MSKBMap.CmdData().get("CmdMS_REL") +
-                            CH9329MSKBMap.DataLen().get("DataLenRelMS") +
-                            CH9329MSKBMap.MSRelData().get("FirstData") +
-                            CH9329MSKBMap.MSRelData().get("SecRightData") + //MS key
-                            CH9329MSKBMap.DataNull().get("DataNull") +
-                            CH9329MSKBMap.DataNull().get("DataNull") +
-                            CH9329MSKBMap.DataNull().get("DataNull");
+                                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
+                                    CH9329MSKBMap.getKeyCodeMap().get("address") +
+                                    CH9329MSKBMap.CmdData().get("CmdMS_REL") +
+                                    CH9329MSKBMap.DataLen().get("DataLenRelMS") +
+                                    CH9329MSKBMap.MSRelData().get("FirstData") +
+                                    CH9329MSKBMap.MSRelData().get("SecRightData") + //MS key
+                                    CH9329MSKBMap.DataNull().get("DataNull") +
+                                    CH9329MSKBMap.DataNull().get("DataNull") +
+                                    CH9329MSKBMap.DataNull().get("DataNull");
 
                     sendMSDoubleClickData = sendMSDoubleClickData + CH9329Function.makeChecksum(sendMSDoubleClickData);
 
@@ -166,7 +165,7 @@ public class MouseManager {
                     byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendMSDoubleClickData);
 
                     try {
-                        usbDeviceManager.port.write(sendKBDataBytes, 200);
+                        usbDeviceManager.port.write(sendKBDataBytes, 20);
                         Log.d(TAG, "send data successful two click");
                         releaseMSRelData();
                     } catch (IOException e) {
@@ -186,29 +185,33 @@ public class MouseManager {
                 try {
                     int yMovement = (int) (StartMoveMSY - LastMoveMSY);
 
-                    String yByte;
+                    String yByte = "";
                     if (yMovement == 0) {
                         yByte = "00";
                     }else if(LastMoveMSY == 0){
                         yByte = "00";
                     } else if (yMovement > 0) {
-                        yByte = String.format("%02X", Math.min(yMovement, 0x7F));
+                        yByte = "01";
+                        System.out.println("yMovement > 0 data :" + yByte);
+//                        yByte = String.format("%02X", Math.min(yMovement, 0x7F));
                     } else {
-                        yByte = String.format("%02X", 0x100 + yMovement);
+                        yByte = "FF";
+//                        yByte = String.format("%02X", 0x100 + yMovement);
+                        System.out.println("yByte < 0 data :" + yByte);
                     }
 
                     String sendMSData = "";
                     sendMSData =
                             CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
-                            CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
-                            CH9329MSKBMap.getKeyCodeMap().get("address") +
-                            CH9329MSKBMap.CmdData().get("CmdMS_REL") +
-                            CH9329MSKBMap.DataLen().get("DataLenRelMS") +
-                            CH9329MSKBMap.MSRelData().get("FirstData") +
-                            CH9329MSKBMap.MSRelData().get("SecMiddleData") + //MS key
-                            CH9329MSKBMap.DataNull().get("DataNull") +
-                            CH9329MSKBMap.DataNull().get("DataNull") +
-                            yByte;
+                                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
+                                    CH9329MSKBMap.getKeyCodeMap().get("address") +
+                                    CH9329MSKBMap.CmdData().get("CmdMS_REL") +
+                                    CH9329MSKBMap.DataLen().get("DataLenRelMS") +
+                                    CH9329MSKBMap.MSRelData().get("FirstData") +
+                                    CH9329MSKBMap.MSRelData().get("SecMiddleData") + //MS key
+                                    CH9329MSKBMap.DataNull().get("DataNull") +
+                                    CH9329MSKBMap.DataNull().get("DataNull") +
+                                    yByte;
 
                     sendMSData = sendMSData + CH9329Function.makeChecksum(sendMSData);
 
@@ -221,7 +224,7 @@ public class MouseManager {
                     byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendMSData);
 
                     try {
-                        usbDeviceManager.port.write(sendKBDataBytes, 200);
+                        usbDeviceManager.port.write(sendKBDataBytes, 20);
                         Log.d(TAG, "send data successful");
                     } catch (IOException e) {
                         Log.e(TAG, "Error writing to port: " + e.getMessage());
@@ -256,7 +259,7 @@ public class MouseManager {
         byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendReleaseMSData);
 
         try {
-            usbDeviceManager.port.write(sendKBDataBytes, 200);
+            usbDeviceManager.port.write(sendKBDataBytes, 20);
             Log.d(TAG, "release all MS data");
         } catch (IOException e) {
             Log.e(TAG, "Error writing to port: " + e.getMessage());
@@ -273,15 +276,15 @@ public class MouseManager {
                     String sendMSDoubleClickData = "";
                     sendMSDoubleClickData =
                             CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
-                            CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
-                            CH9329MSKBMap.getKeyCodeMap().get("address") +
-                            CH9329MSKBMap.CmdData().get("CmdMS_REL") +
-                            CH9329MSKBMap.DataLen().get("DataLenRelMS") +
-                            CH9329MSKBMap.MSRelData().get("FirstData") +
-                            CH9329MSKBMap.MSRelData().get("SecLeftData") + //MS key
-                            CH9329MSKBMap.DataNull().get("DataNull") +
-                            CH9329MSKBMap.DataNull().get("DataNull") +
-                            CH9329MSKBMap.DataNull().get("DataNull");
+                                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
+                                    CH9329MSKBMap.getKeyCodeMap().get("address") +
+                                    CH9329MSKBMap.CmdData().get("CmdMS_REL") +
+                                    CH9329MSKBMap.DataLen().get("DataLenRelMS") +
+                                    CH9329MSKBMap.MSRelData().get("FirstData") +
+                                    CH9329MSKBMap.MSRelData().get("SecLeftData") + //MS key
+                                    CH9329MSKBMap.DataNull().get("DataNull") +
+                                    CH9329MSKBMap.DataNull().get("DataNull") +
+                                    CH9329MSKBMap.DataNull().get("DataNull");
 
                     sendMSDoubleClickData = sendMSDoubleClickData + CH9329Function.makeChecksum(sendMSDoubleClickData);
 
@@ -290,7 +293,7 @@ public class MouseManager {
                     byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendMSDoubleClickData);
 
                     try {
-                        usbDeviceManager.port.write(sendKBDataBytes, 200);
+                        usbDeviceManager.port.write(sendKBDataBytes, 20);
                         Log.d(TAG, "send data successful");
                         releaseMSRelData();
                     } catch (IOException e) {
@@ -337,15 +340,15 @@ public class MouseManager {
                     String sendMSData = "";
                     sendMSData =
                             CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
-                            CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
-                            CH9329MSKBMap.getKeyCodeMap().get("address") +
-                            CH9329MSKBMap.CmdData().get("CmdMS_REL") +
-                            CH9329MSKBMap.DataLen().get("DataLenRelMS") +
-                            CH9329MSKBMap.MSRelData().get("FirstData") +
-                            CH9329MSKBMap.MSRelData().get("SecNullData") + //MS key
-                            xByte +
-                            yByte +
-                            CH9329MSKBMap.DataNull().get("DataNull");
+                                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
+                                    CH9329MSKBMap.getKeyCodeMap().get("address") +
+                                    CH9329MSKBMap.CmdData().get("CmdMS_REL") +
+                                    CH9329MSKBMap.DataLen().get("DataLenRelMS") +
+                                    CH9329MSKBMap.MSRelData().get("FirstData") +
+                                    CH9329MSKBMap.MSRelData().get("SecNullData") + //MS key
+                                    xByte +
+                                    yByte +
+                                    CH9329MSKBMap.DataNull().get("DataNull");
 
                     sendMSData = sendMSData + CH9329Function.makeChecksum(sendMSData);
 
@@ -357,7 +360,7 @@ public class MouseManager {
                     byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendMSData);
 
                     try {
-                        usbDeviceManager.port.write(sendKBDataBytes, 200);
+                        usbDeviceManager.port.write(sendKBDataBytes, 20);
 //                        Log.d(TAG, "send data successful");
                     } catch (IOException e) {
 //                        Log.e(TAG, "Error writing to port: " + e.getMessage());
@@ -374,15 +377,15 @@ public class MouseManager {
         String sendReleaseMSData = "";
         sendReleaseMSData =
                 CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
-                CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
-                CH9329MSKBMap.getKeyCodeMap().get("address") +
-                CH9329MSKBMap.CmdData().get("CmdMS_REL") +
-                CH9329MSKBMap.DataLen().get("DataLenRelMS") +
-                CH9329MSKBMap.MSRelData().get("FirstData") +
-                CH9329MSKBMap.MSRelData().get("SecNullData") + //MS key
-                CH9329MSKBMap.DataNull().get("DataNull") +
-                CH9329MSKBMap.DataNull().get("DataNull") +
-                CH9329MSKBMap.DataNull().get("DataNull");
+                        CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
+                        CH9329MSKBMap.getKeyCodeMap().get("address") +
+                        CH9329MSKBMap.CmdData().get("CmdMS_REL") +
+                        CH9329MSKBMap.DataLen().get("DataLenRelMS") +
+                        CH9329MSKBMap.MSRelData().get("FirstData") +
+                        CH9329MSKBMap.MSRelData().get("SecNullData") + //MS key
+                        CH9329MSKBMap.DataNull().get("DataNull") +
+                        CH9329MSKBMap.DataNull().get("DataNull") +
+                        CH9329MSKBMap.DataNull().get("DataNull");
 
         sendReleaseMSData = sendReleaseMSData + CH9329Function.makeChecksum(sendReleaseMSData);
 
@@ -391,7 +394,7 @@ public class MouseManager {
         byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendReleaseMSData);
 
         try {
-            usbDeviceManager.port.write(sendKBDataBytes, 200);
+            usbDeviceManager.port.write(sendKBDataBytes, 20);
             Log.d(TAG, "release all MS data");
         } catch (IOException e) {
             Log.e(TAG, "Error writing to port: " + e.getMessage());

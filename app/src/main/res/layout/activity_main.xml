@@ -9,34 +9,46 @@
     tools:context="com.openterface.AOS.activity.MainActivity">
 
     <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/appBarLayout"
+        android:id="@+id/HideAppBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:theme="@style/Theme.Usbvideo.AppBarOverlay">
 
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="@color/black"
-            app:popupTheme="@style/Theme.Usbvideo.PopupOverlay">
+<!--        <androidx.appcompat.widget.Toolbar-->
+<!--            android:id="@+id/toolbar"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="?attr/actionBarSize"-->
+<!--            android:background="@color/black"-->
+<!--            app:popupTheme="@style/Theme.Usbvideo.PopupOverlay">-->
 
-            <com.kyleduo.switchbutton.SwitchButton
-                android:id="@+id/switchButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/green"
-                app:kswBackColor="@color/gray_400"
-                app:kswTextOn="Abs"
-                app:kswTextOff="Rel"
-                android:layout_gravity="end"
-                />
+<!--            <com.kyleduo.switchbutton.SwitchButton-->
+<!--                android:id="@+id/switchButton"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:textColor="@color/green"-->
+<!--                app:kswBackColor="@color/gray_400"-->
+<!--                app:kswTextOn="Abs"-->
+<!--                app:kswTextOff="Rel"-->
+<!--                android:layout_gravity="end"-->
+<!--                />-->
 
-        </androidx.appcompat.widget.Toolbar>
+<!--            <Button-->
+<!--                android:id="@+id/btnToggleAppBar"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:text="Toggle"-->
+<!--                android:layout_gravity="end" />-->
 
-        <include layout="@layout/options_bar" />
+<!--        </androidx.appcompat.widget.Toolbar>-->
 
     </com.google.android.material.appbar.AppBarLayout>
+
+<!--    <Button-->
+<!--        android:id="@+id/btnOpenAppBar"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="Open"-->
+<!--        android:layout_gravity="center_horizontal" />-->
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -344,6 +356,17 @@
                     android:layout_marginEnd="4dp"/>
 
                 <Button
+                    android:id="@+id/TAB"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="TAB"
+                    android:textColor="@color/black"
+                    android:background="@drawable/button_background"
+                    android:theme="@style/ButtonTheme"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp"/>
+
+                <Button
                     android:id="@+id/NumLk"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -381,6 +404,17 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="DEL"
+                    android:textColor="@color/black"
+                    android:background="@drawable/button_background"
+                    android:theme="@style/ButtonTheme"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp"/>
+
+                <Button
+                    android:id="@+id/ENTER"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ENTER"
                     android:textColor="@color/black"
                     android:background="@drawable/button_background"
                     android:theme="@style/ButtonTheme"
