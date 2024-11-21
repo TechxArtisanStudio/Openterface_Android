@@ -20,12 +20,46 @@ jobs:
         uses: actions/setup-java@v2
         with:
           java-version: '11'
+          distribution: 'adopt'
 
       - name: Run Lint
         run: ./gradlew lint
 
-      - name: Upload Lint Results
-        uses: actions/upload-artifact@v2
+      - name: Deploy Lint Report to Branch
+        run: |
+          mkdir -p lint-report
+          cp app/build/reports/lint-results.html lint-report/
+          
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # Create and switch to a new branch or reset if it exists
+          git fetch origin lint-reports || true
+          git checkout lint-reports 2>/dev/null || git checkout -b lint-reports
+          git reset --hard origin/lint-reports || true
+          
+          # Copy the new report
+          cp -r lint-report/* .
+          
+          # Add and commit changes
+          git add lint-results.html
+          git commit -m "Update lint report from commit ${GITHUB_SHA}" || true
+          
+          # Force push to lint-reports branch
+          git push -f origin lint-reports
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add Comment to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
         with:
-          name: lint-results
-          path: app/build/reports/lint-results.html
+          script: |
+            const repo = context.repo
+            const comment = `📊 Lint Report available at: https://github.com/${repo.owner}/${repo.repo}/blob/lint-reports/lint-results.html`
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: repo.owner,
+              repo: repo.repo,
+              body: comment
+            })

@@ -15,6 +15,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
@@ -32,10 +33,29 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew assemble
 
+    # Set up GPG for signing commits
+    - name: Set up GPG
+      run: |
+        echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --import --batch --yes
+        echo "passphrase=${{ secrets.GPG_PASSPHRASE }}" > ~/.gnupg/gpg.conf
+        echo "use-agent" >> ~/.gnupg/gpg.conf
+        echo "pinentry-program /usr/bin/pinentry" >> ~/.gnupg/gpg.conf
+        echo "allow-loopback-pinentry" >> ~/.gnupg/gpg.conf
+
+    - name: Configure Git for Signing
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+        git config --global commit.gpgSign true
+        git config --global user.signingkey <your-gpg-key-id>  # Replace with your GPG key ID
+
     # The USERNAME and TOKEN need to correspond to the credentials environment variables used in
     # the publishing section of your build.gradle
     - name: Publish to GitHub Packages
-      run: ./gradlew publish
+      run: |
+        ./gradlew publish
+        git add .  # Add any changes if necessary
+        git commit -S -m "Publish package from commit ${GITHUB_SHA}" || true  # Use -S to sign the commit
       env:
         USERNAME: ${{ github.actor }}
         TOKEN: ${{ secrets.GITHUB_TOKEN }}
