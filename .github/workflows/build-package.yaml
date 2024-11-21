@@ -21,17 +21,26 @@ jobs:
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
 
+    - name: Decode Keystore
+      run: |
+        echo ${{ secrets.SIGNING_KEY }} | base64 -d > app/release.jks
+
     - name: Clean Gradle
       run: ./gradlew clean
 
-    - name: Build with Gradle
-      run: ./gradlew assemble --info
+    - name: Build Release APK
+      run: ./gradlew assembleRelease --info
+      env:
+        SIGNING_STORE_PATH: release.jks
+        SIGNING_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+        SIGNING_KEY_ALIAS: ${{ secrets.ALIAS }}
+        SIGNING_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
 
-    # Store only APK files as artifacts
-    - name: Upload APK
+    # Store signed release APK files as artifacts
+    - name: Upload Signed Release APK
       uses: actions/upload-artifact@v3
       with:
-        name: app-builds
+        name: openterface-signed-release
         path: |
-          app/build/outputs/apk/**/*.apk
+          app/build/outputs/apk/release/*.apk
         retention-days: 90
