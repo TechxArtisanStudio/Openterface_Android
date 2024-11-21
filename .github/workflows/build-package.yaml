@@ -7,12 +7,8 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
+    
     steps:
     - uses: actions/checkout@v4
 
@@ -21,8 +17,6 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-        server-id: github
-        settings-path: ${{ github.workspace }}
 
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
@@ -31,27 +25,13 @@ jobs:
       run: ./gradlew clean
 
     - name: Build with Gradle
-      run: ./gradlew assemble
+      run: ./gradlew assemble --info
 
-    # Import GPG key
-    - name: Import GPG key
-      uses: crazy-max/ghaction-import-gpg@v5
+    # Store only APK files as artifacts
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
       with:
-        gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-        passphrase: ${{ secrets.GPG_PASSPHRASE }}
-        git_user_signingkey: true
-        git_commit_gpgsign: true
-
-    - name: Configure Git
-      run: |
-        git config --global user.name 'github-actions[bot]'
-        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-
-    - name: Publish to GitHub Packages
-      run: ./gradlew publish
-      env:
-        USERNAME: ${{ github.actor }}
-        TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
-        GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-        GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        name: app-builds
+        path: |
+          app/build/outputs/apk/**/*.apk
+        retention-days: 90
