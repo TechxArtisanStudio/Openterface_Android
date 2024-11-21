@@ -21,8 +21,8 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-        server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
-        settings-path: ${{ github.workspace }} # location for the settings.xml file
+        server-id: github
+        settings-path: ${{ github.workspace }}
 
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
@@ -33,29 +33,25 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew assemble
 
-    # Set up GPG for signing commits
-    - name: Set up GPG
-      run: |
-        echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --import --batch --yes
-        echo "passphrase=${{ secrets.GPG_PASSPHRASE }}" > ~/.gnupg/gpg.conf
-        echo "use-agent" >> ~/.gnupg/gpg.conf
-        echo "pinentry-program /usr/bin/pinentry" >> ~/.gnupg/gpg.conf
-        echo "allow-loopback-pinentry" >> ~/.gnupg/gpg.conf
+    # Import GPG key
+    - name: Import GPG key
+      uses: crazy-max/ghaction-import-gpg@v5
+      with:
+        gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+        passphrase: ${{ secrets.GPG_PASSPHRASE }}
+        git_user_signingkey: true
+        git_commit_gpgsign: true
 
-    - name: Configure Git for Signing
+    - name: Configure Git
       run: |
         git config --global user.name 'github-actions[bot]'
         git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-        git config --global commit.gpgSign true
-        git config --global user.signingkey <your-gpg-key-id>  # Replace with your GPG key ID
 
-    # The USERNAME and TOKEN need to correspond to the credentials environment variables used in
-    # the publishing section of your build.gradle
     - name: Publish to GitHub Packages
       run: |
         ./gradlew publish
-        git add .  # Add any changes if necessary
-        git commit -S -m "Publish package from commit ${GITHUB_SHA}" || true  # Use -S to sign the commit
+        git add .
+        git commit -S -m "Publish package from commit ${GITHUB_SHA}" || true
       env:
         USERNAME: ${{ github.actor }}
         TOKEN: ${{ secrets.GITHUB_TOKEN }}
