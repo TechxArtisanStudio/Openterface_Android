@@ -26,10 +26,6 @@ allprojects {
     }
 }
 
-task clean(type: Delete) {
-	delete rootProject.buildDir
-}
-
 ext {
 	versionCompiler = 34
 	versionTarget = 34
