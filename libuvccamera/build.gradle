@@ -87,38 +87,3 @@ ext {
     licenseName = 'The Apache Software License, Version 2.0'
     licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
 }
-
-apply from: "../publish_aar.gradle"
-
-afterEvaluate {
-    publishing {
-        publications {
-            release(MavenPublication) {
-                from components.release
-
-                groupId = 'com.openterface'
-                artifactId = 'libuvccamera'
-                version = '1.0.0'
-            }
-        }
-        
-        repositories {
-            maven {
-                name = "GitHubPackages"
-                url = uri("https://maven.pkg.github.com/OWNER/REPOSITORY")
-                credentials {
-                    username = System.getenv("USERNAME")
-                    password = System.getenv("TOKEN")
-                }
-            }
-        }
-    }
-
-    signing {
-        def signingKeyId = System.getenv("GPG_KEY_ID")
-        def signingKey = System.getenv("GPG_PRIVATE_KEY")
-        def signingPassword = System.getenv("GPG_PASSPHRASE")
-        useInMemoryPgpKeys(signingKeyId, signingKey, signingPassword)
-        sign publishing.publications.release
-    }
-}
