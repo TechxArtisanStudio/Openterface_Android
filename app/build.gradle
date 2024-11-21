@@ -3,6 +3,7 @@ plugins {
 }
 
 android {
+    namespace 'com.openterface.AOS'
     compileSdkVersion 34
 
     defaultConfig {
