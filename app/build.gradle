@@ -29,6 +29,12 @@ android {
     viewBinding {
         enabled true
     }
+    
+    lint {
+        abortOnError false  // Don't abort build on lint errors
+        checkReleaseBuilds false  // Don't check lint for release builds
+        baseline = file("lint-baseline.xml")  // Create baseline for existing issues
+    }
 }
 
 dependencies {

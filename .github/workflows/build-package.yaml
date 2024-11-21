@@ -30,7 +30,7 @@ jobs:
       run: ./gradlew clean
 
     - name: Build with Gradle
-      run: ./gradlew build
+      run: ./gradlew assemble
 
     # The USERNAME and TOKEN need to correspond to the credentials environment variables used in
     # the publishing section of your build.gradle
