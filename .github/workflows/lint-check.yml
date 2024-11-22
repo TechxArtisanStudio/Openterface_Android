@@ -14,6 +14,9 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
 
     - name: Set up JDK 17
       uses: actions/setup-java@v4
@@ -49,8 +52,10 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
           git commit -m "Add/Update lint baseline files"
-          git push
+          git push origin HEAD:${{ github.ref }}
         fi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     # Run actual lint check after baseline is generated
     - name: Run Lint Check
