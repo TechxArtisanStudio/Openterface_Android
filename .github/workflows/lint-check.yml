@@ -77,10 +77,6 @@ jobs:
         cp -r app/build/reports/lint-results-debug.html reports/app-lint-report.html || true
         cp -r libuvccamera/build/reports/lint-results-debug.html reports/libuvccamera-lint-report.html || true
         
-        # Copy baseline files
-        cp -r app/lint-baseline.xml app/lint-baseline.xml || true
-        cp -r libuvccamera/lint-baseline.xml libuvccamera/lint-baseline.xml || true
-        
         # Create an index.html that links to both reports
         cat > reports/index.html <<EOL
         <!DOCTYPE html>
@@ -115,7 +111,17 @@ jobs:
     # Commit and push everything
     - name: Commit and Push Changes
       run: |
-        git add reports/ app/lint-baseline.xml libuvccamera/lint-baseline.xml
+        # Add reports directory
+        git add reports/
+        
+        # Add baseline files if they exist
+        if [ -f "app/lint-baseline.xml" ]; then
+          git add app/lint-baseline.xml
+        fi
+        if [ -f "libuvccamera/lint-baseline.xml" ]; then
+          git add libuvccamera/lint-baseline.xml
+        fi
+        
         git commit -m "Update lint reports and baseline files"
         git push -f origin lint_check_report
 
