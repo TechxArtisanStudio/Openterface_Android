@@ -44,6 +44,10 @@ public class CH9329Function {
     }
 
     public static byte[] hexStringToByteArray(String ByteData) {
+        if (ByteData.length() % 2 != 0) {
+            throw new IllegalArgumentException("Hex string must have an even length");
+        }
+
         int len = ByteData.length();
         byte[] data = new byte[len / 2];
         for (int i = 0; i < len; i += 2) {
@@ -56,7 +60,11 @@ public class CH9329Function {
     public static void checkSendLogData(String sendKBData) {
         StringBuilder check_send_data = new StringBuilder();
         for (int i = 0; i < sendKBData.length(); i += 2) {
-            check_send_data.append(sendKBData.substring(i, i + 2)).append(" ");
+            if (i + 2 <= sendKBData.length()) {
+                check_send_data.append(sendKBData.substring(i, i + 2)).append(" ");
+            } else {
+                check_send_data.append(sendKBData.substring(i)).append(" ");
+            }
         }
         Log.d(TAG, "sendKBData: " + check_send_data.toString().trim());
     }

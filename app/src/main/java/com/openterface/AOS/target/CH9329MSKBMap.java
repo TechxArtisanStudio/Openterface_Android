@@ -53,8 +53,8 @@ public class CH9329MSKBMap {
 
     public static Map<Object, String> DataLen() {
         Map<Object, String> DataLen = new HashMap<>();
-        DataLen.put("DataLenAbsMS", "05");
-        DataLen.put("DataLenRelMS", "07");
+        DataLen.put("DataLenRelMS", "05");
+        DataLen.put("DataLenAbsMS", "07");
         DataLen.put("DataLenKB", "08");
 
         return DataLen;
@@ -258,6 +258,7 @@ public class CH9329MSKBMap {
 
         //release keyboard data
         keyCodeMap.put("release", "57AB00020800000000000000000C");
+        keyCodeMap.put("releaseRel", "57AB0005050100000000");
 
         return keyCodeMap;
     }

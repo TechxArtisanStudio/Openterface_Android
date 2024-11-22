@@ -82,6 +82,8 @@ dependencies {
     // SwitchButton widget in Android.
     implementation 'com.kyleduo.switchbutton:library:2.1.0'
 
+    implementation "androidx.activity:activity:1.9.3"
+
     // debugImplementation because LeakCanary should only run in debug builds.
 //    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.8.1'
 

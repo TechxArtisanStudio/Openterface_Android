@@ -9,7 +9,7 @@
     tools:context="com.openterface.AOS.activity.MainActivity">
 
     <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/appBarLayout"
+        android:id="@+id/HideAppBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:theme="@style/Theme.Usbvideo.AppBarOverlay">
@@ -32,15 +32,33 @@
                 android:layout_gravity="end"
                 />
 
-        </androidx.appcompat.widget.Toolbar>
+            <ImageButton
+                android:id="@+id/btnToggleAppBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:layout_marginRight="15dp"
+                android:background="@color/black"
+                android:src="@drawable/baseline_aspect_ratio_24">
 
-        <include layout="@layout/options_bar" />
+            </ImageButton>
+
+        </androidx.appcompat.widget.Toolbar>
 
     </com.google.android.material.appbar.AppBarLayout>
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/btnOpenAppBar"
+            style="@style/ArrowFloatingActionButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_centerHorizontal="true"
+            app:srcCompat="@drawable/baseline_keyboard_arrow_down_24"/>
 
         <com.serenegiant.widget.AspectRatioTextureView
             android:id="@+id/viewMainPreview"
@@ -344,6 +362,17 @@
                     android:layout_marginEnd="4dp"/>
 
                 <Button
+                    android:id="@+id/TAB"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="TAB"
+                    android:textColor="@color/black"
+                    android:background="@drawable/button_background"
+                    android:theme="@style/ButtonTheme"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp"/>
+
+                <Button
                     android:id="@+id/NumLk"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -381,6 +410,17 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="DEL"
+                    android:textColor="@color/black"
+                    android:background="@drawable/button_background"
+                    android:theme="@style/ButtonTheme"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginEnd="4dp"/>
+
+                <Button
+                    android:id="@+id/ENTER"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ENTER"
                     android:textColor="@color/black"
                     android:background="@drawable/button_background"
                     android:theme="@style/ButtonTheme"

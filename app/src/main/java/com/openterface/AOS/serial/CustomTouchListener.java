@@ -1,7 +1,7 @@
 /**
-* @Title: CustomTouchListener
-* @Package com.openterface.AOS.serial
-* @Description:
+ * @Title: CustomTouchListener
+ * @Package com.openterface.AOS.serial
+ * @Description:
  * ========================================================================== *
  *                                                                            *
  *    This file is part of the Openterface Mini KVM App Android version       *
@@ -21,143 +21,166 @@
  *    along with this program. If not, see <http://www.gnu.org/licenses/>.    *
  *                                                                            *
  * ========================================================================== *
-*/
+ */
 package com.openterface.AOS.serial;
 
 import android.os.Handler;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-
 import com.openterface.AOS.target.MouseManager;
 
 public class CustomTouchListener implements View.OnTouchListener {
+
     private static final String TAG = CustomTouchListener.class.getSimpleName();
+    private static final long DOUBLE_CLICK_TIME_DELTA = 300; // milliseconds
+    private static final long TWO_FINGER_PRESS_DELAY = 750; // 0.5 second
+    private static final float CLICK_POSITION_THRESHOLD = 50.0f;
+    private static UsbDeviceManager usbDeviceManager;
+    private static boolean KeyMouse_state;
+
     private float startY1, startY2;
     private boolean isPanning = false;
     private boolean hasHandledMove = false;
     private Handler handler = new Handler();
-    private Runnable longPressRunnable;
+    private Runnable twoFingerPressRunnable;
     private boolean isLongPress = false;
-    private float x, y;
+    private float StartMoveMSX, StartMoveMSY, LastMoveMSX, LastMoveMSY, LastClickX, LastClickY;
     private long lastClickTime = 0;
-    private static final long DOUBLE_CLICK_TIME_DELTA = 300; // milliseconds
-    private static UsbDeviceManager usbDeviceManager;
-    private Runnable runnable;
-    private static boolean KeyMouse_state;
-    private float lastX, lastY;
+    private boolean isDoubleClickHandled = false;
+    private long lastDoubleClickTime = 0;
+
+    private long lastMoveTime = 0; // To store the last execution time
+    private static final long MOVE_DELAY = 50; // 0.05 seconds in milliseconds
+
+    private long ignoreMoveUntil = 0;
 
     public static void KeyMouse_state(boolean keyMouseState) {
         KeyMouse_state = keyMouseState;
     }
 
     public CustomTouchListener(UsbDeviceManager usbDeviceManager) {
-        this.usbDeviceManager = usbDeviceManager;
+        CustomTouchListener.usbDeviceManager = usbDeviceManager;
     }
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
-                isLongPress = false;
-                x = event.getX(); // save start x, y
-                y = event.getY();
-
-//                handler.postDelayed(longPressRunnable = new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        isLongPress = true;
-//                        Log.d(TAG, "Long pressed at: (" + x + ", " + y + ")");
-//                        // deal long press event
-//                        MouseManager.handleLongPress(x, y);
-//                    }
-//                }, 1000); // 1000 millisecond trigger long press
-//                break;
+                handActionDownMouse(event);
+                break;
 
             case MotionEvent.ACTION_POINTER_DOWN:
-                if (event.getPointerCount() == 2) {
-                    startY1 = event.getY(0);
-                    startY2 = event.getY(1);
-                    isPanning = true;
-                    hasHandledMove = false; // Reset the flag
-                    Log.d(TAG, "ACTION_POINTER_DOWN");
-                }
+                handActionPointerDownMouse(event);
                 break;
 
             case MotionEvent.ACTION_MOVE:
-                if (isPanning && event.getPointerCount() == 2) {
-                    float y1 = event.getY(0) - startY1;
-                    float y2 = event.getY(1) - startY2;
-
-                    String rollingGearY;
-
-                    Log.d(TAG, "event.getY(0) " + event.getY(0));
-                    Log.d(TAG, "event.getY(1) " + event.getY(1));
-                    if (y1 > 0 && y2 > 0) {
-                        rollingGearY = "SlideUp";
-                    } else {
-                        rollingGearY = "Downward";
-                    }
-
-                    // Check if both fingers are moving in the same vertical direction
-                    if (!hasHandledMove && ((y1 > 0 && y2 > 0) || (y1 < 0 && y2 < 0))) {
-                        // Handle the double finger pan up or down
-                        Log.d(TAG, "ACTION_MOVE");
-                        MouseManager.handleDoubleFingerPan(event.getX(1), event.getY(1), rollingGearY);
-
-                        hasHandledMove = true; // Set the flag to true after handling the move
-                    }else {
-                        MouseManager.handleLongPress(x, y);
-                    }
-                } else if (!isLongPress) {
-                    // For single-finger tracking
-                    x = event.getX();
-                    y = event.getY();
-//                    Log.d(TAG, "Touched at: (" + x + ", " + y + ")");
-//                    System.out.println("this is KeyMouse Boolean state22: " + KeyMouse_state);
-                    if (KeyMouse_state){
-//                        System.out.println("startY1: " + startY1+ "startY2: " + startY2);
-                        MouseManager.sendHexAbsData(x, y);
-
-                    }else {
-                        MouseManager.sendHexRelData(x, y, lastX, lastY);
-                        lastX = x;
-                        lastY = y;
-//                        System.out.println("send REL MS Data");
-                    }
-                }
+                handActionMoveMouse(event);
                 break;
 
             case MotionEvent.ACTION_POINTER_UP:
-                if (event.getPointerCount() == 2) {
-                    isPanning = false;
-                    hasHandledMove = false; // Reset the flag
-                    Log.d(TAG, "ACTION_POINTER_UP");
-                }
+                handActionPointerUpMouse(event);
                 break;
 
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
-                handler.removeCallbacks(longPressRunnable);
-                handler.removeCallbacks(runnable); // Stop the runnable for single click
-                long clickTime = System.currentTimeMillis();
-                if (clickTime - lastClickTime <= DOUBLE_CLICK_TIME_DELTA) {
-                    // deal double click event
-                    Log.d(TAG, "click double button ");
-                    MouseManager.handleDoubleClick(x, y);
-                }
-//                else {
-//                    if (!isLongPress) {
-//                        // Stop the single click runnable
-//                        Log.d(TAG, "one click");
-//                        Log.d(TAG, "Touched at: (" + x + ", " + y + ")");
-//                    }
-//                }
-                lastClickTime = clickTime;
-                isPanning = false;
+                handActionUpMouse(event);
                 break;
         }
         return true;
     }
 
+    private void handActionDownMouse(MotionEvent event){
+        isLongPress = false;
+        StartMoveMSX = event.getX();
+        StartMoveMSY = event.getY();
+    }
+
+    private void handActionPointerDownMouse(MotionEvent event){
+        if (event.getPointerCount() == 2) {
+            startY1 = event.getY(0);
+            startY2 = event.getY(1);
+            isPanning = true;
+            hasHandledMove = false;
+
+            handler.postDelayed(twoFingerPressRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    if (!hasHandledMove) {
+                        MouseManager.handleTwoPress();
+                    }
+                }
+            }, TWO_FINGER_PRESS_DELAY);
+        }
+    }
+
+    private void handActionMoveMouse(MotionEvent event){
+        long currentTime = System.currentTimeMillis();
+        if (isPanning && event.getPointerCount() == 2) {
+            float y1 = event.getY(0) - startY1;
+            float y2 = event.getY(1) - startY2;
+            StartMoveMSY = event.getY();
+            if (((y1 > 100 && y2 > 100) || (y1 < -100 && y2 < -100))) {
+                // Check if enough time has elapsed since the last move
+                if (currentTime - lastMoveTime >= MOVE_DELAY) {
+                    handler.removeCallbacks(twoFingerPressRunnable);
+                    Log.d(TAG, "ACTION_MOVE");
+
+                    MouseManager.handleDoubleFingerPan(StartMoveMSY, LastMoveMSY);
+                    hasHandledMove = true;
+                    LastMoveMSY = StartMoveMSY;
+
+                    // Update lastMoveTime to the current time
+                    lastMoveTime = currentTime;
+                }
+            }
+        } else if (!isLongPress) {
+            StartMoveMSX = event.getX();
+            StartMoveMSY = event.getY();
+            if (currentTime < ignoreMoveUntil) {
+                return;
+            }
+
+            if (KeyMouse_state) {
+                MouseManager.sendHexAbsData(StartMoveMSX, StartMoveMSY);
+            } else {
+                Log.d(TAG, "Rel data send now");
+                MouseManager.sendHexRelData(StartMoveMSX, StartMoveMSY, LastMoveMSX, LastMoveMSY);
+                LastMoveMSX = StartMoveMSX;
+                LastMoveMSY = StartMoveMSY;
+            }
+        }
+    }
+
+    private void handActionPointerUpMouse(MotionEvent event){
+        if (event.getPointerCount() == 2) {
+            isPanning = false;
+            hasHandledMove = false;
+            Log.d(TAG, "ACTION_POINTER_UP");
+            ignoreMoveUntil = System.currentTimeMillis() + 200;
+        }
+    }
+
+    private void handActionUpMouse(MotionEvent event){
+        long clickTime = System.currentTimeMillis();
+        if (clickTime - lastClickTime <= DOUBLE_CLICK_TIME_DELTA) {
+                Log.d(TAG, "Double click at the same position");
+
+                if (KeyMouse_state) {
+                    MouseManager.handleDoubleClickAbs(StartMoveMSX, StartMoveMSY);
+                } else {
+                    MouseManager.handleDoubleClickRel();
+                }
+
+                isDoubleClickHandled = true;
+                lastDoubleClickTime = clickTime;
+
+        }
+        LastMoveMSX = 0;
+        LastMoveMSY = 0;
+        LastClickX = StartMoveMSX;
+        LastClickY = StartMoveMSY;
+        lastClickTime = clickTime;
+        isPanning = false;
+    }
 }

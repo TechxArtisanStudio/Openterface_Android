@@ -175,7 +175,7 @@ public class UsbDeviceManager {
             byte[] buffer = new byte[1024];
             while (isReading) {
                 try {
-                    int numBytesRead = port.read(buffer, 2000);
+                    int numBytesRead = port.read(buffer, 50);
                     if (numBytesRead > 0) {
                         StringBuilder allReadData = new StringBuilder();
                         for (int i = 0; i < numBytesRead; i++) {

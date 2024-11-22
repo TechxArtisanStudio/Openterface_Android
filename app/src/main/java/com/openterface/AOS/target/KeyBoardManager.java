@@ -168,7 +168,7 @@ public class KeyBoardManager {
                             CH9329MSKBMap.DataNull().get("DataNull") +
                             CH9329MSKBMap.DataNull().get("DataNull") +
                             CH9329MSKBMap.DataNull().get("DataNull");
-
+                    Log.e(TAG, "successful send keyboard data: " + keyName);
                     sendKBData = sendKBData + CH9329Function.makeChecksum(sendKBData);
 
                     CH9329Function.checkSendLogData(sendKBData);
@@ -177,6 +177,7 @@ public class KeyBoardManager {
 
                     try {
                         UsbDeviceManager.port.write(sendKBDataBytes, 200);
+                        Log.e(TAG, "successful send keyboard data ");
                         EmptyKeyboard();
                     } catch (IOException e) {
                         Log.e(TAG, "Error writing to port: " + e.getMessage());
@@ -239,13 +240,14 @@ public class KeyBoardManager {
                 R.id.Function5, R.id.Function6, R.id.Function7, R.id.Function8,
                 R.id.Function9, R.id.Function10, R.id.Function11, R.id.Function12,
                 R.id.Win, R.id.PrtSc, R.id.ScrLk, R.id.Pause, R.id.Ins, R.id.Home,
-                R.id.End, R.id.PgUp, R.id.PgDn, R.id.NumLk, R.id.CapsLk, R.id.Esc, R.id.Delete
+                R.id.End, R.id.PgUp, R.id.PgDn, R.id.NumLk, R.id.TAB, R.id.CapsLk,
+                R.id.Esc, R.id.Delete, R.id.ENTER
         };
 
         String [] functions = {
             "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
             "Win", "PrtSc", "ScrLk", "Pause", "Ins", "Home", "End", "PgUp", "PgDn", "NumLk",
-            "CapsLk", "Esc", "Delete"
+            "TAB","CapsLk", "Esc", "Delete", "ENTER"
         };
 
         for (int i = 0; i < buttonIDs.length; i++) {
