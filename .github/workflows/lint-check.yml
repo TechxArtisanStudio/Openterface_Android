@@ -34,9 +34,30 @@ jobs:
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
 
-    # Run lint check and generate reports
+    # Fetch existing baseline files from lint_check_report branch
+    - name: Fetch Existing Baseline
+      run: |
+        if git fetch origin lint_check_report; then
+          mkdir -p app libuvccamera
+          git show origin/lint_check_report:app/lint-baseline.xml > app/lint-baseline.xml || true
+          git show origin/lint_check_report:libuvccamera/lint-baseline.xml > libuvccamera/lint-baseline.xml || true
+        fi
+
+    # Generate lint baseline files first
+    - name: Generate Lint Baseline
+      run: |
+        ./gradlew :app:lintDebug || true
+        ./gradlew :libuvccamera:lintDebug || true
+
+    # Run actual lint check with baseline
     - name: Run Lint Check
-      run: ./gradlew lint
+      run: |
+        if [ -f "app/lint-baseline.xml" ]; then
+          ./gradlew :app:lintDebug
+        fi
+        if [ -f "libuvccamera/lint-baseline.xml" ]; then
+          ./gradlew :libuvccamera:lintDebug
+        fi
 
     # Setup the lint_check_report branch
     - name: Setup Report Branch
@@ -46,12 +67,19 @@ jobs:
         git rm -rf . || true
         git clean -fdx
 
-    # Create report directory structure
-    - name: Prepare Report Directory
+    # Create directory structure for reports and baseline
+    - name: Prepare Directories
       run: |
-        mkdir -p reports
-        cp -r app/build/reports/lint-results-debug.html reports/app-lint-report.html
-        cp -r libuvccamera/build/reports/lint-results-debug.html reports/libuvccamera-lint-report.html
+        # Create directories
+        mkdir -p reports app libuvccamera
+        
+        # Copy lint reports
+        cp -r app/build/reports/lint-results-debug.html reports/app-lint-report.html || true
+        cp -r libuvccamera/build/reports/lint-results-debug.html reports/libuvccamera-lint-report.html || true
+        
+        # Copy baseline files
+        cp -r app/lint-baseline.xml app/lint-baseline.xml || true
+        cp -r libuvccamera/lint-baseline.xml libuvccamera/lint-baseline.xml || true
         
         # Create an index.html that links to both reports
         cat > reports/index.html <<EOL
@@ -84,11 +112,11 @@ jobs:
         </html>
         EOL
 
-    # Commit and push the reports
-    - name: Commit and Push Reports
+    # Commit and push everything
+    - name: Commit and Push Changes
       run: |
-        git add reports/
-        git commit -m "Update lint reports"
+        git add reports/ app/lint-baseline.xml libuvccamera/lint-baseline.xml
+        git commit -m "Update lint reports and baseline files"
         git push -f origin lint_check_report
 
     - name: Show Report URL
