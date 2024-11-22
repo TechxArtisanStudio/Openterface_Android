@@ -81,7 +81,7 @@ jobs:
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Android Lint Reports</title>
+            <title>Openterface Android Lint Reports</title>
             <style>
                 body { font-family: Arial, sans-serif; margin: 40px; }
                 h1 { color: #333; }
