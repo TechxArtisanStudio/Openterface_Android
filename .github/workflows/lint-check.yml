@@ -50,9 +50,10 @@ jobs:
         ./gradlew :app:lintDebug || true
         ./gradlew :libuvccamera:lintDebug || true
         
-        # Debug output
-        echo "Checking for lint reports..."
-        find . -name "lint-results*.html"
+        # Create a temporary directory to save reports
+        mkdir -p /tmp/lint-reports
+        cp app/build/reports/lint-results-debug.html /tmp/lint-reports/app-lint-report.html || true
+        cp libuvccamera/build/reports/lint-results-debug.html /tmp/lint-reports/libuvccamera-lint-report.html || true
 
     # Setup the lint_check_report branch
     - name: Setup Report Branch
@@ -66,20 +67,10 @@ jobs:
     - name: Prepare Directories
       run: |
         # Create directories
-        mkdir -p reports app libuvccamera
+        mkdir -p reports
         
-        # Find and copy lint reports
-        echo "Finding lint reports..."
-        for report in $(find . -name "lint-results*.html"); do
-          echo "Found report: $report"
-          if [[ $report == *"app"* ]]; then
-            echo "Copying app report..."
-            cp -v "$report" reports/app-lint-report.html
-          elif [[ $report == *"libuvccamera"* ]]; then
-            echo "Copying libuvccamera report..."
-            cp -v "$report" reports/libuvccamera-lint-report.html
-          fi
-        done
+        # Copy reports from temporary directory
+        cp -v /tmp/lint-reports/* reports/ || true
         
         # Debug: List the contents of reports directory
         echo "Listing reports directory:"
