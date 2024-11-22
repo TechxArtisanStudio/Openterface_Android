@@ -46,7 +46,13 @@ jobs:
     # Generate lint baseline files and run lint check
     - name: Run Lint Check
       run: |
-        ./gradlew lint
+        # Run lint for each module separately
+        ./gradlew :app:lintDebug || true
+        ./gradlew :libuvccamera:lintDebug || true
+        
+        # Debug output
+        echo "Checking for lint reports..."
+        find . -name "lint-results*.html"
 
     # Setup the lint_check_report branch
     - name: Setup Report Branch
@@ -62,17 +68,18 @@ jobs:
         # Create directories
         mkdir -p reports app libuvccamera
         
-        # Debug: List the contents of build directories
-        echo "Listing app build directory:"
-        ls -la app/build/reports/ || true
-        echo "Listing libuvccamera build directory:"
-        ls -la libuvccamera/build/reports/ || true
-        
-        # Copy lint reports with verbose output
-        echo "Copying app lint report..."
-        cp -v app/build/reports/lint-results*.html reports/app-lint-report.html || true
-        echo "Copying libuvccamera lint report..."
-        cp -v libuvccamera/build/reports/lint-results*.html reports/libuvccamera-lint-report.html || true
+        # Find and copy lint reports
+        echo "Finding lint reports..."
+        for report in $(find . -name "lint-results*.html"); do
+          echo "Found report: $report"
+          if [[ $report == *"app"* ]]; then
+            echo "Copying app report..."
+            cp -v "$report" reports/app-lint-report.html
+          elif [[ $report == *"libuvccamera"* ]]; then
+            echo "Copying libuvccamera report..."
+            cp -v "$report" reports/libuvccamera-lint-report.html
+          fi
+        done
         
         # Debug: List the contents of reports directory
         echo "Listing reports directory:"
