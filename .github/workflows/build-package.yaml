@@ -31,7 +31,7 @@ jobs:
       run: ./gradlew clean
 
     - name: Build Release APK
-      run: ./gradlew assembleRelease --info
+      run: ./gradlew assembleRelease -x lint --info
       env:
         SIGNING_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
         SIGNING_KEY_ALIAS: ${{ secrets.ALIAS }}

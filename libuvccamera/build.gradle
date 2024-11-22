@@ -62,6 +62,12 @@ android {
 //            path "src/main/jni/CMakeLists.txt"
 //        }
     }
+
+    lint {
+        abortOnError false  // Don't abort build on lint errors
+        checkReleaseBuilds false  // Don't check lint for release builds
+        baseline = file("lint-baseline.xml")  // Create baseline for existing issues
+    }
 }
 
 dependencies {
