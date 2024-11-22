@@ -43,21 +43,10 @@ jobs:
           git show origin/lint_check_report:libuvccamera/lint-baseline.xml > libuvccamera/lint-baseline.xml || true
         fi
 
-    # Generate lint baseline files first
-    - name: Generate Lint Baseline
-      run: |
-        ./gradlew :app:lintDebug || true
-        ./gradlew :libuvccamera:lintDebug || true
-
-    # Run actual lint check with baseline
+    # Generate lint baseline files and run lint check
     - name: Run Lint Check
       run: |
-        if [ -f "app/lint-baseline.xml" ]; then
-          ./gradlew :app:lintDebug
-        fi
-        if [ -f "libuvccamera/lint-baseline.xml" ]; then
-          ./gradlew :libuvccamera:lintDebug
-        fi
+        ./gradlew lint
 
     # Setup the lint_check_report branch
     - name: Setup Report Branch
@@ -73,9 +62,21 @@ jobs:
         # Create directories
         mkdir -p reports app libuvccamera
         
-        # Copy lint reports
-        cp -r app/build/reports/lint-results-debug.html reports/app-lint-report.html || true
-        cp -r libuvccamera/build/reports/lint-results-debug.html reports/libuvccamera-lint-report.html || true
+        # Debug: List the contents of build directories
+        echo "Listing app build directory:"
+        ls -la app/build/reports/ || true
+        echo "Listing libuvccamera build directory:"
+        ls -la libuvccamera/build/reports/ || true
+        
+        # Copy lint reports with verbose output
+        echo "Copying app lint report..."
+        cp -v app/build/reports/lint-results*.html reports/app-lint-report.html || true
+        echo "Copying libuvccamera lint report..."
+        cp -v libuvccamera/build/reports/lint-results*.html reports/libuvccamera-lint-report.html || true
+        
+        # Debug: List the contents of reports directory
+        echo "Listing reports directory:"
+        ls -la reports/
         
         # Create an index.html that links to both reports
         cat > reports/index.html <<EOL
