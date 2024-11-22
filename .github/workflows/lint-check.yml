@@ -1,65 +1,67 @@
-name: Lint Check
+name: Android Lint Check
 
 on:
   push:
     branches:
-      - main
+      - 'main'
   pull_request:
     branches:
-      - main
+      - 'main'
 
 jobs:
   lint:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
-      - name: Set up JDK
-        uses: actions/setup-java@v2
-        with:
-          java-version: '11'
-          distribution: 'adopt'
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
 
-      - name: Run Lint
-        run: ./gradlew lint
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
 
-      - name: Deploy Lint Report to Branch
-        run: |
-          mkdir -p lint-report
-          cp app/build/reports/lint-results.html lint-report/
-          
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          
-          # Create and switch to a new branch or reset if it exists
-          git fetch origin lint-reports || true
-          git checkout lint-reports 2>/dev/null || git checkout -b lint-reports
-          git reset --hard origin/lint-reports || true
-          
-          # Copy the new report
-          cp -r lint-report/* .
-          
-          # Add and commit changes
-          git add lint-results.html
-          git commit -m "Update lint report from commit ${GITHUB_SHA}" || true
-          
-          # Force push to lint-reports branch
-          git push -f origin lint-reports
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # Generate lint baseline for app module
+    - name: Generate App Lint Baseline
+      run: |
+        ./gradlew :app:lintDebug || true
+        if [ -f "app/lint-baseline.xml" ]; then
+          git add app/lint-baseline.xml
+        fi
 
-      - name: Add Comment to PR
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const repo = context.repo
-            const comment = `📊 Lint Report available at: https://github.com/${repo.owner}/${repo.repo}/blob/lint-reports/lint-results.html`
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: repo.owner,
-              repo: repo.repo,
-              body: comment
-            })
+    # Generate lint baseline for libuvccamera module
+    - name: Generate LibUVCCamera Lint Baseline
+      run: |
+        ./gradlew :libuvccamera:lintDebug || true
+        if [ -f "libuvccamera/lint-baseline.xml" ]; then
+          git add libuvccamera/lint-baseline.xml
+        fi
+
+    # Commit the baseline files if they were generated
+    - name: Commit Lint Baseline
+      run: |
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git commit -m "Add/Update lint baseline files"
+          git push
+        fi
+
+    # Run actual lint check after baseline is generated
+    - name: Run Lint Check
+      run: ./gradlew lint
+
+    # Upload lint reports as artifacts
+    - name: Upload Lint Reports
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: lint-reports
+        path: |
+          app/build/reports/lint-results-debug.html
+          libuvccamera/build/reports/lint-results-debug.html
