@@ -126,4 +126,4 @@ jobs:
 
     - name: Show Report URL
       run: |
-        echo "::notice::Lint reports will be available at https://$(git remote get-url origin | sed 's/.*github.com[\/:]//' | sed 's/\.git$//')/lint_check_report/reports/index.html"
+        echo "::notice::Lint reports will be available at https://$(git remote get-url origin | sed 's/.*github.com[\/:]//' | sed 's/\.git$//')/reports/index.html"
