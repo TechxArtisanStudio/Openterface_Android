@@ -11,6 +11,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  pages: write
 
 jobs:
   lint:
@@ -33,47 +34,63 @@ jobs:
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
 
-    - name: Setup Lint Report Branch
-      run: |
-        git fetch origin lint_check_report || true
-        git checkout -B lint_check_report
-
-    # Generate lint baseline for app module
-    - name: Generate App Lint Baseline
-      run: |
-        ./gradlew :app:lintDebug || true
-        if [ -f "app/lint-baseline.xml" ]; then
-          git add app/lint-baseline.xml
-        fi
-
-    # Generate lint baseline for libuvccamera module
-    - name: Generate LibUVCCamera Lint Baseline
-      run: |
-        ./gradlew :libuvccamera:lintDebug || true
-        if [ -f "libuvccamera/lint-baseline.xml" ]; then
-          git add libuvccamera/lint-baseline.xml
-        fi
-
-    # Commit and push if there are changes
-    - name: Commit and Push Changes
-      run: |
-        if git diff --staged --quiet; then
-          echo "No changes to commit"
-        else
-          git commit -m "Add/Update lint baseline files"
-          git push -f origin lint_check_report
-        fi
-
-    # Run actual lint check after baseline is generated
+    # Run lint check and generate reports
     - name: Run Lint Check
       run: ./gradlew lint
 
-    # Upload lint reports as artifacts
-    - name: Upload Lint Reports
-      if: always()
-      uses: actions/upload-artifact@v3
-      with:
-        name: lint-reports
-        path: |
-          app/build/reports/lint-results-debug.html
-          libuvccamera/build/reports/lint-results-debug.html
+    # Setup the lint_check_report branch
+    - name: Setup Report Branch
+      run: |
+        git fetch origin lint_check_report || true
+        git checkout -B lint_check_report
+        git rm -rf . || true
+        git clean -fdx
+
+    # Create report directory structure
+    - name: Prepare Report Directory
+      run: |
+        mkdir -p reports
+        cp -r app/build/reports/lint-results-debug.html reports/app-lint-report.html
+        cp -r libuvccamera/build/reports/lint-results-debug.html reports/libuvccamera-lint-report.html
+        
+        # Create an index.html that links to both reports
+        cat > reports/index.html <<EOL
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Android Lint Reports</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 40px; }
+                h1 { color: #333; }
+                .report-link { 
+                    display: block;
+                    margin: 20px 0;
+                    padding: 10px;
+                    background: #f0f0f0;
+                    border-radius: 5px;
+                    text-decoration: none;
+                    color: #333;
+                }
+                .report-link:hover {
+                    background: #e0e0e0;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>Android Lint Reports</h1>
+            <a class="report-link" href="app-lint-report.html">App Module Lint Report</a>
+            <a class="report-link" href="libuvccamera-lint-report.html">LibUVCCamera Module Lint Report</a>
+        </body>
+        </html>
+        EOL
+
+    # Commit and push the reports
+    - name: Commit and Push Reports
+      run: |
+        git add reports/
+        git commit -m "Update lint reports"
+        git push -f origin lint_check_report
+
+    - name: Show Report URL
+      run: |
+        echo "::notice::Lint reports will be available at https://$(git remote get-url origin | sed 's/.*github.com[\/:]//' | sed 's/\.git$//')/lint_check_report/reports/index.html"
