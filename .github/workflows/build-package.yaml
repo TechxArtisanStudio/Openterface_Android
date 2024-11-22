@@ -25,7 +25,7 @@ jobs:
       env:
         ENCODED_STRING: ${{ secrets.SIGNING_KEY }}
       run: |
-        echo $ENCODED_STRING | base64 -di > keystore.jks
+        echo $ENCODED_STRING | base64 -di > app/keystore.jks
 
     - name: Clean Gradle
       run: ./gradlew clean
@@ -33,7 +33,6 @@ jobs:
     - name: Build Release APK
       run: ./gradlew assembleRelease --info
       env:
-        SIGNING_STORE_PATH: keystore.jks
         SIGNING_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
         SIGNING_KEY_ALIAS: ${{ secrets.ALIAS }}
         SIGNING_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
