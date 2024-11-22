@@ -43,6 +43,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.google.android.material.appbar.AppBarLayout;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.kyleduo.switchbutton.SwitchButton;
 import com.openterface.AOS.serial.CustomTouchListener;
 import com.openterface.AOS.serial.UsbDeviceManager;
@@ -71,6 +72,7 @@ import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Display;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -79,8 +81,10 @@ import android.view.MotionEvent;
 import android.view.TextureView;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -160,7 +164,7 @@ public class MainActivity extends AppCompatActivity {
         mBinding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(mBinding.getRoot());
 
-//        setSupportActionBar(mBinding.toolbar);
+        setSupportActionBar(mBinding.toolbar);
 
         checkCameraHelper();
 
@@ -208,54 +212,54 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-//        SwitchButton switchButton = findViewById(R.id.switchButton);
-//        switchButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
-//            if (isChecked) {
-//                KeyMouse_state = true;
-//                CustomTouchListener.KeyMouse_state(KeyMouse_state);
-////                Log.d(TAG, "Change ABS KeyMouse");
-//            } else {
-//                KeyMouse_state = false;
-//                CustomTouchListener.KeyMouse_state(KeyMouse_state);
-////                Log.d(TAG, "Change REL KeyMouse");
-//            }
-//        });
+        SwitchButton switchButton = findViewById(R.id.switchButton);
+        switchButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                KeyMouse_state = true;
+                CustomTouchListener.KeyMouse_state(KeyMouse_state);
+//                Log.d(TAG, "Change ABS KeyMouse");
+            } else {
+                KeyMouse_state = false;
+                CustomTouchListener.KeyMouse_state(KeyMouse_state);
+//                Log.d(TAG, "Change REL KeyMouse");
+            }
+        });
 
-//        Button btnToggleAppBar = findViewById(R.id.btnToggleAppBar);
-//        final AppBarLayout HideAppBarLayout = findViewById(R.id.HideAppBarLayout);
-//
-//        Button btnOpenAppBar = findViewById(R.id.btnOpenAppBar);
-//        btnOpenAppBar.setVisibility(View.GONE);
-//
-//        btnToggleAppBar.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                if (HideAppBarLayout.getVisibility() == View.VISIBLE) {
-//                    AppBar = true;
-//                    HideAppBarLayout.setVisibility(View.GONE);
-////                    btnOpenAppBar.setVisibility(View.VISIBLE);
-//                    Log.d(TAG, "toggle is GONE");
-//                } else {
-//                    AppBar = false;
-//                    HideAppBarLayout.setVisibility(View.VISIBLE);
-////                    btnOpenAppBar.setVisibility(View.GONE);
-//                    Log.d(TAG, "toggle is visible");
-//                }
-//            }
-//        });
-//
-//        btnOpenAppBar.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                if (HideAppBarLayout.getVisibility() == View.VISIBLE){
-//                    HideAppBarLayout.setVisibility(View.GONE);
-//                    btnOpenAppBar.setVisibility(View.VISIBLE);
-//                }else {
-//                    HideAppBarLayout.setVisibility(View.VISIBLE);
-//                    btnOpenAppBar.setVisibility(View.GONE);
-//                }
-//            }
-//        });
+        ImageButton btnToggleAppBar = findViewById(R.id.btnToggleAppBar);
+        final AppBarLayout HideAppBarLayout = findViewById(R.id.HideAppBarLayout);
+
+        FloatingActionButton btnOpenAppBar = findViewById(R.id.btnOpenAppBar);
+        btnOpenAppBar.setVisibility(View.GONE);
+
+        btnToggleAppBar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (HideAppBarLayout.getVisibility() == View.VISIBLE) {
+                    AppBar = true;
+                    HideAppBarLayout.setVisibility(View.GONE);
+                    btnOpenAppBar.setVisibility(View.VISIBLE);
+                    Log.d(TAG, "toggle is GONE");
+                } else {
+                    AppBar = false;
+                    HideAppBarLayout.setVisibility(View.VISIBLE);
+                    btnOpenAppBar.setVisibility(View.GONE);
+                    Log.d(TAG, "toggle is visible");
+                }
+            }
+        });
+
+        btnOpenAppBar.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (HideAppBarLayout.getVisibility() == View.VISIBLE){
+                    HideAppBarLayout.setVisibility(View.GONE);
+                    btnOpenAppBar.setVisibility(View.VISIBLE);
+                }else {
+                    HideAppBarLayout.setVisibility(View.VISIBLE);
+                    btnOpenAppBar.setVisibility(View.GONE);
+                }
+            }
+        });
     }
 
     @Override
@@ -721,8 +725,15 @@ public class MainActivity extends AppCompatActivity {
         // Update the preview size
 //        mPreviewWidth = size.width;
 //        mPreviewHeight = size.height;
-        mPreviewWidth = 2880;//test
-        mPreviewHeight = 1800;
+        WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
+        DisplayMetrics metrics = new DisplayMetrics();
+        if (wm != null) {
+            Display display = wm.getDefaultDisplay();
+            display.getRealMetrics(metrics);
+            mPreviewWidth = metrics.widthPixels;
+            mPreviewHeight = metrics.heightPixels;
+
+        }
         Log.d(TAG, "22mPreviewWidth: " + mPreviewWidth + " mPreviewHeight: " + mPreviewHeight);
         // Set the aspect ratio of TextureView to match the aspect ratio of the camera
         mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
