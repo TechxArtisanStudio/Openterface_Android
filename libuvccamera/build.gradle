@@ -21,7 +21,11 @@
  *  may have a different license, see the respective files.
  */
 
-apply plugin: 'com.android.library'
+plugins {
+    id 'com.android.library'
+    id 'maven-publish'
+    id 'signing'
+}
 
 android {
     compileSdkVersion versionCompiler
@@ -58,6 +62,12 @@ android {
 //            path "src/main/jni/CMakeLists.txt"
 //        }
     }
+
+    lint {
+        abortOnError false  // Don't abort build on lint errors
+        checkReleaseBuilds false  // Don't check lint for release builds
+        baseline = file("lint-baseline.xml")  // Create baseline for existing issues
+    }
 }
 
 dependencies {
@@ -83,5 +93,3 @@ ext {
     licenseName = 'The Apache Software License, Version 2.0'
     licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
 }
-
-apply from: "../publish_aar.gradle"

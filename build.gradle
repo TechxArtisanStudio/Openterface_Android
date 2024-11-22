@@ -1,31 +1,29 @@
-// Move buildscript block to the top
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
     repositories {
-        maven { url 'https://maven.aliyun.com/repository/google' }
-        maven { url 'https://maven.aliyun.com/repository/central' }
-        google()
-        mavenCentral()
+		maven { url 'https://maven.aliyun.com/repository/google' }
+		maven { url 'https://maven.aliyun.com/repository/central' }
+
+		google()
+		mavenCentral()
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:7.1.2'
     }
 }
 
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
-// If there's a plugins block, it should come after buildscript but before other content
-
 allprojects {
+    apply plugin: 'signing'
+    
     repositories {
-        maven { url 'https://maven.aliyun.com/repository/google' }
-        maven { url 'https://maven.aliyun.com/repository/central' }
-        maven { url 'https://jitpack.io' }
-        google()
-        mavenCentral()
-    }
-}
+		maven { url 'https://maven.aliyun.com/repository/google' }
+		maven { url 'https://maven.aliyun.com/repository/central' }
 
-task clean(type: Delete) {
-	delete rootProject.buildDir
+		maven { url 'https://jitpack.io' }
+
+		google()
+		mavenCentral()
+    }
 }
 
 ext {
