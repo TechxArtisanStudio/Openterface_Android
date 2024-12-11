@@ -34,7 +34,6 @@ import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
 import android.os.Bundle;
 
-import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -92,6 +91,8 @@ import java.io.File;
 import java.text.DecimalFormat;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Queue;
+import java.util.LinkedList;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -101,8 +102,6 @@ public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding mBinding;
 
     private static final int QUARTER_SECOND = 250;
-    private static final int HALF_SECOND = 500;
-    private static final int ONE_SECOND = 1000;
 
     private static final int DEFAULT_WIDTH = 640;
     private static final int DEFAULT_HEIGHT = 480;
@@ -147,9 +146,11 @@ public class MainActivity extends AppCompatActivity {
 
     private static boolean KeyMouse_state = false;
 
-    private boolean AppBar = false;
 
     KeyBoardManager keyBoardManager = new KeyBoardManager(this);
+
+    private final Queue<Character> characterQueue = new LinkedList<>();
+    private String currentFunctionKey;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -235,12 +236,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (HideAppBarLayout.getVisibility() == View.VISIBLE) {
-                    AppBar = true;
                     HideAppBarLayout.setVisibility(View.GONE);
                     btnOpenAppBar.setVisibility(View.VISIBLE);
                     Log.d(TAG, "toggle is GONE");
                 } else {
-                    AppBar = false;
                     HideAppBarLayout.setVisibility(View.VISIBLE);
                     btnOpenAppBar.setVisibility(View.GONE);
                     Log.d(TAG, "toggle is visible");
@@ -260,6 +259,48 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+        usbDeviceManager.setOnDataReadListener(new UsbDeviceManager.OnDataReadListener() {
+            @Override
+            public void onDataRead() {
+
+                sendNextCharacter();
+
+            }
+        });
+    }
+
+    @Override
+    public boolean onKeyMultiple(int keyCode, int count, KeyEvent event) {
+        String functionKey = KeyBoardManager.getFunctionKey(event, keyCode);
+        if (event.getAction() == KeyEvent.ACTION_MULTIPLE && event.getCharacters() != null) {
+            String characters = event.getCharacters();
+            System.out.println("in this keycode: " + keyCode);
+            System.out.println("in this count: " + count);
+            System.out.println("in this event: " + event);
+            System.out.println("Characters: " + characters);
+
+            for (char Multiple_key : characters.toCharArray()) {
+                characterQueue.add(Multiple_key);
+            }
+
+            currentFunctionKey = functionKey;
+            sendNextCharacter();
+
+            return true;
+        }
+        return super.onKeyMultiple(keyCode, count, event);
+    }
+
+    private void sendNextCharacter() {
+        if (!characterQueue.isEmpty() && currentFunctionKey != null) {
+            char nextChar = characterQueue.poll();
+            String keyName = String.valueOf(nextChar);
+            KeyBoardManager.sendKeyboardMultiple(keyName);
+
+            KeyBoardManager.EmptyKeyboard();
+
+        }
     }
 
     @Override
@@ -273,7 +314,7 @@ public class MainActivity extends AppCompatActivity {
         String targetChars = "~!@#$%^&*()_+{}|:\"<>?";
         if (targetChars.contains(pressedChar)){
             Log.d(TAG, "Detected special character: " + pressedChar);
-            keyBoardManager.sendKeyboardRequest(functionKey, pressedChar);
+            KeyBoardManager.sendKeyboardRequest(functionKey, pressedChar);
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {

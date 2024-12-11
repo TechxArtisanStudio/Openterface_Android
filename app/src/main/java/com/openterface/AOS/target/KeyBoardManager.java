@@ -96,7 +96,7 @@ public class KeyBoardManager {
                 public void run() {
                     MainActivity.mKeyboardRequestSent = true;
                 }
-            }, 100);
+            }, 10);
         }
     }
 
@@ -200,6 +200,8 @@ public class KeyBoardManager {
                         return;
                     }
 
+                    System.out.println("keyName: " + keyName);
+
                     String sendKBData = "";
                     sendKBData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
                             CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
@@ -222,10 +224,60 @@ public class KeyBoardManager {
                     byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendKBData);
 
                     try {
-                        UsbDeviceManager.port.write(sendKBDataBytes, 200);
+                        UsbDeviceManager.port.write(sendKBDataBytes, 10);
                     } catch (IOException e) {
                         Log.e(TAG, "Error writing to port: " + e.getMessage());
                     }
+
+//                    KeyBoardManager.EmptyKeyboard();
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
+    public static void sendKeyboardMultiple(String keyName) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    if (UsbDeviceManager.port == null){
+                        Log.d(TAG, "sendKeyboardMultiple port is null");
+                        return;
+                    }
+
+                    System.out.println("keyName: " + keyName);
+
+                    String sendKBData = "";
+                    sendKBData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
+                            CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
+                            CH9329MSKBMap.getKeyCodeMap().get("address") +
+                            CH9329MSKBMap.CmdData().get("CmdKB_HID") +
+                            CH9329MSKBMap.DataLen().get("DataLenKB") +
+                            CH9329MSKBMap.DataNull().get("DataNull") +
+                            CH9329MSKBMap.DataNull().get("DataNull") +
+                            CH9329MSKBMap.getKeyCodeMap().get(keyName) +
+                            CH9329MSKBMap.DataNull().get("DataNull") +
+                            CH9329MSKBMap.DataNull().get("DataNull") +
+                            CH9329MSKBMap.DataNull().get("DataNull") +
+                            CH9329MSKBMap.DataNull().get("DataNull") +
+                            CH9329MSKBMap.DataNull().get("DataNull");
+
+                    sendKBData = sendKBData + CH9329Function.makeChecksum(sendKBData);
+
+                    CH9329Function.checkSendLogData(sendKBData);
+
+                    byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendKBData);
+
+                    try {
+                        UsbDeviceManager.port.write(sendKBDataBytes, 10);
+                    } catch (IOException e) {
+                        Log.e(TAG, "Error writing to port: " + e.getMessage());
+                    }
+
+                    KeyBoardManager.EmptyKeyboard();
 
                 } catch (Exception e) {
                     e.printStackTrace();
