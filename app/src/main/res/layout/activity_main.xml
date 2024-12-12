@@ -117,151 +117,316 @@
             android:visibility="invisible"
             app:srcCompat="@mipmap/ic_switch_key_board_foreground" />
 
-        <HorizontalScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/white"
-            android:padding="0dp">
+<!--        <HorizontalScrollView xmlns:android="http://schemas.android.com/apk/res/android"-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:background="@color/white"-->
+<!--            android:padding="0dp">-->
             <LinearLayout
                 android:id="@+id/optionsBar"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:visibility="gone">
-
-                <Button
-                    android:id="@+id/Function1"
-                    android:layout_width="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/gray_400">
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="F1"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
+                    android:orientation="horizontal"
+                    android:layout_margin="1dp">
 
-                <Button
-                    android:id="@+id/Function2"
-                    android:layout_width="wrap_content"
+                    <android.widget.Button
+                        android:id="@+id/Esc"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Esc"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"/>
+
+                    <android.widget.Button
+                        android:id="@+id/Function1"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="F1"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"/>
+
+                    <android.widget.Button
+                        android:id="@+id/Function2"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="F2"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"/>
+
+                    <android.widget.Button
+                        android:id="@+id/Function3"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="F3"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"/>
+
+                    <android.widget.Button
+                        android:id="@+id/Function4"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="F4"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"/>
+
+                    <android.widget.Button
+                        android:id="@+id/PrtSc"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="PrtSc"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"/>
+
+                    <android.widget.Button
+                        android:id="@+id/ScrLk"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="ScrLk"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"/>
+
+                    <android.widget.Button
+                        android:id="@+id/Pause"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Pause"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="F2"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
+                    android:orientation="horizontal"
+                    android:layout_margin="1dp">
+                    <android.widget.Button
+                        android:id="@+id/TAB"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="TAB"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"/>
 
-                <Button
-                    android:id="@+id/Function3"
-                    android:layout_width="wrap_content"
+                    <android.widget.Button
+                        android:id="@+id/Function5"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="F5"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"/>
+
+                    <android.widget.Button
+                        android:id="@+id/Function6"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="F6"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"/>
+
+                    <android.widget.Button
+                        android:id="@+id/Function7"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="F7"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"/>
+
+                    <android.widget.Button
+                        android:id="@+id/Function8"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="F8"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"/>
+
+                    <android.widget.Button
+                        android:id="@+id/Ins"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Ins"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"/>
+
+                    <android.widget.Button
+                        android:id="@+id/Home"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Home"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"/>
+
+                    <android.widget.Button
+                        android:id="@+id/PgUp"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="PgUp"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="F3"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
+                    android:orientation="horizontal"
+                    android:layout_margin="1dp">
+                    <android.widget.Button
+                        android:id="@+id/CapsLk"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="CapsLk"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"/>
+                    <android.widget.Button
+                        android:id="@+id/Function9"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="F9"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"/>
 
-                <Button
-                    android:id="@+id/Function4"
-                    android:layout_width="wrap_content"
+                    <android.widget.Button
+                        android:id="@+id/Function10"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="F10"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"/>
+
+                    <android.widget.Button
+                        android:id="@+id/Function11"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="F11"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"/>
+
+                    <android.widget.Button
+                        android:id="@+id/Function12"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="F12"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"/>
+
+                    <android.widget.Button
+                        android:id="@+id/Delete"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="DEL"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"/>
+
+                    <android.widget.Button
+                        android:id="@+id/End"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="End"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"/>
+
+                    <android.widget.Button
+                        android:id="@+id/PgDn"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="PgDn"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="F4"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
+                    android:orientation="horizontal"
+                    android:layout_margin="1dp">
+                    <android.widget.Button
+                        android:id="@+id/bolanjian"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="{ ["
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"/>
 
-                <Button
-                    android:id="@+id/Function5"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="F5"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
+                </LinearLayout>
 
-                <Button
-                    android:id="@+id/Function6"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="F6"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/Function7"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="F7"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/Function8"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="F8"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/Function9"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="F9"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/Function10"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="F10"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/Function11"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="F11"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/Function12"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="F12"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
+                <android.widget.Button
                     android:id="@+id/Win"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -269,109 +434,10 @@
                     android:textColor="@color/black"
                     android:background="@drawable/button_background"
                     android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
+                    android:layout_marginStart="1dp"
+                    android:layout_marginEnd="1dp"/>
 
-                <Button
-                    android:id="@+id/PrtSc"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="PrtSc"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/ScrLk"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="ScrLk"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/Pause"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Pause"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/Ins"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Ins"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/Home"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Home"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/End"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="End"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/PgUp"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="PgUp"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/PgDn"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="PgDn"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/TAB"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="TAB"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
+                <android.widget.Button
                     android:id="@+id/NumLk"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -379,43 +445,10 @@
                     android:textColor="@color/black"
                     android:background="@drawable/button_background"
                     android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
+                    android:layout_marginStart="1dp"
+                    android:layout_marginEnd="1dp"/>
 
-                <Button
-                    android:id="@+id/CapsLk"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="CapsLk"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/Esc"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Esc"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/Delete"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="DEL"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
+                <android.widget.Button
                     android:id="@+id/ENTER"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -423,10 +456,10 @@
                     android:textColor="@color/black"
                     android:background="@drawable/button_background"
                     android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
+                    android:layout_marginStart="1dp"
+                    android:layout_marginEnd="1dp"/>
 
-                <Button
+                <android.widget.Button
                     android:id="@+id/CtrlAltDel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -434,11 +467,11 @@
                     android:textColor="@color/black"
                     android:background="@drawable/button_background"
                     android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
+                    android:layout_marginStart="1dp"
+                    android:layout_marginEnd="1dp"/>
 
             </LinearLayout>
-        </HorizontalScrollView>
+<!--        </HorizontalScrollView>-->
 
     </RelativeLayout>
 
@@ -459,7 +492,7 @@
         android:padding="8dp"
         android:textSize="16sp"/>
 
-    <Button
+    <android.widget.Button
         android:id="@+id/btn_send"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
