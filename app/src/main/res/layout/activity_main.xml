@@ -39,6 +39,7 @@
                 android:layout_gravity="end"
                 android:layout_marginRight="15dp"
                 android:background="@color/black"
+                android:contentDescription="TODO"
                 android:src="@drawable/baseline_aspect_ratio_24">
 
             </ImageButton>
@@ -127,22 +128,142 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:background="@color/gray_400">
+                android:background="@color/gray_400"
+                android:visibility="gone">
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:layout_margin="1dp">
 
+
                     <android.widget.Button
-                        android:id="@+id/Esc"
+                        android:id="@+id/Minus_Sign_Button"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Esc"
+                        android:text="_\n-"
+                        android:textColor="@color/black"
                         android:background="@drawable/button_background"
                         android:theme="@style/ButtonTheme"
-                        android:layout_marginHorizontal="1dp"/>
+                        android:layout_marginHorizontal="1dp">
+                    </android.widget.Button>
+
+                    <android.widget.Button
+                        android:id="@+id/Plus_Sign_Button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="+\n="
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp">
+                    </android.widget.Button>
+
+                    <android.widget.Button
+                        android:id="@+id/Left_Bracket_Button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="{\n["
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp">
+                    </android.widget.Button>
+
+                    <android.widget.Button
+                        android:id="@+id/Right_Bracket_Button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="}\n]"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp">
+                    </android.widget.Button>
+
+                    <android.widget.Button
+                        android:id="@+id/Colon_Button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text=":\n;"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp">
+                    </android.widget.Button>
+
+                    <android.widget.Button
+                        android:id="@+id/Quotation_Button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="&quot;\n&apos;"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp">
+                    </android.widget.Button>
+
+                    <android.widget.Button
+                        android:id="@+id/Bitwise_OR_Button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="|\n\\"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp">
+                    </android.widget.Button>
+
+                    <android.widget.Button
+                        android:id="@+id/Less_Sign_Button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="&lt;\n,"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp">
+                    </android.widget.Button>
+
+                    <android.widget.Button
+                        android:id="@+id/Greater_Sign_Button"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="&gt;\n."
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp">
+                    </android.widget.Button>
+
+                    <android.widget.Button
+                        android:id="@+id/wenhao"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="?\n/"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp">
+                    </android.widget.Button>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_margin="1dp">
 
                     <android.widget.Button
                         android:id="@+id/Function1"
@@ -220,13 +341,29 @@
                         android:background="@drawable/button_background"
                         android:theme="@style/ButtonTheme"
                         android:layout_marginHorizontal="1dp"/>
-                </LinearLayout>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_margin="1dp">
+                    <android.widget.Button
+                        android:id="@+id/Esc"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Esc"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"/>
+
+                    <android.widget.Button
+                        android:id="@+id/bolanhao"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="~\n`"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"
+                        android:layout_gravity="center"/>
+
                     <android.widget.Button
                         android:id="@+id/TAB"
                         android:layout_width="0dp"
@@ -237,6 +374,14 @@
                         android:background="@drawable/button_background"
                         android:theme="@style/ButtonTheme"
                         android:layout_marginHorizontal="1dp"/>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_margin="1dp">
 
                     <android.widget.Button
                         android:id="@+id/Function5"
@@ -314,6 +459,31 @@
                         android:background="@drawable/button_background"
                         android:theme="@style/ButtonTheme"
                         android:layout_marginHorizontal="1dp"/>
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:layout_marginHorizontal="1dp"/>
+
+                    <ImageButton
+                        android:id="@+id/dropUp"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@drawable/button_background"
+                        android:contentDescription="TODO"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"
+                        android:src="@drawable/baseline_arrow_drop_up_24"
+                        android:layout_gravity="center"/>
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:layout_marginHorizontal="1dp"/>
+
                 </LinearLayout>
 
                 <LinearLayout
@@ -321,16 +491,7 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:layout_margin="1dp">
-                    <android.widget.Button
-                        android:id="@+id/CapsLk"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="CapsLk"
-                        android:textColor="@color/black"
-                        android:background="@drawable/button_background"
-                        android:theme="@style/ButtonTheme"
-                        android:layout_marginHorizontal="1dp"/>
+
                     <android.widget.Button
                         android:id="@+id/Function9"
                         android:layout_width="0dp"
@@ -407,24 +568,42 @@
                         android:background="@drawable/button_background"
                         android:theme="@style/ButtonTheme"
                         android:layout_marginHorizontal="1dp"/>
-                </LinearLayout>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_margin="1dp">
-                    <android.widget.Button
-                        android:id="@+id/bolanjian"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="{ ["
-                        android:textColor="@color/black"
+                    <ImageButton
+                        android:id="@+id/dropLeft"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
                         android:background="@drawable/button_background"
+                        android:contentDescription="TODO"
                         android:theme="@style/ButtonTheme"
-                        android:layout_marginHorizontal="1dp"/>
+                        android:layout_marginHorizontal="1dp"
+                        android:src="@drawable/baseline_arrow_left_24"/>
 
+                    <ImageButton
+                        android:id="@+id/dropDown"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@drawable/button_background"
+                        android:contentDescription="TODO"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"
+                        android:src="@drawable/baseline_arrow_drop_down_24"/>
+
+                    <ImageButton
+                        android:id="@+id/dropRight"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@drawable/button_background"
+                        android:contentDescription="TODO"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"
+                        android:src="@drawable/baseline_arrow_right_24"/>
                 </LinearLayout>
+
+
 
                 <android.widget.Button
                     android:id="@+id/Win"
