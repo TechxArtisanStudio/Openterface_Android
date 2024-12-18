@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/Fragment_KeyBoard_ShortCut"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:layout_margin="1dp"
+    android:visibility="visible">
+
+    <android.widget.Button
+        android:id="@+id/KeyBoard_Ctrl_Add_C"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="@string/KeyBoard_Ctrl_Add_C"
+        android:textColor="@color/black"
+        android:background="@drawable/button_background"
+        android:theme="@style/ButtonTheme"
+        android:layout_marginHorizontal="1dp" />
+
+    <android.widget.Button
+        android:id="@+id/KeyBoard_Ctrl_Add_V"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="@string/KeyBoard_Ctrl_Add_V"
+        android:textColor="@color/black"
+        android:background="@drawable/button_background"
+        android:theme="@style/ButtonTheme"
+        android:layout_marginHorizontal="1dp" />
+
+    <android.widget.Button
+        android:id="@+id/KeyBoard_Ctrl_Add_Z"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="@string/KeyBoard_Ctrl_Add_Z"
+        android:textColor="@color/black"
+        android:background="@drawable/button_background"
+        android:theme="@style/ButtonTheme"
+        android:layout_marginHorizontal="1dp" />
+
+    <android.widget.Button
+        android:id="@+id/KeyBoard_Ctrl_Add_X"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="@string/KeyBoard_Ctrl_Add_X"
+        android:textColor="@color/black"
+        android:background="@drawable/button_background"
+        android:theme="@style/ButtonTheme"
+        android:layout_marginHorizontal="1dp" />
+
+    <android.widget.Button
+        android:id="@+id/KeyBoard_Ctrl_Add_A"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="@string/KeyBoard_Ctrl_Add_A"
+        android:textColor="@color/black"
+        android:background="@drawable/button_background"
+        android:theme="@style/ButtonTheme"
+        android:layout_marginHorizontal="1dp" />
+
+    <android.widget.Button
+        android:id="@+id/KeyBoard_Ctrl_Add_S"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="@string/KeyBoard_Ctrl_Add_S"
+        android:textColor="@color/black"
+        android:background="@drawable/button_background"
+        android:theme="@style/ButtonTheme"
+        android:layout_marginHorizontal="1dp" />
+</LinearLayout>

@@ -50,4 +50,12 @@
     <string name="camera_controls_text_60hz">60Hz</string>
     <string name="camera_controls_button_close">Close</string>
     <string name="camera_controls_button_reset">Reset</string>
+
+    <!--    short_cut-->
+    <string name="KeyBoard_Ctrl_Add_C">Ctrl+C</string>
+    <string name="KeyBoard_Ctrl_Add_V">Ctrl+V</string>
+    <string name="KeyBoard_Ctrl_Add_A">Ctrl+A</string>
+    <string name="KeyBoard_Ctrl_Add_X">Ctrl+X</string>
+    <string name="KeyBoard_Ctrl_Add_Z">Ctrl+Z</string>
+    <string name="KeyBoard_Ctrl_Add_S">Ctrl+S</string>
 </resources>
