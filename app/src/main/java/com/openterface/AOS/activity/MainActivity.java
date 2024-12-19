@@ -29,6 +29,8 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
@@ -79,12 +81,14 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.TextureView;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import java.io.File;
@@ -141,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
 
     public static boolean mKeyboardRequestSent = false;
 
-    private LinearLayout optionsBar;
+    private LinearLayout optionsBar, Fragment_KeyBoard_ShortCut, Fragment_KeyBoard_Function, keyBoardView;
     private boolean isOptionsBarVisible = false;
 
     private static boolean KeyMouse_state = false;
@@ -151,6 +155,8 @@ public class MainActivity extends AppCompatActivity {
 
     private final Queue<Character> characterQueue = new LinkedList<>();
     private String currentFunctionKey;
+
+    private Button KeyBoard_ShortCut, KeyBoard_Function;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -266,6 +272,66 @@ public class MainActivity extends AppCompatActivity {
 
                 sendNextCharacter();
 
+            }
+        });
+
+        Fragment_KeyBoard_ShortCut = findViewById(R.id.Fragment_KeyBoard_ShortCut);
+        Fragment_KeyBoard_Function = findViewById(R.id.Fragment_KeyBoard_Function);
+        keyBoardView = findViewById(R.id.KeyBoard_View);
+
+        KeyBoard_ShortCut = findViewById(R.id.KeyBoard_ShortCut);
+        KeyBoard_Function = findViewById(R.id.KeyBoard_Function);
+
+        KeyBoard_ShortCut.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(v.getWindowToken(), 0);//close keyboard
+
+                if (Fragment_KeyBoard_ShortCut.getVisibility() == View.VISIBLE){
+                    KeyBoard_ShortCut.setBackgroundResource(R.drawable.nopress_button_background);
+                    Fragment_KeyBoard_ShortCut.setVisibility(View.GONE);
+                }else {
+                    Fragment_KeyBoard_ShortCut.setVisibility(View.VISIBLE);
+                    KeyBoard_ShortCut.setBackgroundResource(R.drawable.press_button_background);
+                }
+
+                if (Fragment_KeyBoard_Function.getVisibility() == View.VISIBLE) {
+                    Fragment_KeyBoard_Function.setVisibility(View.GONE);
+                    KeyBoard_Function.setBackgroundResource(R.drawable.nopress_button_background);
+                }
+            }
+        });
+
+
+        KeyBoard_Function.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(v.getWindowToken(), 0);//close keyboard
+
+                if (Fragment_KeyBoard_Function.getVisibility() == View.VISIBLE){
+                    Fragment_KeyBoard_Function.setVisibility(View.GONE);
+                    KeyBoard_Function.setBackgroundResource(R.drawable.nopress_button_background);
+                }else {
+                    Fragment_KeyBoard_Function.setVisibility(View.VISIBLE);
+                    KeyBoard_Function.setBackgroundResource(R.drawable.press_button_background);
+                }
+
+                if (Fragment_KeyBoard_ShortCut.getVisibility() == View.VISIBLE) {
+                    Fragment_KeyBoard_ShortCut.setVisibility(View.GONE);
+                    KeyBoard_ShortCut.setBackgroundResource(R.drawable.nopress_button_background);
+                }
+            }
+        });
+
+        ImageButton KeyBoard_Close = findViewById(R.id.KeyBoard_Close);
+        KeyBoard_Close.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);//open keyboard
+                imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                keyBoardView.setVisibility(View.GONE);
             }
         });
     }
@@ -482,9 +548,19 @@ public class MainActivity extends AppCompatActivity {
 //                    });
 //        });
 
-//        mBinding.keyBoard.setOnClickListener(v -> {
-//
-//        });
+        mBinding.keyBoard.setOnClickListener(v -> {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);//open keyboard
+            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED,0);
+
+            keyBoardView.setVisibility(View.VISIBLE);
+
+            Fragment_KeyBoard_Function.setVisibility(View.GONE);
+            Fragment_KeyBoard_ShortCut.setVisibility(View.GONE);
+
+            KeyBoard_Function.setBackgroundResource(R.drawable.nopress_button_background);
+            KeyBoard_ShortCut.setBackgroundResource(R.drawable.nopress_button_background);
+
+        });
     }
 
     private void showCameraControlsDialog() {
@@ -786,7 +862,7 @@ public class MainActivity extends AppCompatActivity {
                 mBinding.viewMainPreview.setVisibility(View.VISIBLE);
                 mBinding.tvConnectUSBCameraTip.setVisibility(View.GONE);
 
-//                mBinding.keyBoard.setVisibility(View.VISIBLE);
+                mBinding.keyBoard.setVisibility(View.VISIBLE);
 //                mBinding.fabPicture.setVisibility(View.VISIBLE);
 //                mBinding.fabVideo.setVisibility(View.VISIBLE);
 
@@ -802,7 +878,7 @@ public class MainActivity extends AppCompatActivity {
                 mBinding.viewMainPreview.setVisibility(View.GONE);
                 mBinding.tvConnectUSBCameraTip.setVisibility(View.VISIBLE);
 
-//                mBinding.keyBoard.setVisibility(View.GONE);
+                mBinding.keyBoard.setVisibility(View.GONE);
 //                mBinding.fabPicture.setVisibility(View.GONE);
 //                mBinding.fabVideo.setVisibility(View.GONE);
 

@@ -52,10 +52,21 @@
     <string name="camera_controls_button_reset">Reset</string>
 
     <!--    short_cut-->
-    <string name="KeyBoard_Ctrl_Add_C">Ctrl+C</string>
-    <string name="KeyBoard_Ctrl_Add_V">Ctrl+V</string>
-    <string name="KeyBoard_Ctrl_Add_A">Ctrl+A</string>
-    <string name="KeyBoard_Ctrl_Add_X">Ctrl+X</string>
-    <string name="KeyBoard_Ctrl_Add_Z">Ctrl+Z</string>
-    <string name="KeyBoard_Ctrl_Add_S">Ctrl+S</string>
+    <string name="KeyBoard_Ctrl_Add_C">Ctrl+C\nCopy</string>
+    <string name="KeyBoard_Ctrl_Add_V">Ctrl+V\nPaste</string>
+    <string name="KeyBoard_Ctrl_Add_A">Ctrl+A\nSelect All</string>
+    <string name="KeyBoard_Ctrl_Add_X">Ctrl+X\nCut</string>
+    <string name="KeyBoard_Ctrl_Add_Z">Ctrl+Z\nRevocation</string>
+    <string name="KeyBoard_Ctrl_Add_S">Ctrl+S\nSave</string>
+
+    <string name="KeyBoard_Win_Add_Tab">Win+Tab\nTask View</string>
+    <string name="KeyBoard_Win_Add_S">Win+S\nSearch</string>
+    <string name="KeyBoard_Win_Add_E">Win+E\nFile Explorer</string>
+    <string name="KeyBoard_Win_Add_R">Win+R\nRun command</string>
+    <string name="KeyBoard_Win_Add_D">Win+D\nDesktop</string>
+    <string name="KeyBoard_Win_Add_L">Win+L\nLock PC</string>
+
+    <string name="KeyBoard_Alt_Add_F4">Alt+F4\nClose Window</string>
+    <string name="KeyBoard_Ctrl_Add_Alt_Add_Del">Ctrl+Alt+Del\nTask Manager</string>
+    <string name="KeyBoard_Alt_Add_PrtScr">Alt+PrtScr\nWindow Screenshot</string>
 </resources>
