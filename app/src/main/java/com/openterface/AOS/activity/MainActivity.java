@@ -39,9 +39,11 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -332,6 +334,20 @@ public class MainActivity extends AppCompatActivity {
                 InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);//open keyboard
                 imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
                 keyBoardView.setVisibility(View.GONE);
+            }
+        });
+
+        FloatingActionButton set_up_button = findViewById(R.id.set_up_button);
+        DrawerLayout drawer_layout = findViewById(R.id.drawer_layout);
+        drawer_layout.setScrimColor(0x00ffffff);
+        set_up_button.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                if (drawer_layout.isDrawerOpen(GravityCompat.END)) {
+                    drawer_layout.closeDrawer(GravityCompat.END);
+                } else {
+                    drawer_layout.openDrawer(GravityCompat.END);
+                }
             }
         });
     }

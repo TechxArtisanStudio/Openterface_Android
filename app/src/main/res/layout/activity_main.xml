@@ -1,200 +1,196 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
-    android:orientation="vertical"
     tools:context="com.openterface.AOS.activity.MainActivity">
 
-    <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/HideAppBarLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:theme="@style/Theme.Usbvideo.AppBarOverlay">
-
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="@color/black"
-            app:popupTheme="@style/Theme.Usbvideo.PopupOverlay">
-
-            <com.kyleduo.switchbutton.SwitchButton
-                android:id="@+id/switchButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/green"
-                app:kswBackColor="@color/gray_400"
-                app:kswTextOn="Abs"
-                app:kswTextOff="Rel"
-                android:layout_gravity="end"
-                />
-
-            <ImageButton
-                android:id="@+id/btnToggleAppBar"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="end"
-                android:layout_marginRight="15dp"
-                android:background="@color/black"
-                android:contentDescription="TODO"
-                android:src="@drawable/baseline_aspect_ratio_24">
-
-            </ImageButton>
-
-        </androidx.appcompat.widget.Toolbar>
-
-    </com.google.android.material.appbar.AppBarLayout>
-
-    <RelativeLayout
-        android:id="@+id/root_relative_layout"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/black">
+        android:background="@color/white"
+        android:orientation="vertical">
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/btnOpenAppBar"
-            style="@style/ArrowFloatingActionButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
-            android:layout_centerHorizontal="true"
-            app:srcCompat="@drawable/baseline_keyboard_arrow_down_24"/>
-
-        <com.serenegiant.widget.AspectRatioTextureView
-            android:id="@+id/viewMainPreview"
+        <com.google.android.material.appbar.AppBarLayout
+            android:id="@+id/HideAppBarLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_alignWithParentIfMissing="true"
-            android:layout_centerInParent="true"
-            android:visibility="invisible" />
+            android:theme="@style/Theme.Usbvideo.AppBarOverlay">
 
-        <ImageView
-            android:id="@+id/tvConnectUSBCameraTip"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            app:srcCompat="@drawable/content_dark_eng" />
-
-        <TextView
-            android:id="@+id/tvVideoRecordTime"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="20dp"
-            android:drawableLeft="@drawable/ic_record_red_dot"
-            android:drawablePadding="5dp"
-            android:textColor="@color/black"
-            android:textSize="14sp"
-            android:visibility="gone"
-            tools:text="99:99:99" />
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fabVideo"
-            style="@style/MainFloatingActionButton"
-            android:layout_above="@id/keyBoard"
-            android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"
-            android:layout_marginEnd="@dimen/fab_margin"
-            android:visibility="invisible"
-            app:srcCompat="@drawable/ic_switch_video" />
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fabPicture"
-            style="@style/MainFloatingActionButton"
-            android:layout_above="@id/fabVideo"
-            android:layout_alignParentRight="true"
-            android:layout_marginEnd="@dimen/fab_margin"
-            android:visibility="invisible"
-            app:srcCompat="@drawable/ic_switch_camera" />
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/keyBoard"
-            style="@style/MainFloatingActionButton"
-            android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"
-            android:visibility="gone"
-            android:src="@drawable/baseline_keyboard_24" />
-
-<!--        <HorizontalScrollView xmlns:android="http://schemas.android.com/apk/res/android"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:background="@color/white"-->
-<!--            android:padding="0dp">-->
-
-
-        <LinearLayout
-            android:id="@+id/KeyBoard_View"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@color/white"
-            android:visibility="gone"
-            android:layout_alignParentBottom="true">
-
-            <LinearLayout
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="1dp"
-                android:layout_marginLeft="1dp"
-                android:layout_marginRight="1dp"
-                android:layout_marginBottom="5dp">
+                android:layout_height="?attr/actionBarSize"
+                android:background="@color/black"
+                app:popupTheme="@style/Theme.Usbvideo.PopupOverlay">
 
-                <android.widget.Button
-                    android:id="@+id/KeyBoard_ShortCut"
-                    android:layout_width="0dp"
+                <com.kyleduo.switchbutton.SwitchButton
+                    android:id="@+id/switchButton"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="ShortCut"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginHorizontal="1dp">
-                </android.widget.Button>
-
-                <android.widget.Button
-                    android:id="@+id/KeyBoard_Shift"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Shift"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginHorizontal="1dp">
-                </android.widget.Button>
-
-                <android.widget.Button
-                    android:id="@+id/KeyBoard_Function"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Function"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginHorizontal="1dp">
-                </android.widget.Button>
+                    android:textColor="@color/green"
+                    app:kswBackColor="@color/gray_400"
+                    app:kswTextOn="Abs"
+                    app:kswTextOff="Rel"
+                    android:layout_gravity="end" />
 
                 <ImageButton
-                    android:id="@+id/KeyBoard_Close"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="0.5"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginHorizontal="1dp"
-                    android:src="@drawable/baseline_close_24">
-                </ImageButton>
+                    android:id="@+id/btnToggleAppBar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="end"
+                    android:layout_marginRight="15dp"
+                    android:background="@color/black"
+                    android:contentDescription="TODO"
+                    android:src="@drawable/baseline_aspect_ratio_24" />
+            </androidx.appcompat.widget.Toolbar>
+        </com.google.android.material.appbar.AppBarLayout>
+
+        <RelativeLayout
+            android:id="@+id/root_relative_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/black">
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/btnOpenAppBar"
+                style="@style/ArrowFloatingActionButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"
+                app:srcCompat="@drawable/baseline_keyboard_arrow_down_24"/>
+
+            <com.serenegiant.widget.AspectRatioTextureView
+                android:id="@+id/viewMainPreview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignWithParentIfMissing="true"
+                android:layout_centerInParent="true"
+                android:visibility="invisible" />
+
+            <ImageView
+                android:id="@+id/tvConnectUSBCameraTip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                app:srcCompat="@drawable/content_dark_eng" />
+
+            <TextView
+                android:id="@+id/tvVideoRecordTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="20dp"
+                android:drawableLeft="@drawable/ic_record_red_dot"
+                android:drawablePadding="5dp"
+                android:textColor="@color/black"
+                android:textSize="14sp"
+                android:visibility="gone"
+                tools:text="99:99:99" />
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/fabVideo"
+                style="@style/MainFloatingActionButton"
+                android:layout_above="@id/keyBoard"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="@dimen/fab_margin"
+                android:visibility="invisible"
+                app:srcCompat="@drawable/ic_switch_video" />
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/fabPicture"
+                style="@style/MainFloatingActionButton"
+                android:layout_above="@id/fabVideo"
+                android:layout_alignParentRight="true"
+                android:layout_marginEnd="@dimen/fab_margin"
+                android:visibility="invisible"
+                app:srcCompat="@drawable/ic_switch_camera" />
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/keyBoard"
+                style="@style/MainFloatingActionButton"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentBottom="true"
+                android:src="@drawable/baseline_keyboard_24" />
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/set_up_button"
+                style="@style/MainFloatingActionButton"
+                android:layout_above="@id/keyBoard"
+                android:layout_alignParentRight="true"
+                android:src="@drawable/baseline_menu_open_24" />
+
+            <LinearLayout
+                android:id="@+id/KeyBoard_View"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/white"
+                android:visibility="gone"
+                android:layout_alignParentBottom="true">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="1dp"
+                    android:layout_marginLeft="1dp"
+                    android:layout_marginRight="1dp"
+                    android:layout_marginBottom="5dp">
+
+                    <android.widget.Button
+                        android:id="@+id/KeyBoard_ShortCut"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="ShortCut"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp" />
+
+                    <android.widget.Button
+                        android:id="@+id/KeyBoard_Shift"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Shift"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp" />
+
+                    <android.widget.Button
+                        android:id="@+id/KeyBoard_Function"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Function"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp" />
+
+                    <ImageButton
+                        android:id="@+id/KeyBoard_Close"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="0.5"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"
+                        android:src="@drawable/baseline_close_24">
+                    </ImageButton>
+                </LinearLayout>
+
+                <include layout="@layout/short_cut_button" />
+                <include layout="@layout/function_button" />
             </LinearLayout>
-
-            <include layout="@layout/short_cut_button"/>
-
-            <include layout="@layout/function_button"/>
-        </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/optionsBar"
@@ -203,15 +199,6 @@
                 android:orientation="vertical"
                 android:background="@color/gray_400"
                 android:visibility="gone">
-
-
-
-
-
-
-
-
-
 
                 <android.widget.Button
                     android:id="@+id/Win"
@@ -245,46 +232,12 @@
                     android:theme="@style/ButtonTheme"
                     android:layout_marginStart="1dp"
                     android:layout_marginEnd="1dp"/>
-
-                <android.widget.Button
-                    android:id="@+id/CtrlAltDel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Ctrl+Alt+Del"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="1dp"
-                    android:layout_marginEnd="1dp"/>
-
             </LinearLayout>
-<!--        </HorizontalScrollView>-->
 
-    </RelativeLayout>
+        </RelativeLayout>
 
-    <TextView
-        android:id="@+id/tv_received_data"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Received Data:"
-        android:padding="8dp"
-        android:textSize="16sp"/>
+    </LinearLayout>
 
-    <EditText
-        android:id="@+id/et_hex_input"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Enter Hex Data"
-        android:inputType="text"
-        android:padding="8dp"
-        android:textSize="16sp"/>
+    <include layout="@layout/drawer_layout_setup"/>
 
-    <android.widget.Button
-        android:id="@+id/btn_send"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Send"
-        android:padding="8dp"
-        android:textSize="16sp"/>
-
-</LinearLayout>
+</androidx.drawerlayout.widget.DrawerLayout>

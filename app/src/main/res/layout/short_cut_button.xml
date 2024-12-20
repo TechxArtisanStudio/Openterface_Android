@@ -172,7 +172,7 @@
             android:layout_marginHorizontal="1dp" />
 
         <android.widget.Button
-            android:id="@+id/KeyBoard_Ctrl_Add_Alt_Add_Del"
+            android:id="@+id/CtrlAltDel"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
