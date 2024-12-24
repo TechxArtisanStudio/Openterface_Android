@@ -69,4 +69,8 @@
     <string name="KeyBoard_Alt_Add_F4">Alt+F4\nClose Window</string>
     <string name="KeyBoard_Ctrl_Add_Alt_Add_Del">Ctrl+Alt+Del\nTask Manager</string>
     <string name="KeyBoard_Alt_Add_PrtScr">Alt+PrtScr\nWindow Screenshot</string>
+
+    <!--    mouse ctrl mode-->
+    <string name="KeyMouse_Abs_Ctrl">Touch Mode</string>
+    <string name="KeyMouse_Abs_Drag_Ctrl">Drag Mode</string>
 </resources>

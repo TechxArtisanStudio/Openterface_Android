@@ -37,7 +37,7 @@ public class CustomTouchListener implements View.OnTouchListener {
     private static final long TWO_FINGER_PRESS_DELAY = 750; // 0.5 second
     private static final float CLICK_POSITION_THRESHOLD = 50.0f;
     private static UsbDeviceManager usbDeviceManager;
-    private static boolean KeyMouse_state;
+    private static boolean KeyMouse_state, keyMouseAbsCtrl;
 
     private float startY1, startY2;
     private boolean isPanning = false;
@@ -55,8 +55,11 @@ public class CustomTouchListener implements View.OnTouchListener {
 
     private long ignoreMoveUntil = 0;
 
-    public static void KeyMouse_state(boolean keyMouseState) {
+    long lastSendTime = System.currentTimeMillis();
+
+    public static void KeyMouse_state(boolean keyMouseState, boolean keyMouseAbsCtrlState) {
         KeyMouse_state = keyMouseState;
+        keyMouseAbsCtrl = keyMouseAbsCtrlState;
     }
 
     public CustomTouchListener(UsbDeviceManager usbDeviceManager) {
@@ -91,6 +94,7 @@ public class CustomTouchListener implements View.OnTouchListener {
     }
 
     private void handActionDownMouse(MotionEvent event){
+        System.out.println("this is action down");
         isLongPress = false;
         StartMoveMSX = event.getX();
         StartMoveMSY = event.getY();
@@ -141,8 +145,24 @@ public class CustomTouchListener implements View.OnTouchListener {
                 return;
             }
 
-            if (KeyMouse_state) {
+            long currentTimeMillis = System.currentTimeMillis();
+            if (currentTimeMillis - lastSendTime > 1000) {
+                System.out.println("currentTimeMillis - lastSendTime > 1000");
                 MouseManager.sendHexAbsData(StartMoveMSX, StartMoveMSY);
+                lastSendTime = currentTimeMillis;
+                return;
+            }
+
+            if (KeyMouse_state) {
+                if (keyMouseAbsCtrl && currentTimeMillis - lastSendTime < 1000){
+                    System.out.println("StartMoveMSX： " + StartMoveMSX + " StartMoveMSY: " + StartMoveMSY);
+                    MouseManager.sendHexAbsDragData(StartMoveMSX, StartMoveMSY);
+                    lastSendTime = currentTimeMillis;
+                }else {
+                    System.out.println("22222");
+                    MouseManager.sendHexAbsData(StartMoveMSX, StartMoveMSY);
+                    lastSendTime = currentTimeMillis;
+                }
             } else {
                 Log.d(TAG, "Rel data send now");
                 MouseManager.sendHexRelData(StartMoveMSX, StartMoveMSY, LastMoveMSX, LastMoveMSY);

@@ -30,8 +30,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
+import android.graphics.drawable.Drawable;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
 import android.os.Bundle;
@@ -151,6 +153,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean isOptionsBarVisible = false;
 
     private static boolean KeyMouse_state = false;
+    private static boolean keyMouseAbsCtrlState = true;
 
 
     KeyBoardManager keyBoardManager = new KeyBoardManager(this);
@@ -225,11 +228,11 @@ public class MainActivity extends AppCompatActivity {
         switchButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
                 KeyMouse_state = true;
-                CustomTouchListener.KeyMouse_state(KeyMouse_state);
+                CustomTouchListener.KeyMouse_state(KeyMouse_state, keyMouseAbsCtrlState);
 //                Log.d(TAG, "Change ABS KeyMouse");
             } else {
                 KeyMouse_state = false;
-                CustomTouchListener.KeyMouse_state(KeyMouse_state);
+                CustomTouchListener.KeyMouse_state(KeyMouse_state, keyMouseAbsCtrlState);
 //                Log.d(TAG, "Change REL KeyMouse");
             }
         });
@@ -349,6 +352,63 @@ public class MainActivity extends AppCompatActivity {
                     drawer_layout.openDrawer(GravityCompat.END);
                 }
             }
+        });
+
+        LinearLayout buttonLayout, optionLayout;
+        buttonLayout = findViewById(R.id.buttonLayout);
+        optionLayout = findViewById(R.id.optionLayout);
+
+        Button Abs_ctrl_default_button = findViewById(R.id.Abs_ctrl_default_button);
+        Button Abs_ctrl_drag_button = findViewById(R.id.Abs_ctrl_drag_button);
+        Drawable Abs_ctrl_default_button_drawable = Abs_ctrl_default_button.getCompoundDrawables()[1];
+        Drawable Abs_ctrl_drag_button_drawable = Abs_ctrl_drag_button.getCompoundDrawables()[1];
+        Button drawerButton = findViewById(R.id.drawerButton);
+
+
+        Abs_ctrl_default_button_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+        Abs_ctrl_default_button.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+        Abs_ctrl_default_button.setOnClickListener(v -> {
+
+            if (Abs_ctrl_default_button_drawable != null) {
+
+                Abs_ctrl_default_button_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+                Abs_ctrl_default_button.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+
+                Abs_ctrl_drag_button_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                Abs_ctrl_drag_button.setTextColor(getResources().getColor(android.R.color.white));
+
+            }
+        });
+
+        Abs_ctrl_drag_button.setOnClickListener(v -> {
+
+            if (Abs_ctrl_drag_button_drawable != null) {
+
+                Abs_ctrl_drag_button_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+                Abs_ctrl_drag_button.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+
+                Abs_ctrl_default_button_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                Abs_ctrl_default_button.setTextColor(getResources().getColor(android.R.color.white));
+
+                KeyMouse_state = true;
+                CustomTouchListener.KeyMouse_state(KeyMouse_state, keyMouseAbsCtrlState);
+
+            }
+        });
+
+        drawerButton.setOnClickListener(v -> {
+            buttonLayout.setVisibility(View.GONE);
+            optionLayout.setVisibility(View.VISIBLE);
+        });
+
+        findViewById(R.id.optionA).setOnClickListener(v -> {
+            buttonLayout.setVisibility(View.VISIBLE);
+            optionLayout.setVisibility(View.GONE);
+        });
+
+        findViewById(R.id.optionB).setOnClickListener(v -> {
+            buttonLayout.setVisibility(View.VISIBLE);
+            optionLayout.setVisibility(View.GONE);
         });
     }
 
