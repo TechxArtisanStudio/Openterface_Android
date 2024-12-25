@@ -11,15 +11,55 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_margin="1dp"
-        android:orientation="horizontal"
-        android:layout_weight="1">
-
+        android:layout_margin="1dp">
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/app_name"
-            android:textColor="@color/white"/>
+            android:textColor="@color/white"
+            android:theme="@style/FontStyle" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="1dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:layout_gravity="center">
+
+        <android.widget.Button
+            android:id="@+id/action_device"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="1dp"
+            android:background="@android:color/transparent"
+            android:drawableTop="@drawable/ic_action_usb"
+            android:theme="@style/FontStyle"
+            android:text="@string/Device_Connect_Setting"
+            android:textColor="@color/white" />
+
+        <android.widget.Button
+            android:id="@+id/action_control"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="1dp"
+            android:background="@android:color/transparent"
+            android:drawableTop="@drawable/ic_action_control"
+            android:theme="@style/FontStyle"
+            android:text="@string/parameter_Setting"
+            android:textColor="@color/white" />
+
+<!--        <android.widget.Button-->
+<!--            android:id="@+id/action_control"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginHorizontal="1dp"-->
+<!--            android:background="@android:color/transparent"-->
+<!--            android:drawableTop="@drawable/ic_action_control"-->
+<!--            android:theme="@style/FontStyle"-->
+<!--            android:text="@string/parameter_Setting"-->
+<!--            android:textColor="@color/white" />-->
 
     </LinearLayout>
 
@@ -36,7 +76,8 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="this is drawerLayout"
+                android:text="@string/KeyMouse_Ctrl_Way"
+                android:theme="@style/FontStyle"
                 android:textColor="@color/white"
                 android:layout_margin="1dp"/>
 
@@ -49,7 +90,7 @@
 
             <LinearLayout
                 android:id="@+id/buttonLayout"
-                android:layout_width="250dp"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content">
 
                 <android.widget.Button
@@ -60,7 +101,20 @@
                     android:layout_marginHorizontal="1dp"
                     android:background="@android:color/transparent"
                     android:drawableTop="@drawable/baseline_ads_click_24"
+                    android:theme="@style/FontStyle"
                     android:text="@string/KeyMouse_Abs_Ctrl"
+                    android:textColor="@color/white" />
+
+                <android.widget.Button
+                    android:id="@+id/Abs_ctrl_drag_button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginHorizontal="1dp"
+                    android:background="@android:color/transparent"
+                    android:drawableTop="@drawable/hand_index_thumb"
+                    android:theme="@style/FontStyle"
+                    android:text="@string/KeyMouse_Abs_Drag_Ctrl"
                     android:textColor="@color/white" />
 
                 <Button
@@ -102,17 +156,19 @@
 
             <LinearLayout
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:layout_gravity="center">
 
                 <android.widget.Button
-                    android:id="@+id/Abs_ctrl_drag_button"
+                    android:id="@+id/Rel_ctrl_button"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginHorizontal="1dp"
                     android:background="@android:color/transparent"
-                    android:drawableTop="@drawable/baseline_ads_click_24"
-                    android:text="@string/KeyMouse_Abs_Drag_Ctrl"
+                    android:drawableTop="@drawable/mouse_icons_cursor"
+                    android:text="@string/KeyMouse_Rel_Ctrl"
+                    android:theme="@style/FontStyle"
                     android:textColor="@color/white" />
 
             </LinearLayout>
@@ -120,7 +176,5 @@
         </LinearLayout>
 
     </LinearLayout>
-
-
 
 </LinearLayout>

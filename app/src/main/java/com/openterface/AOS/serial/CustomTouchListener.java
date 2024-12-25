@@ -86,6 +86,14 @@ public class CustomTouchListener implements View.OnTouchListener {
                 break;
 
             case MotionEvent.ACTION_UP:
+                if (KeyMouse_state){
+                    MouseManager.sendHexAbsData(StartMoveMSX, StartMoveMSY);
+                    System.out.println("this is action up");
+                }else {
+                    handActionUpMouse(event);
+                }
+                break;
+
             case MotionEvent.ACTION_CANCEL:
                 handActionUpMouse(event);
                 break;
@@ -145,23 +153,11 @@ public class CustomTouchListener implements View.OnTouchListener {
                 return;
             }
 
-            long currentTimeMillis = System.currentTimeMillis();
-            if (currentTimeMillis - lastSendTime > 1000) {
-                System.out.println("currentTimeMillis - lastSendTime > 1000");
-                MouseManager.sendHexAbsData(StartMoveMSX, StartMoveMSY);
-                lastSendTime = currentTimeMillis;
-                return;
-            }
-
             if (KeyMouse_state) {
-                if (keyMouseAbsCtrl && currentTimeMillis - lastSendTime < 1000){
-                    System.out.println("StartMoveMSX： " + StartMoveMSX + " StartMoveMSY: " + StartMoveMSY);
+                if (keyMouseAbsCtrl){
                     MouseManager.sendHexAbsDragData(StartMoveMSX, StartMoveMSY);
-                    lastSendTime = currentTimeMillis;
                 }else {
-                    System.out.println("22222");
                     MouseManager.sendHexAbsData(StartMoveMSX, StartMoveMSY);
-                    lastSendTime = currentTimeMillis;
                 }
             } else {
                 Log.d(TAG, "Rel data send now");

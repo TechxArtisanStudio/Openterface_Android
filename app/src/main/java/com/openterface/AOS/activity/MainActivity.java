@@ -153,7 +153,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean isOptionsBarVisible = false;
 
     private static boolean KeyMouse_state = false;
-    private static boolean keyMouseAbsCtrlState = true;
+    private static boolean keyMouseAbsCtrlState = false;
 
 
     KeyBoardManager keyBoardManager = new KeyBoardManager(this);
@@ -359,14 +359,20 @@ public class MainActivity extends AppCompatActivity {
         optionLayout = findViewById(R.id.optionLayout);
 
         Button Abs_ctrl_default_button = findViewById(R.id.Abs_ctrl_default_button);
-        Button Abs_ctrl_drag_button = findViewById(R.id.Abs_ctrl_drag_button);
         Drawable Abs_ctrl_default_button_drawable = Abs_ctrl_default_button.getCompoundDrawables()[1];
+
+        Button Abs_ctrl_drag_button = findViewById(R.id.Abs_ctrl_drag_button);
         Drawable Abs_ctrl_drag_button_drawable = Abs_ctrl_drag_button.getCompoundDrawables()[1];
+
+        Button Rel_ctrl_button = findViewById(R.id.Rel_ctrl_button);
+        Drawable Rel_ctrl_button_drawable = Rel_ctrl_button.getCompoundDrawables()[1];
+
         Button drawerButton = findViewById(R.id.drawerButton);
 
 
-        Abs_ctrl_default_button_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
-        Abs_ctrl_default_button.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+        Rel_ctrl_button_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+        Rel_ctrl_button.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+
         Abs_ctrl_default_button.setOnClickListener(v -> {
 
             if (Abs_ctrl_default_button_drawable != null) {
@@ -376,6 +382,13 @@ public class MainActivity extends AppCompatActivity {
 
                 Abs_ctrl_drag_button_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
                 Abs_ctrl_drag_button.setTextColor(getResources().getColor(android.R.color.white));
+
+                Rel_ctrl_button_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                Rel_ctrl_button.setTextColor(getResources().getColor(android.R.color.white));
+
+                KeyMouse_state = true;
+                keyMouseAbsCtrlState = false;
+                CustomTouchListener.KeyMouse_state(KeyMouse_state, keyMouseAbsCtrlState);
 
             }
         });
@@ -390,9 +403,32 @@ public class MainActivity extends AppCompatActivity {
                 Abs_ctrl_default_button_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
                 Abs_ctrl_default_button.setTextColor(getResources().getColor(android.R.color.white));
 
+                Rel_ctrl_button_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                Rel_ctrl_button.setTextColor(getResources().getColor(android.R.color.white));
+
                 KeyMouse_state = true;
+                keyMouseAbsCtrlState = true;
                 CustomTouchListener.KeyMouse_state(KeyMouse_state, keyMouseAbsCtrlState);
 
+            }
+        });
+
+        Rel_ctrl_button.setOnClickListener(v -> {
+
+            if (Rel_ctrl_button_drawable != null) {
+                System.out.println("in this rel button");
+                Rel_ctrl_button_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+                Rel_ctrl_button.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+
+                Abs_ctrl_drag_button_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                Abs_ctrl_drag_button.setTextColor(getResources().getColor(android.R.color.white));
+
+                Abs_ctrl_default_button_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                Abs_ctrl_default_button.setTextColor(getResources().getColor(android.R.color.white));
+
+                KeyMouse_state = false;
+                keyMouseAbsCtrlState = false;
+                CustomTouchListener.KeyMouse_state(KeyMouse_state, keyMouseAbsCtrlState);
             }
         });
 
@@ -409,6 +445,16 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.optionB).setOnClickListener(v -> {
             buttonLayout.setVisibility(View.VISIBLE);
             optionLayout.setVisibility(View.GONE);
+        });
+
+        Button action_device = findViewById(R.id.action_device);
+        action_device.setOnClickListener(v -> {
+            showDeviceListDialog();
+        });
+
+        Button action_control = findViewById(R.id.action_control);
+        action_control.setOnClickListener(v -> {
+            showCameraControlsDialog();
         });
     }
 
@@ -587,7 +633,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         if (mIsCameraConnected) {
-            menu.findItem(R.id.action_control).setVisible(true);
+//            menu.findItem(R.id.action_control).setVisible(true);
             menu.findItem(R.id.action_safely_eject).setVisible(true);
             menu.findItem(R.id.action_video_format).setVisible(true);
             menu.findItem(R.id.action_rotate_90_CW).setVisible(true);
@@ -595,7 +641,7 @@ public class MainActivity extends AppCompatActivity {
             menu.findItem(R.id.action_flip_horizontally).setVisible(true);
             menu.findItem(R.id.action_flip_vertically).setVisible(true);
         } else {
-            menu.findItem(R.id.action_control).setVisible(false);
+//            menu.findItem(R.id.action_control).setVisible(false);
             menu.findItem(R.id.action_safely_eject).setVisible(false);
             menu.findItem(R.id.action_video_format).setVisible(false);
             menu.findItem(R.id.action_rotate_90_CW).setVisible(false);

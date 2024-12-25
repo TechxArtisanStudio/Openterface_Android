@@ -24,6 +24,10 @@
         <item name="android:background">@drawable/button_background</item>
     </style>
 
+    <style name="FontStyle" parent="Theme.AppCompat.Light">
+        <item name="android:textAllCaps">false</item>
+    </style>
+
 
     <style name="Theme.Usbvideo.NoActionBar">
         <item name="windowActionBar">false</item>

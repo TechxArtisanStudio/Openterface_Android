@@ -15,18 +15,18 @@
         android:visible="true"
         app:showAsAction="ifRoom" />
 
-    <item
-        android:id="@+id/action_control"
-        android:icon="@drawable/ic_action_control"
-        android:title="@string/action_control"
-        android:visible="true"
-        app:showAsAction="ifRoom" />
+<!--    <item-->
+<!--        android:id="@+id/action_control"-->
+<!--        android:icon="@drawable/ic_action_control"-->
+<!--        android:title="@string/action_control"-->
+<!--        android:visible="true"-->
+<!--        app:showAsAction="ifRoom" />-->
 
-    <item
-        android:id="@+id/action_device"
-        android:icon="@drawable/ic_action_usb"
-        android:title="@string/action_usb"
-        app:showAsAction="ifRoom" />
+<!--    <item-->
+<!--        android:id="@+id/action_device"-->
+<!--        android:icon="@drawable/ic_action_usb"-->
+<!--        android:title="@string/action_usb"-->
+<!--        app:showAsAction="ifRoom" />-->
 
     <item
         android:id="@+id/action_safely_eject"
