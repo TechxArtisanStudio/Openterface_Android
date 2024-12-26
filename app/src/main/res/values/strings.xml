@@ -71,13 +71,19 @@
     <string name="KeyBoard_Alt_Add_PrtScr">Alt+PrtScr\nWindow Screenshot</string>
 
 <!--    OpenterFace Setting-->
-    <string name="Device_Connect_Setting">Device Connect</string>
-    <string name="parameter_Setting">Parameter Setting</string>
-    <string name="Video_Direction_Setting">Video Direction</string>
+    <string name="Device_Connect_Setting">Device\nConnect</string>
+    <string name="Device_Disconnect_Setting">Device\nDisconnect</string>
+    <string name="parameter_Setting">Parameter\nSetting</string>
+    <string name="Video_Setting">Video\nSetting</string>
+    <string name="Rotate_90_CW">Rotate\n90 CW</string>
+    <string name="Rotate_90_CCW">Rotate\n90 CCW</string>
+    <string name="Flip_Horizontally">Flip\nHorizontally</string>
+    <string name="Flip_Vertically">Flip\nVertically</string>
+
 
     <!--    mouse ctrl mode-->
     <string name="KeyMouse_Ctrl_Way">Mouse Ctrl Way</string>
-    <string name="KeyMouse_Abs_Ctrl">Touch Mode</string>
-    <string name="KeyMouse_Abs_Drag_Ctrl">Drag Mode</string>
-    <string name="KeyMouse_Rel_Ctrl">Pointer Mode</string>
+    <string name="KeyMouse_Abs_Ctrl">Touch\nMode</string>
+    <string name="KeyMouse_Abs_Drag_Ctrl">Drag\nMode</string>
+    <string name="KeyMouse_Rel_Ctrl">Pointer\nMode</string>
 </resources>

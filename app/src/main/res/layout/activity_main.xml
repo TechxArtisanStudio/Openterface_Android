@@ -14,55 +14,11 @@
         android:background="@color/white"
         android:orientation="vertical">
 
-        <com.google.android.material.appbar.AppBarLayout
-            android:id="@+id/HideAppBarLayout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:theme="@style/Theme.Usbvideo.AppBarOverlay">
-
-            <androidx.appcompat.widget.Toolbar
-                android:id="@+id/toolbar"
-                android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize"
-                android:background="@color/black"
-                app:popupTheme="@style/Theme.Usbvideo.PopupOverlay">
-
-                <com.kyleduo.switchbutton.SwitchButton
-                    android:id="@+id/switchButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/green"
-                    app:kswBackColor="@color/gray_400"
-                    app:kswTextOn="Abs"
-                    app:kswTextOff="Rel"
-                    android:layout_gravity="end" />
-
-                <ImageButton
-                    android:id="@+id/btnToggleAppBar"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="end"
-                    android:layout_marginRight="15dp"
-                    android:background="@color/black"
-                    android:contentDescription="TODO"
-                    android:src="@drawable/baseline_aspect_ratio_24" />
-            </androidx.appcompat.widget.Toolbar>
-        </com.google.android.material.appbar.AppBarLayout>
-
         <RelativeLayout
             android:id="@+id/root_relative_layout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@color/black">
-
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/btnOpenAppBar"
-                style="@style/ArrowFloatingActionButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_alignParentTop="true"
-                android:layout_centerHorizontal="true"
-                app:srcCompat="@drawable/baseline_keyboard_arrow_down_24"/>
 
             <com.serenegiant.widget.AspectRatioTextureView
                 android:id="@+id/viewMainPreview"

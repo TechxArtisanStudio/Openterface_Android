@@ -25,41 +25,131 @@
         android:layout_height="wrap_content"
         android:layout_margin="1dp"
         android:layout_weight="1"
-        android:orientation="vertical"
-        android:layout_gravity="center">
+        android:gravity="center"
+        android:orientation="vertical">
 
-        <android.widget.Button
-            android:id="@+id/action_device"
+        <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="1dp"
-            android:background="@android:color/transparent"
-            android:drawableTop="@drawable/ic_action_usb"
-            android:theme="@style/FontStyle"
-            android:text="@string/Device_Connect_Setting"
-            android:textColor="@color/white" />
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center">
 
-        <android.widget.Button
-            android:id="@+id/action_control"
+            <android.widget.Button
+                android:id="@+id/action_device"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="5dp"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:drawableTop="@drawable/baseline_link_24"
+                android:text="@string/Device_Connect_Setting"
+                android:textColor="@color/white"
+                android:theme="@style/FontStyle" />
+
+            <android.widget.Button
+                android:id="@+id/action_safely_eject"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="5dp"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:drawableTop="@drawable/baseline_link_off_24"
+                android:text="@string/Device_Disconnect_Setting"
+                android:textColor="@android:color/holo_red_light"
+                android:theme="@style/FontStyle" />
+
+            <android.widget.Button
+                android:id="@+id/action_control"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="5dp"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:drawableTop="@drawable/baseline_sliders"
+                android:text="@string/parameter_Setting"
+                android:textColor="@color/white"
+                android:theme="@style/FontStyle" />
+
+        </LinearLayout>
+
+        <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="1dp"
-            android:background="@android:color/transparent"
-            android:drawableTop="@drawable/ic_action_control"
-            android:theme="@style/FontStyle"
-            android:text="@string/parameter_Setting"
-            android:textColor="@color/white" />
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center">
 
-<!--        <android.widget.Button-->
-<!--            android:id="@+id/action_control"-->
-<!--            android:layout_width="wrap_content"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:layout_marginHorizontal="1dp"-->
-<!--            android:background="@android:color/transparent"-->
-<!--            android:drawableTop="@drawable/ic_action_control"-->
-<!--            android:theme="@style/FontStyle"-->
-<!--            android:text="@string/parameter_Setting"-->
-<!--            android:textColor="@color/white" />-->
+            <android.widget.Button
+                android:id="@+id/action_video_format"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="5dp"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:drawableTop="@drawable/baseline_video_settings_24"
+                android:text="@string/Video_Setting"
+                android:textColor="@color/white"
+                android:theme="@style/FontStyle" />
+
+            <android.widget.Button
+                android:id="@+id/action_rotate_90_CW"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="5dp"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:drawableTop="@drawable/baseline_rotate_90_degrees_cw_24"
+                android:text="@string/Rotate_90_CW"
+                android:textColor="@color/white"
+                android:theme="@style/FontStyle" />
+
+            <android.widget.Button
+                android:id="@+id/action_rotate_90_CCW"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="5dp"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:drawableTop="@drawable/baseline_rotate_90_degrees_ccw_24"
+                android:text="@string/Rotate_90_CCW"
+                android:textColor="@color/white"
+                android:theme="@style/FontStyle" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <android.widget.Button
+                android:id="@+id/action_flip_horizontally"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="5dp"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:drawableTop="@drawable/baseline_symmetry_horizontal"
+                android:text="@string/Flip_Horizontally"
+                android:textColor="@color/white"
+                android:theme="@style/FontStyle" />
+
+            <android.widget.Button
+                android:id="@+id/action_flip_vertically"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="5dp"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:drawableTop="@drawable/baseline_symmetry_vertical"
+                android:text="@string/Flip_Vertically"
+                android:textColor="@color/white"
+                android:theme="@style/FontStyle" />
+
+        </LinearLayout>
 
     </LinearLayout>
 
@@ -69,36 +159,46 @@
         android:layout_weight="1"
         android:layout_margin="1dp"
         android:orientation="vertical">
-        <LinearLayout
+
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/KeyMouse_Ctrl_Way"
-                android:theme="@style/FontStyle"
-                android:textColor="@color/white"
-                android:layout_margin="1dp"/>
-
-        </LinearLayout>
+            android:text="@string/KeyMouse_Ctrl_Way"
+            android:theme="@style/FontStyle"
+            android:textColor="@color/white"
+            android:layout_margin="1dp"/>
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_weight="1"
+            android:layout_margin="1dp"
+            android:orientation="vertical"
+            android:layout_gravity="center">
 
             <LinearLayout
-                android:id="@+id/buttonLayout"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <android.widget.Button
+                    android:id="@+id/Rel_ctrl_button"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginHorizontal="5dp"
+                    android:background="@android:color/transparent"
+                    android:drawableTop="@drawable/mouse_icons_cursor"
+                    android:text="@string/KeyMouse_Rel_Ctrl"
+                    android:theme="@style/FontStyle"
+                    android:textColor="@color/white" />
 
                 <android.widget.Button
                     android:id="@+id/Abs_ctrl_default_button"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:layout_marginHorizontal="1dp"
+                    android:layout_marginHorizontal="5dp"
                     android:background="@android:color/transparent"
                     android:drawableTop="@drawable/baseline_ads_click_24"
                     android:theme="@style/FontStyle"
@@ -110,65 +210,11 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:layout_marginHorizontal="1dp"
+                    android:layout_marginHorizontal="5dp"
                     android:background="@android:color/transparent"
                     android:drawableTop="@drawable/hand_index_thumb"
                     android:theme="@style/FontStyle"
                     android:text="@string/KeyMouse_Abs_Drag_Ctrl"
-                    android:textColor="@color/white" />
-
-                <Button
-                    android:id="@+id/drawerButton"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.5"
-                    android:layout_marginHorizontal="1dp"
-                    android:background="@android:color/transparent"
-                    android:drawableRight="@drawable/baseline_keyboard_arrow_left_24"
-                    android:visibility="gone"/>
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/optionLayout"
-                android:layout_width="250dp"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:visibility="gone">
-
-                <CheckBox
-                    android:id="@+id/optionA"
-                    style="@style/Widget.AppCompat.CompoundButton.RadioButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:scaleX="0.8"
-                    android:scaleY="0.8"
-                    android:theme="@style/My_CheckBox2"
-                    android:background="@color/white"
-                    android:text="test"
-                    android:textColor="@color/black"/>
-
-                <Button
-                    android:id="@+id/optionB"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Option B" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center">
-
-                <android.widget.Button
-                    android:id="@+id/Rel_ctrl_button"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginHorizontal="1dp"
-                    android:background="@android:color/transparent"
-                    android:drawableTop="@drawable/mouse_icons_cursor"
-                    android:text="@string/KeyMouse_Rel_Ctrl"
-                    android:theme="@style/FontStyle"
                     android:textColor="@color/white" />
 
             </LinearLayout>

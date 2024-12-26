@@ -149,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
 
     public static boolean mKeyboardRequestSent = false;
 
-    private LinearLayout optionsBar, Fragment_KeyBoard_ShortCut, Fragment_KeyBoard_Function, keyBoardView;
+    private LinearLayout Fragment_KeyBoard_ShortCut, Fragment_KeyBoard_Function, keyBoardView;
     private boolean isOptionsBarVisible = false;
 
     private static boolean KeyMouse_state = false;
@@ -162,6 +162,10 @@ public class MainActivity extends AppCompatActivity {
     private String currentFunctionKey;
 
     private Button KeyBoard_ShortCut, KeyBoard_Function;
+
+    private Button action_device, action_safely_eject;
+    private Drawable action_device_drawable, action_safely_eject_drawable;
+
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -176,7 +180,7 @@ public class MainActivity extends AppCompatActivity {
         mBinding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(mBinding.getRoot());
 
-        setSupportActionBar(mBinding.toolbar);
+//        setSupportActionBar(mBinding.toolbar);
 
         checkCameraHelper();
 
@@ -196,9 +200,6 @@ public class MainActivity extends AppCompatActivity {
         // Setting up the gesture detector
         gestureDetector = new GestureDetector(this, new GestureListener());
 
-        // Initialize the options bar
-        optionsBar = findViewById(R.id.optionsBar);
-
         // Define button IDs
         int[] buttonIds = {R.id.Function1, R.id.Function2, R.id.Function3, R.id.Function4, R.id.Function5, R.id.Function6,
                 R.id.Function7, R.id.Function8, R.id.Function9, R.id.Function10, R.id.Function11, R.id.Function12,
@@ -206,12 +207,12 @@ public class MainActivity extends AppCompatActivity {
                 R.id.NumLk, R.id.TAB, R.id.Esc, R.id.Delete, R.id.ENTER};
 
         // Loop through button IDs and set click listeners
-        for (int buttonId : buttonIds) {
-            Button button = findViewById(buttonId);
+        for (int Function_buttonId : buttonIds) {
+            Button button = findViewById(Function_buttonId);
             button.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    KeyBoardManager.handleButtonClick(buttonId);
+                    KeyBoardManager.handleButtonClick(Function_buttonId);
                 }
             });
         }
@@ -221,53 +222,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 KeyBoardManager.sendKeyBoardFunctionCtrlAltDel();
-            }
-        });
-
-        SwitchButton switchButton = findViewById(R.id.switchButton);
-        switchButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked) {
-                KeyMouse_state = true;
-                CustomTouchListener.KeyMouse_state(KeyMouse_state, keyMouseAbsCtrlState);
-//                Log.d(TAG, "Change ABS KeyMouse");
-            } else {
-                KeyMouse_state = false;
-                CustomTouchListener.KeyMouse_state(KeyMouse_state, keyMouseAbsCtrlState);
-//                Log.d(TAG, "Change REL KeyMouse");
-            }
-        });
-
-        ImageButton btnToggleAppBar = findViewById(R.id.btnToggleAppBar);
-        final AppBarLayout HideAppBarLayout = findViewById(R.id.HideAppBarLayout);
-
-        FloatingActionButton btnOpenAppBar = findViewById(R.id.btnOpenAppBar);
-        btnOpenAppBar.setVisibility(View.GONE);
-
-        btnToggleAppBar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (HideAppBarLayout.getVisibility() == View.VISIBLE) {
-                    HideAppBarLayout.setVisibility(View.GONE);
-                    btnOpenAppBar.setVisibility(View.VISIBLE);
-                    Log.d(TAG, "toggle is GONE");
-                } else {
-                    HideAppBarLayout.setVisibility(View.VISIBLE);
-                    btnOpenAppBar.setVisibility(View.GONE);
-                    Log.d(TAG, "toggle is visible");
-                }
-            }
-        });
-
-        btnOpenAppBar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (HideAppBarLayout.getVisibility() == View.VISIBLE){
-                    HideAppBarLayout.setVisibility(View.GONE);
-                    btnOpenAppBar.setVisibility(View.VISIBLE);
-                }else {
-                    HideAppBarLayout.setVisibility(View.VISIBLE);
-                    btnOpenAppBar.setVisibility(View.GONE);
-                }
             }
         });
 
@@ -354,10 +308,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        LinearLayout buttonLayout, optionLayout;
-        buttonLayout = findViewById(R.id.buttonLayout);
-        optionLayout = findViewById(R.id.optionLayout);
-
         Button Abs_ctrl_default_button = findViewById(R.id.Abs_ctrl_default_button);
         Drawable Abs_ctrl_default_button_drawable = Abs_ctrl_default_button.getCompoundDrawables()[1];
 
@@ -366,9 +316,6 @@ public class MainActivity extends AppCompatActivity {
 
         Button Rel_ctrl_button = findViewById(R.id.Rel_ctrl_button);
         Drawable Rel_ctrl_button_drawable = Rel_ctrl_button.getCompoundDrawables()[1];
-
-        Button drawerButton = findViewById(R.id.drawerButton);
-
 
         Rel_ctrl_button_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
         Rel_ctrl_button.setTextColor(getResources().getColor(android.R.color.holo_red_light));
@@ -432,30 +379,57 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        drawerButton.setOnClickListener(v -> {
-            buttonLayout.setVisibility(View.GONE);
-            optionLayout.setVisibility(View.VISIBLE);
-        });
-
-        findViewById(R.id.optionA).setOnClickListener(v -> {
-            buttonLayout.setVisibility(View.VISIBLE);
-            optionLayout.setVisibility(View.GONE);
-        });
-
-        findViewById(R.id.optionB).setOnClickListener(v -> {
-            buttonLayout.setVisibility(View.VISIBLE);
-            optionLayout.setVisibility(View.GONE);
-        });
-
-        Button action_device = findViewById(R.id.action_device);
-        action_device.setOnClickListener(v -> {
-            showDeviceListDialog();
-        });
-
+        action_device = findViewById(R.id.action_device);
+        action_safely_eject = findViewById(R.id.action_safely_eject);
         Button action_control = findViewById(R.id.action_control);
-        action_control.setOnClickListener(v -> {
-            showCameraControlsDialog();
-        });
+        Button action_video_format = findViewById(R.id.action_video_format);
+        Button action_rotate_90_CW = findViewById(R.id.action_rotate_90_CW);
+        Button action_rotate_90_CCW = findViewById(R.id.action_rotate_90_CCW);
+        Button action_flip_horizontally = findViewById(R.id.action_flip_horizontally);
+        Button action_flip_vertically = findViewById(R.id.action_flip_vertically);
+
+        action_device_drawable = action_device.getCompoundDrawables()[1];
+        action_safely_eject_drawable = action_safely_eject.getCompoundDrawables()[1];
+
+        @SuppressLint("NonConstantResourceId") View.OnClickListener buttonClickListener = view -> {
+            switch (view.getId()) {
+                case R.id.action_device:
+                    showDeviceListDialog();
+                    break;
+                case R.id.action_safely_eject:
+                    safelyEject();
+                    break;
+                case R.id.action_control:
+                    showCameraControlsDialog();
+                    break;
+                case R.id.action_video_format:
+                    showVideoFormatDialog();
+                    break;
+                case R.id.action_rotate_90_CW:
+                    rotateBy(90);
+                    break;
+                case R.id.action_rotate_90_CCW:
+                    rotateBy(-90);
+                    break;
+                case R.id.action_flip_horizontally:
+                    flipHorizontally();
+                    break;
+                case R.id.action_flip_vertically:
+                    flipVertically();
+                    break;
+                default:
+                    break;
+            }
+        };
+
+        action_device.setOnClickListener(buttonClickListener);
+        action_safely_eject.setOnClickListener(buttonClickListener);
+        action_control.setOnClickListener(buttonClickListener);
+        action_video_format.setOnClickListener(buttonClickListener);
+        action_rotate_90_CW.setOnClickListener(buttonClickListener);
+        action_rotate_90_CCW.setOnClickListener(buttonClickListener);
+        action_flip_horizontally.setOnClickListener(buttonClickListener);
+        action_flip_vertically.setOnClickListener(buttonClickListener);
     }
 
     @Override
@@ -579,79 +553,6 @@ public class MainActivity extends AppCompatActivity {
 //        usbDeviceManager.release();
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_control) {
-            showCameraControlsDialog();
-        } else if (id == R.id.action_device) {
-            showDeviceListDialog();
-        } else if (id == R.id.action_safely_eject) {
-            safelyEject();
-        } else if (id == R.id.action_settings) {
-        } else if (id == R.id.action_video_format) {
-            showVideoFormatDialog();
-        } else if (id == R.id.action_rotate_90_CW) {
-            rotateBy(90);
-        } else if (id == R.id.action_rotate_90_CCW) {
-            rotateBy(-90);
-        } else if (id == R.id.action_flip_horizontally) {
-            flipHorizontally();
-        } else if (id == R.id.action_flip_vertically) {
-            flipVertically();
-        } else if (id == R.id.keyBoard) {
-            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);//open keyboard
-            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED,0);
-        } else if (id == R.id.FunctionKey) {
-            toggleOptionsBar();
-        }
-
-        return true;
-    }
-
-    private void toggleOptionsBar() {
-        if (isOptionsBarVisible) {
-            optionsBar.setVisibility(View.GONE);
-        } else {
-            optionsBar.setVisibility(View.VISIBLE);
-        }
-        isOptionsBarVisible = !isOptionsBarVisible;
-    }
-
-    @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        if (mIsCameraConnected) {
-//            menu.findItem(R.id.action_control).setVisible(true);
-            menu.findItem(R.id.action_safely_eject).setVisible(true);
-            menu.findItem(R.id.action_video_format).setVisible(true);
-            menu.findItem(R.id.action_rotate_90_CW).setVisible(true);
-            menu.findItem(R.id.action_rotate_90_CCW).setVisible(true);
-            menu.findItem(R.id.action_flip_horizontally).setVisible(true);
-            menu.findItem(R.id.action_flip_vertically).setVisible(true);
-        } else {
-//            menu.findItem(R.id.action_control).setVisible(false);
-            menu.findItem(R.id.action_safely_eject).setVisible(false);
-            menu.findItem(R.id.action_video_format).setVisible(false);
-            menu.findItem(R.id.action_rotate_90_CW).setVisible(false);
-            menu.findItem(R.id.action_rotate_90_CCW).setVisible(false);
-            menu.findItem(R.id.action_flip_horizontally).setVisible(false);
-            menu.findItem(R.id.action_flip_vertically).setVisible(false);
-        }
-        return super.onPrepareOptionsMenu(menu);
-    }
-
     private void setListeners() {
         mBinding.fabPicture.setOnClickListener(v -> {
             XXPermissions.with(this)
@@ -708,7 +609,6 @@ public class MainActivity extends AppCompatActivity {
             mUsbDevice = usbDevice;
             selectDevice(mUsbDevice);
         });
-
         mDeviceListDialog.show(getSupportFragmentManager(), "device_list");
     }
 
@@ -747,6 +647,12 @@ public class MainActivity extends AppCompatActivity {
     private void safelyEject() {
         if (mCameraHelper != null) {
             mCameraHelper.closeCamera();
+
+            action_safely_eject_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+            action_safely_eject.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+
+            action_device_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+            action_device.setTextColor(getResources().getColor(android.R.color.white));
         }
     }
 
@@ -766,14 +672,14 @@ public class MainActivity extends AppCompatActivity {
     private void flipHorizontally() {
         if (mCameraHelper != null) {
             mCameraHelper.setPreviewConfig(
-                    mCameraHelper.getPreviewConfig().setMirror(MirrorMode.MIRROR_HORIZONTAL));
+                    mCameraHelper.getPreviewConfig().setMirror(MirrorMode.MIRROR_VERTICAL));
         }
     }
 
     private void flipVertically() {
         if (mCameraHelper != null) {
             mCameraHelper.setPreviewConfig(
-                    mCameraHelper.getPreviewConfig().setMirror(MirrorMode.MIRROR_VERTICAL));
+                    mCameraHelper.getPreviewConfig().setMirror(MirrorMode.MIRROR_HORIZONTAL));
         }
     }
 
@@ -864,6 +770,12 @@ public class MainActivity extends AppCompatActivity {
                     if (mCameraHelper != null) {
                         // get usb device
                         mCameraHelper.selectDevice(device);
+
+                        action_device_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+                        action_device.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+
+                        action_safely_eject_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                        action_safely_eject.setTextColor(getResources().getColor(android.R.color.white));
                     }
                 });
     }
@@ -939,6 +851,11 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onDeviceClose(UsbDevice device) {
             if (DEBUG) Log.v(TAG, "onDeviceClose:device=" + device.getDeviceName());
+            action_safely_eject_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+            action_safely_eject.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+
+            action_device_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+            action_device.setTextColor(getResources().getColor(android.R.color.white));
         }
 
         @Override
