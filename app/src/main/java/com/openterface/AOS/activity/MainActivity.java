@@ -50,6 +50,8 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.kyleduo.switchbutton.SwitchButton;
+import com.openterface.AOS.KeyBoardClick.KeyBoardFunction;
+import com.openterface.AOS.KeyBoardClick.KeyBoardShortCut;
 import com.openterface.AOS.serial.CustomTouchListener;
 import com.openterface.AOS.serial.UsbDeviceManager;
 import com.openterface.AOS.target.KeyBoardManager;
@@ -154,6 +156,7 @@ public class MainActivity extends AppCompatActivity {
 
     private static boolean KeyMouse_state = false;
     private static boolean keyMouseAbsCtrlState = false;
+    private static boolean KeyBoard_ShIft_Press = false;
 
 
     KeyBoardManager keyBoardManager = new KeyBoardManager(this);
@@ -200,30 +203,12 @@ public class MainActivity extends AppCompatActivity {
         // Setting up the gesture detector
         gestureDetector = new GestureDetector(this, new GestureListener());
 
-        // Define button IDs
-        int[] buttonIds = {R.id.Function1, R.id.Function2, R.id.Function3, R.id.Function4, R.id.Function5, R.id.Function6,
-                R.id.Function7, R.id.Function8, R.id.Function9, R.id.Function10, R.id.Function11, R.id.Function12,
-                R.id.Win, R.id.PrtSc, R.id.ScrLk, R.id.Pause, R.id.Ins, R.id.Home, R.id.End, R.id.PgUp, R.id.PgDn,
-                R.id.NumLk, R.id.TAB, R.id.Esc, R.id.Delete, R.id.ENTER};
 
-        // Loop through button IDs and set click listeners
-        for (int Function_buttonId : buttonIds) {
-            Button button = findViewById(Function_buttonId);
-            button.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    KeyBoardManager.handleButtonClick(Function_buttonId);
-                }
-            });
-        }
+        //Short Cut Button
+        KeyBoardShortCut KeyBoardShortCut = new KeyBoardShortCut(this);
 
-        Button CtrlAltDelButton = findViewById(R.id.CtrlAltDel);
-        CtrlAltDelButton.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v) {
-                KeyBoardManager.sendKeyBoardFunctionCtrlAltDel();
-            }
-        });
+        //FunctionKey Button
+        KeyBoardFunction KeyBoardFunction = new KeyBoardFunction(this);
 
         usbDeviceManager.setOnDataReadListener(new UsbDeviceManager.OnDataReadListener() {
             @Override
@@ -231,6 +216,20 @@ public class MainActivity extends AppCompatActivity {
 
                 sendNextCharacter();
 
+            }
+        });
+
+
+        Button KeyBoard_Shift = findViewById(R.id.KeyBoard_Shift);
+        KeyBoard_Shift.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!KeyBoard_ShIft_Press) {
+                    KeyBoard_Shift.setBackgroundResource(R.drawable.press_button_background);
+                }else{
+                    KeyBoard_Shift.setBackgroundResource(R.drawable.nopress_button_background);
+                }
+                KeyBoard_ShIft_Press = !KeyBoard_ShIft_Press;
             }
         });
 

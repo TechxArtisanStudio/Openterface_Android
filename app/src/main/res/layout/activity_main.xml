@@ -70,15 +70,15 @@
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/keyBoard"
                 style="@style/MainFloatingActionButton"
+                android:layout_above="@id/set_up_button"
                 android:layout_alignParentRight="true"
-                android:layout_alignParentBottom="true"
                 android:src="@drawable/baseline_keyboard_24" />
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/set_up_button"
                 style="@style/MainFloatingActionButton"
-                android:layout_above="@id/keyBoard"
                 android:layout_alignParentRight="true"
+                android:layout_alignParentBottom="true"
                 android:src="@drawable/baseline_menu_open_24" />
 
             <LinearLayout

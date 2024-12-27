@@ -60,6 +60,16 @@ public class CH9329MSKBMap {
         return DataLen;
     }
 
+    public static Map<Object, String> KBShortCutKey() {
+        Map<Object, String> DataLen = new HashMap<>();
+        DataLen.put("Ctrl", "01");
+        DataLen.put("Shift", "02");
+        DataLen.put("Alt", "04");
+        DataLen.put("Win", "08");
+
+        return DataLen;
+    }
+
     public static Map<Object, String> KBFunctionKey() {
         Map<Object, String> DataLen = new HashMap<>();
         DataLen.put("FunctionKey", "05");

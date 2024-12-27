@@ -100,6 +100,53 @@ public class KeyBoardManager {
         }
     }
 
+    public static void sendKeyBoardShortCut(String modifier, String key) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    if (UsbDeviceManager.port == null){
+                        Log.d(TAG, "sendKeyBoardFunction port is null");
+                        return;
+                    }
+
+                    //Press ShortCut
+                    String sendKBData = "";
+                    sendKBData =
+                            CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
+                                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
+                                    CH9329MSKBMap.getKeyCodeMap().get("address") +
+                                    CH9329MSKBMap.CmdData().get("CmdKB_HID") +
+                                    CH9329MSKBMap.DataLen().get("DataLenKB") +
+                                    CH9329MSKBMap.KBShortCutKey().get(modifier) +
+                                    CH9329MSKBMap.DataNull().get("DataNull") +
+                                    CH9329MSKBMap.getKeyCodeMap().get(key) +
+                                    CH9329MSKBMap.DataNull().get("DataNull") +
+                                    CH9329MSKBMap.DataNull().get("DataNull") +
+                                    CH9329MSKBMap.DataNull().get("DataNull") +
+                                    CH9329MSKBMap.DataNull().get("DataNull") +
+                                    CH9329MSKBMap.DataNull().get("DataNull");
+
+                    sendKBData = sendKBData + CH9329Function.makeChecksum(sendKBData);
+
+                    CH9329Function.checkSendLogData(sendKBData);
+
+                    byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendKBData);
+
+                    try {
+                        UsbDeviceManager.port.write(sendKBDataBytes, 200);
+                        EmptyKeyboard();
+                    } catch (IOException e) {
+                        Log.e(TAG, "Error writing to port: " + e.getMessage());
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
     public static void sendKeyBoardFunctionCtrlAltDel() {
         new Thread(new Runnable() {
             @Override
@@ -112,7 +159,8 @@ public class KeyBoardManager {
 
                     //Press Ctrl+Alt+Del
                     String sendKBData = "";
-                    sendKBData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
+                    sendKBData =
+                            CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
                             CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
                             CH9329MSKBMap.getKeyCodeMap().get("address") +
                             CH9329MSKBMap.CmdData().get("CmdKB_HID") +

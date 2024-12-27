@@ -15,7 +15,7 @@
         android:layout_margin="1dp">
 
         <android.widget.Button
-            android:id="@+id/KeyBoard_Ctrl_Add_C"
+            android:id="@+id/Ctrl_C"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -26,7 +26,7 @@
             android:layout_marginHorizontal="1dp" />
 
         <android.widget.Button
-            android:id="@+id/KeyBoard_Ctrl_Add_V"
+            android:id="@+id/Ctrl_V"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -37,7 +37,7 @@
             android:layout_marginHorizontal="1dp" />
 
         <android.widget.Button
-            android:id="@+id/KeyBoard_Ctrl_Add_Z"
+            android:id="@+id/Ctrl_Z"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -48,7 +48,7 @@
             android:layout_marginHorizontal="1dp" />
 
         <android.widget.Button
-            android:id="@+id/KeyBoard_Ctrl_Add_X"
+            android:id="@+id/Ctrl_X"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -59,7 +59,7 @@
             android:layout_marginHorizontal="1dp" />
 
         <android.widget.Button
-            android:id="@+id/KeyBoard_Ctrl_Add_A"
+            android:id="@+id/Ctrl_A"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -70,7 +70,7 @@
             android:layout_marginHorizontal="1dp" />
 
         <android.widget.Button
-            android:id="@+id/KeyBoard_Ctrl_Add_S"
+            android:id="@+id/Ctrl_S"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -88,7 +88,7 @@
         android:layout_margin="1dp">
 
         <android.widget.Button
-            android:id="@+id/KeyBoard_Win_Add_Tab"
+            android:id="@+id/Win_Tab"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -99,7 +99,7 @@
             android:layout_marginHorizontal="1dp" />
 
         <android.widget.Button
-            android:id="@+id/KeyBoard_Win_Add_S"
+            android:id="@+id/Win_S"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -110,7 +110,7 @@
             android:layout_marginHorizontal="1dp" />
 
         <android.widget.Button
-            android:id="@+id/KeyBoard_Win_Add_E"
+            android:id="@+id/Win_E"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -121,7 +121,7 @@
             android:layout_marginHorizontal="1dp" />
 
         <android.widget.Button
-            android:id="@+id/KeyBoard_Win_Add_R"
+            android:id="@+id/Win_R"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -132,7 +132,7 @@
             android:layout_marginHorizontal="1dp" />
 
         <android.widget.Button
-            android:id="@+id/KeyBoard_Win_Add_D"
+            android:id="@+id/Win_D"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -143,7 +143,7 @@
             android:layout_marginHorizontal="1dp" />
 
         <android.widget.Button
-            android:id="@+id/KeyBoard_Win_Add_L"
+            android:id="@+id/Win_L"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -161,7 +161,7 @@
         android:layout_margin="1dp">
 
         <android.widget.Button
-            android:id="@+id/KeyBoard_Alt_Add_F4"
+            android:id="@+id/Alt_F4"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -183,7 +183,7 @@
             android:layout_marginHorizontal="1dp" />
 
         <android.widget.Button
-            android:id="@+id/KeyBoard_Alt_Add_PrtScr"
+            android:id="@+id/Alt_PrtScr"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
