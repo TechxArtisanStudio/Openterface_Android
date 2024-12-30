@@ -1,13 +1,18 @@
 package com.openterface.AOS.KeyBoardClick;
 
 import android.view.View;
-import android.widget.Button;
-
 import com.openterface.AOS.R;
 import com.openterface.AOS.activity.MainActivity;
+import com.openterface.AOS.target.CH9329MSKBMap;
 import com.openterface.AOS.target.KeyBoardManager;
 
 public class KeyBoardFunction {
+
+    private static boolean KeyBoard_ShIft_Press_state;
+
+    public static void KeyBoard_ShIft_Press(Boolean KeyBoard_ShIft_Press){
+        KeyBoard_ShIft_Press_state = KeyBoard_ShIft_Press;
+    }
 
     private final View[] FunctionButtons;
 
@@ -43,21 +48,29 @@ public class KeyBoardFunction {
                 activity.findViewById(R.id.dropRight),
                 activity.findViewById(R.id.dropUp),
                 activity.findViewById(R.id.dropDown),
+
+                activity.findViewById(R.id.Minus_Sign_Button),
+                activity.findViewById(R.id.Plus_Sign_Button),
+                activity.findViewById(R.id.Left_Bracket_Button),
+                activity.findViewById(R.id.Right_Bracket_Button),
+                activity.findViewById(R.id.Colon_Button),
+                activity.findViewById(R.id.Quotation_Button),
+                activity.findViewById(R.id.Bitwise_OR_Button),
+                activity.findViewById(R.id.Less_Sign_Button),
+                activity.findViewById(R.id.Greater_Sign_Button),
+                activity.findViewById(R.id.Question_Mark),
+                activity.findViewById(R.id.Tilde),
         };
 
         FunctionButtonListeners();
     }
 
     private void FunctionButtonListeners() {
-        FunctionButtons[FunctionButtons.length - 1].setOnClickListener(v -> {
-            KeyBoardManager.sendKeyBoardFunctionCtrlAltDel();
-        });
-
         for (View view : FunctionButtons) {
-            if (view.getId() != R.id.CtrlAltDel) {
-                String Function_buttonId = getKey(view.getId());
-                view.setOnClickListener(v -> handleShortcut(Function_buttonId));
-            }
+            view.setOnClickListener(v -> {
+                String functionButtonId = getKey(view.getId());
+                handleShortcut(functionButtonId);
+            });
         }
     }
 
@@ -93,11 +106,32 @@ public class KeyBoardFunction {
             case R.id.dropRight: return "DPAD_RIGHT";
             case R.id.dropUp: return "DPAD_UP";
             case R.id.dropDown: return "DPAD_DOWN";
+
+            case R.id.Minus_Sign_Button: return KeyBoard_ShIft_Press_state ? "_" : "-";
+            case R.id.Plus_Sign_Button: return KeyBoard_ShIft_Press_state ? "+" : "=";
+            case R.id.Left_Bracket_Button: return KeyBoard_ShIft_Press_state ? "{" : "[";
+            case R.id.Right_Bracket_Button: return KeyBoard_ShIft_Press_state ? "}" : "]";
+            case R.id.Colon_Button: return KeyBoard_ShIft_Press_state ? ":" : ";";
+            case R.id.Quotation_Button: return KeyBoard_ShIft_Press_state ? "\"" : "'";
+            case R.id.Bitwise_OR_Button: return KeyBoard_ShIft_Press_state ? "|" : "\"";
+            case R.id.Less_Sign_Button: return KeyBoard_ShIft_Press_state ? "<" : ",";
+            case R.id.Greater_Sign_Button: return KeyBoard_ShIft_Press_state ? ">" : ".";
+            case R.id.Question_Mark: return KeyBoard_ShIft_Press_state ? "?" : "/";
+            case R.id.Tilde: return "~";
             default: return "";
         }
     }
 
     private void handleShortcut(String Function_buttonId) {
-        KeyBoardManager.sendKeyBoardFunction(Function_buttonId);
+        String FunctionKeyPress;
+        if (KeyBoard_ShIft_Press_state){
+            FunctionKeyPress = "Shift";
+            KeyBoardManager.sendKeyBoardFunction(FunctionKeyPress, Function_buttonId);
+        }else{
+            FunctionKeyPress = "ShortCutKeyNull";
+            KeyBoardManager.sendKeyBoardFunction(FunctionKeyPress, Function_buttonId);
+        }
+        System.out.println("Shift State: " + KeyBoard_ShIft_Press_state);
+
     }
 }

@@ -192,7 +192,7 @@ public class KeyBoardManager {
         }).start();
     }
 
-    public static void sendKeyBoardFunction(String keyName) {
+    public static void sendKeyBoardFunction(String FunctionKeyPress, String keyName) {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -208,7 +208,7 @@ public class KeyBoardManager {
                             CH9329MSKBMap.getKeyCodeMap().get("address") +
                             CH9329MSKBMap.CmdData().get("CmdKB_HID") +
                             CH9329MSKBMap.DataLen().get("DataLenKB") +
-                            CH9329MSKBMap.DataNull().get("DataNull") +
+                            CH9329MSKBMap.KBShortCutKey().get(FunctionKeyPress) +
                             CH9329MSKBMap.DataNull().get("DataNull") +
                             CH9329MSKBMap.getKeyCodeMap().get(keyName) +
                             CH9329MSKBMap.DataNull().get("DataNull") +
@@ -216,6 +216,7 @@ public class KeyBoardManager {
                             CH9329MSKBMap.DataNull().get("DataNull") +
                             CH9329MSKBMap.DataNull().get("DataNull") +
                             CH9329MSKBMap.DataNull().get("DataNull");
+                    System.out.println("FunctionKeyPress: " + CH9329MSKBMap.KBShortCutKey().get(FunctionKeyPress));
                     Log.e(TAG, "successful send keyboard data: " + keyName);
                     sendKBData = sendKBData + CH9329Function.makeChecksum(sendKBData);
 
@@ -332,30 +333,6 @@ public class KeyBoardManager {
                 }
             }
         }).start();
-    }
-
-    public static void handleButtonClick(int buttonId) {
-        int [] buttonIDs = {
-                R.id.Function1, R.id.Function2, R.id.Function3, R.id.Function4,
-                R.id.Function5, R.id.Function6, R.id.Function7, R.id.Function8,
-                R.id.Function9, R.id.Function10, R.id.Function11, R.id.Function12,
-                R.id.Win, R.id.PrtSc, R.id.ScrLk, R.id.Pause, R.id.Ins, R.id.Home,
-                R.id.End, R.id.PgUp, R.id.PgDn, R.id.NumLk, R.id.TAB,
-                R.id.Esc, R.id.Delete, R.id.ENTER
-        };
-
-        String [] functions = {
-            "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10", "F11", "F12",
-            "Win", "PrtSc", "ScrLk", "Pause", "Ins", "Home", "End", "PgUp", "PgDn", "NumLk",
-            "TAB", "Esc", "Delete", "ENTER"
-        };
-
-        for (int i = 0; i < buttonIDs.length; i++) {
-            if (buttonId == buttonIDs[i]) {
-                sendKeyBoardFunction(functions[i]);
-                break;
-            }
-        }
     }
 
     public KeyBoardManager(Context context) {

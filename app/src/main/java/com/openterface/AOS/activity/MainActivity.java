@@ -29,9 +29,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
-import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.graphics.drawable.Drawable;
 import android.hardware.usb.UsbDevice;
@@ -47,9 +45,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
-import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.kyleduo.switchbutton.SwitchButton;
 import com.openterface.AOS.KeyBoardClick.KeyBoardFunction;
 import com.openterface.AOS.KeyBoardClick.KeyBoardShortCut;
 import com.openterface.AOS.serial.CustomTouchListener;
@@ -82,19 +78,15 @@ import android.util.Log;
 import android.view.Display;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.TextureView;
 import android.view.View;
-import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import java.io.File;
@@ -152,14 +144,12 @@ public class MainActivity extends AppCompatActivity {
     public static boolean mKeyboardRequestSent = false;
 
     private LinearLayout Fragment_KeyBoard_ShortCut, Fragment_KeyBoard_Function, keyBoardView;
-    private boolean isOptionsBarVisible = false;
 
     private static boolean KeyMouse_state = false;
     private static boolean keyMouseAbsCtrlState = false;
     private static boolean KeyBoard_ShIft_Press = false;
 
 
-    KeyBoardManager keyBoardManager = new KeyBoardManager(this);
 
     private final Queue<Character> characterQueue = new LinkedList<>();
     private String currentFunctionKey;
@@ -203,6 +193,7 @@ public class MainActivity extends AppCompatActivity {
         // Setting up the gesture detector
         gestureDetector = new GestureDetector(this, new GestureListener());
 
+        KeyBoardManager keyBoardManager = new KeyBoardManager(this);
 
         //Short Cut Button
         KeyBoardShortCut KeyBoardShortCut = new KeyBoardShortCut(this);
@@ -219,16 +210,18 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
         Button KeyBoard_Shift = findViewById(R.id.KeyBoard_Shift);
         KeyBoard_Shift.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (!KeyBoard_ShIft_Press) {
+                    com.openterface.AOS.KeyBoardClick.KeyBoardFunction.KeyBoard_ShIft_Press(true);
                     KeyBoard_Shift.setBackgroundResource(R.drawable.press_button_background);
                 }else{
+                    com.openterface.AOS.KeyBoardClick.KeyBoardFunction.KeyBoard_ShIft_Press(false);
                     KeyBoard_Shift.setBackgroundResource(R.drawable.nopress_button_background);
                 }
+
                 KeyBoard_ShIft_Press = !KeyBoard_ShIft_Press;
             }
         });
@@ -471,22 +464,22 @@ public class MainActivity extends AppCompatActivity {
         String functionKey = KeyBoardManager.getFunctionKey(event, keyCode);
         String keyName = KeyBoardManager.getKeyName(keyCode);
 
-        String pressedChar = String.valueOf((char) event.getUnicodeChar());
-        String targetChars = "~!@#$%^&*()_+{}|:\"<>?";
-        if (targetChars.contains(pressedChar)){
-            Log.d(TAG, "Detected special character: " + pressedChar);
-            KeyBoardManager.sendKeyboardRequest(functionKey, pressedChar);
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    mKeyboardRequestSent = true;
-                }
-            }, 100);
-//            KeyBoardManager.DetectedCharacter(functionKey, pressedChar, targetChars);
-            return true;
-        }else{
+//        String pressedChar = String.valueOf((char) event.getUnicodeChar());
+//        String targetChars = "~!@#$%^&*()_+{}|:\"<>?";
+//        if (targetChars.contains(pressedChar)){
+//            Log.d(TAG, "Detected special character: " + pressedChar);
+//            KeyBoardManager.sendKeyboardRequest(functionKey, pressedChar);
+//            new Handler().postDelayed(new Runnable() {
+//                @Override
+//                public void run() {
+//                    mKeyboardRequestSent = true;
+//                }
+//            }, 100);
+////            KeyBoardManager.DetectedCharacter(functionKey, pressedChar, targetChars);
+//            return true;
+//        }else{
             KeyBoardManager.sendKeyBoardData(functionKey, keyName);
-        }
+//        }
 
         return super.onKeyDown(keyCode, event);
     }
