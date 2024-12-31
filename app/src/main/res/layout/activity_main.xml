@@ -48,24 +48,24 @@
                 android:visibility="gone"
                 tools:text="99:99:99" />
 
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/fabVideo"
-                style="@style/MainFloatingActionButton"
-                android:layout_above="@id/keyBoard"
-                android:layout_alignParentRight="true"
-                android:layout_centerVertical="true"
-                android:layout_marginEnd="@dimen/fab_margin"
-                android:visibility="invisible"
-                app:srcCompat="@drawable/ic_switch_video" />
+<!--            <com.google.android.material.floatingactionbutton.FloatingActionButton-->
+<!--                android:id="@+id/fabVideo"-->
+<!--                style="@style/MainFloatingActionButton"-->
+<!--                android:layout_above="@id/keyBoard"-->
+<!--                android:layout_alignParentRight="true"-->
+<!--                android:layout_centerVertical="true"-->
+<!--                android:layout_marginEnd="@dimen/fab_margin"-->
+<!--                android:visibility="invisible"-->
+<!--                app:srcCompat="@drawable/ic_switch_video" />-->
 
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/fabPicture"
-                style="@style/MainFloatingActionButton"
-                android:layout_above="@id/fabVideo"
-                android:layout_alignParentRight="true"
-                android:layout_marginEnd="@dimen/fab_margin"
-                android:visibility="invisible"
-                app:srcCompat="@drawable/ic_switch_camera" />
+<!--            <com.google.android.material.floatingactionbutton.FloatingActionButton-->
+<!--                android:id="@+id/fabPicture"-->
+<!--                style="@style/MainFloatingActionButton"-->
+<!--                android:layout_above="@id/fabVideo"-->
+<!--                android:layout_alignParentRight="true"-->
+<!--                android:layout_marginEnd="@dimen/fab_margin"-->
+<!--                android:visibility="invisible"-->
+<!--                app:srcCompat="@drawable/ic_switch_camera" />-->
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/keyBoard"

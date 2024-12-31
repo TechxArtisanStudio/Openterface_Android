@@ -118,6 +118,8 @@
     <string name="Rotate_90_CCW">Rotate\n90 CCW</string>
     <string name="Flip_Horizontally">Flip\nHorizontally</string>
     <string name="Flip_Vertically">Flip\nVertically</string>
+    <string name="ScreenHost_Picture">ScreenHost\nPicture</string>
+    <string name="Recording_Video">Recording\nVideo</string>
 
 
     <!--    mouse ctrl mode-->

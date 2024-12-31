@@ -113,7 +113,7 @@ public class KeyBoardFunction {
             case R.id.Right_Bracket_Button: return KeyBoard_ShIft_Press_state ? "}" : "]";
             case R.id.Colon_Button: return KeyBoard_ShIft_Press_state ? ":" : ";";
             case R.id.Quotation_Button: return KeyBoard_ShIft_Press_state ? "\"" : "'";
-            case R.id.Bitwise_OR_Button: return KeyBoard_ShIft_Press_state ? "|" : "\"";
+            case R.id.Bitwise_OR_Button: return KeyBoard_ShIft_Press_state ? "|" : "\\";
             case R.id.Less_Sign_Button: return KeyBoard_ShIft_Press_state ? "<" : ",";
             case R.id.Greater_Sign_Button: return KeyBoard_ShIft_Press_state ? ">" : ".";
             case R.id.Question_Mark: return KeyBoard_ShIft_Press_state ? "?" : "/";
