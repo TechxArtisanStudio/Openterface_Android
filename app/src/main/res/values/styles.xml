@@ -13,7 +13,7 @@
         <item name="fabSize">mini</item>
         <item name="pressedTranslationZ">10dp</item>
         <item name="tint">@color/white</item>
-        <item name="android:backgroundTint">#773700B3</item>
+        <item name="android:backgroundTint">#80000000</item>
     </style>
 
     <style name="TransparentDialogFragment" parent="@android:style/Theme.Dialog">
@@ -84,4 +84,16 @@
         <item name="android:background">#00000000</item>
         <item name="android:textColor">@color/white</item>
     </style>
+
+    <style name="ButtonTextStyle">
+        <item name="android:textAllCaps">false</item>
+<!--        <item name="android:textSize">16sp</item>-->
+<!--        <item name="android:textColor">@color/black</item>-->
+    </style>
+
+    <style name="My_CheckBox2" parent="Theme.AppCompat.Light">
+        <item name="android:colorControlActivated">@color/RED</item>
+        <item name="android:colorControlNormal">@color/black</item>
+    </style>
+
 </resources>

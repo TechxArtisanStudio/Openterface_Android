@@ -29,22 +29,29 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
+import android.graphics.drawable.Drawable;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
 import android.os.Bundle;
 
-import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.kyleduo.switchbutton.SwitchButton;
+import com.openterface.AOS.KeyBoardClick.KeyBoardFunction;
+import com.openterface.AOS.KeyBoardClick.KeyBoardShortCut;
 import com.openterface.AOS.serial.CustomTouchListener;
 import com.openterface.AOS.serial.UsbDeviceManager;
 import com.openterface.AOS.target.KeyBoardManager;
@@ -80,18 +87,22 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.TextureView;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import java.io.File;
 import java.text.DecimalFormat;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.Queue;
+import java.util.LinkedList;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -101,8 +112,6 @@ public class MainActivity extends AppCompatActivity {
     private ActivityMainBinding mBinding;
 
     private static final int QUARTER_SECOND = 250;
-    private static final int HALF_SECOND = 500;
-    private static final int ONE_SECOND = 1000;
 
     private static final int DEFAULT_WIDTH = 640;
     private static final int DEFAULT_HEIGHT = 480;
@@ -142,14 +151,24 @@ public class MainActivity extends AppCompatActivity {
 
     public static boolean mKeyboardRequestSent = false;
 
-    private LinearLayout optionsBar;
+    private LinearLayout Fragment_KeyBoard_ShortCut, Fragment_KeyBoard_Function, keyBoardView;
     private boolean isOptionsBarVisible = false;
 
     private static boolean KeyMouse_state = false;
+    private static boolean keyMouseAbsCtrlState = false;
+    private static boolean KeyBoard_ShIft_Press = false;
 
-    private boolean AppBar = false;
 
     KeyBoardManager keyBoardManager = new KeyBoardManager(this);
+
+    private final Queue<Character> characterQueue = new LinkedList<>();
+    private String currentFunctionKey;
+
+    private Button KeyBoard_ShortCut, KeyBoard_Function;
+
+    private Button action_device, action_safely_eject;
+    private Drawable action_device_drawable, action_safely_eject_drawable;
+
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -164,7 +183,7 @@ public class MainActivity extends AppCompatActivity {
         mBinding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(mBinding.getRoot());
 
-        setSupportActionBar(mBinding.toolbar);
+//        setSupportActionBar(mBinding.toolbar);
 
         checkCameraHelper();
 
@@ -184,82 +203,265 @@ public class MainActivity extends AppCompatActivity {
         // Setting up the gesture detector
         gestureDetector = new GestureDetector(this, new GestureListener());
 
-        // Initialize the options bar
-        optionsBar = findViewById(R.id.optionsBar);
 
-        // Define button IDs
-        int[] buttonIds = {R.id.Function1, R.id.Function2, R.id.Function3, R.id.Function4, R.id.Function5, R.id.Function6,
-                R.id.Function7, R.id.Function8, R.id.Function9, R.id.Function10, R.id.Function11, R.id.Function12,
-                R.id.Win, R.id.PrtSc, R.id.ScrLk, R.id.Pause, R.id.Ins, R.id.Home, R.id.End, R.id.PgUp, R.id.PgDn,
-                R.id.NumLk, R.id.TAB, R.id.CapsLk, R.id.Esc, R.id.Delete, R.id.ENTER};
+        //Short Cut Button
+        KeyBoardShortCut KeyBoardShortCut = new KeyBoardShortCut(this);
 
-        // Loop through button IDs and set click listeners
-        for (int buttonId : buttonIds) {
-            Button button = findViewById(buttonId);
-            button.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    KeyBoardManager.handleButtonClick(buttonId);
+        //FunctionKey Button
+        KeyBoardFunction KeyBoardFunction = new KeyBoardFunction(this);
+
+        usbDeviceManager.setOnDataReadListener(new UsbDeviceManager.OnDataReadListener() {
+            @Override
+            public void onDataRead() {
+
+                sendNextCharacter();
+
+            }
+        });
+
+
+        Button KeyBoard_Shift = findViewById(R.id.KeyBoard_Shift);
+        KeyBoard_Shift.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!KeyBoard_ShIft_Press) {
+                    KeyBoard_Shift.setBackgroundResource(R.drawable.press_button_background);
+                }else{
+                    KeyBoard_Shift.setBackgroundResource(R.drawable.nopress_button_background);
                 }
-            });
-        }
-
-        Button CtrlAltDelButton = findViewById(R.id.CtrlAltDel);
-        CtrlAltDelButton.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v) {
-                KeyBoardManager.sendKeyBoardFunctionCtrlAltDel();
+                KeyBoard_ShIft_Press = !KeyBoard_ShIft_Press;
             }
         });
 
-        SwitchButton switchButton = findViewById(R.id.switchButton);
-        switchButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (isChecked) {
-                KeyMouse_state = true;
-                CustomTouchListener.KeyMouse_state(KeyMouse_state);
-//                Log.d(TAG, "Change ABS KeyMouse");
-            } else {
-                KeyMouse_state = false;
-                CustomTouchListener.KeyMouse_state(KeyMouse_state);
-//                Log.d(TAG, "Change REL KeyMouse");
-            }
-        });
+        Fragment_KeyBoard_ShortCut = findViewById(R.id.Fragment_KeyBoard_ShortCut);
+        Fragment_KeyBoard_Function = findViewById(R.id.Fragment_KeyBoard_Function);
+        keyBoardView = findViewById(R.id.KeyBoard_View);
 
-        ImageButton btnToggleAppBar = findViewById(R.id.btnToggleAppBar);
-        final AppBarLayout HideAppBarLayout = findViewById(R.id.HideAppBarLayout);
+        KeyBoard_ShortCut = findViewById(R.id.KeyBoard_ShortCut);
+        KeyBoard_Function = findViewById(R.id.KeyBoard_Function);
 
-        FloatingActionButton btnOpenAppBar = findViewById(R.id.btnOpenAppBar);
-        btnOpenAppBar.setVisibility(View.GONE);
-
-        btnToggleAppBar.setOnClickListener(new View.OnClickListener() {
+        KeyBoard_ShortCut.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                if (HideAppBarLayout.getVisibility() == View.VISIBLE) {
-                    AppBar = true;
-                    HideAppBarLayout.setVisibility(View.GONE);
-                    btnOpenAppBar.setVisibility(View.VISIBLE);
-                    Log.d(TAG, "toggle is GONE");
-                } else {
-                    AppBar = false;
-                    HideAppBarLayout.setVisibility(View.VISIBLE);
-                    btnOpenAppBar.setVisibility(View.GONE);
-                    Log.d(TAG, "toggle is visible");
-                }
-            }
-        });
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(v.getWindowToken(), 0);//close keyboard
 
-        btnOpenAppBar.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (HideAppBarLayout.getVisibility() == View.VISIBLE){
-                    HideAppBarLayout.setVisibility(View.GONE);
-                    btnOpenAppBar.setVisibility(View.VISIBLE);
+                if (Fragment_KeyBoard_ShortCut.getVisibility() == View.VISIBLE){
+                    KeyBoard_ShortCut.setBackgroundResource(R.drawable.nopress_button_background);
+                    Fragment_KeyBoard_ShortCut.setVisibility(View.GONE);
                 }else {
-                    HideAppBarLayout.setVisibility(View.VISIBLE);
-                    btnOpenAppBar.setVisibility(View.GONE);
+                    Fragment_KeyBoard_ShortCut.setVisibility(View.VISIBLE);
+                    KeyBoard_ShortCut.setBackgroundResource(R.drawable.press_button_background);
+                }
+
+                if (Fragment_KeyBoard_Function.getVisibility() == View.VISIBLE) {
+                    Fragment_KeyBoard_Function.setVisibility(View.GONE);
+                    KeyBoard_Function.setBackgroundResource(R.drawable.nopress_button_background);
                 }
             }
         });
+
+
+        KeyBoard_Function.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(v.getWindowToken(), 0);//close keyboard
+
+                if (Fragment_KeyBoard_Function.getVisibility() == View.VISIBLE){
+                    Fragment_KeyBoard_Function.setVisibility(View.GONE);
+                    KeyBoard_Function.setBackgroundResource(R.drawable.nopress_button_background);
+                }else {
+                    Fragment_KeyBoard_Function.setVisibility(View.VISIBLE);
+                    KeyBoard_Function.setBackgroundResource(R.drawable.press_button_background);
+                }
+
+                if (Fragment_KeyBoard_ShortCut.getVisibility() == View.VISIBLE) {
+                    Fragment_KeyBoard_ShortCut.setVisibility(View.GONE);
+                    KeyBoard_ShortCut.setBackgroundResource(R.drawable.nopress_button_background);
+                }
+            }
+        });
+
+        ImageButton KeyBoard_Close = findViewById(R.id.KeyBoard_Close);
+        KeyBoard_Close.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);//open keyboard
+                imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                keyBoardView.setVisibility(View.GONE);
+            }
+        });
+
+        FloatingActionButton set_up_button = findViewById(R.id.set_up_button);
+        DrawerLayout drawer_layout = findViewById(R.id.drawer_layout);
+        drawer_layout.setScrimColor(0x00ffffff);
+        set_up_button.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                if (drawer_layout.isDrawerOpen(GravityCompat.END)) {
+                    drawer_layout.closeDrawer(GravityCompat.END);
+                } else {
+                    drawer_layout.openDrawer(GravityCompat.END);
+                }
+            }
+        });
+
+        Button Abs_ctrl_default_button = findViewById(R.id.Abs_ctrl_default_button);
+        Drawable Abs_ctrl_default_button_drawable = Abs_ctrl_default_button.getCompoundDrawables()[1];
+
+        Button Abs_ctrl_drag_button = findViewById(R.id.Abs_ctrl_drag_button);
+        Drawable Abs_ctrl_drag_button_drawable = Abs_ctrl_drag_button.getCompoundDrawables()[1];
+
+        Button Rel_ctrl_button = findViewById(R.id.Rel_ctrl_button);
+        Drawable Rel_ctrl_button_drawable = Rel_ctrl_button.getCompoundDrawables()[1];
+
+        Rel_ctrl_button_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+        Rel_ctrl_button.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+
+        Abs_ctrl_default_button.setOnClickListener(v -> {
+
+            if (Abs_ctrl_default_button_drawable != null) {
+
+                Abs_ctrl_default_button_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+                Abs_ctrl_default_button.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+
+                Abs_ctrl_drag_button_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                Abs_ctrl_drag_button.setTextColor(getResources().getColor(android.R.color.white));
+
+                Rel_ctrl_button_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                Rel_ctrl_button.setTextColor(getResources().getColor(android.R.color.white));
+
+                KeyMouse_state = true;
+                keyMouseAbsCtrlState = false;
+                CustomTouchListener.KeyMouse_state(KeyMouse_state, keyMouseAbsCtrlState);
+
+            }
+        });
+
+        Abs_ctrl_drag_button.setOnClickListener(v -> {
+
+            if (Abs_ctrl_drag_button_drawable != null) {
+
+                Abs_ctrl_drag_button_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+                Abs_ctrl_drag_button.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+
+                Abs_ctrl_default_button_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                Abs_ctrl_default_button.setTextColor(getResources().getColor(android.R.color.white));
+
+                Rel_ctrl_button_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                Rel_ctrl_button.setTextColor(getResources().getColor(android.R.color.white));
+
+                KeyMouse_state = true;
+                keyMouseAbsCtrlState = true;
+                CustomTouchListener.KeyMouse_state(KeyMouse_state, keyMouseAbsCtrlState);
+
+            }
+        });
+
+        Rel_ctrl_button.setOnClickListener(v -> {
+
+            if (Rel_ctrl_button_drawable != null) {
+                System.out.println("in this rel button");
+                Rel_ctrl_button_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+                Rel_ctrl_button.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+
+                Abs_ctrl_drag_button_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                Abs_ctrl_drag_button.setTextColor(getResources().getColor(android.R.color.white));
+
+                Abs_ctrl_default_button_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                Abs_ctrl_default_button.setTextColor(getResources().getColor(android.R.color.white));
+
+                KeyMouse_state = false;
+                keyMouseAbsCtrlState = false;
+                CustomTouchListener.KeyMouse_state(KeyMouse_state, keyMouseAbsCtrlState);
+            }
+        });
+
+        action_device = findViewById(R.id.action_device);
+        action_safely_eject = findViewById(R.id.action_safely_eject);
+        Button action_control = findViewById(R.id.action_control);
+        Button action_video_format = findViewById(R.id.action_video_format);
+        Button action_rotate_90_CW = findViewById(R.id.action_rotate_90_CW);
+        Button action_rotate_90_CCW = findViewById(R.id.action_rotate_90_CCW);
+        Button action_flip_horizontally = findViewById(R.id.action_flip_horizontally);
+        Button action_flip_vertically = findViewById(R.id.action_flip_vertically);
+
+        action_device_drawable = action_device.getCompoundDrawables()[1];
+        action_safely_eject_drawable = action_safely_eject.getCompoundDrawables()[1];
+
+        @SuppressLint("NonConstantResourceId") View.OnClickListener buttonClickListener = view -> {
+            switch (view.getId()) {
+                case R.id.action_device:
+                    showDeviceListDialog();
+                    break;
+                case R.id.action_safely_eject:
+                    safelyEject();
+                    break;
+                case R.id.action_control:
+                    showCameraControlsDialog();
+                    break;
+                case R.id.action_video_format:
+                    showVideoFormatDialog();
+                    break;
+                case R.id.action_rotate_90_CW:
+                    rotateBy(90);
+                    break;
+                case R.id.action_rotate_90_CCW:
+                    rotateBy(-90);
+                    break;
+                case R.id.action_flip_horizontally:
+                    flipHorizontally();
+                    break;
+                case R.id.action_flip_vertically:
+                    flipVertically();
+                    break;
+                default:
+                    break;
+            }
+        };
+
+        action_device.setOnClickListener(buttonClickListener);
+        action_safely_eject.setOnClickListener(buttonClickListener);
+        action_control.setOnClickListener(buttonClickListener);
+        action_video_format.setOnClickListener(buttonClickListener);
+        action_rotate_90_CW.setOnClickListener(buttonClickListener);
+        action_rotate_90_CCW.setOnClickListener(buttonClickListener);
+        action_flip_horizontally.setOnClickListener(buttonClickListener);
+        action_flip_vertically.setOnClickListener(buttonClickListener);
+    }
+
+    @Override
+    public boolean onKeyMultiple(int keyCode, int count, KeyEvent event) {
+        String functionKey = KeyBoardManager.getFunctionKey(event, keyCode);
+        if (event.getAction() == KeyEvent.ACTION_MULTIPLE && event.getCharacters() != null) {
+            String characters = event.getCharacters();
+            System.out.println("in this keycode: " + keyCode);
+            System.out.println("in this count: " + count);
+            System.out.println("in this event: " + event);
+            System.out.println("Characters: " + characters);
+
+            for (char Multiple_key : characters.toCharArray()) {
+                characterQueue.add(Multiple_key);
+            }
+
+            currentFunctionKey = functionKey;
+            sendNextCharacter();
+
+            return true;
+        }
+        return super.onKeyMultiple(keyCode, count, event);
+    }
+
+    private void sendNextCharacter() {
+        if (!characterQueue.isEmpty() && currentFunctionKey != null) {
+            char nextChar = characterQueue.poll();
+            String keyName = String.valueOf(nextChar);
+            KeyBoardManager.sendKeyboardMultiple(keyName);
+
+            KeyBoardManager.EmptyKeyboard();
+
+        }
     }
 
     @Override
@@ -273,7 +475,7 @@ public class MainActivity extends AppCompatActivity {
         String targetChars = "~!@#$%^&*()_+{}|:\"<>?";
         if (targetChars.contains(pressedChar)){
             Log.d(TAG, "Detected special character: " + pressedChar);
-            keyBoardManager.sendKeyboardRequest(functionKey, pressedChar);
+            KeyBoardManager.sendKeyboardRequest(functionKey, pressedChar);
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
@@ -350,79 +552,6 @@ public class MainActivity extends AppCompatActivity {
 //        usbDeviceManager.release();
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_control) {
-            showCameraControlsDialog();
-        } else if (id == R.id.action_device) {
-            showDeviceListDialog();
-        } else if (id == R.id.action_safely_eject) {
-            safelyEject();
-        } else if (id == R.id.action_settings) {
-        } else if (id == R.id.action_video_format) {
-            showVideoFormatDialog();
-        } else if (id == R.id.action_rotate_90_CW) {
-            rotateBy(90);
-        } else if (id == R.id.action_rotate_90_CCW) {
-            rotateBy(-90);
-        } else if (id == R.id.action_flip_horizontally) {
-            flipHorizontally();
-        } else if (id == R.id.action_flip_vertically) {
-            flipVertically();
-        } else if (id == R.id.keyBoard) {
-            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);//open keyboard
-            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED,0);
-        } else if (id == R.id.FunctionKey) {
-            toggleOptionsBar();
-        }
-
-        return true;
-    }
-
-    private void toggleOptionsBar() {
-        if (isOptionsBarVisible) {
-            optionsBar.setVisibility(View.GONE);
-        } else {
-            optionsBar.setVisibility(View.VISIBLE);
-        }
-        isOptionsBarVisible = !isOptionsBarVisible;
-    }
-
-    @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        if (mIsCameraConnected) {
-            menu.findItem(R.id.action_control).setVisible(true);
-            menu.findItem(R.id.action_safely_eject).setVisible(true);
-            menu.findItem(R.id.action_video_format).setVisible(true);
-            menu.findItem(R.id.action_rotate_90_CW).setVisible(true);
-            menu.findItem(R.id.action_rotate_90_CCW).setVisible(true);
-            menu.findItem(R.id.action_flip_horizontally).setVisible(true);
-            menu.findItem(R.id.action_flip_vertically).setVisible(true);
-        } else {
-            menu.findItem(R.id.action_control).setVisible(false);
-            menu.findItem(R.id.action_safely_eject).setVisible(false);
-            menu.findItem(R.id.action_video_format).setVisible(false);
-            menu.findItem(R.id.action_rotate_90_CW).setVisible(false);
-            menu.findItem(R.id.action_rotate_90_CCW).setVisible(false);
-            menu.findItem(R.id.action_flip_horizontally).setVisible(false);
-            menu.findItem(R.id.action_flip_vertically).setVisible(false);
-        }
-        return super.onPrepareOptionsMenu(menu);
-    }
-
     private void setListeners() {
         mBinding.fabPicture.setOnClickListener(v -> {
             XXPermissions.with(this)
@@ -441,9 +570,19 @@ public class MainActivity extends AppCompatActivity {
 //                    });
 //        });
 
-//        mBinding.keyBoard.setOnClickListener(v -> {
-//
-//        });
+        mBinding.keyBoard.setOnClickListener(v -> {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);//open keyboard
+            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED,0);
+
+            keyBoardView.setVisibility(View.VISIBLE);
+
+            Fragment_KeyBoard_Function.setVisibility(View.GONE);
+            Fragment_KeyBoard_ShortCut.setVisibility(View.GONE);
+
+            KeyBoard_Function.setBackgroundResource(R.drawable.nopress_button_background);
+            KeyBoard_ShortCut.setBackgroundResource(R.drawable.nopress_button_background);
+
+        });
     }
 
     private void showCameraControlsDialog() {
@@ -469,7 +608,6 @@ public class MainActivity extends AppCompatActivity {
             mUsbDevice = usbDevice;
             selectDevice(mUsbDevice);
         });
-
         mDeviceListDialog.show(getSupportFragmentManager(), "device_list");
     }
 
@@ -508,6 +646,12 @@ public class MainActivity extends AppCompatActivity {
     private void safelyEject() {
         if (mCameraHelper != null) {
             mCameraHelper.closeCamera();
+
+            action_safely_eject_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+            action_safely_eject.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+
+            action_device_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+            action_device.setTextColor(getResources().getColor(android.R.color.white));
         }
     }
 
@@ -527,14 +671,14 @@ public class MainActivity extends AppCompatActivity {
     private void flipHorizontally() {
         if (mCameraHelper != null) {
             mCameraHelper.setPreviewConfig(
-                    mCameraHelper.getPreviewConfig().setMirror(MirrorMode.MIRROR_HORIZONTAL));
+                    mCameraHelper.getPreviewConfig().setMirror(MirrorMode.MIRROR_VERTICAL));
         }
     }
 
     private void flipVertically() {
         if (mCameraHelper != null) {
             mCameraHelper.setPreviewConfig(
-                    mCameraHelper.getPreviewConfig().setMirror(MirrorMode.MIRROR_VERTICAL));
+                    mCameraHelper.getPreviewConfig().setMirror(MirrorMode.MIRROR_HORIZONTAL));
         }
     }
 
@@ -625,6 +769,12 @@ public class MainActivity extends AppCompatActivity {
                     if (mCameraHelper != null) {
                         // get usb device
                         mCameraHelper.selectDevice(device);
+
+                        action_device_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+                        action_device.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+
+                        action_safely_eject_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                        action_safely_eject.setTextColor(getResources().getColor(android.R.color.white));
                     }
                 });
     }
@@ -700,6 +850,11 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onDeviceClose(UsbDevice device) {
             if (DEBUG) Log.v(TAG, "onDeviceClose:device=" + device.getDeviceName());
+            action_safely_eject_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+            action_safely_eject.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+
+            action_device_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+            action_device.setTextColor(getResources().getColor(android.R.color.white));
         }
 
         @Override
@@ -745,7 +900,7 @@ public class MainActivity extends AppCompatActivity {
                 mBinding.viewMainPreview.setVisibility(View.VISIBLE);
                 mBinding.tvConnectUSBCameraTip.setVisibility(View.GONE);
 
-//                mBinding.keyBoard.setVisibility(View.VISIBLE);
+                mBinding.keyBoard.setVisibility(View.VISIBLE);
 //                mBinding.fabPicture.setVisibility(View.VISIBLE);
 //                mBinding.fabVideo.setVisibility(View.VISIBLE);
 
@@ -761,7 +916,7 @@ public class MainActivity extends AppCompatActivity {
                 mBinding.viewMainPreview.setVisibility(View.GONE);
                 mBinding.tvConnectUSBCameraTip.setVisibility(View.VISIBLE);
 
-//                mBinding.keyBoard.setVisibility(View.GONE);
+                mBinding.keyBoard.setVisibility(View.GONE);
 //                mBinding.fabPicture.setVisibility(View.GONE);
 //                mBinding.fabVideo.setVisibility(View.GONE);
 

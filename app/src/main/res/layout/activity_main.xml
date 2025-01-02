@@ -1,268 +1,162 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
-    android:orientation="vertical"
     tools:context="com.openterface.AOS.activity.MainActivity">
 
-    <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/HideAppBarLayout"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:theme="@style/Theme.Usbvideo.AppBarOverlay">
+        android:layout_height="match_parent"
+        android:background="@color/white"
+        android:orientation="vertical">
 
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
+        <RelativeLayout
+            android:id="@+id/root_relative_layout"
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="@color/black"
-            app:popupTheme="@style/Theme.Usbvideo.PopupOverlay">
+            android:layout_height="match_parent"
+            android:background="@color/black">
 
-            <com.kyleduo.switchbutton.SwitchButton
-                android:id="@+id/switchButton"
+            <com.serenegiant.widget.AspectRatioTextureView
+                android:id="@+id/viewMainPreview"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignWithParentIfMissing="true"
+                android:layout_centerInParent="true"
+                android:visibility="invisible" />
+
+            <ImageView
+                android:id="@+id/tvConnectUSBCameraTip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/green"
-                app:kswBackColor="@color/gray_400"
-                app:kswTextOn="Abs"
-                app:kswTextOff="Rel"
-                android:layout_gravity="end"
-                />
+                android:layout_centerInParent="true"
+                app:srcCompat="@drawable/content_dark_eng" />
 
-            <ImageButton
-                android:id="@+id/btnToggleAppBar"
+            <TextView
+                android:id="@+id/tvVideoRecordTime"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="end"
-                android:layout_marginRight="15dp"
-                android:background="@color/black"
-                android:src="@drawable/baseline_aspect_ratio_24">
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="20dp"
+                android:drawableLeft="@drawable/ic_record_red_dot"
+                android:drawablePadding="5dp"
+                android:textColor="@color/black"
+                android:textSize="14sp"
+                android:visibility="gone"
+                tools:text="99:99:99" />
 
-            </ImageButton>
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/fabVideo"
+                style="@style/MainFloatingActionButton"
+                android:layout_above="@id/keyBoard"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="@dimen/fab_margin"
+                android:visibility="invisible"
+                app:srcCompat="@drawable/ic_switch_video" />
 
-        </androidx.appcompat.widget.Toolbar>
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/fabPicture"
+                style="@style/MainFloatingActionButton"
+                android:layout_above="@id/fabVideo"
+                android:layout_alignParentRight="true"
+                android:layout_marginEnd="@dimen/fab_margin"
+                android:visibility="invisible"
+                app:srcCompat="@drawable/ic_switch_camera" />
 
-    </com.google.android.material.appbar.AppBarLayout>
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/keyBoard"
+                style="@style/MainFloatingActionButton"
+                android:layout_above="@id/set_up_button"
+                android:layout_alignParentRight="true"
+                android:src="@drawable/baseline_keyboard_24" />
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/set_up_button"
+                style="@style/MainFloatingActionButton"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentBottom="true"
+                android:src="@drawable/baseline_menu_open_24" />
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/btnOpenAppBar"
-            style="@style/ArrowFloatingActionButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
-            android:layout_centerHorizontal="true"
-            app:srcCompat="@drawable/baseline_keyboard_arrow_down_24"/>
+            <LinearLayout
+                android:id="@+id/KeyBoard_View"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/white"
+                android:visibility="gone"
+                android:layout_alignParentBottom="true">
 
-        <com.serenegiant.widget.AspectRatioTextureView
-            android:id="@+id/viewMainPreview"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignWithParentIfMissing="true"
-            android:layout_centerInParent="true"
-            android:visibility="invisible" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="1dp"
+                    android:layout_marginLeft="1dp"
+                    android:layout_marginRight="1dp"
+                    android:layout_marginBottom="5dp">
 
-        <TextView
-            android:id="@+id/tvConnectUSBCameraTip"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:text="@string/main_connect_usb_tip"
-            android:textColor="@color/black"
-            android:textSize="20dp" />
+                    <android.widget.Button
+                        android:id="@+id/KeyBoard_ShortCut"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="ShortCut"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp" />
 
-        <TextView
-            android:id="@+id/tvVideoRecordTime"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:layout_marginTop="20dp"
-            android:drawableLeft="@drawable/ic_record_red_dot"
-            android:drawablePadding="5dp"
-            android:textColor="@color/black"
-            android:textSize="14sp"
-            android:visibility="gone"
-            tools:text="99:99:99" />
+                    <android.widget.Button
+                        android:id="@+id/KeyBoard_Shift"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Shift"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp" />
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fabVideo"
-            style="@style/MainFloatingActionButton"
-            android:layout_above="@id/keyBoard"
-            android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"
-            android:layout_marginEnd="@dimen/fab_margin"
-            android:visibility="invisible"
-            app:srcCompat="@drawable/ic_switch_video" />
+                    <android.widget.Button
+                        android:id="@+id/KeyBoard_Function"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Function"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp" />
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/fabPicture"
-            style="@style/MainFloatingActionButton"
-            android:layout_above="@id/fabVideo"
-            android:layout_alignParentRight="true"
-            android:layout_marginEnd="@dimen/fab_margin"
-            android:visibility="invisible"
-            app:srcCompat="@drawable/ic_switch_camera" />
+                    <ImageButton
+                        android:id="@+id/KeyBoard_Close"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="0.5"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"
+                        android:src="@drawable/baseline_close_24">
+                    </ImageButton>
+                </LinearLayout>
 
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/keyBoard"
-            style="@style/MainFloatingActionButton"
-            android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"
-            android:layout_marginEnd="@dimen/fab_margin"
-            android:visibility="invisible"
-            app:srcCompat="@mipmap/ic_switch_key_board_foreground" />
+                <include layout="@layout/short_cut_button" />
+                <include layout="@layout/function_button" />
+            </LinearLayout>
 
-        <HorizontalScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/white"
-            android:padding="0dp">
             <LinearLayout
                 android:id="@+id/optionsBar"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
+                android:orientation="vertical"
+                android:background="@color/gray_400"
                 android:visibility="gone">
 
-                <Button
-                    android:id="@+id/Function1"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="F1"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/Function2"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="F2"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/Function3"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="F3"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/Function4"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="F4"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/Function5"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="F5"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/Function6"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="F6"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/Function7"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="F7"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/Function8"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="F8"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/Function9"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="F9"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/Function10"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="F10"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/Function11"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="F11"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/Function12"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="F12"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
+                <android.widget.Button
                     android:id="@+id/Win"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -270,109 +164,10 @@
                     android:textColor="@color/black"
                     android:background="@drawable/button_background"
                     android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
+                    android:layout_marginStart="1dp"
+                    android:layout_marginEnd="1dp"/>
 
-                <Button
-                    android:id="@+id/PrtSc"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="PrtSc"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/ScrLk"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="ScrLk"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/Pause"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Pause"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/Ins"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Ins"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/Home"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Home"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/End"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="End"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/PgUp"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="PgUp"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/PgDn"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="PgDn"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/TAB"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="TAB"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
+                <android.widget.Button
                     android:id="@+id/NumLk"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -380,43 +175,10 @@
                     android:textColor="@color/black"
                     android:background="@drawable/button_background"
                     android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
+                    android:layout_marginStart="1dp"
+                    android:layout_marginEnd="1dp"/>
 
-                <Button
-                    android:id="@+id/CapsLk"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="CapsLk"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/Esc"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Esc"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/Delete"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="DEL"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
+                <android.widget.Button
                     android:id="@+id/ENTER"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -424,48 +186,14 @@
                     android:textColor="@color/black"
                     android:background="@drawable/button_background"
                     android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
-                <Button
-                    android:id="@+id/CtrlAltDel"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Ctrl+Alt+Del"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="4dp"
-                    android:layout_marginEnd="4dp"/>
-
+                    android:layout_marginStart="1dp"
+                    android:layout_marginEnd="1dp"/>
             </LinearLayout>
-        </HorizontalScrollView>
 
-    </RelativeLayout>
+        </RelativeLayout>
 
-    <TextView
-        android:id="@+id/tv_received_data"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Received Data:"
-        android:padding="8dp"
-        android:textSize="16sp"/>
+    </LinearLayout>
 
-    <EditText
-        android:id="@+id/et_hex_input"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Enter Hex Data"
-        android:inputType="text"
-        android:padding="8dp"
-        android:textSize="16sp"/>
+    <include layout="@layout/drawer_layout_setup"/>
 
-    <Button
-        android:id="@+id/btn_send"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Send"
-        android:padding="8dp"
-        android:textSize="16sp"/>
-
-</LinearLayout>
+</androidx.drawerlayout.widget.DrawerLayout>

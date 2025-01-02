@@ -16,6 +16,7 @@
         android:theme="@style/Theme.Usbvideo">
         <activity
             android:name="com.openterface.AOS.activity.MainActivity"
+            android:windowSoftInputMode="adjustResize"
             android:exported="true"
             android:label="@string/app_name"
             android:launchMode="singleTask"

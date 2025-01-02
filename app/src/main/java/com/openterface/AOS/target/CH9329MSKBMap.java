@@ -60,6 +60,16 @@ public class CH9329MSKBMap {
         return DataLen;
     }
 
+    public static Map<Object, String> KBShortCutKey() {
+        Map<Object, String> DataLen = new HashMap<>();
+        DataLen.put("Ctrl", "01");
+        DataLen.put("Shift", "02");
+        DataLen.put("Alt", "04");
+        DataLen.put("Win", "08");
+
+        return DataLen;
+    }
+
     public static Map<Object, String> KBFunctionKey() {
         Map<Object, String> DataLen = new HashMap<>();
         DataLen.put("FunctionKey", "05");
@@ -152,6 +162,32 @@ public class CH9329MSKBMap {
         keyCodeMap.put("X", "1B");
         keyCodeMap.put("Y", "1C");
         keyCodeMap.put("Z", "1D");
+        keyCodeMap.put("a", "04");
+        keyCodeMap.put("b", "05");
+        keyCodeMap.put("c", "06");
+        keyCodeMap.put("d", "07");
+        keyCodeMap.put("e", "08");
+        keyCodeMap.put("f", "09");
+        keyCodeMap.put("g", "0A");
+        keyCodeMap.put("h", "0B");
+        keyCodeMap.put("i", "0C");
+        keyCodeMap.put("j", "0D");
+        keyCodeMap.put("k", "0E");
+        keyCodeMap.put("l", "0F");
+        keyCodeMap.put("m", "10");
+        keyCodeMap.put("n", "11");
+        keyCodeMap.put("o", "12");
+        keyCodeMap.put("p", "13");
+        keyCodeMap.put("q", "14");
+        keyCodeMap.put("r", "15");
+        keyCodeMap.put("s", "16");
+        keyCodeMap.put("t", "17");
+        keyCodeMap.put("u", "18");
+        keyCodeMap.put("v", "19");
+        keyCodeMap.put("w", "1A");
+        keyCodeMap.put("x", "1B");
+        keyCodeMap.put("y", "1C");
+        keyCodeMap.put("z", "1D");
         keyCodeMap.put("0", "27");
         keyCodeMap.put("1", "1E");
         keyCodeMap.put("2", "1F");
@@ -184,6 +220,7 @@ public class CH9329MSKBMap {
         keyCodeMap.put("<", "36");
         keyCodeMap.put(">", "37");
         keyCodeMap.put("?", "38");
+        keyCodeMap.put("'", "34");
 
         //function key
         keyCodeMap.put("GRAVE", "35");

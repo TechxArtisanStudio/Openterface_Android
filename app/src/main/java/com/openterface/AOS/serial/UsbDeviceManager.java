@@ -66,6 +66,16 @@ public class UsbDeviceManager {
     private static final String ACTION_USB_PERMISSION = "com.example.openterface.USB_PERMISSION";
     private UsbDeviceManager usbDeviceManager;
 
+    public interface OnDataReadListener {
+        void onDataRead();
+    }
+
+    private OnDataReadListener onDataReadListener;
+
+    public void setOnDataReadListener(OnDataReadListener listener) {
+        this.onDataReadListener = listener;
+    }
+
 //    public UsbDeviceManager(Context context, TextView tvReceivedData) {
 //        this.context = context;
 //        this.tvReceivedData = tvReceivedData;
@@ -175,14 +185,17 @@ public class UsbDeviceManager {
             byte[] buffer = new byte[1024];
             while (isReading) {
                 try {
-                    int numBytesRead = port.read(buffer, 50);
+                    int numBytesRead = port.read(buffer, 5);
                     if (numBytesRead > 0) {
                         StringBuilder allReadData = new StringBuilder();
                         for (int i = 0; i < numBytesRead; i++) {
                             allReadData.append(String.format("%02X ", buffer[i]));
                         }
                         Log.d(TAG, "Read data: " + allReadData.toString().trim());
-                        Log.d(TAG, "    ");
+                        
+                        if (onDataReadListener != null) {
+                            onDataReadListener.onDataRead();
+                        }
                     }
                 } catch (IOException e) {
                     Log.e(TAG, "Error reading from port", e);

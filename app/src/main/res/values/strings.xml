@@ -50,4 +50,40 @@
     <string name="camera_controls_text_60hz">60Hz</string>
     <string name="camera_controls_button_close">Close</string>
     <string name="camera_controls_button_reset">Reset</string>
+
+    <!--    short_cut-->
+    <string name="KeyBoard_Ctrl_Add_C">Ctrl+C\nCopy</string>
+    <string name="KeyBoard_Ctrl_Add_V">Ctrl+V\nPaste</string>
+    <string name="KeyBoard_Ctrl_Add_A">Ctrl+A\nSelect All</string>
+    <string name="KeyBoard_Ctrl_Add_X">Ctrl+X\nCut</string>
+    <string name="KeyBoard_Ctrl_Add_Z">Ctrl+Z\nRevocation</string>
+    <string name="KeyBoard_Ctrl_Add_S">Ctrl+S\nSave</string>
+
+    <string name="KeyBoard_Win_Add_Tab">Win+Tab\nTask View</string>
+    <string name="KeyBoard_Win_Add_S">Win+S\nSearch</string>
+    <string name="KeyBoard_Win_Add_E">Win+E\nFile Explorer</string>
+    <string name="KeyBoard_Win_Add_R">Win+R\nRun command</string>
+    <string name="KeyBoard_Win_Add_D">Win+D\nDesktop</string>
+    <string name="KeyBoard_Win_Add_L">Win+L\nLock PC</string>
+
+    <string name="KeyBoard_Alt_Add_F4">Alt+F4\nClose Window</string>
+    <string name="KeyBoard_Ctrl_Add_Alt_Add_Del">Ctrl+Alt+Del\nTask Manager</string>
+    <string name="KeyBoard_Alt_Add_PrtScr">Alt+PrtScr\nWindow Screenshot</string>
+
+<!--    OpenterFace Setting-->
+    <string name="Device_Connect_Setting">Device\nConnect</string>
+    <string name="Device_Disconnect_Setting">Device\nDisconnect</string>
+    <string name="parameter_Setting">Parameter\nSetting</string>
+    <string name="Video_Setting">Video\nSetting</string>
+    <string name="Rotate_90_CW">Rotate\n90 CW</string>
+    <string name="Rotate_90_CCW">Rotate\n90 CCW</string>
+    <string name="Flip_Horizontally">Flip\nHorizontally</string>
+    <string name="Flip_Vertically">Flip\nVertically</string>
+
+
+    <!--    mouse ctrl mode-->
+    <string name="KeyMouse_Ctrl_Way">Mouse Ctrl Way</string>
+    <string name="KeyMouse_Abs_Ctrl">Touch\nMode</string>
+    <string name="KeyMouse_Abs_Drag_Ctrl">Drag\nMode</string>
+    <string name="KeyMouse_Rel_Ctrl">Pointer\nMode</string>
 </resources>
