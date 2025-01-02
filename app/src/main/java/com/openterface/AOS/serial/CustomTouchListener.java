@@ -24,10 +24,14 @@
  */
 package com.openterface.AOS.serial;
 
+import android.content.Context;
 import android.os.Handler;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+
+import com.openterface.AOS.ProgressView.CircularProgressView;
 import com.openterface.AOS.target.MouseManager;
 
 public class CustomTouchListener implements View.OnTouchListener {
@@ -55,21 +59,47 @@ public class CustomTouchListener implements View.OnTouchListener {
 
     private long ignoreMoveUntil = 0;
 
-    long lastSendTime = System.currentTimeMillis();
+    private CircularProgressView circularProgressView;
+    private View parentView; // The parent view to which the CircularProgressView will be added
+    private Handler progressHandler = new Handler();
+    private Runnable progressRunnable;
+    private float currentProgress = 0f;
+    private static final long PROGRESS_UPDATE_INTERVAL = 50;
 
     public static void KeyMouse_state(boolean keyMouseState, boolean keyMouseAbsCtrlState) {
         KeyMouse_state = keyMouseState;
         keyMouseAbsCtrl = keyMouseAbsCtrlState;
     }
 
-    public CustomTouchListener(UsbDeviceManager usbDeviceManager) {
+    public CustomTouchListener(Context context, UsbDeviceManager usbDeviceManager, View parentView) {
         CustomTouchListener.usbDeviceManager = usbDeviceManager;
+        this.parentView = parentView;
+        circularProgressView = new CircularProgressView(context);
+        circularProgressView.setVisibility(View.GONE);
+        ((ViewGroup) parentView).addView(circularProgressView);
     }
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         switch (event.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
+//                isLongPress = true;
+//                StartMoveMSX = event.getX();
+//                StartMoveMSY = event.getY();
+//                circularProgressView.setCenter(StartMoveMSX, StartMoveMSY);
+//                circularProgressView.setVisibility(View.VISIBLE);
+//                currentProgress = 0f;
+//                progressHandler.post(progressRunnable = new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        if (isLongPress && currentProgress < 1f) {
+//                            System.out.println("11111");
+//                            currentProgress += 0.02f;
+//                            circularProgressView.setProgress(currentProgress);
+//                            progressHandler.postDelayed(this, PROGRESS_UPDATE_INTERVAL);
+//                        }
+//                    }
+//                });
                 handActionDownMouse(event);
                 break;
 
@@ -86,29 +116,38 @@ public class CustomTouchListener implements View.OnTouchListener {
                 break;
 
             case MotionEvent.ACTION_UP:
-                if (KeyMouse_state){
+            case MotionEvent.ACTION_CANCEL:
+//                isLongPress = false;
+//                handler.removeCallbacks(longPressRunnable);
+//                circularProgressView.setVisibility(View.GONE);
+                if (KeyMouse_state) {
                     MouseManager.sendHexAbsData(StartMoveMSX, StartMoveMSY);
                     System.out.println("this is action up");
-                }else {
+                } else {
                     handActionUpMouse(event);
                 }
-                break;
-
-            case MotionEvent.ACTION_CANCEL:
-                handActionUpMouse(event);
                 break;
         }
         return true;
     }
 
-    private void handActionDownMouse(MotionEvent event){
+    private Runnable longPressRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (isLongPress) {
+                circularProgressView.setProgress(1);
+            }
+        }
+    };
+
+    private void handActionDownMouse(MotionEvent event) {
         System.out.println("this is action down");
         isLongPress = false;
         StartMoveMSX = event.getX();
         StartMoveMSY = event.getY();
     }
 
-    private void handActionPointerDownMouse(MotionEvent event){
+    private void handActionPointerDownMouse(MotionEvent event) {
         if (event.getPointerCount() == 2) {
             startY1 = event.getY(0);
             startY2 = event.getY(1);
@@ -126,14 +165,13 @@ public class CustomTouchListener implements View.OnTouchListener {
         }
     }
 
-    private void handActionMoveMouse(MotionEvent event){
+    private void handActionMoveMouse(MotionEvent event) {
         long currentTime = System.currentTimeMillis();
         if (isPanning && event.getPointerCount() == 2) {
             float y1 = event.getY(0) - startY1;
             float y2 = event.getY(1) - startY2;
             StartMoveMSY = event.getY();
             if (((y1 > 100 && y2 > 100) || (y1 < -100 && y2 < -100))) {
-                // Check if enough time has elapsed since the last move
                 if (currentTime - lastMoveTime >= MOVE_DELAY) {
                     handler.removeCallbacks(twoFingerPressRunnable);
                     Log.d(TAG, "ACTION_MOVE");
@@ -142,7 +180,6 @@ public class CustomTouchListener implements View.OnTouchListener {
                     hasHandledMove = true;
                     LastMoveMSY = StartMoveMSY;
 
-                    // Update lastMoveTime to the current time
                     lastMoveTime = currentTime;
                 }
             }
@@ -154,9 +191,9 @@ public class CustomTouchListener implements View.OnTouchListener {
             }
 
             if (KeyMouse_state) {
-                if (keyMouseAbsCtrl){
+                if (keyMouseAbsCtrl) {
                     MouseManager.sendHexAbsDragData(StartMoveMSX, StartMoveMSY);
-                }else {
+                } else {
                     MouseManager.sendHexAbsData(StartMoveMSX, StartMoveMSY);
                 }
             } else {
@@ -168,7 +205,7 @@ public class CustomTouchListener implements View.OnTouchListener {
         }
     }
 
-    private void handActionPointerUpMouse(MotionEvent event){
+    private void handActionPointerUpMouse(MotionEvent event) {
         if (event.getPointerCount() == 2) {
             isPanning = false;
             hasHandledMove = false;
@@ -177,20 +214,19 @@ public class CustomTouchListener implements View.OnTouchListener {
         }
     }
 
-    private void handActionUpMouse(MotionEvent event){
+    private void handActionUpMouse(MotionEvent event) {
         long clickTime = System.currentTimeMillis();
         if (clickTime - lastClickTime <= DOUBLE_CLICK_TIME_DELTA) {
-                Log.d(TAG, "Double click at the same position");
+            Log.d(TAG, "Double click at the same position");
 
-                if (KeyMouse_state) {
-                    MouseManager.handleDoubleClickAbs(StartMoveMSX, StartMoveMSY);
-                } else {
-                    MouseManager.handleDoubleClickRel();
-                }
+            if (KeyMouse_state) {
+                MouseManager.handleDoubleClickAbs(StartMoveMSX, StartMoveMSY);
+            } else {
+                MouseManager.handleDoubleClickRel();
+            }
 
-                isDoubleClickHandled = true;
-                lastDoubleClickTime = clickTime;
-
+            isDoubleClickHandled = true;
+            lastDoubleClickTime = clickTime;
         }
         LastMoveMSX = 0;
         LastMoveMSY = 0;
