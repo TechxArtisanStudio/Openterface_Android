@@ -163,7 +163,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean isLongPress = false;
 
 
-    @SuppressLint("ClickableViewAccessibility")
+    @SuppressLint("ClickableViewAccessibility")//add
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Window window = getWindow();
