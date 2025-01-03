@@ -33,7 +33,6 @@ jobs:
     - name: Build Release APK
       run: ./gradlew assembleRelease -x lint --info
       env:
-        signingKeyBase64: ${{ secrets.ANDROID_KEYSTORE }}
         SIGNING_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
         SIGNING_KEY_ALIAS: ${{ secrets.ALIAS }}
         SIGNING_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
