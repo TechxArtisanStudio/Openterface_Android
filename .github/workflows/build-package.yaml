@@ -21,11 +21,11 @@ jobs:
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
 
-#    - name: Decode Keystore
-#      env:
-#        ENCODED_STRING: ${{ secrets.SIGNING_KEY }}
-#      run: |
-#        echo $ENCODED_STRING | base64 -di > app/keystore.jks
+    - name: Decode Keystore
+      env:
+        ENCODED_STRING: ${{ secrets.SIGNING_KEY }}
+      run: |
+        echo $ENCODED_STRING | base64 -di > app/keystore.jks
 
     - name: Clean Gradle
       run: ./gradlew clean
