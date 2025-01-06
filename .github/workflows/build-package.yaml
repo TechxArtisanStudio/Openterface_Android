@@ -21,11 +21,11 @@ jobs:
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v4
 
-#    - name: Decode Keystore
-#      env:
-#        ENCODED_STRING: ${{ secrets.SIGNING_KEY }}
-#      run: |
-#        echo $ENCODED_STRING | base64 -di > app/keystore.jks
+    - name: Decode Keystore
+      env:
+        ENCODED_STRING: ${{ secrets.SIGNING_KEY }}
+      run: |
+        echo $ENCODED_STRING | base64 -di > app/keystore.jks
 
     - name: Clean Gradle
       run: ./gradlew clean
@@ -33,7 +33,6 @@ jobs:
     - name: Build Release APK
       run: ./gradlew assembleRelease -x lint --info
       env:
-        ENCODED_STRING: ${{ secrets.ANDROID_KEYSTORE }}
         SIGNING_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
         SIGNING_KEY_ALIAS: ${{ secrets.ALIAS }}
         SIGNING_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
