@@ -65,7 +65,7 @@ dependencies {
     // Permission request framework
     implementation 'com.github.getActivity:XXPermissions:13.5'
 //    implementation 'com.github.warkiz.widget:indicatorseekbar:2.1.2'
-    implementation 'com.github.warkiz:IndicatorSeekBar:v2.1.0'
+//    implementation 'com.github.warkiz:IndicatorSeekBar:v2.1.0'
     // Takt library for logging
     releaseImplementation 'jp.wasabeef:takt-no-op:2.1.1'
     // Debug implementation for logging
