@@ -29,9 +29,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
-import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.graphics.drawable.Drawable;
 import android.hardware.usb.UsbDevice;
@@ -47,11 +45,10 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
-import com.google.android.material.appbar.AppBarLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.kyleduo.switchbutton.SwitchButton;
 import com.openterface.AOS.KeyBoardClick.KeyBoardFunction;
 import com.openterface.AOS.KeyBoardClick.KeyBoardShortCut;
+import com.openterface.AOS.ProgressView.CircularProgressView;
 import com.openterface.AOS.serial.CustomTouchListener;
 import com.openterface.AOS.serial.UsbDeviceManager;
 import com.openterface.AOS.target.KeyBoardManager;
@@ -82,19 +79,15 @@ import android.util.Log;
 import android.view.Display;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.TextureView;
 import android.view.View;
-import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import java.io.File;
@@ -152,14 +145,10 @@ public class MainActivity extends AppCompatActivity {
     public static boolean mKeyboardRequestSent = false;
 
     private LinearLayout Fragment_KeyBoard_ShortCut, Fragment_KeyBoard_Function, keyBoardView;
-    private boolean isOptionsBarVisible = false;
 
     private static boolean KeyMouse_state = false;
     private static boolean keyMouseAbsCtrlState = false;
     private static boolean KeyBoard_ShIft_Press = false;
-
-
-    KeyBoardManager keyBoardManager = new KeyBoardManager(this);
 
     private final Queue<Character> characterQueue = new LinkedList<>();
     private String currentFunctionKey;
@@ -169,8 +158,12 @@ public class MainActivity extends AppCompatActivity {
     private Button action_device, action_safely_eject;
     private Drawable action_device_drawable, action_safely_eject_drawable;
 
+    private CircularProgressView circularProgressView;
+    private Handler handler = new Handler();
+    private boolean isLongPress = false;
 
-    @SuppressLint("ClickableViewAccessibility")
+
+    @SuppressLint("ClickableViewAccessibility")//add
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Window window = getWindow();
@@ -197,12 +190,16 @@ public class MainActivity extends AppCompatActivity {
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
 
+        View parentView = findViewById(R.id.root_relative_layout);
         //deal mouse click and button ,you can jump CustomTouchListener java
-        mBinding.viewMainPreview.setOnTouchListener(new CustomTouchListener(usbDeviceManager));
+        CustomTouchListener customTouchListener = new CustomTouchListener(this, usbDeviceManager, parentView);
+
+        mBinding.viewMainPreview.setOnTouchListener(customTouchListener);
 
         // Setting up the gesture detector
         gestureDetector = new GestureDetector(this, new GestureListener());
 
+        KeyBoardManager keyBoardManager = new KeyBoardManager(this);
 
         //Short Cut Button
         KeyBoardShortCut KeyBoardShortCut = new KeyBoardShortCut(this);
@@ -219,16 +216,18 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
         Button KeyBoard_Shift = findViewById(R.id.KeyBoard_Shift);
         KeyBoard_Shift.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (!KeyBoard_ShIft_Press) {
+                    com.openterface.AOS.KeyBoardClick.KeyBoardFunction.KeyBoard_ShIft_Press(true);
                     KeyBoard_Shift.setBackgroundResource(R.drawable.press_button_background);
                 }else{
+                    com.openterface.AOS.KeyBoardClick.KeyBoardFunction.KeyBoard_ShIft_Press(false);
                     KeyBoard_Shift.setBackgroundResource(R.drawable.nopress_button_background);
                 }
+
                 KeyBoard_ShIft_Press = !KeyBoard_ShIft_Press;
             }
         });
@@ -295,6 +294,7 @@ public class MainActivity extends AppCompatActivity {
 
         FloatingActionButton set_up_button = findViewById(R.id.set_up_button);
         DrawerLayout drawer_layout = findViewById(R.id.drawer_layout);
+        drawer_layout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
         drawer_layout.setScrimColor(0x00ffffff);
         set_up_button.setOnClickListener(new View.OnClickListener(){
             @Override
@@ -386,6 +386,9 @@ public class MainActivity extends AppCompatActivity {
         Button action_rotate_90_CCW = findViewById(R.id.action_rotate_90_CCW);
         Button action_flip_horizontally = findViewById(R.id.action_flip_horizontally);
         Button action_flip_vertically = findViewById(R.id.action_flip_vertically);
+        Button ScreenHost_Picture = findViewById(R.id.ScreenHost_Picture);
+        Button Recording_Video = findViewById(R.id.Recording_Video);
+        Button Close_DrawLayout = findViewById(R.id.Close_DrawLayout);
 
         action_device_drawable = action_device.getCompoundDrawables()[1];
         action_safely_eject_drawable = action_safely_eject.getCompoundDrawables()[1];
@@ -416,6 +419,17 @@ public class MainActivity extends AppCompatActivity {
                 case R.id.action_flip_vertically:
                     flipVertically();
                     break;
+                case R.id.ScreenHost_Picture:
+                    takePicture();
+                    break;
+                case R.id.Recording_Video:
+                    toggleVideoRecord(!mIsRecording);
+                    break;
+                case R.id.Close_DrawLayout:
+                    if (drawer_layout.isDrawerOpen(GravityCompat.END)) {
+                        drawer_layout.closeDrawer(GravityCompat.END);
+                    }
+                    break;
                 default:
                     break;
             }
@@ -429,7 +443,19 @@ public class MainActivity extends AppCompatActivity {
         action_rotate_90_CCW.setOnClickListener(buttonClickListener);
         action_flip_horizontally.setOnClickListener(buttonClickListener);
         action_flip_vertically.setOnClickListener(buttonClickListener);
+        ScreenHost_Picture.setOnClickListener(buttonClickListener);
+        Recording_Video.setOnClickListener(buttonClickListener);
+        Close_DrawLayout.setOnClickListener(buttonClickListener);
     }
+
+    private Runnable longPressRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (isLongPress) {
+                circularProgressView.setProgress(1);
+            }
+        }
+    };
 
     @Override
     public boolean onKeyMultiple(int keyCode, int count, KeyEvent event) {
@@ -471,22 +497,22 @@ public class MainActivity extends AppCompatActivity {
         String functionKey = KeyBoardManager.getFunctionKey(event, keyCode);
         String keyName = KeyBoardManager.getKeyName(keyCode);
 
-        String pressedChar = String.valueOf((char) event.getUnicodeChar());
-        String targetChars = "~!@#$%^&*()_+{}|:\"<>?";
-        if (targetChars.contains(pressedChar)){
-            Log.d(TAG, "Detected special character: " + pressedChar);
-            KeyBoardManager.sendKeyboardRequest(functionKey, pressedChar);
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    mKeyboardRequestSent = true;
-                }
-            }, 100);
-//            KeyBoardManager.DetectedCharacter(functionKey, pressedChar, targetChars);
-            return true;
-        }else{
+//        String pressedChar = String.valueOf((char) event.getUnicodeChar());
+//        String targetChars = "~!@#$%^&*()_+{}|:\"<>?";
+//        if (targetChars.contains(pressedChar)){
+//            Log.d(TAG, "Detected special character: " + pressedChar);
+//            KeyBoardManager.sendKeyboardRequest(functionKey, pressedChar);
+//            new Handler().postDelayed(new Runnable() {
+//                @Override
+//                public void run() {
+//                    mKeyboardRequestSent = true;
+//                }
+//            }, 100);
+////            KeyBoardManager.DetectedCharacter(functionKey, pressedChar, targetChars);
+//            return true;
+//        }else{
             KeyBoardManager.sendKeyBoardData(functionKey, keyName);
-        }
+//        }
 
         return super.onKeyDown(keyCode, event);
     }
@@ -553,13 +579,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setListeners() {
-        mBinding.fabPicture.setOnClickListener(v -> {
-            XXPermissions.with(this)
-                    .permission(Manifest.permission.MANAGE_EXTERNAL_STORAGE)
-                    .request((permissions, all) -> {
-                        takePicture();
-                    });
-        });
+//        mBinding.fabPicture.setOnClickListener(v -> {
+//            XXPermissions.with(this)
+//                    .permission(Manifest.permission.MANAGE_EXTERNAL_STORAGE)
+//                    .request((permissions, all) -> {
+//                        takePicture();
+//                    });
+//        });
 
 //        mBinding.fabVideo.setOnClickListener(v -> {
 //            XXPermissions.with(this)
@@ -901,24 +927,23 @@ public class MainActivity extends AppCompatActivity {
                 mBinding.tvConnectUSBCameraTip.setVisibility(View.GONE);
 
                 mBinding.keyBoard.setVisibility(View.VISIBLE);
-//                mBinding.fabPicture.setVisibility(View.VISIBLE);
-//                mBinding.fabVideo.setVisibility(View.VISIBLE);
 
+                Button Recording_Video = findViewById(R.id.Recording_Video);
+                Drawable Recording_Video_drawable = Recording_Video.getCompoundDrawables()[1];
                 // Update record button
-                int colorId = R.color.WHITE;
                 if (mIsRecording) {
-                    colorId = R.color.RED;
+                    Recording_Video_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+                    Recording_Video.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+                }else{
+                    Recording_Video_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                    Recording_Video.setTextColor(getResources().getColor(android.R.color.white));
                 }
-                ColorStateList colorStateList = ColorStateList.valueOf(getResources().getColor(colorId));
-//                mBinding.fabVideo.setSupportImageTintList(colorStateList);
 
             } else {
                 mBinding.viewMainPreview.setVisibility(View.GONE);
                 mBinding.tvConnectUSBCameraTip.setVisibility(View.VISIBLE);
 
                 mBinding.keyBoard.setVisibility(View.GONE);
-//                mBinding.fabPicture.setVisibility(View.GONE);
-//                mBinding.fabVideo.setVisibility(View.GONE);
 
                 mBinding.tvVideoRecordTime.setVisibility(View.GONE);
             }

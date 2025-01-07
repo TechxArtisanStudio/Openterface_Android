@@ -62,6 +62,7 @@ public class CH9329MSKBMap {
 
     public static Map<Object, String> KBShortCutKey() {
         Map<Object, String> DataLen = new HashMap<>();
+        DataLen.put("ShortCutKeyNull", "00");
         DataLen.put("Ctrl", "01");
         DataLen.put("Shift", "02");
         DataLen.put("Alt", "04");
@@ -188,39 +189,28 @@ public class CH9329MSKBMap {
         keyCodeMap.put("x", "1B");
         keyCodeMap.put("y", "1C");
         keyCodeMap.put("z", "1D");
-        keyCodeMap.put("0", "27");
-        keyCodeMap.put("1", "1E");
-        keyCodeMap.put("2", "1F");
-        keyCodeMap.put("3", "20");
-        keyCodeMap.put("4", "21");
-        keyCodeMap.put("5", "22");
-        keyCodeMap.put("6", "23");
-        keyCodeMap.put("7", "24");
-        keyCodeMap.put("8", "25");
-        keyCodeMap.put("9", "26");
 
-        keyCodeMap.put("~", "35");
-        keyCodeMap.put("!", "1E");
-        keyCodeMap.put("@", "1F");
-        keyCodeMap.put("#", "20");
-        keyCodeMap.put("$", "21");
-        keyCodeMap.put("%", "22");
-        keyCodeMap.put("^", "23");
-        keyCodeMap.put("&", "24");
-        keyCodeMap.put("*", "25");
-        keyCodeMap.put("(", "26");
-        keyCodeMap.put(")", "27");
-        keyCodeMap.put("_", "2D");
-        keyCodeMap.put("+", "2E");
-        keyCodeMap.put("{", "2F");
-        keyCodeMap.put("}", "30");
-        keyCodeMap.put("|", "31");
-        keyCodeMap.put(":", "33");
-        keyCodeMap.put("'\'", "34");
-        keyCodeMap.put("<", "36");
-        keyCodeMap.put(">", "37");
-        keyCodeMap.put("?", "38");
-        keyCodeMap.put("'", "34");
+        keyCodeMap.put("1", "1E");keyCodeMap.put("!", "1E");
+        keyCodeMap.put("2", "1F");keyCodeMap.put("@", "1F");
+        keyCodeMap.put("3", "20");keyCodeMap.put("#", "20");
+        keyCodeMap.put("4", "21");keyCodeMap.put("$", "21");
+        keyCodeMap.put("5", "22");keyCodeMap.put("%", "22");
+        keyCodeMap.put("6", "23");keyCodeMap.put("^", "23");
+        keyCodeMap.put("7", "24");keyCodeMap.put("&", "24");
+        keyCodeMap.put("8", "25");keyCodeMap.put("*", "25");
+        keyCodeMap.put("9", "26");keyCodeMap.put("(", "26");
+        keyCodeMap.put("0", "27");keyCodeMap.put(")", "27");
+        keyCodeMap.put("`", "35");keyCodeMap.put("~", "35");
+        keyCodeMap.put("-", "2D");keyCodeMap.put("_", "2D");
+        keyCodeMap.put("+", "2E");keyCodeMap.put("=", "2E");
+        keyCodeMap.put("[", "2F");keyCodeMap.put("{", "2F");
+        keyCodeMap.put("]", "30");keyCodeMap.put("}", "30");
+        keyCodeMap.put("|", "64");keyCodeMap.put("\\", "64");
+        keyCodeMap.put(";", "33");keyCodeMap.put(":", "33");
+        keyCodeMap.put(",", "36");keyCodeMap.put("<", "36");
+        keyCodeMap.put(".", "37");keyCodeMap.put(">", "37");
+        keyCodeMap.put("/", "38");keyCodeMap.put("?", "38");
+        keyCodeMap.put("'", "34");keyCodeMap.put("\"", "34");
 
         //function key
         keyCodeMap.put("GRAVE", "35");

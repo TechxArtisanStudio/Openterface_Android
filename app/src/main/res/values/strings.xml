@@ -70,7 +70,46 @@
     <string name="KeyBoard_Ctrl_Add_Alt_Add_Del">Ctrl+Alt+Del\nTask Manager</string>
     <string name="KeyBoard_Alt_Add_PrtScr">Alt+PrtScr\nWindow Screenshot</string>
 
-<!--    OpenterFace Setting-->
+    <!--    Function button-->
+    <string name="Minus_Sign_Button">_\n-</string>
+    <string name="Plus_Sign_Button">+\n=</string>
+    <string name="Left_Bracket_Button">{\n[</string>
+    <string name="Right_Bracket_Button">}\n]</string>
+    <string name="Colon_Button">:\n;</string>
+    <string name="Quotation_Button">\""\n'</string>
+    <string name="Bitwise_OR_Button">|\n\\</string>
+    <string name="Less_Sign_Button">&lt;\n,</string>
+    <string name="Greater_Sign_Button">&gt;\n.</string>
+    <string name="Question_Mark">\?\n/</string>
+
+    <string name="Function1">F1</string>
+    <string name="Function2">F2</string>
+    <string name="Function3">F3</string>
+    <string name="Function4">F4</string>
+    <string name="PrtSc">PrtSc</string>
+    <string name="ScrLk">ScrLk</string>
+    <string name="Pause">Pause</string>
+    <string name="Esc">Esc</string>
+    <string name="Tilde">~\n`</string>
+    <string name="TAB">TAB</string>
+
+    <string name="Function5">F5</string>
+    <string name="Function6">F6</string>
+    <string name="Function7">F7</string>
+    <string name="Function8">F8</string>
+    <string name="Ins">Ins</string>
+    <string name="Home">Home</string>
+    <string name="PgUp">PgUp</string>
+
+    <string name="Function9">F9</string>
+    <string name="Function10">F10</string>
+    <string name="Function11">F11</string>
+    <string name="Function12">F12</string>
+    <string name="Delete">DEL</string>
+    <string name="End">End</string>
+    <string name="PgDn">PgDn</string>
+
+    <!--    OpenterFace Setting-->
     <string name="Device_Connect_Setting">Device\nConnect</string>
     <string name="Device_Disconnect_Setting">Device\nDisconnect</string>
     <string name="parameter_Setting">Parameter\nSetting</string>
@@ -79,6 +118,8 @@
     <string name="Rotate_90_CCW">Rotate\n90 CCW</string>
     <string name="Flip_Horizontally">Flip\nHorizontally</string>
     <string name="Flip_Vertically">Flip\nVertically</string>
+    <string name="ScreenHost_Picture">ScreenHost\nPicture</string>
+    <string name="Recording_Video">Recording\nVideo</string>
 
 
     <!--    mouse ctrl mode-->
