@@ -126,5 +126,6 @@
     <string name="KeyMouse_Ctrl_Way">Mouse Ctrl Way</string>
     <string name="KeyMouse_Abs_Ctrl">Touch\nMode</string>
     <string name="KeyMouse_Abs_Drag_Ctrl">Drag\nMode</string>
+    <string name="KeyMouse_Drag">Drag</string>
     <string name="KeyMouse_Rel_Ctrl">Pointer\nMode</string>
 </resources>

@@ -48,6 +48,16 @@
                 android:visibility="gone"
                 tools:text="99:99:99" />
 
+            <TextView
+                android:id="@+id/floating_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/KeyMouse_Drag"
+                android:textColor="@color/black"
+                android:background="@color/white"
+                android:layout_centerHorizontal="true"
+                android:visibility="gone"/>
+
 <!--            <com.google.android.material.floatingactionbutton.FloatingActionButton-->
 <!--                android:id="@+id/fabVideo"-->
 <!--                style="@style/MainFloatingActionButton"-->
