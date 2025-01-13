@@ -40,7 +40,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerHorizontal="true"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="30dp"
                 android:drawableLeft="@drawable/ic_record_red_dot"
                 android:drawablePadding="5dp"
                 android:textColor="@color/black"
@@ -53,8 +53,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/KeyMouse_Drag"
+                android:layout_marginTop="5dp"
                 android:textColor="@color/black"
-                android:background="@color/white"
+                android:background="@drawable/lable_background"
                 android:layout_centerHorizontal="true"
                 android:visibility="gone"/>
 

@@ -38,8 +38,7 @@ public class CustomTouchListener implements View.OnTouchListener {
 
     private static final String TAG = CustomTouchListener.class.getSimpleName();
     private static final long DOUBLE_CLICK_TIME_DELTA = 300; // milliseconds
-    private static final long TWO_FINGER_PRESS_DELAY = 750; // 0.5 second
-    private static final float CLICK_POSITION_THRESHOLD = 50.0f;
+    private static final long TWO_FINGER_PRESS_DELAY = 750; // 0.75 second
     private static UsbDeviceManager usbDeviceManager;
     private static boolean KeyMouse_state, keyMouseAbsCtrl;
 
@@ -49,10 +48,8 @@ public class CustomTouchListener implements View.OnTouchListener {
     private Handler handler = new Handler();
     private Runnable twoFingerPressRunnable;
     private boolean isLongPress = false;
-    private float StartMoveMSX, StartMoveMSY, LastMoveMSX, LastMoveMSY, LastClickX, LastClickY;
+    private float StartMoveMSX, StartMoveMSY, LastMoveMSX, LastMoveMSY;
     private long lastClickTime = 0;
-    private boolean isDoubleClickHandled = false;
-    private long lastDoubleClickTime = 0;
 
     private long lastMoveTime = 0; // To store the last execution time
     private static final long MOVE_DELAY = 50; // 0.05 seconds in milliseconds
@@ -63,7 +60,7 @@ public class CustomTouchListener implements View.OnTouchListener {
 
     private boolean DrawMode = false;
 
-    private TextView floating_label;
+    private final TextView floating_label;
 
     public static void KeyMouse_state(boolean keyMouseState, boolean keyMouseAbsCtrlState) {
         KeyMouse_state = keyMouseState;
@@ -95,14 +92,7 @@ public class CustomTouchListener implements View.OnTouchListener {
                 break;
 
             case MotionEvent.ACTION_UP:
-                DrawMode = false;
-                floating_label.setVisibility(View.GONE);
-                if (KeyMouse_state){
-                    MouseManager.sendHexAbsData(StartMoveMSX, StartMoveMSY);
-                    System.out.println("this is action up");
-                }else {
-                    handActionUpMouse(event);
-                }
+                handActionUpMouse(event);
                 break;
 
             case MotionEvent.ACTION_CANCEL:
@@ -177,7 +167,11 @@ public class CustomTouchListener implements View.OnTouchListener {
                 if (keyMouseAbsCtrl){
                     MouseManager.sendHexAbsDragData(StartMoveMSX, StartMoveMSY);
                 }else {
-                    if (DrawMode){
+                    if (DrawMode && currentTime - longPressStartTime >= 2000 && distance < 30){
+                        MouseManager.handleTwoPress();
+                        floating_label.setVisibility(View.GONE);
+                        return;
+                    } else if (DrawMode) {
                         floating_label.setVisibility(View.VISIBLE);
                         MouseManager.sendHexAbsDragData(StartMoveMSX, StartMoveMSY);
                         return;
@@ -222,14 +216,15 @@ public class CustomTouchListener implements View.OnTouchListener {
                 MouseManager.handleDoubleClickRel();
             }
 
-            isDoubleClickHandled = true;
-            lastDoubleClickTime = clickTime;
         }
+        if (KeyMouse_state) {
+            MouseManager.sendHexAbsData(StartMoveMSX, StartMoveMSY);
+        }
+        DrawMode = false;
+        floating_label.setVisibility(View.GONE);
         longPressStartTime = 0;
         LastMoveMSX = 0;
         LastMoveMSY = 0;
-        LastClickX = StartMoveMSX;
-        LastClickY = StartMoveMSY;
         lastClickTime = clickTime;
         isPanning = false;
     }
