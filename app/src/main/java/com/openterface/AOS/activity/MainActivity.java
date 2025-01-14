@@ -48,7 +48,6 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.openterface.AOS.KeyBoardClick.KeyBoardFunction;
 import com.openterface.AOS.KeyBoardClick.KeyBoardShortCut;
-import com.openterface.AOS.ProgressView.CircularProgressView;
 import com.openterface.AOS.serial.CustomTouchListener;
 import com.openterface.AOS.serial.UsbDeviceManager;
 import com.openterface.AOS.target.KeyBoardManager;
@@ -158,7 +157,6 @@ public class MainActivity extends AppCompatActivity {
     private Button action_device, action_safely_eject;
     private Drawable action_device_drawable, action_safely_eject_drawable;
 
-    private CircularProgressView circularProgressView;
     private Handler handler = new Handler();
     private boolean isLongPress = false;
 
@@ -190,9 +188,8 @@ public class MainActivity extends AppCompatActivity {
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
 
-        View parentView = findViewById(R.id.root_relative_layout);
         //deal mouse click and button ,you can jump CustomTouchListener java
-        CustomTouchListener customTouchListener = new CustomTouchListener(this, usbDeviceManager, parentView);
+        CustomTouchListener customTouchListener = new CustomTouchListener(this, usbDeviceManager);
 
         mBinding.viewMainPreview.setOnTouchListener(customTouchListener);
 
@@ -448,14 +445,14 @@ public class MainActivity extends AppCompatActivity {
         Close_DrawLayout.setOnClickListener(buttonClickListener);
     }
 
-    private Runnable longPressRunnable = new Runnable() {
-        @Override
-        public void run() {
-            if (isLongPress) {
-                circularProgressView.setProgress(1);
-            }
-        }
-    };
+//    private Runnable longPressRunnable = new Runnable() {
+//        @Override
+//        public void run() {
+//            if (isLongPress) {
+//                circularProgressView.setProgress(1);
+//            }
+//        }
+//    };
 
     @Override
     public boolean onKeyMultiple(int keyCode, int count, KeyEvent event) {

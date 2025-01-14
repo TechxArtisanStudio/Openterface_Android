@@ -40,13 +40,24 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerHorizontal="true"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="30dp"
                 android:drawableLeft="@drawable/ic_record_red_dot"
                 android:drawablePadding="5dp"
                 android:textColor="@color/black"
                 android:textSize="14sp"
                 android:visibility="gone"
                 tools:text="99:99:99" />
+
+            <TextView
+                android:id="@+id/floating_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/KeyMouse_Drag"
+                android:layout_marginTop="5dp"
+                android:textColor="@color/black"
+                android:background="@drawable/lable_background"
+                android:layout_centerHorizontal="true"
+                android:visibility="gone"/>
 
 <!--            <com.google.android.material.floatingactionbutton.FloatingActionButton-->
 <!--                android:id="@+id/fabVideo"-->
