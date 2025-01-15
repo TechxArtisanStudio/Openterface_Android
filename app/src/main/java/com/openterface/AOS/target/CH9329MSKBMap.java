@@ -225,6 +225,7 @@ public class CH9329MSKBMap {
         keyCodeMap.put("PERIOD", "37");
         keyCodeMap.put("SLASH", "38");
         keyCodeMap.put("CapsLk", "39");
+        keyCodeMap.put("CAPS_LOCK", "39");
 
         keyCodeMap.put("F1", "3A");
         keyCodeMap.put("F2", "3B");

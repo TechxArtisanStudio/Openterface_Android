@@ -62,6 +62,8 @@ public class CustomTouchListener implements View.OnTouchListener {
 
     private final TextView floating_label;
 
+    private boolean MouseLeftClcik, MouseRightClick, MouseScrollClick = false;
+
     public static void KeyMouse_state(boolean keyMouseState, boolean keyMouseAbsCtrlState) {
         KeyMouse_state = keyMouseState;
         keyMouseAbsCtrl = keyMouseAbsCtrlState;
@@ -110,6 +112,21 @@ public class CustomTouchListener implements View.OnTouchListener {
         longPressStartTime = System.currentTimeMillis();
         currentX = event.getX();
         currentY = event.getY();
+        int buttonState = event.getButtonState();
+
+        if ((buttonState & MotionEvent.BUTTON_PRIMARY) != 0) {
+            MouseLeftClcik = true;
+            Log.d("MouseEvent", "Left button pressed");
+        }
+        if ((buttonState & MotionEvent.BUTTON_SECONDARY) != 0) {
+            MouseRightClick = true;
+            Log.d("MouseEvent", "Right button pressed");
+        }
+        if ((buttonState & MotionEvent.BUTTON_TERTIARY) != 0) {
+            MouseScrollClick = true;
+            Log.d("MouseEvent", "Middle button pressed");
+        }
+
         if (KeyMouse_state){
             MouseManager.sendHexAbsData(StartMoveMSX, StartMoveMSY);
         }
@@ -183,7 +200,18 @@ public class CustomTouchListener implements View.OnTouchListener {
                             DrawMode = true;
                         }
                     } else {
-                        MouseManager.sendHexAbsData(StartMoveMSX, StartMoveMSY);
+                        if (MouseLeftClcik){
+                            Log.d("mouse", "mouse left click");
+                            MouseManager.sendHexAbsButtonClickData("SecLeftData", StartMoveMSX, StartMoveMSY);
+                        }else if (MouseRightClick){
+                            Log.d("mouse", "mouse right click");
+                            MouseManager.sendHexAbsButtonClickData("SecRightData", StartMoveMSX, StartMoveMSY);
+                        } else if (MouseScrollClick) {
+                            Log.d("mouse", "mouse scroll click");
+                            MouseManager.sendHexAbsButtonClickData("SecMiddleData", StartMoveMSX, StartMoveMSY);
+                        }else {
+                            MouseManager.sendHexAbsData(StartMoveMSX, StartMoveMSY);
+                        }
                         longPressStartTime = currentTime;
                     }
                 }
@@ -227,5 +255,8 @@ public class CustomTouchListener implements View.OnTouchListener {
         LastMoveMSY = 0;
         lastClickTime = clickTime;
         isPanning = false;
+        MouseLeftClcik = false;
+        MouseRightClick = false;
+        MouseScrollClick = false;
     }
 }

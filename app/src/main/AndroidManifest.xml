@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.openterface.AOS">
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
@@ -13,7 +14,9 @@
         android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_openterface_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Usbvideo">
+        android:theme="@style/Theme.Usbvideo"
+        android:enableOnBackInvokedCallback="true"
+        tools:targetApi="tiramisu">
         <activity
             android:name="com.openterface.AOS.activity.MainActivity"
             android:windowSoftInputMode="adjustResize"

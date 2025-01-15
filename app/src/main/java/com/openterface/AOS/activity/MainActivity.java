@@ -29,6 +29,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.SurfaceTexture;
 import android.graphics.drawable.Drawable;
@@ -95,6 +96,9 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Queue;
 import java.util.LinkedList;
+
+import jp.wasabeef.takt.Seat;
+import jp.wasabeef.takt.Takt;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -173,8 +177,6 @@ public class MainActivity extends AppCompatActivity {
 
         mBinding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(mBinding.getRoot());
-
-//        setSupportActionBar(mBinding.toolbar);
 
         checkCameraHelper();
 
@@ -445,14 +447,40 @@ public class MainActivity extends AppCompatActivity {
         Close_DrawLayout.setOnClickListener(buttonClickListener);
     }
 
-//    private Runnable longPressRunnable = new Runnable() {
-//        @Override
-//        public void run() {
-//            if (isLongPress) {
-//                circularProgressView.setProgress(1);
-//            }
-//        }
-//    };
+    @Override
+    public boolean onGenericMotionEvent(MotionEvent event){
+        if (event.getAction() == MotionEvent.ACTION_SCROLL) {
+            float scrollAmount = event.getAxisValue(MotionEvent.AXIS_VSCROLL);
+            if (scrollAmount != 0) {
+                Log.d("MouseEvent", "Scroll amount: " + scrollAmount);
+                MouseManager.handleTwoFingerPanSlideUpDown(scrollAmount);
+            }
+            return true;
+        }
+
+        if (event.getAction() == MotionEvent.ACTION_HOVER_MOVE ||
+                event.getAction() == MotionEvent.ACTION_MOVE) {
+            float cursorX = event.getX();
+            float cursorY = event.getY();
+            if (KeyMouse_state){
+                for (int i = 0; i < event.getPointerCount(); i++) {
+                    int toolType = event.getToolType(i);
+                    switch (toolType) {
+                        case MotionEvent.TOOL_TYPE_MOUSE:
+                            if(keyMouseAbsCtrlState){
+                                MouseManager.sendHexAbsDragData(cursorX, cursorY);
+                            }else {
+                                MouseManager.sendHexAbsData(cursorX, cursorY);
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+        return super.onGenericMotionEvent(event);
+    }
 
     @Override
     public boolean onKeyMultiple(int keyCode, int count, KeyEvent event) {
@@ -493,23 +521,7 @@ public class MainActivity extends AppCompatActivity {
 
         String functionKey = KeyBoardManager.getFunctionKey(event, keyCode);
         String keyName = KeyBoardManager.getKeyName(keyCode);
-
-//        String pressedChar = String.valueOf((char) event.getUnicodeChar());
-//        String targetChars = "~!@#$%^&*()_+{}|:\"<>?";
-//        if (targetChars.contains(pressedChar)){
-//            Log.d(TAG, "Detected special character: " + pressedChar);
-//            KeyBoardManager.sendKeyboardRequest(functionKey, pressedChar);
-//            new Handler().postDelayed(new Runnable() {
-//                @Override
-//                public void run() {
-//                    mKeyboardRequestSent = true;
-//                }
-//            }, 100);
-////            KeyBoardManager.DetectedCharacter(functionKey, pressedChar, targetChars);
-//            return true;
-//        }else{
-            KeyBoardManager.sendKeyBoardData(functionKey, keyName);
-//        }
+        KeyBoardManager.sendKeyBoardData(functionKey, keyName);
 
         return super.onKeyDown(keyCode, event);
     }
@@ -576,22 +588,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setListeners() {
-//        mBinding.fabPicture.setOnClickListener(v -> {
-//            XXPermissions.with(this)
-//                    .permission(Manifest.permission.MANAGE_EXTERNAL_STORAGE)
-//                    .request((permissions, all) -> {
-//                        takePicture();
-//                    });
-//        });
-
-//        mBinding.fabVideo.setOnClickListener(v -> {
-//            XXPermissions.with(this)
-//                    .permission(Manifest.permission.MANAGE_EXTERNAL_STORAGE)
-//                    .permission(Manifest.permission.RECORD_AUDIO)
-//                    .request((permissions, all) -> {
-//                        toggleVideoRecord(!mIsRecording);
-//                    });
-//        });
 
         mBinding.keyBoard.setOnClickListener(v -> {
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);//open keyboard
