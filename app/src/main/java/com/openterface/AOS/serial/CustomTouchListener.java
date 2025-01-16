@@ -48,7 +48,10 @@ public class CustomTouchListener implements View.OnTouchListener {
     private Handler handler = new Handler();
     private Runnable twoFingerPressRunnable;
     private boolean isLongPress = false;
-    private float StartMoveMSX, StartMoveMSY, LastMoveMSX, LastMoveMSY;
+    private float StartMoveMSX;
+    private float StartMoveMSY;
+    private static float LastMoveMSX;
+    private static float LastMoveMSY;
     private long lastClickTime = 0;
 
     private long lastMoveTime = 0; // To store the last execution time
@@ -72,6 +75,44 @@ public class CustomTouchListener implements View.OnTouchListener {
     public CustomTouchListener(MainActivity activity, UsbDeviceManager usbDeviceManager) {
         CustomTouchListener.usbDeviceManager = usbDeviceManager;
         floating_label = activity.findViewById(R.id.floating_label);
+    }
+
+    public static boolean handleGenericMotionEvent(MotionEvent event){
+        if (event.getAction() == MotionEvent.ACTION_SCROLL) {
+            float scrollAmount = event.getAxisValue(MotionEvent.AXIS_VSCROLL);
+            if (scrollAmount != 0) {
+                Log.d("MouseEvent", "Scroll amount: " + scrollAmount);
+                MouseManager.handleTwoFingerPanSlideUpDown(scrollAmount);
+            }
+            return true;
+        }
+
+        if (event.getAction() == MotionEvent.ACTION_HOVER_MOVE ||
+                event.getAction() == MotionEvent.ACTION_MOVE) {
+            float cursorX = event.getX();
+            float cursorY = event.getY();
+            for (int i = 0; i < event.getPointerCount(); i++) {
+                int toolType = event.getToolType(i);
+                switch (toolType) {
+                    case MotionEvent.TOOL_TYPE_MOUSE:
+                        if(KeyMouse_state){
+                            if(keyMouseAbsCtrl){
+                                MouseManager.sendHexAbsDragData(cursorX, cursorY);
+                            }else {
+                                MouseManager.sendHexAbsData(cursorX, cursorY);
+                            }
+                        }else {
+                            MouseManager.sendHexRelData(cursorX, cursorY, LastMoveMSX, LastMoveMSY);
+                            LastMoveMSX = cursorX;
+                            LastMoveMSY = cursorY;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        return false;
     }
 
     @Override

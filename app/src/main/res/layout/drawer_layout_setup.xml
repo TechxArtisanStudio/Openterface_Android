@@ -6,7 +6,8 @@
     android:alpha="0.7"
     android:layout_gravity="end"
     android:layout_margin="0.1dp"
-    android:orientation="horizontal">
+    android:orientation="horizontal"
+    android:id="@+id/main_drawer_layout">
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -272,6 +273,17 @@
                         android:textColor="@color/white" />
 
                 </LinearLayout>
+
+                <android.widget.Button
+                    android:id="@+id/about_device"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="5dp"
+                    android:background="@android:color/transparent"
+                    android:drawableTop="@drawable/hand_index_thumb"
+                    android:theme="@style/FontStyle"
+                    android:text="@string/KeyMouse_Abs_Drag_Ctrl"
+                    android:textColor="@color/white" />
 
             </LinearLayout>
 
