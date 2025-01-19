@@ -4,18 +4,23 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
+import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.openterface.AOS.R;
 import com.openterface.AOS.activity.MainActivity;
 import com.openterface.AOS.serial.CustomTouchListener;
 
-public class DrawerLayoutDeal {
+public class DrawerLayoutDeal extends Fragment {
     private final MainActivity activity;
     private final Context context;
     private final FloatingActionButton set_up_button;
@@ -42,13 +47,25 @@ public class DrawerLayoutDeal {
     private final Button action_rotate_90_CCW;
     private final Button action_flip_horizontally;
     private final Button action_flip_vertically;
-    private final Button ScreenHost_Picture;
+//    private final Button ScreenHost_Picture;
     private final Button Recording_Video;
     private final Button Close_DrawLayout;
 
-    public DrawerLayoutDeal(MainActivity activity) {
+    private final LinearLayout main_drawer_layout;
+    private final Button about_device;
+
+    private boolean isAboutLayoutView = false;
+
+    private Bundle savedInstanceState;
+
+    private final View about_layout;
+
+    private final Button backButton;
+
+    public DrawerLayoutDeal(MainActivity activity , Bundle savedInstanceState) {
         this.activity = activity;
         this.context = activity;
+        this.savedInstanceState = savedInstanceState;
         set_up_button = activity.findViewById(R.id.set_up_button);
         drawer_layout = activity.findViewById(R.id.drawer_layout);
 
@@ -70,17 +87,49 @@ public class DrawerLayoutDeal {
         action_rotate_90_CCW = activity.findViewById(R.id.action_rotate_90_CCW);
         action_flip_horizontally = activity.findViewById(R.id.action_flip_horizontally);
         action_flip_vertically = activity.findViewById(R.id.action_flip_vertically);
-        ScreenHost_Picture = activity.findViewById(R.id.ScreenHost_Picture);
+//        ScreenHost_Picture = activity.findViewById(R.id.ScreenHost_Picture);
         Recording_Video = activity.findViewById(R.id.Recording_Video);
 
         Close_DrawLayout = activity.findViewById(R.id.Close_DrawLayout);
 
+        main_drawer_layout = activity.findViewById(R.id.main_drawer_layout);
+        about_device = activity.findViewById(R.id.about_device);
+
+        about_layout = activity.getLayoutInflater().inflate(R.layout.about_layout, main_drawer_layout,  false);
+        main_drawer_layout.addView(about_layout);
+        about_layout.setVisibility(View.GONE);
+        backButton = activity.findViewById(R.id.close_second_drawer);
         CameraVideoDeal();
     }
+
+    //                    if (isAboutLayoutView) {
+//                        System.out.println("this is about layout can view");
+//                        main_drawer_layout.removeAllViews();
+//                        main_drawer_layout.addView(activity.getLayoutInflater().inflate(R.layout.drawer_layout_setup, drawer_layout, false));
+//                        main_drawer_layout.setVisibility(View.VISIBLE);
+//                        isAboutLayoutView = false;
+//                    }
+
+    //                System.out.println("this is about layout fragment");
+//
+//                View abtouLayoutView = activity.getLayoutInflater().inflate(R.layout.about_layout, main_drawer_layout, false);
+//                // deal get drawerLayout fragment width size
+//                int width = main_drawer_layout.getWidth();
+//                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+//                        width,
+//                        LinearLayout.LayoutParams.MATCH_PARENT
+//                );
+//                abtouLayoutView.setLayoutParams(params);
+//
+//                main_drawer_layout.removeAllViews();
+//                main_drawer_layout.addView(abtouLayoutView);
+//                main_drawer_layout.setVisibility(View.VISIBLE);
+//                isAboutLayoutView = true;
 
     public void setDrawerLayoutButtonClickColor() {
         drawer_layout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
         drawer_layout.setScrimColor(0x00ffffff);
+
         set_up_button.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
@@ -89,6 +138,26 @@ public class DrawerLayoutDeal {
                 } else {
                     drawer_layout.openDrawer(GravityCompat.END);
                 }
+            }
+        });
+
+        about_device.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+//                main_drawer_layout.setVisibility(View.GONE);
+                about_layout.setVisibility(View.VISIBLE);
+//                main_drawer_layout.setVisibility(View.GONE);
+//                drawer_layout.openDrawer(GravityCompat.END);
+            }
+        });
+
+        backButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                System.out.println("this is back button");
+                about_layout.setVisibility(View.GONE);
+                main_drawer_layout.setVisibility(View.VISIBLE);
+//                drawer_layout.closeDrawer(GravityCompat.END);
             }
         });
 
@@ -180,9 +249,9 @@ public class DrawerLayoutDeal {
                 case R.id.action_flip_vertically:
                     activity.flipVertically();
                     break;
-                case R.id.ScreenHost_Picture:
-                    activity.takePicture();
-                    break;
+//                case R.id.ScreenHost_Picture:
+//                    activity.takePicture();
+//                    break;
                 case R.id.Recording_Video:
                     activity.toggleVideoRecord(!mIsRecording);
                     break;
@@ -204,7 +273,7 @@ public class DrawerLayoutDeal {
         action_rotate_90_CCW.setOnClickListener(buttonClickListener);
         action_flip_horizontally.setOnClickListener(buttonClickListener);
         action_flip_vertically.setOnClickListener(buttonClickListener);
-        ScreenHost_Picture.setOnClickListener(buttonClickListener);
+//        ScreenHost_Picture.setOnClickListener(buttonClickListener);
         Recording_Video.setOnClickListener(buttonClickListener);
         Close_DrawLayout.setOnClickListener(buttonClickListener);
     }

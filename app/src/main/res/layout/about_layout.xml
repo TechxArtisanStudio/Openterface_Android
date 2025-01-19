@@ -1,20 +1,17 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#AAFFFFFF">
+    android:orientation="vertical">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="this is about layout"
-        android:padding="16dp"/>
+        android:text="这是第二个侧边栏" />
 
     <Button
-        android:id="@+id/button_close_overlay"
+        android:id="@+id/close_second_drawer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="close"
-        android:onClick="closeOverlay"/>
+        android:text="返回第一个侧边栏" />
+
 </LinearLayout>

@@ -24,10 +24,13 @@
 */
 package com.openterface.AOS.activity;
 
+import static com.hjq.permissions.XXPermissions.REQUEST_CODE;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.PorterDuff;
 import android.graphics.SurfaceTexture;
 import android.graphics.drawable.Drawable;
@@ -38,6 +41,8 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -196,7 +201,7 @@ public class MainActivity extends AppCompatActivity {
         KeyBoardClose KeyBoardClose = new KeyBoardClose(this);
 
         //Drawer Layout
-        DrawerLayoutDeal DrawerLayoutDeal = new DrawerLayoutDeal(this);
+        DrawerLayoutDeal DrawerLayoutDeal = new DrawerLayoutDeal(this, savedInstanceState);
 
 
         usbDeviceManager.setOnDataReadListener(new UsbDeviceManager.OnDataReadListener() {
@@ -224,19 +229,22 @@ public class MainActivity extends AppCompatActivity {
         action_device_drawable = action_device.getCompoundDrawables()[1];
         action_safely_eject_drawable = action_safely_eject.getCompoundDrawables()[1];
 
-        LinearLayout main_drawer_layout = findViewById(R.id.main_drawer_layout);
-        Button test_button11 = findViewById(R.id.about_device);
-        test_button11.setOnClickListener(new View.OnClickListener() {
+
+//        if (savedInstanceState == null) {
+//            getSupportFragmentManager().beginTransaction()
+//                    .replace(R.id.fragment_container, new DrawerLayoutDeal(this, savedInstanceState))
+//                    .commit();
+//        }
+
+
+
+        Button ScreenHost_Picture = findViewById(R.id.ScreenHost_Picture);
+        ScreenHost_Picture.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                System.out.println("this is test button");
-
-                View overlayView = getLayoutInflater().inflate(R.layout.about_layout, main_drawer_layout, false);
-
-                main_drawer_layout.addView(overlayView);
-
+            public void onClick(View view) {
+                System.out.println("ScreenHost_Picture");
+                takePicture();
             }
-
         });
     }
 
@@ -739,25 +747,33 @@ public class MainActivity extends AppCompatActivity {
                 mCameraHelper.getImageCaptureConfig().setJpegCompressionQuality(90));
     }
 
-    public void takePicture() {
+    private void takePicture() {
         if (mIsRecording) {
             return;
         }
 
+        System.out.println("11111");
         try {
+            System.out.println("22222");
             File file = new File(SaveHelper.getSavePhotoPath());
             ImageCapture.OutputFileOptions options =
                     new ImageCapture.OutputFileOptions.Builder(file).build();
+            System.out.println("33333");
             mCameraHelper.takePicture(options, new ImageCapture.OnImageCaptureCallback() {
                 @Override
                 public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
                     Toast.makeText(MainActivity.this,
                             "save \"" + UriHelper.getPath(MainActivity.this, outputFileResults.getSavedUri()) + "\"",
                             Toast.LENGTH_SHORT).show();
+                    System.out.println("444444");
                 }
 
                 @Override
                 public void onError(int imageCaptureError, @NonNull String message, @Nullable Throwable cause) {
+                    System.out.println("Error Code: " + imageCaptureError);
+                    if (cause != null) {
+                        Log.e(TAG, "Error cause: ", cause);
+                    }
                     Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
                 }
             });
