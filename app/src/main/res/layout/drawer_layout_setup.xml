@@ -20,273 +20,278 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@android:color/transparent"
-            android:drawableRight="@drawable/chevron_double_right"
-            android:text=""
+            android:drawableEnd="@drawable/chevron_double_right"
+            android:contentDescription="@string/Close_DrawLayout"
             android:minWidth="0dp"/>
     </LinearLayout>
-
-    <LinearLayout
+    
+    <ScrollView
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="match_parent">
 
         <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="1dp">
-            <TextView
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+    
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/app_name"
-                android:textColor="@color/white"
-                android:theme="@style/FontStyle" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="1dp"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:orientation="vertical">
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:orientation="horizontal"
-                android:gravity="center">
-
-                <android.widget.Button
-                    android:id="@+id/action_device"
-                    android:layout_width="0dp"
+                android:layout_margin="1dp">
+                <TextView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="5dp"
-                    android:layout_weight="1"
-                    android:background="@android:color/transparent"
-                    android:drawableTop="@drawable/baseline_link_24"
-                    android:text="@string/Device_Connect_Setting"
+                    android:text="@string/app_name"
                     android:textColor="@color/white"
                     android:theme="@style/FontStyle" />
-
-                <android.widget.Button
-                    android:id="@+id/action_safely_eject"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="5dp"
-                    android:layout_weight="1"
-                    android:background="@android:color/transparent"
-                    android:drawableTop="@drawable/baseline_link_off_24"
-                    android:text="@string/Device_Disconnect_Setting"
-                    android:textColor="@android:color/holo_red_light"
-                    android:theme="@style/FontStyle" />
-
-                <android.widget.Button
-                    android:id="@+id/action_control"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="5dp"
-                    android:layout_weight="1"
-                    android:background="@android:color/transparent"
-                    android:drawableTop="@drawable/baseline_sliders"
-                    android:text="@string/parameter_Setting"
-                    android:textColor="@color/white"
-                    android:theme="@style/FontStyle" />
-
             </LinearLayout>
-
+    
             <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:orientation="horizontal"
-                android:gravity="center">
-
-                <android.widget.Button
-                    android:id="@+id/action_video_format"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="5dp"
-                    android:layout_weight="1"
-                    android:background="@android:color/transparent"
-                    android:drawableTop="@drawable/baseline_video_settings_24"
-                    android:text="@string/Video_Setting"
-                    android:textColor="@color/white"
-                    android:theme="@style/FontStyle" />
-
-                <android.widget.Button
-                    android:id="@+id/action_rotate_90_CW"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="5dp"
-                    android:layout_weight="1"
-                    android:background="@android:color/transparent"
-                    android:drawableTop="@drawable/baseline_rotate_90_degrees_cw_24"
-                    android:text="@string/Rotate_90_CW"
-                    android:textColor="@color/white"
-                    android:theme="@style/FontStyle" />
-
-                <android.widget.Button
-                    android:id="@+id/action_rotate_90_CCW"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="5dp"
-                    android:layout_weight="1"
-                    android:background="@android:color/transparent"
-                    android:drawableTop="@drawable/baseline_rotate_90_degrees_ccw_24"
-                    android:text="@string/Rotate_90_CCW"
-                    android:textColor="@color/white"
-                    android:theme="@style/FontStyle" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:orientation="horizontal"
-                android:gravity="center">
-
-                <android.widget.Button
-                    android:id="@+id/action_flip_horizontally"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="5dp"
-                    android:layout_weight="1"
-                    android:background="@android:color/transparent"
-                    android:drawableTop="@drawable/baseline_symmetry_horizontal"
-                    android:text="@string/Flip_Horizontally"
-                    android:textColor="@color/white"
-                    android:theme="@style/FontStyle" />
-
-                <android.widget.Button
-                    android:id="@+id/action_flip_vertically"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="5dp"
-                    android:layout_weight="1"
-                    android:background="@android:color/transparent"
-                    android:drawableTop="@drawable/baseline_symmetry_vertical"
-                    android:text="@string/Flip_Vertically"
-                    android:textColor="@color/white"
-                    android:theme="@style/FontStyle" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:orientation="horizontal"
-                android:gravity="center">
-
-                <android.widget.Button
-                    android:id="@+id/ScreenHost_Picture"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="5dp"
-                    android:layout_weight="1"
-                    android:background="@android:color/transparent"
-                    android:drawableTop="@drawable/camera"
-                    android:text="@string/ScreenHost_Picture"
-                    android:textColor="@color/white"
-                    android:theme="@style/FontStyle" />
-
-                <android.widget.Button
-                    android:id="@+id/Recording_Video"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="5dp"
-                    android:layout_weight="1"
-                    android:background="@android:color/transparent"
-                    android:drawableTop="@drawable/camera_video"
-                    android:text="@string/Recording_Video"
-                    android:textColor="@color/white"
-                    android:theme="@style/FontStyle" />
-
-            </LinearLayout>
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_margin="1dp"
-            android:orientation="vertical">
-
-            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/KeyMouse_Ctrl_Way"
-                android:theme="@style/FontStyle"
-                android:textColor="@color/white"
-                android:layout_margin="1dp"/>
-
+                android:layout_margin="1dp"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:orientation="vertical">
+    
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:gravity="center">
+    
+                    <android.widget.Button
+                        android:id="@+id/action_device"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="5dp"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:drawableTop="@drawable/baseline_link_24"
+                        android:text="@string/Device_Connect_Setting"
+                        android:textColor="@color/white"
+                        android:theme="@style/FontStyle" />
+    
+                    <android.widget.Button
+                        android:id="@+id/action_safely_eject"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="5dp"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:drawableTop="@drawable/baseline_link_off_24"
+                        android:text="@string/Device_Disconnect_Setting"
+                        android:textColor="@android:color/holo_red_light"
+                        android:theme="@style/FontStyle" />
+    
+                    <android.widget.Button
+                        android:id="@+id/action_control"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="5dp"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:drawableTop="@drawable/baseline_sliders"
+                        android:text="@string/parameter_Setting"
+                        android:textColor="@color/white"
+                        android:theme="@style/FontStyle" />
+    
+                </LinearLayout>
+    
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:gravity="center">
+    
+                    <android.widget.Button
+                        android:id="@+id/action_video_format"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="5dp"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:drawableTop="@drawable/baseline_video_settings_24"
+                        android:text="@string/Video_Setting"
+                        android:textColor="@color/white"
+                        android:theme="@style/FontStyle" />
+    
+                    <android.widget.Button
+                        android:id="@+id/action_rotate_90_CW"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="5dp"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:drawableTop="@drawable/baseline_rotate_90_degrees_cw_24"
+                        android:text="@string/Rotate_90_CW"
+                        android:textColor="@color/white"
+                        android:theme="@style/FontStyle" />
+    
+                    <android.widget.Button
+                        android:id="@+id/action_rotate_90_CCW"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="5dp"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:drawableTop="@drawable/baseline_rotate_90_degrees_ccw_24"
+                        android:text="@string/Rotate_90_CCW"
+                        android:textColor="@color/white"
+                        android:theme="@style/FontStyle" />
+    
+                </LinearLayout>
+    
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:gravity="center">
+    
+                    <android.widget.Button
+                        android:id="@+id/action_flip_horizontally"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="5dp"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:drawableTop="@drawable/baseline_symmetry_horizontal"
+                        android:text="@string/Flip_Horizontally"
+                        android:textColor="@color/white"
+                        android:theme="@style/FontStyle" />
+    
+                    <android.widget.Button
+                        android:id="@+id/action_flip_vertically"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="5dp"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:drawableTop="@drawable/baseline_symmetry_vertical"
+                        android:text="@string/Flip_Vertically"
+                        android:textColor="@color/white"
+                        android:theme="@style/FontStyle" />
+    
+                </LinearLayout>
+    
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:orientation="horizontal"
+                    android:gravity="center">
+    
+                    <android.widget.Button
+                        android:id="@+id/ScreenHost_Picture"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="5dp"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:drawableTop="@drawable/camera"
+                        android:text="@string/ScreenHost_Picture"
+                        android:textColor="@color/white"
+                        android:theme="@style/FontStyle" />
+    
+                    <android.widget.Button
+                        android:id="@+id/Recording_Video"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="5dp"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:drawableTop="@drawable/camera_video"
+                        android:text="@string/Recording_Video"
+                        android:textColor="@color/white"
+                        android:theme="@style/FontStyle" />
+    
+                </LinearLayout>
+    
+            </LinearLayout>
+    
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_margin="1dp"
-                android:orientation="vertical"
-                android:layout_gravity="center">
-
+                android:orientation="vertical">
+    
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/KeyMouse_Ctrl_Way"
+                    android:theme="@style/FontStyle"
+                    android:textColor="@color/white"
+                    android:layout_margin="1dp"/>
+    
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <android.widget.Button
-                        android:id="@+id/Rel_ctrl_button"
-                        android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_margin="1dp"
+                    android:orientation="vertical"
+                    android:layout_gravity="center">
+    
+                    <LinearLayout
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginHorizontal="5dp"
-                        android:background="@android:color/transparent"
-                        android:drawableTop="@drawable/mouse_icons_cursor"
-                        android:text="@string/KeyMouse_Rel_Ctrl"
-                        android:theme="@style/FontStyle"
-                        android:textColor="@color/white" />
-
+                        android:orientation="horizontal">
+    
+                        <android.widget.Button
+                            android:id="@+id/Rel_ctrl_button"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="5dp"
+                            android:background="@android:color/transparent"
+                            android:drawableTop="@drawable/mouse_icons_cursor"
+                            android:text="@string/KeyMouse_Rel_Ctrl"
+                            android:theme="@style/FontStyle"
+                            android:textColor="@color/white" />
+    
+                        <android.widget.Button
+                            android:id="@+id/Abs_ctrl_default_button"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="5dp"
+                            android:background="@android:color/transparent"
+                            android:drawableTop="@drawable/baseline_ads_click_24"
+                            android:theme="@style/FontStyle"
+                            android:text="@string/KeyMouse_Abs_Ctrl"
+                            android:textColor="@color/white" />
+    
+                        <android.widget.Button
+                            android:id="@+id/Abs_ctrl_drag_button"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="5dp"
+                            android:background="@android:color/transparent"
+                            android:drawableTop="@drawable/hand_index_thumb"
+                            android:theme="@style/FontStyle"
+                            android:text="@string/KeyMouse_Abs_Drag_Ctrl"
+                            android:textColor="@color/white" />
+    
+                    </LinearLayout>
+    
                     <android.widget.Button
-                        android:id="@+id/Abs_ctrl_default_button"
-                        android:layout_width="0dp"
+                        android:id="@+id/about_device"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginHorizontal="5dp"
-                        android:background="@android:color/transparent"
-                        android:drawableTop="@drawable/baseline_ads_click_24"
-                        android:theme="@style/FontStyle"
-                        android:text="@string/KeyMouse_Abs_Ctrl"
-                        android:textColor="@color/white" />
-
-                    <android.widget.Button
-                        android:id="@+id/Abs_ctrl_drag_button"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
                         android:layout_marginHorizontal="5dp"
                         android:background="@android:color/transparent"
                         android:drawableTop="@drawable/hand_index_thumb"
                         android:theme="@style/FontStyle"
                         android:text="@string/KeyMouse_Abs_Drag_Ctrl"
                         android:textColor="@color/white" />
-
+    
                 </LinearLayout>
-
-                <android.widget.Button
-                    android:id="@+id/about_device"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginHorizontal="5dp"
-                    android:background="@android:color/transparent"
-                    android:drawableTop="@drawable/hand_index_thumb"
-                    android:theme="@style/FontStyle"
-                    android:text="@string/KeyMouse_Abs_Drag_Ctrl"
-                    android:textColor="@color/white" />
-
+    
             </LinearLayout>
-
         </LinearLayout>
-    </LinearLayout>
+    </ScrollView>
 </LinearLayout>

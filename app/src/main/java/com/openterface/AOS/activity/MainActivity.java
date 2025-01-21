@@ -24,13 +24,10 @@
 */
 package com.openterface.AOS.activity;
 
-import static com.hjq.permissions.XXPermissions.REQUEST_CODE;
-
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.PorterDuff;
 import android.graphics.SurfaceTexture;
 import android.graphics.drawable.Drawable;
@@ -41,9 +38,6 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-import androidx.core.view.GravityCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
@@ -73,8 +67,8 @@ import com.openterface.AOS.databinding.ActivityMainBinding;
 import com.openterface.AOS.fragment.CameraControlsDialogFragment;
 import com.openterface.AOS.fragment.DeviceListDialogFragment;
 import com.openterface.AOS.fragment.VideoFormatDialogFragment;
-import com.openterface.AOS.utils.SaveHelper;
 
+import android.os.Environment;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.text.TextUtils;
@@ -201,7 +195,7 @@ public class MainActivity extends AppCompatActivity {
         KeyBoardClose KeyBoardClose = new KeyBoardClose(this);
 
         //Drawer Layout
-        DrawerLayoutDeal DrawerLayoutDeal = new DrawerLayoutDeal(this, savedInstanceState);
+        DrawerLayoutDeal DrawerLayoutDeal = new DrawerLayoutDeal(this, savedInstanceState, mIsRecording);
 
 
         usbDeviceManager.setOnDataReadListener(new UsbDeviceManager.OnDataReadListener() {
@@ -228,24 +222,6 @@ public class MainActivity extends AppCompatActivity {
 
         action_device_drawable = action_device.getCompoundDrawables()[1];
         action_safely_eject_drawable = action_safely_eject.getCompoundDrawables()[1];
-
-
-//        if (savedInstanceState == null) {
-//            getSupportFragmentManager().beginTransaction()
-//                    .replace(R.id.fragment_container, new DrawerLayoutDeal(this, savedInstanceState))
-//                    .commit();
-//        }
-
-
-
-        Button ScreenHost_Picture = findViewById(R.id.ScreenHost_Picture);
-        ScreenHost_Picture.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                System.out.println("ScreenHost_Picture");
-                takePicture();
-            }
-        });
     }
 
     @Override
@@ -747,33 +723,37 @@ public class MainActivity extends AppCompatActivity {
                 mCameraHelper.getImageCaptureConfig().setJpegCompressionQuality(90));
     }
 
-    private void takePicture() {
+    public void takePicture() {
         if (mIsRecording) {
             return;
         }
 
-        System.out.println("11111");
         try {
-            System.out.println("22222");
-            File file = new File(SaveHelper.getSavePhotoPath());
+
+            // Define the directory where the image will be saved
+            String directoryPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + "/Openterface";
+            File directory = new File(directoryPath);
+
+            // Create the directory if it does not exist
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
+
+            // Create a unique file name for the image
+            String imageName = "picture_" + System.currentTimeMillis() + ".jpg"; // or .png if you prefer
+            File file = new File(directory, imageName);
             ImageCapture.OutputFileOptions options =
                     new ImageCapture.OutputFileOptions.Builder(file).build();
-            System.out.println("33333");
             mCameraHelper.takePicture(options, new ImageCapture.OnImageCaptureCallback() {
                 @Override
                 public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
                     Toast.makeText(MainActivity.this,
-                            "save \"" + UriHelper.getPath(MainActivity.this, outputFileResults.getSavedUri()) + "\"",
+                            "Saved: \"" + UriHelper.getPath(MainActivity.this, outputFileResults.getSavedUri()) + "\"",
                             Toast.LENGTH_SHORT).show();
-                    System.out.println("444444");
                 }
 
                 @Override
                 public void onError(int imageCaptureError, @NonNull String message, @Nullable Throwable cause) {
-                    System.out.println("Error Code: " + imageCaptureError);
-                    if (cause != null) {
-                        Log.e(TAG, "Error cause: ", cause);
-                    }
                     Toast.makeText(MainActivity.this, message, Toast.LENGTH_SHORT).show();
                 }
             });
@@ -814,7 +794,20 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startRecord() {
-        File file = new File(SaveHelper.getSaveVideoPath());
+
+        String directoryPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + "/Openterface";
+        File directory = new File(directoryPath);
+
+        // Create the directory if it does not exist
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+
+        // Create a unique file name for the video
+        String videoName = "video_" + System.currentTimeMillis() + ".mp4";
+        File file = new File(directory, videoName);
+
+        // File file = new File(SaveHelper.getSaveVideoPath());
         VideoCapture.OutputFileOptions options =
                 new VideoCapture.OutputFileOptions.Builder(file).build();
         mCameraHelper.startRecording(options, new VideoCapture.OnVideoCaptureCallback() {

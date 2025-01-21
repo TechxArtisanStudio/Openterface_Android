@@ -34,7 +34,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
-                app:srcCompat="@drawable/content_dark_eng" />
+                app:srcCompat="@drawable/content_dark_eng"
+                tools:ignore="ContentDescription" />
 
             <TextView
                 android:id="@+id/tvVideoRecordTime"
@@ -42,11 +43,11 @@
                 android:layout_height="wrap_content"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="30dp"
-                android:drawableLeft="@drawable/ic_record_red_dot"
                 android:drawablePadding="5dp"
                 android:textColor="@color/black"
                 android:textSize="14sp"
                 android:visibility="gone"
+                app:drawableLeftCompat="@drawable/ic_record_red_dot"
                 tools:text="99:99:99" />
 
             <TextView
@@ -83,15 +84,17 @@
                 android:id="@+id/keyBoard"
                 style="@style/MainFloatingActionButton"
                 android:layout_above="@id/set_up_button"
-                android:layout_alignParentRight="true"
-                android:src="@drawable/baseline_keyboard_24" />
+                android:layout_alignParentEnd="true"
+                android:src="@drawable/baseline_keyboard_24"
+                android:contentDescription="@string/keyBoard_button_description"/>
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/set_up_button"
                 style="@style/MainFloatingActionButton"
-                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true"
                 android:layout_alignParentBottom="true"
-                android:src="@drawable/baseline_menu_open_24" />
+                android:src="@drawable/baseline_menu_open_24"
+                android:contentDescription="@string/setup_button_description"/>
 
             <LinearLayout
                 android:id="@+id/KeyBoard_View"
@@ -116,7 +119,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="ShortCut"
+                        android:text="@string/ShortCut"
                         android:textColor="@color/black"
                         android:background="@drawable/button_background"
                         android:theme="@style/ButtonTheme"
@@ -127,7 +130,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Shift"
+                        android:text="@string/Shift"
                         android:textColor="@color/black"
                         android:background="@drawable/button_background"
                         android:theme="@style/ButtonTheme"
@@ -138,7 +141,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Function"
+                        android:text="@string/Function"
                         android:textColor="@color/black"
                         android:background="@drawable/button_background"
                         android:theme="@style/ButtonTheme"
@@ -152,54 +155,13 @@
                         android:background="@drawable/button_background"
                         android:theme="@style/ButtonTheme"
                         android:layout_marginHorizontal="1dp"
-                        android:src="@drawable/baseline_close_24">
+                        android:src="@drawable/baseline_close_24"
+                        tools:ignore="ContentDescription">
                     </ImageButton>
                 </LinearLayout>
 
                 <include layout="@layout/short_cut_button" />
                 <include layout="@layout/function_button" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/optionsBar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@color/gray_400"
-                android:visibility="gone">
-
-                <android.widget.Button
-                    android:id="@+id/Win"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Win"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="1dp"
-                    android:layout_marginEnd="1dp"/>
-
-                <android.widget.Button
-                    android:id="@+id/NumLk"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="NumLk"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="1dp"
-                    android:layout_marginEnd="1dp"/>
-
-                <android.widget.Button
-                    android:id="@+id/ENTER"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="ENTER"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:layout_marginStart="1dp"
-                    android:layout_marginEnd="1dp"/>
             </LinearLayout>
 
         </RelativeLayout>

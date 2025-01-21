@@ -70,7 +70,15 @@
     <string name="KeyBoard_Ctrl_Add_Alt_Add_Del">Ctrl+Alt+Del\nTask Manager</string>
     <string name="KeyBoard_Alt_Add_PrtScr">Alt+PrtScr\nWindow Screenshot</string>
 
+    <!--    FloatingButton-->
+    <string name="setup_button_description">setup_button_description</string>
+    <string name="keyBoard_button_description">keyBoard_button_description</string>
+
     <!--    Function button-->
+    <string name="ShortCut">ShortCut</string>
+    <string name="Shift">Shift</string>
+    <string name="Function">Function</string>
+
     <string name="Minus_Sign_Button">_\n-</string>
     <string name="Plus_Sign_Button">+\n=</string>
     <string name="Left_Bracket_Button">{\n[</string>
@@ -110,6 +118,7 @@
     <string name="PgDn">PgDn</string>
 
     <!--    OpenterFace Setting-->
+    <string name="Close_DrawLayout">Close_DrawLayout</string>
     <string name="Device_Connect_Setting">Device\nConnect</string>
     <string name="Device_Disconnect_Setting">Device\nDisconnect</string>
     <string name="parameter_Setting">Parameter\nSetting</string>
