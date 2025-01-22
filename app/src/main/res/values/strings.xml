@@ -129,7 +129,9 @@
     <string name="Flip_Vertically">Flip\nVertically</string>
     <string name="ScreenHost_Picture">ScreenHost\nPicture</string>
     <string name="Recording_Video">Recording\nVideo</string>
-
+    <string name="about_device">About Openterface Device</string>
+    <string name="Android_Version">Android Version</string>
+    <string name="Openterface_Version">Openterface Version</string>
 
     <!--    mouse ctrl mode-->
     <string name="KeyMouse_Ctrl_Way">Mouse Ctrl Way</string>

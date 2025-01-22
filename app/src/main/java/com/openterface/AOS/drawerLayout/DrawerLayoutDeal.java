@@ -7,6 +7,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
 
@@ -23,22 +24,23 @@ import com.openterface.AOS.serial.CustomTouchListener;
 public class DrawerLayoutDeal extends Fragment {
     private final MainActivity activity;
     private final Context context;
+    private Bundle savedInstanceState;
     private final FloatingActionButton set_up_button;
     private final DrawerLayout drawer_layout;
 
-    private final Button Abs_ctrl_default_button;
     private final Drawable Abs_ctrl_default_button_drawable;
 
-    private final Button Abs_ctrl_drag_button;
     private final Drawable Abs_ctrl_drag_button_drawable;
 
-    private final Button Rel_ctrl_button;
     private final Drawable Rel_ctrl_button_drawable;
 
     private boolean KeyMouse_state = false;
     private boolean keyMouseAbsCtrlState = false;
     private boolean mIsRecording;
 
+    private final Button Abs_ctrl_default_button;
+    private final Button Abs_ctrl_drag_button;
+    private final Button Rel_ctrl_button;
     private final Button action_device;
     private final Button action_safely_eject;
     private final Button action_control;
@@ -50,17 +52,11 @@ public class DrawerLayoutDeal extends Fragment {
     private final Button ScreenHost_Picture;
     private final Button Recording_Video;
     private final Button Close_DrawLayout;
-
-    private final LinearLayout main_drawer_layout;
+    private final Button close_about_device_button;
     private final Button about_device;
 
-    private Bundle savedInstanceState;
-
-    private final View about_layout;
-
-    private final Button backButton;
-
-    private boolean aboutLayoutState = false;
+    private final LinearLayout main_drawer_layout;
+    private final LinearLayout about_device_layout;
 
     public DrawerLayoutDeal(MainActivity activity , Bundle savedInstanceState, boolean mIsRecording) {
         this.activity = activity;
@@ -95,11 +91,8 @@ public class DrawerLayoutDeal extends Fragment {
 
         main_drawer_layout = activity.findViewById(R.id.main_drawer_layout);
         about_device = activity.findViewById(R.id.about_device);
-
-        about_layout = activity.getLayoutInflater().inflate(R.layout.about_layout, main_drawer_layout,  false);
-        main_drawer_layout.addView(about_layout);
-        about_layout.setVisibility(View.GONE);
-        backButton = activity.findViewById(R.id.close_second_drawer);
+        about_device_layout = activity.findViewById(R.id.about_device_layout);
+        close_about_device_button = activity.findViewById(R.id.close_button);
         CameraVideoDeal();
     }
 
@@ -121,23 +114,22 @@ public class DrawerLayoutDeal extends Fragment {
         about_device.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (!aboutLayoutState){
-                    about_layout.setVisibility(View.VISIBLE);
-                }else {
-                    about_layout.setVisibility(View.GONE);
-                    main_drawer_layout.setVisibility(View.VISIBLE);
-                }
-                aboutLayoutState = !aboutLayoutState;
+                //get drawer layout width and set it to about device layout width
+                int drawerWidth = main_drawer_layout.getWidth();
+                ViewGroup.LayoutParams params = about_device_layout.getLayoutParams();
+                params.width = drawerWidth;
+                about_device_layout.setLayoutParams(params);
+
+                main_drawer_layout.setVisibility(View.GONE);
+                about_device_layout.setVisibility(View.VISIBLE);
             }
         });
 
-        backButton.setOnClickListener(new View.OnClickListener() {
+        close_about_device_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                System.out.println("this is back button");
-                about_layout.setVisibility(View.GONE);
+                about_device_layout.setVisibility(View.GONE);
                 main_drawer_layout.setVisibility(View.VISIBLE);
-//                drawer_layout.closeDrawer(GravityCompat.END);
             }
         });
 
