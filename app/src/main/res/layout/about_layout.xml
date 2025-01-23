@@ -3,7 +3,10 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingTop="5dp"
+    android:paddingTop="16dp"
+    android:paddingBottom="16dp"
+    android:paddingLeft="16dp"
+    android:paddingRight="16dp"
     android:visibility="gone"
     android:id="@+id/about_device_layout">
 
@@ -13,21 +16,44 @@
         android:layout_height="wrap_content"
         android:background="@android:color/transparent"
         android:drawableStart="@drawable/nrkback"
-        android:layout_gravity="start"/>
+        android:layout_gravity="start" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/Android_Version"
         android:textColor="@color/white"
-        android:theme="@style/FontStyle" />
+        android:theme="@style/FontStyle"
+        android:layout_marginTop="16dp"
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/android_version"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="@color/white"
+        android:theme="@style/FontStyle"
+        android:layout_marginTop="4dp"
+        android:textSize="16sp" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/Openterface_Version"
         android:textColor="@color/white"
-        android:theme="@style/FontStyle" />
+        android:theme="@style/FontStyle"
+        android:layout_marginTop="16dp"
+        android:textSize="18sp" />
 
+    <TextView
+        android:id="@+id/app_version"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textColor="@color/white"
+        android:theme="@style/FontStyle"
+        android:layout_marginTop="4dp"
+        android:textSize="16sp" />
 
 </LinearLayout>

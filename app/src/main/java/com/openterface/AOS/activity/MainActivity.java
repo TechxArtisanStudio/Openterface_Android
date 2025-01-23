@@ -222,17 +222,6 @@ public class MainActivity extends AppCompatActivity {
 
         action_device_drawable = action_device.getCompoundDrawables()[1];
         action_safely_eject_drawable = action_safely_eject.getCompoundDrawables()[1];
-
-//        Button aboutDeviceButton = findViewById(R.id.about_device);
-//        aboutDeviceButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-////                AboutDeviceDialogFragment dialog = new AboutDeviceDialogFragment();
-////                dialog.show(getSupportFragmentManager(), "aboutDeviceDialog");
-//                LinearLayout about_layout = findViewById(R.id.about_layout);
-//                about_layout.setVisibility(View.VISIBLE);
-//            }
-//        });
     }
 
     @Override

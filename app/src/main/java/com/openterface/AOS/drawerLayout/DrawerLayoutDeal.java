@@ -2,14 +2,18 @@ package com.openterface.AOS.drawerLayout;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -58,6 +62,9 @@ public class DrawerLayoutDeal extends Fragment {
     private final LinearLayout main_drawer_layout;
     private final LinearLayout about_device_layout;
 
+    private final TextView android_version;
+    private final TextView app_version;
+
     public DrawerLayoutDeal(MainActivity activity , Bundle savedInstanceState, boolean mIsRecording) {
         this.activity = activity;
         this.context = activity;
@@ -93,6 +100,18 @@ public class DrawerLayoutDeal extends Fragment {
         about_device = activity.findViewById(R.id.about_device);
         about_device_layout = activity.findViewById(R.id.about_device_layout);
         close_about_device_button = activity.findViewById(R.id.close_button);
+        android_version = activity.findViewById(R.id.android_version);
+        app_version = activity.findViewById(R.id.app_version);
+
+        android_version.setText(Build.VERSION.RELEASE);
+        try {
+            PackageInfo packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), 0);
+            String appVersion = packageInfo.versionName;
+            app_version.setText(appVersion);
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+            app_version.setText("Unknown");
+        }
         CameraVideoDeal();
     }
 
