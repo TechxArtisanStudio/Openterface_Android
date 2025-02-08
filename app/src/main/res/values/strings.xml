@@ -16,7 +16,7 @@
     <string name="main_connect_usb_tip">Connect the USB camera</string>
 
     <string name="device_list_dialog_title">Device</string>
-    <string name="device_list_empty_tip">Please connect a USB Camera</string>
+    <string name="device_list_empty_tip">Please connect a USB Openterface</string>
     <string name="device_list_cancel_button">Cancel</string>
 
     <string name="video_format_title">Video Format</string>

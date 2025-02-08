@@ -387,6 +387,12 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        //Determine whether to open the video
+        if (mCameraHelper == null || !mIsCameraConnected) {
+            Log.e("MainActivity", "Camera not connected");
+            return;
+        }
+
         mFormatDialog = new VideoFormatDialogFragment(mCameraHelper.getSupportedFormatList(), mCameraHelper.getPreviewSize());
         mFormatDialog.setOnVideoFormatSelectListener(size -> {
             if (mIsCameraConnected && !mCameraHelper.isRecording()) {
