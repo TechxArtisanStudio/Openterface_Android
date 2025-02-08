@@ -48,7 +48,10 @@ public class CustomTouchListener implements View.OnTouchListener {
     private Handler handler = new Handler();
     private Runnable twoFingerPressRunnable;
     private boolean isLongPress = false;
-    private float StartMoveMSX, StartMoveMSY, LastMoveMSX, LastMoveMSY;
+    private float StartMoveMSX;
+    private float StartMoveMSY;
+    private static float LastMoveMSX;
+    private static float LastMoveMSY;
     private long lastClickTime = 0;
 
     private long lastMoveTime = 0; // To store the last execution time
@@ -62,6 +65,8 @@ public class CustomTouchListener implements View.OnTouchListener {
 
     private final TextView floating_label;
 
+    private boolean MouseLeftClcik, MouseRightClick, MouseScrollClick = false;
+
     public static void KeyMouse_state(boolean keyMouseState, boolean keyMouseAbsCtrlState) {
         KeyMouse_state = keyMouseState;
         keyMouseAbsCtrl = keyMouseAbsCtrlState;
@@ -70,6 +75,44 @@ public class CustomTouchListener implements View.OnTouchListener {
     public CustomTouchListener(MainActivity activity, UsbDeviceManager usbDeviceManager) {
         CustomTouchListener.usbDeviceManager = usbDeviceManager;
         floating_label = activity.findViewById(R.id.floating_label);
+    }
+
+    public static boolean handleGenericMotionEvent(MotionEvent event){
+        if (event.getAction() == MotionEvent.ACTION_SCROLL) {
+            float scrollAmount = event.getAxisValue(MotionEvent.AXIS_VSCROLL);
+            if (scrollAmount != 0) {
+                Log.d("MouseEvent", "Scroll amount: " + scrollAmount);
+                MouseManager.handleTwoFingerPanSlideUpDown(scrollAmount);
+            }
+            return true;
+        }
+
+        if (event.getAction() == MotionEvent.ACTION_HOVER_MOVE ||
+                event.getAction() == MotionEvent.ACTION_MOVE) {
+            float cursorX = event.getX();
+            float cursorY = event.getY();
+            for (int i = 0; i < event.getPointerCount(); i++) {
+                int toolType = event.getToolType(i);
+                switch (toolType) {
+                    case MotionEvent.TOOL_TYPE_MOUSE:
+                        if(KeyMouse_state){
+                            if(keyMouseAbsCtrl){
+                                MouseManager.sendHexAbsDragData(cursorX, cursorY);
+                            }else {
+                                MouseManager.sendHexAbsData(cursorX, cursorY);
+                            }
+                        }else {
+                            MouseManager.sendHexRelData(cursorX, cursorY, LastMoveMSX, LastMoveMSY);
+                            LastMoveMSX = cursorX;
+                            LastMoveMSY = cursorY;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        return false;
     }
 
     @Override
@@ -110,6 +153,21 @@ public class CustomTouchListener implements View.OnTouchListener {
         longPressStartTime = System.currentTimeMillis();
         currentX = event.getX();
         currentY = event.getY();
+        int buttonState = event.getButtonState();
+
+        if ((buttonState & MotionEvent.BUTTON_PRIMARY) != 0) {
+            MouseLeftClcik = true;
+            Log.d("MouseEvent", "Left button pressed");
+        }
+        if ((buttonState & MotionEvent.BUTTON_SECONDARY) != 0) {
+            MouseRightClick = true;
+            Log.d("MouseEvent", "Right button pressed");
+        }
+        if ((buttonState & MotionEvent.BUTTON_TERTIARY) != 0) {
+            MouseScrollClick = true;
+            Log.d("MouseEvent", "Middle button pressed");
+        }
+
         if (KeyMouse_state){
             MouseManager.sendHexAbsData(StartMoveMSX, StartMoveMSY);
         }
@@ -183,7 +241,18 @@ public class CustomTouchListener implements View.OnTouchListener {
                             DrawMode = true;
                         }
                     } else {
-                        MouseManager.sendHexAbsData(StartMoveMSX, StartMoveMSY);
+                        if (MouseLeftClcik){
+                            Log.d("mouse", "mouse left click");
+                            MouseManager.sendHexAbsButtonClickData("SecLeftData", StartMoveMSX, StartMoveMSY);
+                        }else if (MouseRightClick){
+                            Log.d("mouse", "mouse right click");
+                            MouseManager.sendHexAbsButtonClickData("SecRightData", StartMoveMSX, StartMoveMSY);
+                        } else if (MouseScrollClick) {
+                            Log.d("mouse", "mouse scroll click");
+                            MouseManager.sendHexAbsButtonClickData("SecMiddleData", StartMoveMSX, StartMoveMSY);
+                        }else {
+                            MouseManager.sendHexAbsData(StartMoveMSX, StartMoveMSY);
+                        }
                         longPressStartTime = currentTime;
                     }
                 }
@@ -227,5 +296,8 @@ public class CustomTouchListener implements View.OnTouchListener {
         LastMoveMSY = 0;
         lastClickTime = clickTime;
         isPanning = false;
+        MouseLeftClcik = false;
+        MouseRightClick = false;
+        MouseScrollClick = false;
     }
 }

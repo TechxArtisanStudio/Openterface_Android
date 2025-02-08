@@ -25,19 +25,24 @@
 package com.openterface.AOS;
 
 import android.app.Application;
+import android.graphics.Color;
+import android.util.Log;
+
+import jp.wasabeef.takt.Seat;
+import jp.wasabeef.takt.Takt;
 
 public class MyApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
 //        Takt.stock(this)
-//                .seat(Seat.BOTTOM_LEFT)
+//                .seat(Seat.TOP_RIGHT)
 //                .interval(250)
 //                .color(Color.WHITE)
 //                .size(14f)
 //                .alpha(0.5f)
 //                .listener(fps -> {
-////                    Log.d("uvcdemo", (int) fps + " fps");
+//                    Log.d("uvcdemo", (int) fps + " fps");
 //                });
     }
 }

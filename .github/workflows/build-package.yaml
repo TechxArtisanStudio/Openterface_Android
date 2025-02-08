@@ -39,7 +39,7 @@ jobs:
 
     # Store signed release APK files as artifacts
     - name: Upload Signed Release APK
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: openterface-signed-release
         path: |

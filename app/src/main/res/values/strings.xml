@@ -16,7 +16,7 @@
     <string name="main_connect_usb_tip">Connect the USB camera</string>
 
     <string name="device_list_dialog_title">Device</string>
-    <string name="device_list_empty_tip">Please connect a USB Camera</string>
+    <string name="device_list_empty_tip">Please connect a USB Openterface</string>
     <string name="device_list_cancel_button">Cancel</string>
 
     <string name="video_format_title">Video Format</string>
@@ -70,7 +70,15 @@
     <string name="KeyBoard_Ctrl_Add_Alt_Add_Del">Ctrl+Alt+Del\nTask Manager</string>
     <string name="KeyBoard_Alt_Add_PrtScr">Alt+PrtScr\nWindow Screenshot</string>
 
+    <!--    FloatingButton-->
+    <string name="setup_button_description">setup_button_description</string>
+    <string name="keyBoard_button_description">keyBoard_button_description</string>
+
     <!--    Function button-->
+    <string name="ShortCut">ShortCut</string>
+    <string name="Shift">Shift</string>
+    <string name="Function">Function</string>
+
     <string name="Minus_Sign_Button">_\n-</string>
     <string name="Plus_Sign_Button">+\n=</string>
     <string name="Left_Bracket_Button">{\n[</string>
@@ -110,6 +118,7 @@
     <string name="PgDn">PgDn</string>
 
     <!--    OpenterFace Setting-->
+    <string name="Close_DrawLayout">Close_DrawLayout</string>
     <string name="Device_Connect_Setting">Device\nConnect</string>
     <string name="Device_Disconnect_Setting">Device\nDisconnect</string>
     <string name="parameter_Setting">Parameter\nSetting</string>
@@ -120,7 +129,9 @@
     <string name="Flip_Vertically">Flip\nVertically</string>
     <string name="ScreenHost_Picture">ScreenHost\nPicture</string>
     <string name="Recording_Video">Recording\nVideo</string>
-
+    <string name="about_device">About Openterface Device</string>
+    <string name="Android_Version">Android Version</string>
+    <string name="Openterface_Version">Openterface Version</string>
 
     <!--    mouse ctrl mode-->
     <string name="KeyMouse_Ctrl_Way">Mouse Ctrl Way</string>

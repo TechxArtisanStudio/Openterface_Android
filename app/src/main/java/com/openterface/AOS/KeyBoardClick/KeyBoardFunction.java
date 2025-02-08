@@ -1,12 +1,21 @@
 package com.openterface.AOS.KeyBoardClick;
 
+import android.content.Context;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.Button;
+import android.widget.LinearLayout;
+
 import com.openterface.AOS.R;
 import com.openterface.AOS.activity.MainActivity;
-import com.openterface.AOS.target.CH9329MSKBMap;
 import com.openterface.AOS.target.KeyBoardManager;
 
 public class KeyBoardFunction {
+    private final Button KeyBoard_ShortCut;
+    private final Button KeyBoard_Function;
+    private final LinearLayout Fragment_KeyBoard_ShortCut;
+    private final LinearLayout Fragment_KeyBoard_Function;
+    private final Context context;
 
     private static boolean KeyBoard_ShIft_Press_state;
 
@@ -17,6 +26,12 @@ public class KeyBoardFunction {
     private final View[] FunctionButtons;
 
     public KeyBoardFunction(MainActivity activity) {
+        Fragment_KeyBoard_ShortCut = activity.findViewById(R.id.Fragment_KeyBoard_ShortCut);
+        Fragment_KeyBoard_Function = activity.findViewById(R.id.Fragment_KeyBoard_Function);
+
+        KeyBoard_ShortCut = activity.findViewById(R.id.KeyBoard_ShortCut);
+        KeyBoard_Function = activity.findViewById(R.id.KeyBoard_Function);
+        this.context = activity;
         FunctionButtons = new View[]{
                 activity.findViewById(R.id.Function1),
                 activity.findViewById(R.id.Function2),
@@ -133,5 +148,28 @@ public class KeyBoardFunction {
         }
         System.out.println("Shift State: " + KeyBoard_ShIft_Press_state);
 
+    }
+
+    public void setFunctionButtonsClickColor(){
+        KeyBoard_Function.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(v.getWindowToken(), 0);//close keyboard
+
+                if (Fragment_KeyBoard_Function.getVisibility() == View.VISIBLE){
+                    Fragment_KeyBoard_Function.setVisibility(View.GONE);
+                    KeyBoard_Function.setBackgroundResource(R.drawable.nopress_button_background);
+                }else {
+                    Fragment_KeyBoard_Function.setVisibility(View.VISIBLE);
+                    KeyBoard_Function.setBackgroundResource(R.drawable.press_button_background);
+                }
+
+                if (Fragment_KeyBoard_ShortCut.getVisibility() == View.VISIBLE) {
+                    Fragment_KeyBoard_ShortCut.setVisibility(View.GONE);
+                    KeyBoard_ShortCut.setBackgroundResource(R.drawable.nopress_button_background);
+                }
+            }
+        });
     }
 }
