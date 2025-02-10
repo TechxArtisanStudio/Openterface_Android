@@ -157,6 +157,9 @@ public class MainActivity extends AppCompatActivity {
         windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
         super.onCreate(savedInstanceState);
 
+        //Prevent screen from turning off
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         mBinding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(mBinding.getRoot());
 
