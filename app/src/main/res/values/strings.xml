@@ -117,6 +117,51 @@
     <string name="End">End</string>
     <string name="PgDn">PgDn</string>
 
+    <!--    system button-->
+    <string name="One_Sigh_Button">!\n1</string>
+    <string name="Two_At_Button">@\n2</string>
+    <string name="Three_Pound_Button">#\n3</string>
+    <string name="Four_Dollar_Button">$\n4</string>
+    <string name="Five_Percent_Button">%\n5</string>
+    <string name="Six_Caret_Button">^\n6</string>
+    <string name="Seven_Ampersand_Button">&amp;\n7</string>
+    <string name="Eight_Asterisk_Button">*\n8</string>
+    <string name="Nine_Left_Parenthesis_Button">(\n9</string>
+    <string name="Zero_Right_Parenthesis_Button">)\n0</string>
+
+    <string name="Q_Button">Q</string>
+    <string name="W_Button">W</string>
+    <string name="E_Button">E</string>
+    <string name="R_Button">R</string>
+    <string name="T_Button">T</string>
+    <string name="Y_Button">Y</string>
+    <string name="U_Button">U</string>
+    <string name="I_Button">I</string>
+    <string name="O_Button">O</string>
+    <string name="P_Button">P</string>
+
+    <string name="A_Button">A</string>
+    <string name="S_Button">S</string>
+    <string name="D_Button">D</string>
+    <string name="F_Button">F</string>
+    <string name="G_Button">G</string>
+    <string name="H_Button">H</string>
+    <string name="J_Button">J</string>
+    <string name="K_Button">K</string>
+    <string name="L_Button">L</string>
+
+    <string name="Z_Button">Z</string>
+    <string name="X_Button">X</string>
+    <string name="C_Button">C</string>
+    <string name="V_Button">V</string>
+    <string name="B_Button">B</string>
+    <string name="N_Button">N</string>
+    <string name="M_Button">M</string>
+
+    <string name="DEL_Button">DEL</string>
+    <string name="Space_Button">Space</string>
+    <string name="Enter_Button">Enter</string>
+
     <!--    OpenterFace Setting-->
     <string name="Close_DrawLayout">Close_DrawLayout</string>
     <string name="Device_Connect_Setting">Device\nConnect</string>

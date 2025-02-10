@@ -42,10 +42,12 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.openterface.AOS.KeyBoardClick.KeyBoardClose;
 import com.openterface.AOS.KeyBoardClick.KeyBoardFunction;
 import com.openterface.AOS.KeyBoardClick.KeyBoardShift;
 import com.openterface.AOS.KeyBoardClick.KeyBoardShortCut;
+import com.openterface.AOS.KeyBoardClick.KeyBoardSystem;
 import com.openterface.AOS.drawerLayout.DrawerLayoutDeal;
 import com.openterface.AOS.serial.CustomTouchListener;
 import com.openterface.AOS.serial.UsbDeviceManager;
@@ -84,6 +86,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -187,13 +190,12 @@ public class MainActivity extends AppCompatActivity {
 
         //Short Cut Button
         KeyBoardShortCut KeyBoardShortCut = new KeyBoardShortCut(this);
-
-        //FunctionKey Button
-        KeyBoardFunction KeyBoardFunction = new KeyBoardFunction(this);
-
         //Shift Button
         KeyBoardShift KeyBoardShiftButton = new KeyBoardShift(this);
-
+        //FunctionKey Button
+        KeyBoardFunction KeyBoardFunction = new KeyBoardFunction(this);
+        //System Button
+        KeyBoardSystem KeyBoardSystem = new KeyBoardSystem(this);
         //KeyBoard Close Button
         KeyBoardClose KeyBoardClose = new KeyBoardClose(this);
 
@@ -215,6 +217,8 @@ public class MainActivity extends AppCompatActivity {
         KeyBoardShortCut.setShortCutButtonsClickColor();//deal short cut button click color
 
         KeyBoardFunction.setFunctionButtonsClickColor();//deal function button click color
+
+        KeyBoardSystem.setSystemButtonsClickColor();//deal system button click color
 
         KeyBoardClose.setCloseButtonClickColor();//deal close button click color
 
@@ -344,17 +348,27 @@ public class MainActivity extends AppCompatActivity {
             imm.toggleSoftInput(InputMethodManager.SHOW_FORCED,0);
             LinearLayout Fragment_KeyBoard_ShortCut = findViewById(R.id.Fragment_KeyBoard_ShortCut);
             LinearLayout Fragment_KeyBoard_Function = findViewById(R.id.Fragment_KeyBoard_Function);
+            LinearLayout Fragment_KeyBoard_System = findViewById(R.id.Fragment_KeyBoard_System);
             LinearLayout keyBoardView = findViewById(R.id.KeyBoard_View);
             Button KeyBoard_ShortCut = findViewById(R.id.KeyBoard_ShortCut);
             Button KeyBoard_Function = findViewById(R.id.KeyBoard_Function);
+            ImageButton KeyBoard_System = findViewById(R.id.KeyBoard_System);
 
             keyBoardView.setVisibility(View.VISIBLE);
 
+            //hide floating button keyboard and set_up_button
+            FloatingActionButton keyBoard = findViewById(R.id.keyBoard);
+            keyBoard.setVisibility(View.GONE);
+            FloatingActionButton set_up_button = findViewById(R.id.set_up_button);
+            set_up_button.setVisibility(View.GONE);
+
             Fragment_KeyBoard_Function.setVisibility(View.GONE);
             Fragment_KeyBoard_ShortCut.setVisibility(View.GONE);
+            Fragment_KeyBoard_System.setVisibility(View.GONE);
 
             KeyBoard_Function.setBackgroundResource(R.drawable.nopress_button_background);
             KeyBoard_ShortCut.setBackgroundResource(R.drawable.nopress_button_background);
+            KeyBoard_System.setBackgroundResource(R.drawable.nopress_button_background);
 
         });
     }

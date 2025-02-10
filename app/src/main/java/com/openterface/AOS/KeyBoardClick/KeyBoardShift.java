@@ -20,9 +20,11 @@ public class KeyBoardShift {
             public void onClick(View v) {
                 if (!KeyBoard_ShIft_Press) {
                     com.openterface.AOS.KeyBoardClick.KeyBoardFunction.KeyBoard_ShIft_Press(true);
+                    com.openterface.AOS.KeyBoardClick.KeyBoardSystem.KeyBoard_ShIft_Press(true);
                     KeyBoard_Shift.setBackgroundResource(R.drawable.press_button_background);
                 }else{
                     com.openterface.AOS.KeyBoardClick.KeyBoardFunction.KeyBoard_ShIft_Press(false);
+                    com.openterface.AOS.KeyBoardClick.KeyBoardSystem.KeyBoard_ShIft_Press(false);
                     KeyBoard_Shift.setBackgroundResource(R.drawable.nopress_button_background);
                 }
                 KeyBoard_ShIft_Press = !KeyBoard_ShIft_Press;

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 
 import com.openterface.AOS.R;
@@ -14,16 +15,20 @@ public class KeyBoardShortCut {
     private final Button[] ShortCutButtons;
     private final Button KeyBoard_ShortCut;
     private final Button KeyBoard_Function;
+    private final ImageButton KeyBoard_System;
     private final LinearLayout Fragment_KeyBoard_ShortCut;
     private final LinearLayout Fragment_KeyBoard_Function;
+    private final LinearLayout Fragment_KeyBoard_System;
     private final Context context;
 
     public KeyBoardShortCut(MainActivity activity) {
         Fragment_KeyBoard_ShortCut = activity.findViewById(R.id.Fragment_KeyBoard_ShortCut);
         Fragment_KeyBoard_Function = activity.findViewById(R.id.Fragment_KeyBoard_Function);
+        Fragment_KeyBoard_System = activity.findViewById(R.id.Fragment_KeyBoard_System);
 
         KeyBoard_ShortCut = activity.findViewById(R.id.KeyBoard_ShortCut);
         KeyBoard_Function = activity.findViewById(R.id.KeyBoard_Function);
+        KeyBoard_System = activity.findViewById(R.id.KeyBoard_System);
         this.context = activity;
         ShortCutButtons = new Button[]{
                 activity.findViewById(R.id.Ctrl_C),
@@ -73,22 +78,36 @@ public class KeyBoardShortCut {
     }
 
     private String getKey(int buttonId) {
-        switch (buttonId) {
-            case R.id.Ctrl_C: return "C";
-            case R.id.Ctrl_V: return "V";
-            case R.id.Ctrl_Z: return "Z";
-            case R.id.Ctrl_X: return "X";
-            case R.id.Ctrl_A: return "A";
-            case R.id.Ctrl_S: return "S";
-            case R.id.Win_Tab: return "TAB";
-            case R.id.Win_S: return "S";
-            case R.id.Win_E: return "E";
-            case R.id.Win_R: return "R";
-            case R.id.Win_D: return "D";
-            case R.id.Win_L: return "L";
-            case R.id.Alt_F4: return "F4";
-            case R.id.Alt_PrtScr: return "PrtSc";
-            default: return "";
+        if (buttonId == R.id.Ctrl_C) {
+            return "C";
+        } else if (buttonId == R.id.Ctrl_V) {
+            return "V";
+        } else if (buttonId == R.id.Ctrl_Z) {
+            return "Z";
+        } else if (buttonId == R.id.Ctrl_X) {
+            return "X";
+        } else if (buttonId == R.id.Ctrl_A) {
+            return "A";
+        } else if (buttonId == R.id.Ctrl_S) {
+            return "S";
+        } else if (buttonId == R.id.Win_Tab) {
+            return "TAB";
+        } else if (buttonId == R.id.Win_S) {
+            return "S";
+        } else if (buttonId == R.id.Win_E) {
+            return "E";
+        } else if (buttonId == R.id.Win_R) {
+            return "R";
+        } else if (buttonId == R.id.Win_D) {
+            return "D";
+        } else if (buttonId == R.id.Win_L) {
+            return "L";
+        } else if (buttonId == R.id.Alt_F4) {
+            return "F4";
+        } else if (buttonId == R.id.Alt_PrtScr) {
+            return "PrtSc";
+        }else {
+            return "";
         }
     }
 
@@ -114,6 +133,11 @@ public class KeyBoardShortCut {
                 if (Fragment_KeyBoard_Function.getVisibility() == View.VISIBLE) {
                     Fragment_KeyBoard_Function.setVisibility(View.GONE);
                     KeyBoard_Function.setBackgroundResource(R.drawable.nopress_button_background);
+                }
+
+                if (Fragment_KeyBoard_System.getVisibility() == View.VISIBLE) {
+                    Fragment_KeyBoard_System.setVisibility(View.GONE);
+                    KeyBoard_System.setBackgroundResource(R.drawable.nopress_button_background);
                 }
             }
         });

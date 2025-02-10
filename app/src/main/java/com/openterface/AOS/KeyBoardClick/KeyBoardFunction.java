@@ -4,6 +4,7 @@ import android.content.Context;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 
 import com.openterface.AOS.R;
@@ -13,8 +14,10 @@ import com.openterface.AOS.target.KeyBoardManager;
 public class KeyBoardFunction {
     private final Button KeyBoard_ShortCut;
     private final Button KeyBoard_Function;
+    private final ImageButton KeyBoard_System;
     private final LinearLayout Fragment_KeyBoard_ShortCut;
     private final LinearLayout Fragment_KeyBoard_Function;
+    private final LinearLayout Fragment_KeyBoard_System;
     private final Context context;
 
     private static boolean KeyBoard_ShIft_Press_state;
@@ -28,9 +31,11 @@ public class KeyBoardFunction {
     public KeyBoardFunction(MainActivity activity) {
         Fragment_KeyBoard_ShortCut = activity.findViewById(R.id.Fragment_KeyBoard_ShortCut);
         Fragment_KeyBoard_Function = activity.findViewById(R.id.Fragment_KeyBoard_Function);
+        Fragment_KeyBoard_System = activity.findViewById(R.id.Fragment_KeyBoard_System);
 
         KeyBoard_ShortCut = activity.findViewById(R.id.KeyBoard_ShortCut);
         KeyBoard_Function = activity.findViewById(R.id.KeyBoard_Function);
+        KeyBoard_System = activity.findViewById(R.id.KeyBoard_System);
         this.context = activity;
         FunctionButtons = new View[]{
                 activity.findViewById(R.id.Function1),
@@ -202,6 +207,11 @@ public class KeyBoardFunction {
                 if (Fragment_KeyBoard_ShortCut.getVisibility() == View.VISIBLE) {
                     Fragment_KeyBoard_ShortCut.setVisibility(View.GONE);
                     KeyBoard_ShortCut.setBackgroundResource(R.drawable.nopress_button_background);
+                }
+
+                if (Fragment_KeyBoard_System.getVisibility() == View.VISIBLE) {
+                    Fragment_KeyBoard_System.setVisibility(View.GONE);
+                    KeyBoard_System.setBackgroundResource(R.drawable.nopress_button_background);
                 }
             }
         });
