@@ -148,6 +148,18 @@
                         android:layout_marginHorizontal="1dp" />
 
                     <ImageButton
+                        android:id="@+id/KeyBoard_System"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"
+                        android:src="@drawable/windows"
+                        tools:ignore="ContentDescription">
+                    </ImageButton>
+
+                    <ImageButton
                         android:id="@+id/KeyBoard_Close"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
@@ -162,6 +174,7 @@
 
                 <include layout="@layout/short_cut_button" />
                 <include layout="@layout/function_button" />
+                <include layout="@layout/system_button" />
             </LinearLayout>
 
         </RelativeLayout>

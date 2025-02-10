@@ -4,6 +4,7 @@ import android.content.Context;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 
 import com.openterface.AOS.R;
@@ -13,8 +14,10 @@ import com.openterface.AOS.target.KeyBoardManager;
 public class KeyBoardFunction {
     private final Button KeyBoard_ShortCut;
     private final Button KeyBoard_Function;
+    private final ImageButton KeyBoard_System;
     private final LinearLayout Fragment_KeyBoard_ShortCut;
     private final LinearLayout Fragment_KeyBoard_Function;
+    private final LinearLayout Fragment_KeyBoard_System;
     private final Context context;
 
     private static boolean KeyBoard_ShIft_Press_state;
@@ -28,9 +31,11 @@ public class KeyBoardFunction {
     public KeyBoardFunction(MainActivity activity) {
         Fragment_KeyBoard_ShortCut = activity.findViewById(R.id.Fragment_KeyBoard_ShortCut);
         Fragment_KeyBoard_Function = activity.findViewById(R.id.Fragment_KeyBoard_Function);
+        Fragment_KeyBoard_System = activity.findViewById(R.id.Fragment_KeyBoard_System);
 
         KeyBoard_ShortCut = activity.findViewById(R.id.KeyBoard_ShortCut);
         KeyBoard_Function = activity.findViewById(R.id.KeyBoard_Function);
+        KeyBoard_System = activity.findViewById(R.id.KeyBoard_System);
         this.context = activity;
         FunctionButtons = new View[]{
                 activity.findViewById(R.id.Function1),
@@ -90,50 +95,84 @@ public class KeyBoardFunction {
     }
 
     private String getKey(int Function_buttonId) {
-        switch (Function_buttonId) {
-            case R.id.Function1: return "F1";
-            case R.id.Function2: return "F2";
-            case R.id.Function3: return "F3";
-            case R.id.Function4: return "F4";
-            case R.id.Function5: return "F5";
-            case R.id.Function6: return "F6";
-            case R.id.Function7: return "F7";
-            case R.id.Function8: return "F8";
-            case R.id.Function9: return "F9";
-            case R.id.Function10: return "F10";
-            case R.id.Function11: return "F11";
-            case R.id.Function12: return "F12";
-
-            case R.id.PrtSc: return "PrtSc";
-            case R.id.ScrLk: return "ScrLk";
-            case R.id.Pause: return "Pause";
-            case R.id.Ins: return "Ins";
-            case R.id.Home: return "Home";
-            case R.id.PgUp: return "PgUp";
-            case R.id.Delete: return "Delete";
-            case R.id.End: return "End";
-            case R.id.PgDn: return "PgDn";
-
-            case R.id.Esc: return "Esc";
-            case R.id.TAB: return "TAB";
-
-            case R.id.dropLeft: return "DPAD_LEFT";
-            case R.id.dropRight: return "DPAD_RIGHT";
-            case R.id.dropUp: return "DPAD_UP";
-            case R.id.dropDown: return "DPAD_DOWN";
-
-            case R.id.Minus_Sign_Button: return KeyBoard_ShIft_Press_state ? "_" : "-";
-            case R.id.Plus_Sign_Button: return KeyBoard_ShIft_Press_state ? "+" : "=";
-            case R.id.Left_Bracket_Button: return KeyBoard_ShIft_Press_state ? "{" : "[";
-            case R.id.Right_Bracket_Button: return KeyBoard_ShIft_Press_state ? "}" : "]";
-            case R.id.Colon_Button: return KeyBoard_ShIft_Press_state ? ":" : ";";
-            case R.id.Quotation_Button: return KeyBoard_ShIft_Press_state ? "\"" : "'";
-            case R.id.Bitwise_OR_Button: return KeyBoard_ShIft_Press_state ? "|" : "\\";
-            case R.id.Less_Sign_Button: return KeyBoard_ShIft_Press_state ? "<" : ",";
-            case R.id.Greater_Sign_Button: return KeyBoard_ShIft_Press_state ? ">" : ".";
-            case R.id.Question_Mark: return KeyBoard_ShIft_Press_state ? "?" : "/";
-            case R.id.Tilde: return "~";
-            default: return "";
+        if (Function_buttonId == R.id.Function1) {
+            return "F1";
+        } else if (Function_buttonId == R.id.Function2) {
+            return "F2";
+        } else if (Function_buttonId == R.id.Function3) {
+            return "F3";
+        } else if (Function_buttonId == R.id.Function4) {
+            return "F4";
+        } else if (Function_buttonId == R.id.Function5) {
+            return "F5";
+        } else if (Function_buttonId == R.id.Function6) {
+            return "F6";
+        } else if (Function_buttonId == R.id.Function7) {
+            return "F7";
+        } else if (Function_buttonId == R.id.Function8) {
+            return "F8";
+        } else if (Function_buttonId == R.id.Function9) {
+            return "F9";
+        } else if (Function_buttonId == R.id.Function10) {
+            return "F10";
+        } else if (Function_buttonId == R.id.Function11) {
+            return "F11";
+        } else if (Function_buttonId == R.id.Function12) {
+            return "F12";
+        } else if (Function_buttonId == R.id.PrtSc) {
+            return "PrtSc";
+        } else if (Function_buttonId == R.id.ScrLk) {
+            return "ScrLk";
+        } else if (Function_buttonId == R.id.Pause) {
+            return "Pause";
+        } else if (Function_buttonId == R.id.Ins) {
+            return "Ins";
+        } else if (Function_buttonId == R.id.Home) {
+            return "Home";
+        } else if (Function_buttonId == R.id.PgUp) {
+            return "PgUp";
+        } else if (Function_buttonId == R.id.Delete) {
+            return "Delete";
+        } else if (Function_buttonId == R.id.End) {
+            return "End";
+        } else if (Function_buttonId == R.id.PgDn) {
+            return "PgDn";
+        } else if (Function_buttonId == R.id.Esc) {
+            return "Esc";
+        } else if (Function_buttonId == R.id.TAB) {
+            return "TAB";
+        } else if (Function_buttonId == R.id.dropLeft) {
+            return "DPAD_LEFT";
+        } else if (Function_buttonId == R.id.dropRight) {
+            return "DPAD_RIGHT";
+        } else if (Function_buttonId == R.id.dropUp) {
+            return "DPAD_UP";
+        } else if (Function_buttonId == R.id.dropDown) {
+            return "DPAD_DOWN";
+        } else if (Function_buttonId == R.id.Minus_Sign_Button) {
+            return KeyBoard_ShIft_Press_state ? "_" : "-";
+        } else if (Function_buttonId == R.id.Plus_Sign_Button) {
+            return KeyBoard_ShIft_Press_state ? "+" : "=";
+        } else if (Function_buttonId == R.id.Left_Bracket_Button) {
+            return KeyBoard_ShIft_Press_state ? "{" : "[";
+        } else if (Function_buttonId == R.id.Right_Bracket_Button) {
+            return KeyBoard_ShIft_Press_state ? "}" : "]";
+        } else if (Function_buttonId == R.id.Colon_Button) {
+            return KeyBoard_ShIft_Press_state ? ":" : ";";
+        } else if (Function_buttonId == R.id.Quotation_Button) {
+            return KeyBoard_ShIft_Press_state ? "\"" : "'";
+        } else if (Function_buttonId == R.id.Bitwise_OR_Button) {
+            return KeyBoard_ShIft_Press_state ? "|" : "\\";
+        } else if (Function_buttonId == R.id.Less_Sign_Button) {
+            return KeyBoard_ShIft_Press_state ? "<" : ",";
+        } else if (Function_buttonId == R.id.Greater_Sign_Button) {
+            return KeyBoard_ShIft_Press_state ? ">" : ".";
+        } else if (Function_buttonId == R.id.Question_Mark) {
+            return KeyBoard_ShIft_Press_state ? "?" : "/";
+        } else if (Function_buttonId == R.id.Tilde) {
+            return "~";
+        } else {
+            return "";
         }
     }
 
@@ -168,6 +207,11 @@ public class KeyBoardFunction {
                 if (Fragment_KeyBoard_ShortCut.getVisibility() == View.VISIBLE) {
                     Fragment_KeyBoard_ShortCut.setVisibility(View.GONE);
                     KeyBoard_ShortCut.setBackgroundResource(R.drawable.nopress_button_background);
+                }
+
+                if (Fragment_KeyBoard_System.getVisibility() == View.VISIBLE) {
+                    Fragment_KeyBoard_System.setVisibility(View.GONE);
+                    KeyBoard_System.setBackgroundResource(R.drawable.nopress_button_background);
                 }
             }
         });
