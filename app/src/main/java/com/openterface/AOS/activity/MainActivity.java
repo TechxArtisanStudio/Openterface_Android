@@ -29,6 +29,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.PorterDuff;
+import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.graphics.drawable.Drawable;
 import android.hardware.usb.UsbDevice;
@@ -82,6 +83,7 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.TextureView;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
@@ -354,8 +356,20 @@ public class MainActivity extends AppCompatActivity {
             Button KeyBoard_Function = findViewById(R.id.KeyBoard_Function);
             ImageButton KeyBoard_System = findViewById(R.id.KeyBoard_System);
 
-            keyBoardView.setVisibility(View.VISIBLE);
-
+            keyBoardView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    Rect r = new Rect();
+                    getWindow().getDecorView().getWindowVisibleDisplayFrame(r);
+                    int heightDiff = getResources().getDisplayMetrics().heightPixels - (r.bottom - r.top);
+                    if (heightDiff > 100) {
+                        keyBoardView.setVisibility(View.VISIBLE);
+                        keyBoardView.setTranslationY(-heightDiff);
+                    } else {
+                        keyBoardView.setTranslationY(0);
+                    }
+                }
+            });
             //hide floating button keyboard and set_up_button
             FloatingActionButton keyBoard = findViewById(R.id.keyBoard);
             keyBoard.setVisibility(View.GONE);
@@ -502,6 +516,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initPreviewView() {
+        int initWidth = mPreviewWidth;
+        int initHeight = mPreviewHeight;
         mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
         Log.d(TAG, "1mPreviewWidth: " + mPreviewWidth + " mPreviewHeight: " + mPreviewHeight);
         mBinding.viewMainPreview.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
@@ -516,11 +532,15 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onSurfaceTextureSizeChanged(@NonNull SurfaceTexture surface, int width, int height) {
+//                surface.setDefaultBufferSize(initWidth, initHeight);
+                System.out.println("this is change initWidth: " + initWidth + " initHeight: " + initHeight);
+                System.out.println("this is change width: " + width + " height: " + height);
             }
 
             @Override
             public boolean onSurfaceTextureDestroyed(@NonNull SurfaceTexture surface) {
                 if (mCameraHelper != null) {
+                    System.out.println("this is remove surface");
                     mCameraHelper.removeSurface(surface);
                 }
                 return false;

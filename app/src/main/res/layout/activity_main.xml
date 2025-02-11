@@ -167,7 +167,7 @@
                         android:background="@drawable/button_background"
                         android:theme="@style/ButtonTheme"
                         android:layout_marginHorizontal="1dp"
-                        android:src="@drawable/baseline_close_24"
+                        android:src="@drawable/x_circle"
                         tools:ignore="ContentDescription">
                     </ImageButton>
                 </LinearLayout>

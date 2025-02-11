@@ -66,13 +66,13 @@ public class AspectRatioTextureView extends TextureView    // API >= 14
             throw new IllegalArgumentException();
         }
         // Use a range as a standard for comparing whether floating point numbers are equal
-        float diff = 1e-6f;
-        if (Math.abs(mRequestedAspect - aspectRatio) > diff) {
-            mRequestedAspect = aspectRatio;
-            new Handler(Looper.getMainLooper()).post(() -> {
-                requestLayout();
-            });
-        }
+//        float diff = 1e-6f;
+//        if (Math.abs(mRequestedAspect - aspectRatio) > diff) {
+//            mRequestedAspect = aspectRatio;
+//            new Handler(Looper.getMainLooper()).post(() -> {
+//                requestLayout();
+//            });
+//        }
     }
 
     @Override
