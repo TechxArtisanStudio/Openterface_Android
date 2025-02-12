@@ -39,6 +39,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
@@ -152,6 +153,8 @@ public class MainActivity extends AppCompatActivity {
     private Button action_device, action_safely_eject;
     private Drawable action_device_drawable, action_safely_eject_drawable;
 
+    private String[] permissions = {Manifest.permission.RECORD_AUDIO};
+
     @SuppressLint("ClickableViewAccessibility")//add
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -161,6 +164,9 @@ public class MainActivity extends AppCompatActivity {
         // Hide the system bars.
         windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
         super.onCreate(savedInstanceState);
+
+        //Recording Permission
+        ActivityCompat.requestPermissions(this, permissions, 200);
 
         //Prevent screen from turning off
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -516,8 +522,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initPreviewView() {
-        int initWidth = mPreviewWidth;
-        int initHeight = mPreviewHeight;
         mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
         Log.d(TAG, "1mPreviewWidth: " + mPreviewWidth + " mPreviewHeight: " + mPreviewHeight);
         mBinding.viewMainPreview.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
@@ -532,15 +536,11 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onSurfaceTextureSizeChanged(@NonNull SurfaceTexture surface, int width, int height) {
-//                surface.setDefaultBufferSize(initWidth, initHeight);
-                System.out.println("this is change initWidth: " + initWidth + " initHeight: " + initHeight);
-                System.out.println("this is change width: " + width + " height: " + height);
             }
 
             @Override
             public boolean onSurfaceTextureDestroyed(@NonNull SurfaceTexture surface) {
                 if (mCameraHelper != null) {
-                    System.out.println("this is remove surface");
                     mCameraHelper.removeSurface(surface);
                 }
                 return false;
@@ -562,8 +562,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * In Android9+, connected to the UVC CAMERA, CAMERA permission is required
-     *
+     *     * In Android9+, connected to the UVC CAMERA, CAMERA permission is required
      * @param device
      */
     protected void selectDevice(UsbDevice device) {
