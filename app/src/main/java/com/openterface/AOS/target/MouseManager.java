@@ -452,7 +452,7 @@ public class MouseManager {
         }).start();
     }
 
-    public static void sendHexRelData(float StartMoveMSX, float StartMoveMSY, float LastMoveMSX, float LastMoveMSY) {
+    public static void sendHexRelData(String MouseClick, float StartMoveMSX, float StartMoveMSY, float LastMoveMSX, float LastMoveMSY) {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -490,7 +490,7 @@ public class MouseManager {
                                     CH9329MSKBMap.CmdData().get("CmdMS_REL") +
                                     CH9329MSKBMap.DataLen().get("DataLenRelMS") +
                                     CH9329MSKBMap.MSRelData().get("FirstData") +
-                                    CH9329MSKBMap.MSRelData().get("SecNullData") + //MS key
+                                    CH9329MSKBMap.MSAbsData().get(MouseClick) + //MS key
                                     xByte +
                                     yByte +
                                     CH9329MSKBMap.DataNull().get("DataNull");

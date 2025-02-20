@@ -296,21 +296,6 @@
                         android:textSize="18sp"
                         android:theme="@style/FontStyle"/>
 
-                    <com.kyleduo.switchbutton.SwitchButton
-                        android:id="@+id/switchTargetButton"
-                        style="@style/SwitchButtonStyle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="#FFFFFF"
-                        android:textSize="16dp"
-                        app:kswTextAdjust="-2dp"
-                        app:kswTextExtra="8dp"
-                        app:kswTextOff="Off"
-                        app:kswTextOn="On"
-                        app:kswTintColor="@color/white"
-                        app:kswBackColor="@drawable/switch_button_status"/>
-
-
                 </LinearLayout>
 
             </LinearLayout>

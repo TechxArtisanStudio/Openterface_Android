@@ -67,6 +67,10 @@ public class CustomTouchListener implements View.OnTouchListener {
 
     private boolean MouseLeftClcik, MouseRightClick, MouseScrollClick = false;
 
+    private boolean isDoubleClickPhase = false;
+    private float firstClickX, firstClickY;
+    private long firstClickTime = 0;
+
     public static void KeyMouse_state(boolean keyMouseState, boolean keyMouseAbsCtrlState) {
         KeyMouse_state = keyMouseState;
         keyMouseAbsCtrl = keyMouseAbsCtrlState;
@@ -102,7 +106,7 @@ public class CustomTouchListener implements View.OnTouchListener {
                                 MouseManager.sendHexAbsData(cursorX, cursorY);
                             }
                         }else {
-                            MouseManager.sendHexRelData(cursorX, cursorY, LastMoveMSX, LastMoveMSY);
+                            MouseManager.sendHexRelData("SecNullData", cursorX, cursorY, LastMoveMSX, LastMoveMSY);
                             LastMoveMSX = cursorX;
                             LastMoveMSY = cursorY;
                         }
@@ -146,6 +150,17 @@ public class CustomTouchListener implements View.OnTouchListener {
     }
 
     private void handActionDownMouse(MotionEvent event){
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - firstClickTime < DOUBLE_CLICK_TIME_DELTA
+                && Math.abs(event.getX() - firstClickX) < 100
+                && Math.abs(event.getY() - firstClickY) < 100) {
+            isDoubleClickPhase = true;
+        } else {
+            firstClickTime = currentTime;
+            firstClickX = event.getX();
+            firstClickY = event.getY();
+        }
+
         System.out.println("this is action down");
         isLongPress = false;
         StartMoveMSX = event.getX();
@@ -192,6 +207,28 @@ public class CustomTouchListener implements View.OnTouchListener {
     }
 
     private void handActionMoveMouse(MotionEvent event){
+        // Added double-click drag and drop processing
+        if (isDoubleClickPhase && event.getPointerCount() == 1) {
+            StartMoveMSX = event.getX();
+            StartMoveMSY = event.getY();
+
+            if (KeyMouse_state) {
+                System.out.println("double click drag AbsDragData");
+                MouseManager.sendHexAbsDragData(event.getX(), event.getY());
+            } else {
+                System.out.println("double click drag RelDragData");
+                MouseManager.sendHexRelData("SecLeftData", StartMoveMSX, StartMoveMSY, LastMoveMSX, LastMoveMSY);
+                LastMoveMSX = StartMoveMSX;
+                LastMoveMSY = StartMoveMSY;
+            }
+
+            if (floating_label != null) {
+                floating_label.setVisibility(View.VISIBLE);
+            }
+
+            return;
+        }
+
         long currentTime = System.currentTimeMillis();
         if (isPanning && event.getPointerCount() == 2) {
             float y1 = event.getY(0) - startY1;
@@ -258,7 +295,7 @@ public class CustomTouchListener implements View.OnTouchListener {
                 }
             } else {
                 Log.d(TAG, "Rel data send now");
-                MouseManager.sendHexRelData(StartMoveMSX, StartMoveMSY, LastMoveMSX, LastMoveMSY);
+                MouseManager.sendHexRelData("SecNullData", StartMoveMSX, StartMoveMSY, LastMoveMSX, LastMoveMSY);
                 LastMoveMSX = StartMoveMSX;
                 LastMoveMSY = StartMoveMSY;
             }
@@ -275,6 +312,23 @@ public class CustomTouchListener implements View.OnTouchListener {
     }
 
     private void handActionUpMouse(MotionEvent event){
+        // double-click end processing
+        if (isDoubleClickPhase) {
+            Log.d(TAG, "Double click drag end");
+            if (KeyMouse_state){
+                MouseManager.sendHexAbsData(StartMoveMSX, StartMoveMSY);//release abs state
+            }else {
+                MouseManager.sendHexRelData("SecNullData", StartMoveMSX, StartMoveMSY, LastMoveMSX, LastMoveMSY);
+            }
+            isDoubleClickPhase = false;
+            if (floating_label != null) {
+                floating_label.setVisibility(View.GONE);
+            }
+            LastMoveMSX = 0;
+            LastMoveMSY = 0;
+            return;
+        }
+
         long clickTime = System.currentTimeMillis();
         if (clickTime - lastClickTime <= DOUBLE_CLICK_TIME_DELTA) {
             Log.d(TAG, "Double click at the same position");
@@ -288,6 +342,8 @@ public class CustomTouchListener implements View.OnTouchListener {
         }
         if (KeyMouse_state) {
             MouseManager.sendHexAbsData(StartMoveMSX, StartMoveMSY);
+        }else{
+            MouseManager.sendHexRelData("SecNullData", StartMoveMSX, StartMoveMSY, LastMoveMSX, LastMoveMSY);
         }
         DrawMode = false;
         floating_label.setVisibility(View.GONE);
