@@ -28,6 +28,9 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
@@ -43,8 +46,10 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.openterface.AOS.IImageCapture;
 import com.openterface.AOS.KeyBoardClick.KeyBoardClose;
 import com.openterface.AOS.KeyBoardClick.KeyBoardFunction;
 import com.openterface.AOS.KeyBoardClick.KeyBoardShift;
@@ -71,6 +76,7 @@ import com.openterface.AOS.databinding.ActivityMainBinding;
 import com.openterface.AOS.fragment.CameraControlsDialogFragment;
 import com.openterface.AOS.fragment.DeviceListDialogFragment;
 import com.openterface.AOS.fragment.VideoFormatDialogFragment;
+import com.serenegiant.widget.AspectRatioSurfaceView;
 
 import android.os.Environment;
 import android.os.Handler;
@@ -82,15 +88,22 @@ import android.view.Display;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.SurfaceHolder;
 import android.view.TextureView;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -154,6 +167,17 @@ public class MainActivity extends AppCompatActivity {
     private Drawable action_device_drawable, action_safely_eject_drawable;
 
     private String[] permissions = {Manifest.permission.RECORD_AUDIO};
+
+    private DrawerLayout drawerLayout;
+    private View thumbnailContainer;
+    private ImageView ivThumbnail;
+    private View indicatorView;
+    private Matrix matrix = new Matrix();
+    private float scaleFactor = 1f;
+    private float ratioX, ratioY;
+
+    private AspectRatioSurfaceView cameraViewSecond;
+    private RelativeLayout thumbnail_container;
 
     @SuppressLint("ClickableViewAccessibility")//add
     @Override
@@ -237,6 +261,199 @@ public class MainActivity extends AppCompatActivity {
 
         action_device_drawable = action_device.getCompoundDrawables()[1];
         action_safely_eject_drawable = action_safely_eject.getCompoundDrawables()[1];
+
+        setCameraViewSecond();
+        initViews();
+        setupEnlargeButton();
+
+    }
+
+    private void setCameraViewSecond() {
+        cameraViewSecond = findViewById(R.id.cameraViewSecond);
+        cameraViewSecond.setAspectRatio(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+
+        cameraViewSecond.getHolder().addCallback(new SurfaceHolder.Callback() {
+            @Override
+            public void surfaceCreated(@NonNull SurfaceHolder holder) {
+                if (mCameraHelper != null) {
+                    mCameraHelper.addSurface(holder.getSurface(), false);
+                }
+            }
+
+            @Override
+            public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
+
+            }
+
+            @Override
+            public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
+                if (mCameraHelper != null) {
+                    mCameraHelper.removeSurface(holder.getSurface());
+                }
+            }
+        });
+    }
+
+    private void initViews() {
+        drawerLayout = findViewById(R.id.drawer_layout);
+        thumbnailContainer = findViewById(R.id.thumbnail_container);
+        indicatorView = findViewById(R.id.view_indicator);
+
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getRealMetrics(displayMetrics);
+        int screenWidth = displayMetrics.widthPixels;
+        int screenHeight = displayMetrics.heightPixels;
+
+        Log.d("initViews", "screenWidth: " + screenWidth + " screenHeight: " + screenHeight);
+
+
+        cameraViewSecond.getLayoutParams().width = screenWidth / 4;
+        cameraViewSecond.getLayoutParams().height = screenHeight / 4;
+        cameraViewSecond.requestLayout();
+
+        indicatorView.getLayoutParams().width = screenWidth / 8;
+        indicatorView.getLayoutParams().height = screenHeight / 8;
+        indicatorView.requestLayout();
+    }
+
+    private void setupEnlargeButton() {
+
+        Button btnEnlarge = findViewById(R.id.enlargeButton);
+        btnEnlarge.setOnClickListener(v -> {
+            // Enlarge main view
+            scaleFactor = 2f;
+            drawerLayout.setScaleX(scaleFactor);
+            drawerLayout.setScaleY(scaleFactor);
+            Log.d("setupEnlargeButton", "drawerLayoutWidth: " + drawerLayout.getWidth() + " drawerLayoutHeight: " + drawerLayout.getHeight());
+            mCameraHelper.addSurface(mBinding.cameraViewSecond.getHolder().getSurface(), false);
+            thumbnailContainer.setVisibility(View.VISIBLE);
+            // Show navigation window
+            showThumbnailWindow();
+        });
+
+        Button zoomOutButton = findViewById(R.id.zoomOutButton);
+        zoomOutButton.setOnClickListener(v -> {
+            scaleFactor = 1f;
+            drawerLayout.setScaleX(scaleFactor);
+            drawerLayout.setScaleY(scaleFactor);
+            mCameraHelper.removeSurface(cameraViewSecond.getHolder().getSurface());
+            thumbnailContainer.setVisibility(View.GONE);
+            drawerLayout.scrollTo(
+                    (0),
+                    (0)
+            );
+        });
+
+    }
+
+    private void showThumbnailWindow() {
+
+        // Generate thumbnail
+        generateThumbnail();
+
+        // Set drag and drop listening
+        setupThumbnailDrag();
+    }
+
+    private void generateThumbnail() {
+        if (!mBinding.viewMainPreview.isAvailable()) {
+            Log.e("generateThumbnail", "TextureView is not available");
+            return;
+        }
+
+        Bitmap mainBitmap = mBinding.viewMainPreview.getBitmap();
+        if (mainBitmap == null) {
+            Log.e("generateThumbnail", "Failed to get bitmap from TextureView");
+            return;
+        }
+
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private void setupThumbnailDrag() {
+        cameraViewSecond.setOnTouchListener((v, event) -> {
+            switch (event.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN:
+                    updateIndicatorPosition(event.getX(), event.getY());
+                    syncMainViewPosition(event.getX(), event.getY());
+//                    indicatorView.setVisibility(View.VISIBLE);
+                    return true;
+
+                case MotionEvent.ACTION_MOVE:
+                    updateIndicatorPosition(event.getX(), event.getY());
+                    syncMainViewPosition(event.getX(), event.getY());
+                    return true;
+
+                case MotionEvent.ACTION_UP:
+//                    indicatorView.setVisibility(View.INVISIBLE);
+                    return true;
+            }
+            return false;
+        });
+    }
+
+    private void updateIndicatorPosition(float x, float y) {
+        // Center display indicator
+        float indicatorX = x - indicatorView.getWidth()/2f;
+        float indicatorY = y - indicatorView.getHeight()/2f;
+        indicatorView.setX(Math.max(0, Math.min(
+                indicatorX,
+                cameraViewSecond.getWidth() - indicatorView.getWidth()
+        )));
+
+        indicatorView.setY(Math.max(0, Math.min(
+                indicatorY,
+                cameraViewSecond.getHeight() - indicatorView.getHeight()
+        )));
+    }
+
+    private void syncMainViewPosition(float thumbX, float thumbY) {
+        int[] location = new int[2];
+        indicatorView.getLocationInWindow(location);
+
+        int[] containerLocation = new int[2];
+        thumbnailContainer.getLocationInWindow(containerLocation);
+
+        // Computation center coordinate
+        float centerX = location[0] - containerLocation[0] + indicatorView.getWidth() / 2f;
+        float centerY = location[1] - containerLocation[1] + indicatorView.getHeight() / 2f;
+
+        // Output center coordinate
+        Log.d("Center Coordinates", "location[0]: " + location[0] + ", location[1]: " + location[1]);
+        Log.d("Center Coordinates", "X: " + centerX + ", Y: " + centerY);
+
+        Log.d("syncMainViewPosition", "sizeThumbX: " + thumbX + " sizeThumbY: " + thumbY);
+        // Calculate where the main view should scroll to
+        ratioX = 4f;
+        ratioY = 4f;
+        float mainX = thumbX * ratioX;
+        float mainY = thumbY * ratioY;
+        Log.d("syncMainViewPosition", "mainX: " + mainX + " mainY: " + mainY);
+        // Update the main view location
+        Log.d("syncMainViewPosition", "mainX - drawerLayout.getWidth()/2f: " + (mainX - drawerLayout.getWidth()/2f));
+        Log.d("syncMainViewPosition", "mainY - drawerLayout.getHeight()/2f: " + (mainY - drawerLayout.getHeight()/2f));
+        int setMaxViewX = 0;
+        int setMaxViewY = 0;
+        if((mainX - drawerLayout.getWidth()/2f) < -(drawerLayout.getWidth()/ ratioX)){
+            setMaxViewX = (int)(-(drawerLayout.getWidth()/ ratioX));
+        } else if ((mainX - drawerLayout.getWidth()/2f) > (drawerLayout.getWidth()/ ratioX)) {
+            setMaxViewX = (int)((drawerLayout.getWidth()/ ratioX));
+        }else {
+            setMaxViewX = (int)(mainX - drawerLayout.getWidth()/2f);
+        }
+
+        if((mainY - drawerLayout.getHeight()/2f) < -(drawerLayout.getHeight()/ ratioY)){
+            setMaxViewY = (int)(-(drawerLayout.getHeight()/ ratioY));
+        } else if ((mainY - drawerLayout.getHeight()/2f) > (drawerLayout.getHeight()/ ratioY)) {
+            setMaxViewY = (int)((drawerLayout.getHeight()/ ratioY));
+        }else {
+            setMaxViewY = (int)(mainY - drawerLayout.getHeight()/2f);
+        }
+        Log.d("syncMainViewPosition", "setMaxViewX: " + setMaxViewX + " setMaxViewY: " + setMaxViewY);
+        drawerLayout.scrollTo(
+                (setMaxViewX),
+                (setMaxViewY)
+        );
     }
 
     @Override
@@ -624,15 +841,17 @@ public class MainActivity extends AppCompatActivity {
         public void onCameraOpen(UsbDevice device) {
             if (DEBUG) Log.v(TAG, "onCameraOpen:device=" + device.getDeviceName());
             mCameraHelper.startPreview();
-
             // After connecting to the camera, you can get preview size of the camera
             Size size = mCameraHelper.getPreviewSize();
             if (size != null) {
                 resizePreviewView(size);
+//                cameraViewSecond.setAspectRatio(640, 480);
+
             }
 
             if (mBinding.viewMainPreview.getSurfaceTexture() != null) {
                 mCameraHelper.addSurface(mBinding.viewMainPreview.getSurfaceTexture(), false);
+                mCameraHelper.addSurface(mBinding.cameraViewSecond.getHolder().getSurface(), false);
             }
 
             mIsCameraConnected = true;
@@ -652,6 +871,7 @@ public class MainActivity extends AppCompatActivity {
 
             if (mCameraHelper != null && mBinding.viewMainPreview.getSurfaceTexture() != null) {
                 mCameraHelper.removeSurface(mBinding.viewMainPreview.getSurfaceTexture());
+                mCameraHelper.removeSurface(cameraViewSecond.getHolder().getSurface());
             }
 
             mIsCameraConnected = false;
@@ -829,7 +1049,7 @@ public class MainActivity extends AppCompatActivity {
     private void setCustomVideoCaptureConfig() {
         mCameraHelper.setVideoCaptureConfig(
                 mCameraHelper.getVideoCaptureConfig()
-//                        .setAudioCaptureEnable(false)
+                        .setAudioCaptureEnable(true)
                         .setBitRate((int) (1024 * 1024 * 25 * 0.25))
                         .setVideoFrameRate(25)
                         .setIFrameInterval(1));

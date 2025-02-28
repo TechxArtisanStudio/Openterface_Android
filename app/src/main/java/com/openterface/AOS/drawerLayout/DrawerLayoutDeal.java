@@ -61,6 +61,7 @@ public class DrawerLayoutDeal extends Fragment {
 
     private final LinearLayout main_drawer_layout;
     private final LinearLayout about_device_layout;
+    private final LinearLayout drawer_layout_setup;
 
     private final TextView android_version;
     private final TextView app_version;
@@ -97,6 +98,7 @@ public class DrawerLayoutDeal extends Fragment {
         Close_DrawLayout = activity.findViewById(R.id.Close_DrawLayout);
 
         main_drawer_layout = activity.findViewById(R.id.main_drawer_layout);
+        drawer_layout_setup = activity.findViewById(R.id.drawer_layout_setup);
         about_device = activity.findViewById(R.id.about_device);
         about_device_layout = activity.findViewById(R.id.about_device_layout);
         close_about_device_button = activity.findViewById(R.id.close_button);
@@ -122,11 +124,12 @@ public class DrawerLayoutDeal extends Fragment {
         set_up_button.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                if (drawer_layout.isDrawerOpen(GravityCompat.END)) {
-                    drawer_layout.closeDrawer(GravityCompat.END);
-                } else {
-                    drawer_layout.openDrawer(GravityCompat.END);
-                }
+                drawer_layout_setup.setVisibility(View.VISIBLE);
+//                if (drawer_layout.isDrawerOpen(GravityCompat.END)) {
+//                    drawer_layout.closeDrawer(GravityCompat.END);
+//                } else {
+//                    drawer_layout.openDrawer(GravityCompat.END);
+//                }
             }
         });
 
@@ -248,9 +251,11 @@ public class DrawerLayoutDeal extends Fragment {
                     mIsRecording = !mIsRecording;
                     break;
                 case R.id.Close_DrawLayout:
-                    if (drawer_layout.isDrawerOpen(GravityCompat.END)) {
-                        drawer_layout.closeDrawer(GravityCompat.END);
-                    }
+                    Log.d("DrawerLayoutDeal", "Close_DrawLayout");
+                    drawer_layout_setup.setVisibility(View.GONE);
+//                    if (drawer_layout.isDrawerOpen(GravityCompat.END)) {
+//                        drawer_layout.closeDrawer(GravityCompat.END);
+//                    }
                     break;
                 default:
                     break;

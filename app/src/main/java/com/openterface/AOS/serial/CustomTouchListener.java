@@ -176,6 +176,7 @@ public class CustomTouchListener implements View.OnTouchListener {
         }
 
         if (KeyMouse_state){
+            Log.d("handActionDownMouse", "KeyMouse_state");
             MouseManager.sendHexAbsData(startMoveMSX, startMoveMSY);
         }
     }
@@ -215,7 +216,7 @@ public class CustomTouchListener implements View.OnTouchListener {
                 @Override
                 public void run() {
                     if (!hasHandledMove) {
-                        MouseManager.handleTwoPress();
+                        MouseManager.handleTwoPress();//deal right click
                     }
                 }
             }, TWO_FINGER_PRESS_DELAY);
@@ -246,7 +247,7 @@ public class CustomTouchListener implements View.OnTouchListener {
         }
 
         long currentTime = System.currentTimeMillis();
-        if (isPanning && event.getPointerCount() == 2) {
+        if (isPanning && event.getPointerCount() == 2) {  //deal Middle click
             float y1 = event.getY(0) - startY1;
             float y2 = event.getY(1) - startY2;
             startMoveMSY = event.getY();
@@ -277,13 +278,13 @@ public class CustomTouchListener implements View.OnTouchListener {
             if (KeyMouse_state) {
                 if (keyMouseAbsCtrl){
                     MouseManager.sendHexAbsDragData(startMoveMSX, startMoveMSY);
+                    floatingLabel.setVisibility(View.VISIBLE);
                 }else {
                     if (DrawMode && currentTime - longPressStartTime >= 2000 && distance < 30){
                         MouseManager.handleTwoPress();
                         floatingLabel.setVisibility(View.GONE);
                         return;
                     } else if (DrawMode) {
-                        floatingLabel.setVisibility(View.VISIBLE);
                         MouseManager.sendHexAbsDragData(startMoveMSX, startMoveMSY);
                         return;
                     }
