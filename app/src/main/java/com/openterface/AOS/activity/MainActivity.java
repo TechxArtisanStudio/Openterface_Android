@@ -56,6 +56,7 @@ import com.openterface.AOS.KeyBoardClick.KeyBoardShift;
 import com.openterface.AOS.KeyBoardClick.KeyBoardShortCut;
 import com.openterface.AOS.KeyBoardClick.KeyBoardSystem;
 import com.openterface.AOS.drawerLayout.DrawerLayoutDeal;
+import com.openterface.AOS.drawerLayout.ZoomLayoutDeal;
 import com.openterface.AOS.serial.CustomTouchListener;
 import com.openterface.AOS.serial.UsbDeviceManager;
 import com.openterface.AOS.target.KeyBoardManager;
@@ -118,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final boolean DEBUG = true;
 
-    private ActivityMainBinding mBinding;
+    public ActivityMainBinding mBinding;
 
     private static final int QUARTER_SECOND = 250;
 
@@ -136,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
 
     private int mPreviewRotation = 0;
 
-    private ICameraHelper mCameraHelper;
+    public ICameraHelper mCameraHelper;
 
     private UsbDevice mUsbDevice;
     private final ICameraHelper.StateCallback mStateCallback = new MyCameraHelperCallback();
@@ -168,15 +169,7 @@ public class MainActivity extends AppCompatActivity {
 
     private String[] permissions = {Manifest.permission.RECORD_AUDIO};
 
-    private DrawerLayout drawerLayout;
-    private View thumbnailContainer;
-    private ImageView ivThumbnail;
-    private View indicatorView;
-    private Matrix matrix = new Matrix();
-    private float scaleFactor = 1f;
-    private float ratioX, ratioY;
-
-    private AspectRatioSurfaceView cameraViewSecond;
+    public AspectRatioSurfaceView cameraViewSecond;
     private RelativeLayout thumbnail_container;
 
     @SuppressLint("ClickableViewAccessibility")//add
@@ -262,10 +255,9 @@ public class MainActivity extends AppCompatActivity {
         action_device_drawable = action_device.getCompoundDrawables()[1];
         action_safely_eject_drawable = action_safely_eject.getCompoundDrawables()[1];
 
+        //Zoom layout deal
         setCameraViewSecond();
-        initViews();
-        setupEnlargeButton();
-
+        ZoomLayoutDeal ZoomLayoutDeal = new ZoomLayoutDeal(this, mCameraHelper, mBinding);
     }
 
     private void setCameraViewSecond() {
@@ -294,167 +286,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void initViews() {
-        drawerLayout = findViewById(R.id.drawer_layout);
-        thumbnailContainer = findViewById(R.id.thumbnail_container);
-        indicatorView = findViewById(R.id.view_indicator);
-
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getRealMetrics(displayMetrics);
-        int screenWidth = displayMetrics.widthPixels;
-        int screenHeight = displayMetrics.heightPixels;
-
-        Log.d("initViews", "screenWidth: " + screenWidth + " screenHeight: " + screenHeight);
-
-
-        cameraViewSecond.getLayoutParams().width = screenWidth / 4;
-        cameraViewSecond.getLayoutParams().height = screenHeight / 4;
-        cameraViewSecond.requestLayout();
-
-        indicatorView.getLayoutParams().width = screenWidth / 8;
-        indicatorView.getLayoutParams().height = screenHeight / 8;
-        indicatorView.requestLayout();
-    }
-
-    private void setupEnlargeButton() {
-
-        Button btnEnlarge = findViewById(R.id.enlargeButton);
-        btnEnlarge.setOnClickListener(v -> {
-            // Enlarge main view
-            scaleFactor = 2f;
-            drawerLayout.setScaleX(scaleFactor);
-            drawerLayout.setScaleY(scaleFactor);
-            Log.d("setupEnlargeButton", "drawerLayoutWidth: " + drawerLayout.getWidth() + " drawerLayoutHeight: " + drawerLayout.getHeight());
-            mCameraHelper.addSurface(mBinding.cameraViewSecond.getHolder().getSurface(), false);
-            thumbnailContainer.setVisibility(View.VISIBLE);
-            // Show navigation window
-            showThumbnailWindow();
-        });
-
-        Button zoomOutButton = findViewById(R.id.zoomOutButton);
-        zoomOutButton.setOnClickListener(v -> {
-            scaleFactor = 1f;
-            drawerLayout.setScaleX(scaleFactor);
-            drawerLayout.setScaleY(scaleFactor);
-            mCameraHelper.removeSurface(cameraViewSecond.getHolder().getSurface());
-            thumbnailContainer.setVisibility(View.GONE);
-            drawerLayout.scrollTo(
-                    (0),
-                    (0)
-            );
-        });
-
-    }
-
-    private void showThumbnailWindow() {
-
-        // Generate thumbnail
-        generateThumbnail();
-
-        // Set drag and drop listening
-        setupThumbnailDrag();
-    }
-
-    private void generateThumbnail() {
-        if (!mBinding.viewMainPreview.isAvailable()) {
-            Log.e("generateThumbnail", "TextureView is not available");
-            return;
-        }
-
-        Bitmap mainBitmap = mBinding.viewMainPreview.getBitmap();
-        if (mainBitmap == null) {
-            Log.e("generateThumbnail", "Failed to get bitmap from TextureView");
-            return;
-        }
-
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
-    private void setupThumbnailDrag() {
-        cameraViewSecond.setOnTouchListener((v, event) -> {
-            switch (event.getActionMasked()) {
-                case MotionEvent.ACTION_DOWN:
-                    updateIndicatorPosition(event.getX(), event.getY());
-                    syncMainViewPosition(event.getX(), event.getY());
-//                    indicatorView.setVisibility(View.VISIBLE);
-                    return true;
-
-                case MotionEvent.ACTION_MOVE:
-                    updateIndicatorPosition(event.getX(), event.getY());
-                    syncMainViewPosition(event.getX(), event.getY());
-                    return true;
-
-                case MotionEvent.ACTION_UP:
-//                    indicatorView.setVisibility(View.INVISIBLE);
-                    return true;
-            }
-            return false;
-        });
-    }
-
-    private void updateIndicatorPosition(float x, float y) {
-        // Center display indicator
-        float indicatorX = x - indicatorView.getWidth()/2f;
-        float indicatorY = y - indicatorView.getHeight()/2f;
-        indicatorView.setX(Math.max(0, Math.min(
-                indicatorX,
-                cameraViewSecond.getWidth() - indicatorView.getWidth()
-        )));
-
-        indicatorView.setY(Math.max(0, Math.min(
-                indicatorY,
-                cameraViewSecond.getHeight() - indicatorView.getHeight()
-        )));
-    }
-
-    private void syncMainViewPosition(float thumbX, float thumbY) {
-        int[] location = new int[2];
-        indicatorView.getLocationInWindow(location);
-
-        int[] containerLocation = new int[2];
-        thumbnailContainer.getLocationInWindow(containerLocation);
-
-        // Computation center coordinate
-        float centerX = location[0] - containerLocation[0] + indicatorView.getWidth() / 2f;
-        float centerY = location[1] - containerLocation[1] + indicatorView.getHeight() / 2f;
-
-        // Output center coordinate
-        Log.d("Center Coordinates", "location[0]: " + location[0] + ", location[1]: " + location[1]);
-        Log.d("Center Coordinates", "X: " + centerX + ", Y: " + centerY);
-
-        Log.d("syncMainViewPosition", "sizeThumbX: " + thumbX + " sizeThumbY: " + thumbY);
-        // Calculate where the main view should scroll to
-        ratioX = 4f;
-        ratioY = 4f;
-        float mainX = thumbX * ratioX;
-        float mainY = thumbY * ratioY;
-        Log.d("syncMainViewPosition", "mainX: " + mainX + " mainY: " + mainY);
-        // Update the main view location
-        Log.d("syncMainViewPosition", "mainX - drawerLayout.getWidth()/2f: " + (mainX - drawerLayout.getWidth()/2f));
-        Log.d("syncMainViewPosition", "mainY - drawerLayout.getHeight()/2f: " + (mainY - drawerLayout.getHeight()/2f));
-        int setMaxViewX = 0;
-        int setMaxViewY = 0;
-        if((mainX - drawerLayout.getWidth()/2f) < -(drawerLayout.getWidth()/ ratioX)){
-            setMaxViewX = (int)(-(drawerLayout.getWidth()/ ratioX));
-        } else if ((mainX - drawerLayout.getWidth()/2f) > (drawerLayout.getWidth()/ ratioX)) {
-            setMaxViewX = (int)((drawerLayout.getWidth()/ ratioX));
-        }else {
-            setMaxViewX = (int)(mainX - drawerLayout.getWidth()/2f);
-        }
-
-        if((mainY - drawerLayout.getHeight()/2f) < -(drawerLayout.getHeight()/ ratioY)){
-            setMaxViewY = (int)(-(drawerLayout.getHeight()/ ratioY));
-        } else if ((mainY - drawerLayout.getHeight()/2f) > (drawerLayout.getHeight()/ ratioY)) {
-            setMaxViewY = (int)((drawerLayout.getHeight()/ ratioY));
-        }else {
-            setMaxViewY = (int)(mainY - drawerLayout.getHeight()/2f);
-        }
-        Log.d("syncMainViewPosition", "setMaxViewX: " + setMaxViewX + " setMaxViewY: " + setMaxViewY);
-        drawerLayout.scrollTo(
-                (setMaxViewX),
-                (setMaxViewY)
-        );
-    }
 
     @Override
     public boolean onGenericMotionEvent(MotionEvent event) {
@@ -878,6 +709,8 @@ public class MainActivity extends AppCompatActivity {
             updateUIControls();
 
             closeAllDialogFragment();
+
+            ZoomLayoutDeal.zoomOut();
         }
 
         @Override

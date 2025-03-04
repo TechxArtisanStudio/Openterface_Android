@@ -55,38 +55,6 @@
                     app:drawableLeftCompat="@drawable/ic_record_red_dot"
                     tools:text="99:99:99" />
 
-                <TextView
-                    android:id="@+id/floating_label"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/KeyMouse_Drag"
-                    android:layout_marginTop="5dp"
-                    android:textColor="@color/black"
-                    android:background="@drawable/lable_background"
-                    android:layout_centerHorizontal="true"
-                    android:visibility="gone"/>
-
-    <!--            <com.google.android.material.floatingactionbutton.FloatingActionButton-->
-    <!--                android:id="@+id/fabVideo"-->
-    <!--                style="@style/MainFloatingActionButton"-->
-    <!--                android:layout_above="@id/keyBoard"-->
-    <!--                android:layout_alignParentRight="true"-->
-    <!--                android:layout_centerVertical="true"-->
-    <!--                android:layout_marginEnd="@dimen/fab_margin"-->
-    <!--                android:visibility="invisible"-->
-    <!--                app:srcCompat="@drawable/ic_switch_video" />-->
-
-    <!--            <com.google.android.material.floatingactionbutton.FloatingActionButton-->
-    <!--                android:id="@+id/fabPicture"-->
-    <!--                style="@style/MainFloatingActionButton"-->
-    <!--                android:layout_above="@id/fabVideo"-->
-    <!--                android:layout_alignParentRight="true"-->
-    <!--                android:layout_marginEnd="@dimen/fab_margin"-->
-    <!--                android:visibility="invisible"-->
-    <!--                app:srcCompat="@drawable/ic_switch_camera" />-->
-
-
-
             </RelativeLayout>
 
         </LinearLayout>
@@ -177,6 +145,21 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="center|top">
+        <TextView
+            android:id="@+id/floating_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/KeyMouse_Drag"
+            android:layout_marginTop="5dp"
+            android:textColor="@color/black"
+            android:background="@drawable/lable_background"
+            android:visibility="gone"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
         android:layout_gravity="bottom|end">
         <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -200,7 +183,9 @@
         android:layout_height="wrap_content"
         android:visibility="gone"
         android:background="@android:color/white"
-        android:elevation="8dp">
+        android:elevation="8dp"
+        android:layout_marginTop="50dp"
+        android:layout_marginLeft="50dp">
 
         <com.serenegiant.widget.AspectRatioSurfaceView
             android:id="@+id/cameraViewSecond"
@@ -214,5 +199,12 @@
             android:background="#6600ff00"
             android:layout_centerInParent="true"/>
     </RelativeLayout>
+
+    <Button
+        android:id="@+id/drag_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Drag"
+        android:visibility="visible" />
 
 </FrameLayout>
