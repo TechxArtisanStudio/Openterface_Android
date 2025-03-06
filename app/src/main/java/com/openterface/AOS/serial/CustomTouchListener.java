@@ -30,8 +30,11 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
 
+import androidx.drawerlayout.widget.DrawerLayout;
+
 import com.openterface.AOS.R;
 import com.openterface.AOS.activity.MainActivity;
+import com.openterface.AOS.drawerLayout.ZoomLayoutDeal;
 import com.openterface.AOS.target.MouseManager;
 
 public class CustomTouchListener implements View.OnTouchListener {
@@ -44,6 +47,7 @@ public class CustomTouchListener implements View.OnTouchListener {
     private Handler handler = new Handler();
     private Runnable twoFingerPressRunnable;
     private final TextView floatingLabel;
+    private final MainActivity activity;
 
     //Event processing time
     private static final long DOUBLE_CLICK_TIME_DELTA = 300;    // double click time threshold
@@ -52,7 +56,7 @@ public class CustomTouchListener implements View.OnTouchListener {
 
     //coordinate record
     private float firstClickX, firstClickY;
-    private float startY1, startY2;
+    private float startX1, startX2, startY1, startY2;
     private float currentX, currentY;
     private float startMoveMSX, startMoveMSY;
     private static float lastMoveMSX, lastMoveMSY;
@@ -78,6 +82,9 @@ public class CustomTouchListener implements View.OnTouchListener {
     private static final float CLICK_RADIUS = 100f;           // Click radius
     private static final float PAN_SENSITIVITY = 100f;        // Sliding sensitivity
 
+    //zoom set
+    private final DrawerLayout drawerLayout;
+
     public static void KeyMouse_state(boolean keyMouseState, boolean keyMouseAbsCtrlState) {
         KeyMouse_state = keyMouseState;
         keyMouseAbsCtrl = keyMouseAbsCtrlState;
@@ -86,6 +93,8 @@ public class CustomTouchListener implements View.OnTouchListener {
     public CustomTouchListener(MainActivity activity, UsbDeviceManager usbDeviceManager) {
         CustomTouchListener.usbDeviceManager = usbDeviceManager;
         floatingLabel = activity.findViewById(R.id.floating_label);
+        drawerLayout = activity.findViewById(R.id.drawer_layout);
+        this.activity = activity;
     }
 
     public static boolean handleGenericMotionEvent(MotionEvent event){
@@ -207,19 +216,21 @@ public class CustomTouchListener implements View.OnTouchListener {
 
     private void handActionPointerDownMouse(MotionEvent event){
         if (event.getPointerCount() == 2) {
+            startX1 = event.getX(0);
+            startX2 = event.getX(1);
             startY1 = event.getY(0);
             startY2 = event.getY(1);
             isPanning = true;
             hasHandledMove = false;
 
-            handler.postDelayed(twoFingerPressRunnable = new Runnable() {
-                @Override
-                public void run() {
-                    if (!hasHandledMove) {
-                        MouseManager.handleTwoPress();//deal right click
-                    }
-                }
-            }, TWO_FINGER_PRESS_DELAY);
+//            handler.postDelayed(twoFingerPressRunnable = new Runnable() {
+//                @Override
+//                public void run() {
+//                    if (!hasHandledMove) {
+//                        MouseManager.handleTwoPress();//deal right click
+//                    }
+//                }
+//            }, TWO_FINGER_PRESS_DELAY);
         }
     }
 
@@ -248,20 +259,56 @@ public class CustomTouchListener implements View.OnTouchListener {
 
         long currentTime = System.currentTimeMillis();
         if (isPanning && event.getPointerCount() == 2) {  //deal Middle click
-            float y1 = event.getY(0) - startY1;
-            float y2 = event.getY(1) - startY2;
-            startMoveMSY = event.getY();
-            if (((y1 > PAN_SENSITIVITY && y2 > PAN_SENSITIVITY) || (y1 < -PAN_SENSITIVITY && y2 < -PAN_SENSITIVITY))) {
+
+//            float y1 = event.getY(0) - startY1;
+//            float y2 = event.getY(1) - startY2;
+//            startMoveMSY = event.getY();
+//            if (((y1 > PAN_SENSITIVITY && y2 > PAN_SENSITIVITY) || (y1 < -PAN_SENSITIVITY && y2 < -PAN_SENSITIVITY))) {
+//                // Check if enough time has elapsed since the last move
+//                if (currentTime - lastMoveTime >= MOVE_DELAY) {
+//                    handler.removeCallbacks(twoFingerPressRunnable);
+//                    Log.d(TAG, "ACTION_MOVE");
+//
+//                    MouseManager.handleDoubleFingerPan(startMoveMSY, lastMoveMSY);
+//                    hasHandledMove = true;
+//                    lastMoveMSY = startMoveMSY;
+//
+//                    // Update lastMoveTime to the current time
+//                    lastMoveTime = currentTime;
+//                }
+//            }
+
+            float zoomX1 = event.getX(0);
+            float zoomY1 = event.getY(0);
+            float zoomX2 = event.getX(1);
+            float zoomY2 = event.getY(1);
+
+            // Calculate initial and current distances between fingers
+            float initialDistance = calculateDistance(startX1, startY1, startX2, startY2);
+            float currentDistance = calculateDistance(zoomX1, zoomY1, zoomX2, zoomY2);
+
+            float ZOOM_SENSITIVITY = 5f; // Minimum distance change to trigger zoom
+
+            // Check if the distance change is significant enough
+            if (Math.abs(currentDistance - initialDistance) > ZOOM_SENSITIVITY) {
                 // Check if enough time has elapsed since the last move
-                if (currentTime - lastMoveTime >= MOVE_DELAY) {
+                if (currentTime - lastMoveTime >= 16) {
                     handler.removeCallbacks(twoFingerPressRunnable);
-                    Log.d(TAG, "ACTION_MOVE");
+                    Log.d(TAG, "ACTION_MOVE: Pinch to Zoom");
 
-                    MouseManager.handleDoubleFingerPan(startMoveMSY, lastMoveMSY);
+                    // Calculate the zoom factor (ratio of current to initial distance)
+                    float zoomFactor = currentDistance / initialDistance;
+
+                    // Apply zoom to your view (e.g., drawerLayout or viewMainPreview)
+                    adjustZoom(zoomFactor);
+
+                    // Update the starting points to the current ones for the next move
+                    startX1 = zoomX1;
+                    startY1 = zoomY1;
+                    startX2 = zoomX2;
+                    startY2 = zoomY2;
+
                     hasHandledMove = true;
-                    lastMoveMSY = startMoveMSY;
-
-                    // Update lastMoveTime to the current time
                     lastMoveTime = currentTime;
                 }
             }
@@ -317,6 +364,45 @@ public class CustomTouchListener implements View.OnTouchListener {
                 lastMoveMSY = startMoveMSY;
             }
         }
+    }
+
+    // Helper method to calculate distance between two points
+    private float calculateDistance(float x1, float y1, float x2, float y2) {
+        float dx = x2 - x1;
+        float dy = y2 - y1;
+        return (float) Math.sqrt(dx * dx + dy * dy);
+    }
+
+    // Method to apply zoom to your view
+    private void adjustZoom(float zoomFactor) {
+        // Define scale limits
+        float MIN_SCALE = 1f; // Minimum zoom level
+        float MAX_SCALE = 2.0f; // Maximum zoom level
+
+        // Get current scale from the view (assuming drawerLayout is being scaled)
+        float currentScale = drawerLayout.getScaleX(); // Assume uniform scaling (X = Y)
+        float newScale = currentScale * zoomFactor;
+
+        // Clamp the new scale within bounds
+        if (newScale < MIN_SCALE){
+            newScale = MIN_SCALE;
+            ZoomLayoutDeal.zoomOut();
+        }
+
+        if (newScale > MAX_SCALE){
+            newScale = MAX_SCALE;
+            ZoomLayoutDeal.enlargeView();
+        }
+
+        // Apply the new scale
+        drawerLayout.setScaleX(newScale);
+        drawerLayout.setScaleY(newScale);
+
+        // Ensure pivot is centered for proper scaling
+        drawerLayout.setPivotX(drawerLayout.getWidth() / 2f);
+        drawerLayout.setPivotY(drawerLayout.getHeight() / 2f);
+
+        Log.d(TAG, "Zoom adjusted: newScale=" + newScale);
     }
 
     private void handActionPointerUpMouse(MotionEvent event){

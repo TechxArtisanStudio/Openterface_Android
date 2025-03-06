@@ -9,6 +9,7 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
@@ -36,7 +37,7 @@ public class ZoomLayoutDeal {
     private static int screenWidth;
     private static int screenHeight;
 
-    private static Button dragButton;
+    private static ImageButton dragButton;
     private float lastTouchX, lastTouchY;
 
     public ZoomLayoutDeal(MainActivity activity, ICameraHelper mCameraHelper, ActivityMainBinding mBinding) {
@@ -120,13 +121,21 @@ public class ZoomLayoutDeal {
 
                     // Update dragButton to stay at top-right with offset
                     float offset = 10f;
-                    dragButton.setX(newLeft + thumbnailContainer.getWidth() - offset);
-                    dragButton.setY(newTop - dragButton.getHeight() + offset);
+                    float buttonX = newLeft + thumbnailContainer.getWidth() - offset;
+                    float buttonY = newTop - dragButton.getHeight() + offset;
+
+                    // Clamp dragButton within screen bounds
+                    buttonX = Math.max(0, Math.min(buttonX, screenWidth - dragButton.getWidth()));
+                    buttonY = Math.max(0, Math.min(buttonY, screenHeight - dragButton.getHeight()));
+
+                    dragButton.setX(buttonX);
+                    dragButton.setY(buttonY);
 
                     lastTouchX = event.getRawX();
                     lastTouchY = event.getRawY();
 
-                    Log.d("ZoomLayoutDeal", "Dragging: x=" + newLeft + ", y=" + newTop);
+                    Log.d("ZoomLayoutDeal", "Dragging: thumbnail x=" + newLeft + ", y=" + newTop +
+                            ", button x=" + buttonX + ", y=" + buttonY);
                     return true;
 
                 case MotionEvent.ACTION_UP:

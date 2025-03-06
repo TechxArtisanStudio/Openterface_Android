@@ -42,24 +42,44 @@
                     app:srcCompat="@drawable/content_dark_eng"
                     tools:ignore="ContentDescription" />
 
-                <TextView
-                    android:id="@+id/tvVideoRecordTime"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_centerHorizontal="true"
-                    android:layout_marginTop="30dp"
-                    android:drawablePadding="5dp"
-                    android:textColor="@color/black"
-                    android:textSize="14sp"
-                    android:visibility="gone"
-                    app:drawableLeftCompat="@drawable/ic_record_red_dot"
-                    tools:text="99:99:99" />
-
             </RelativeLayout>
 
         </LinearLayout>
 
     </androidx.drawerlayout.widget.DrawerLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center|top">
+        <TextView
+            android:id="@+id/floating_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/KeyMouse_Drag"
+            android:layout_marginTop="5dp"
+            android:textColor="@color/black"
+            android:background="@drawable/lable_background"
+            android:visibility="gone"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_gravity="bottom|end">
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/keyBoard"
+            style="@style/MainFloatingActionButton"
+            android:src="@drawable/baseline_keyboard_24"
+            android:contentDescription="@string/keyBoard_button_description"/>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/set_up_button"
+            style="@style/MainFloatingActionButton"
+            android:src="@drawable/baseline_menu_open_24"
+            android:contentDescription="@string/setup_button_description"/>
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/KeyBoard_View"
@@ -68,7 +88,7 @@
         android:orientation="vertical"
         android:background="@color/white"
         android:visibility="gone"
-        android:layout_alignParentBottom="true">
+        android:layout_gravity="bottom">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -142,38 +162,18 @@
         <include layout="@layout/system_button" />
     </LinearLayout>
 
-    <LinearLayout
+    <TextView
+        android:id="@+id/tvVideoRecordTime"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center|top">
-        <TextView
-            android:id="@+id/floating_label"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/KeyMouse_Drag"
-            android:layout_marginTop="5dp"
-            android:textColor="@color/black"
-            android:background="@drawable/lable_background"
-            android:visibility="gone"/>
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_gravity="bottom|end">
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/keyBoard"
-            style="@style/MainFloatingActionButton"
-            android:src="@drawable/baseline_keyboard_24"
-            android:contentDescription="@string/keyBoard_button_description"/>
-
-        <com.google.android.material.floatingactionbutton.FloatingActionButton
-            android:id="@+id/set_up_button"
-            style="@style/MainFloatingActionButton"
-            android:src="@drawable/baseline_menu_open_24"
-            android:contentDescription="@string/setup_button_description"/>
-    </LinearLayout>
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="30dp"
+        android:drawablePadding="5dp"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        android:visibility="gone"
+        app:drawableLeftCompat="@drawable/ic_record_red_dot"
+        tools:text="99:99:99" />
 
     <include layout="@layout/drawer_layout_setup"/>
 
@@ -200,11 +200,13 @@
             android:layout_centerInParent="true"/>
     </RelativeLayout>
 
-    <Button
+    <ImageButton
         android:id="@+id/drag_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Drag"
-        android:visibility="visible" />
+        android:background="@null"
+        android:visibility="gone"
+        style="@style/CameraViewDragButton"
+        android:src="@drawable/arrows_move"/>
 
 </FrameLayout>
