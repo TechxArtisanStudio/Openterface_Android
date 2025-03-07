@@ -28,6 +28,9 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
@@ -39,17 +42,21 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.openterface.AOS.IImageCapture;
 import com.openterface.AOS.KeyBoardClick.KeyBoardClose;
 import com.openterface.AOS.KeyBoardClick.KeyBoardFunction;
 import com.openterface.AOS.KeyBoardClick.KeyBoardShift;
 import com.openterface.AOS.KeyBoardClick.KeyBoardShortCut;
 import com.openterface.AOS.KeyBoardClick.KeyBoardSystem;
 import com.openterface.AOS.drawerLayout.DrawerLayoutDeal;
+import com.openterface.AOS.drawerLayout.ZoomLayoutDeal;
 import com.openterface.AOS.serial.CustomTouchListener;
 import com.openterface.AOS.serial.UsbDeviceManager;
 import com.openterface.AOS.target.KeyBoardManager;
@@ -70,6 +77,7 @@ import com.openterface.AOS.databinding.ActivityMainBinding;
 import com.openterface.AOS.fragment.CameraControlsDialogFragment;
 import com.openterface.AOS.fragment.DeviceListDialogFragment;
 import com.openterface.AOS.fragment.VideoFormatDialogFragment;
+import com.serenegiant.widget.AspectRatioSurfaceView;
 
 import android.os.Environment;
 import android.os.Handler;
@@ -81,15 +89,22 @@ import android.view.Display;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.SurfaceHolder;
 import android.view.TextureView;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -104,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final boolean DEBUG = true;
 
-    private ActivityMainBinding mBinding;
+    public ActivityMainBinding mBinding;
 
     private static final int QUARTER_SECOND = 250;
 
@@ -122,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
 
     private int mPreviewRotation = 0;
 
-    private ICameraHelper mCameraHelper;
+    public ICameraHelper mCameraHelper;
 
     private UsbDevice mUsbDevice;
     private final ICameraHelper.StateCallback mStateCallback = new MyCameraHelperCallback();
@@ -152,6 +167,11 @@ public class MainActivity extends AppCompatActivity {
     private Button action_device, action_safely_eject;
     private Drawable action_device_drawable, action_safely_eject_drawable;
 
+    private String[] permissions = {Manifest.permission.RECORD_AUDIO};
+
+    public AspectRatioSurfaceView cameraViewSecond;
+    private RelativeLayout thumbnail_container;
+
     @SuppressLint("ClickableViewAccessibility")//add
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -161,6 +181,9 @@ public class MainActivity extends AppCompatActivity {
         // Hide the system bars.
         windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
         super.onCreate(savedInstanceState);
+
+        //Recording Permission
+        ActivityCompat.requestPermissions(this, permissions, 200);
 
         //Prevent screen from turning off
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -231,7 +254,38 @@ public class MainActivity extends AppCompatActivity {
 
         action_device_drawable = action_device.getCompoundDrawables()[1];
         action_safely_eject_drawable = action_safely_eject.getCompoundDrawables()[1];
+
+        //Zoom layout deal
+        setCameraViewSecond();
+        ZoomLayoutDeal ZoomLayoutDeal = new ZoomLayoutDeal(this, mCameraHelper, mBinding);
     }
+
+    private void setCameraViewSecond() {
+        cameraViewSecond = findViewById(R.id.cameraViewSecond);
+        cameraViewSecond.setAspectRatio(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+
+        cameraViewSecond.getHolder().addCallback(new SurfaceHolder.Callback() {
+            @Override
+            public void surfaceCreated(@NonNull SurfaceHolder holder) {
+                if (mCameraHelper != null) {
+                    mCameraHelper.addSurface(holder.getSurface(), false);
+                }
+            }
+
+            @Override
+            public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
+
+            }
+
+            @Override
+            public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
+                if (mCameraHelper != null) {
+                    mCameraHelper.removeSurface(holder.getSurface());
+                }
+            }
+        });
+    }
+
 
     @Override
     public boolean onGenericMotionEvent(MotionEvent event) {
@@ -516,8 +570,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initPreviewView() {
-        int initWidth = mPreviewWidth;
-        int initHeight = mPreviewHeight;
         mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
         Log.d(TAG, "1mPreviewWidth: " + mPreviewWidth + " mPreviewHeight: " + mPreviewHeight);
         mBinding.viewMainPreview.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
@@ -532,15 +584,11 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onSurfaceTextureSizeChanged(@NonNull SurfaceTexture surface, int width, int height) {
-//                surface.setDefaultBufferSize(initWidth, initHeight);
-                System.out.println("this is change initWidth: " + initWidth + " initHeight: " + initHeight);
-                System.out.println("this is change width: " + width + " height: " + height);
             }
 
             @Override
             public boolean onSurfaceTextureDestroyed(@NonNull SurfaceTexture surface) {
                 if (mCameraHelper != null) {
-                    System.out.println("this is remove surface");
                     mCameraHelper.removeSurface(surface);
                 }
                 return false;
@@ -562,8 +610,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * In Android9+, connected to the UVC CAMERA, CAMERA permission is required
-     *
+     *     * In Android9+, connected to the UVC CAMERA, CAMERA permission is required
      * @param device
      */
     protected void selectDevice(UsbDevice device) {
@@ -625,15 +672,17 @@ public class MainActivity extends AppCompatActivity {
         public void onCameraOpen(UsbDevice device) {
             if (DEBUG) Log.v(TAG, "onCameraOpen:device=" + device.getDeviceName());
             mCameraHelper.startPreview();
-
             // After connecting to the camera, you can get preview size of the camera
             Size size = mCameraHelper.getPreviewSize();
             if (size != null) {
                 resizePreviewView(size);
+//                cameraViewSecond.setAspectRatio(640, 480);
+
             }
 
             if (mBinding.viewMainPreview.getSurfaceTexture() != null) {
                 mCameraHelper.addSurface(mBinding.viewMainPreview.getSurfaceTexture(), false);
+                mCameraHelper.addSurface(mBinding.cameraViewSecond.getHolder().getSurface(), false);
             }
 
             mIsCameraConnected = true;
@@ -653,12 +702,15 @@ public class MainActivity extends AppCompatActivity {
 
             if (mCameraHelper != null && mBinding.viewMainPreview.getSurfaceTexture() != null) {
                 mCameraHelper.removeSurface(mBinding.viewMainPreview.getSurfaceTexture());
+                mCameraHelper.removeSurface(cameraViewSecond.getHolder().getSurface());
             }
 
             mIsCameraConnected = false;
             updateUIControls();
 
             closeAllDialogFragment();
+
+            ZoomLayoutDeal.zoomOut();
         }
 
         @Override
@@ -830,7 +882,7 @@ public class MainActivity extends AppCompatActivity {
     private void setCustomVideoCaptureConfig() {
         mCameraHelper.setVideoCaptureConfig(
                 mCameraHelper.getVideoCaptureConfig()
-//                        .setAudioCaptureEnable(false)
+                        .setAudioCaptureEnable(true)
                         .setBitRate((int) (1024 * 1024 * 25 * 0.25))
                         .setVideoFrameRate(25)
                         .setIFrameInterval(1));

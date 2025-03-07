@@ -74,7 +74,7 @@ public class MouseManager {
 
                     try {
                         usbDeviceManager.port.write(sendKBDataBytes, 20);
-                        Log.d(TAG, "send data successful");
+                        Log.d(TAG, "send sendHexAbsData successful");
                     } catch (IOException e) {
                         Log.e(TAG, "Error writing to port: " + e.getMessage());
                     }
@@ -121,7 +121,7 @@ public class MouseManager {
 
                     try {
                         usbDeviceManager.port.write(sendKBDataBytes, 20);
-                        Log.d(TAG, "send data successful");
+                        Log.d(TAG, "send sendHexAbsButtonClickData successful");
                     } catch (IOException e) {
                         Log.e(TAG, "Error writing to port: " + e.getMessage());
                     }
@@ -168,7 +168,7 @@ public class MouseManager {
 
                     try {
                         usbDeviceManager.port.write(sendKBDataBytes, 20);
-                        Log.d(TAG, "send data successful");
+                        Log.d(TAG, "send sendHexAbsDragData successful");
                     } catch (IOException e) {
                         Log.e(TAG, "Error writing to port: " + e.getMessage());
                     }
@@ -220,7 +220,7 @@ public class MouseManager {
 
                     try {
                         usbDeviceManager.port.write(sendKBDataBytes, 20);
-                        Log.d(TAG, "send data successful");
+                        Log.d(TAG, "send handleDoubleClickAbs successful");
                         releaseMSAbsData(xBytes0, xBytes1, yBytes0, yBytes1);
                     } catch (IOException e) {
                         Log.e(TAG, "Error writing to port: " + e.getMessage());
@@ -260,7 +260,7 @@ public class MouseManager {
 
                     try {
                         usbDeviceManager.port.write(sendKBDataBytes, 20);
-                        Log.d(TAG, "send data successful two click");
+                        Log.d(TAG, "send handleTwoPress successful");
                         releaseMSRelData();
                     } catch (IOException e) {
                         Log.e(TAG, "Error writing to port: " + e.getMessage());
@@ -319,7 +319,7 @@ public class MouseManager {
 
                     try {
                         usbDeviceManager.port.write(sendKBDataBytes, 20);
-                        Log.d(TAG, "send data successful");
+                        Log.d(TAG, "send handleDoubleFingerPan successful");
                     } catch (IOException e) {
                         Log.e(TAG, "Error writing to port: " + e.getMessage());
                     }
@@ -369,7 +369,7 @@ public class MouseManager {
 
                     try {
                         usbDeviceManager.port.write(sendKBDataBytes, 20);
-                        Log.d(TAG, "send data successful");
+                        Log.d(TAG, "send handleTwoFingerPanSlideUpDown successful");
                         releaseMSRelData();
                     } catch (IOException e) {
                         Log.e(TAG, "Error writing to port: " + e.getMessage());
@@ -439,7 +439,7 @@ public class MouseManager {
 
                     try {
                         usbDeviceManager.port.write(sendKBDataBytes, 20);
-                        Log.d(TAG, "send data successful");
+                        Log.d(TAG, "send handleDoubleClickRel successful");
                         releaseMSRelData();
                     } catch (IOException e) {
                         Log.e(TAG, "Error writing to port: " + e.getMessage());
@@ -452,7 +452,7 @@ public class MouseManager {
         }).start();
     }
 
-    public static void sendHexRelData(float StartMoveMSX, float StartMoveMSY, float LastMoveMSX, float LastMoveMSY) {
+    public static void sendHexRelData(String MouseClick, float StartMoveMSX, float StartMoveMSY, float LastMoveMSX, float LastMoveMSY) {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -490,7 +490,7 @@ public class MouseManager {
                                     CH9329MSKBMap.CmdData().get("CmdMS_REL") +
                                     CH9329MSKBMap.DataLen().get("DataLenRelMS") +
                                     CH9329MSKBMap.MSRelData().get("FirstData") +
-                                    CH9329MSKBMap.MSRelData().get("SecNullData") + //MS key
+                                    CH9329MSKBMap.MSAbsData().get(MouseClick) + //MS key
                                     xByte +
                                     yByte +
                                     CH9329MSKBMap.DataNull().get("DataNull");
@@ -506,7 +506,7 @@ public class MouseManager {
 
                     try {
                         usbDeviceManager.port.write(sendKBDataBytes, 20);
-//                        Log.d(TAG, "send data successful");
+//                        Log.d(TAG, "send sendHexRelData successful");
                     } catch (IOException e) {
 //                        Log.e(TAG, "Error writing to port: " + e.getMessage());
                     }

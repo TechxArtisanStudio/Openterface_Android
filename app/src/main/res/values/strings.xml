@@ -178,10 +178,15 @@
     <string name="Android_Version">Android Version</string>
     <string name="Openterface_Version">Openterface Version</string>
 
+    <!--    traget host-->
+    <string name="Target_state">Target state</string>
+    <string name="Target">Target</string>
+    <string name="Host">Host</string>
+
     <!--    mouse ctrl mode-->
     <string name="KeyMouse_Ctrl_Way">Mouse Ctrl Way</string>
     <string name="KeyMouse_Abs_Ctrl">Touch\nMode</string>
     <string name="KeyMouse_Abs_Drag_Ctrl">Drag\nMode</string>
-    <string name="KeyMouse_Drag">Drag</string>
+    <string name="KeyMouse_Drag">Dragging</string>
     <string name="KeyMouse_Rel_Ctrl">Pointer\nMode</string>
 </resources>

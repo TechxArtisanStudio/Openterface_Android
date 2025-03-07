@@ -1,186 +1,212 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.drawerlayout.widget.DrawerLayout
+<FrameLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/drawer_layout"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context="com.openterface.AOS.activity.MainActivity">
+    tools:context="com.openterface.AOS.activity.MainActivity"
+    android:id="@+id/thisFrameLayout">
 
-    <LinearLayout
+    <androidx.drawerlayout.widget.DrawerLayout
+        android:id="@+id/drawer_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/white"
-        android:orientation="vertical">
+        android:layout_height="match_parent">
 
-        <RelativeLayout
-            android:id="@+id/root_relative_layout"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/black"
-            android:descendantFocusability="blocksDescendants">
+            android:background="@color/white"
+            android:orientation="vertical">
 
-            <com.serenegiant.widget.AspectRatioTextureView
-                android:id="@+id/viewMainPreview"
+            <RelativeLayout
+                android:id="@+id/root_relative_layout"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_alignWithParentIfMissing="true"
-                android:layout_centerInParent="true"
-                android:visibility="invisible" />
+                android:layout_height="match_parent"
+                android:background="@color/black"
+                android:descendantFocusability="blocksDescendants">
 
-            <ImageView
-                android:id="@+id/tvConnectUSBCameraTip"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                app:srcCompat="@drawable/content_dark_eng"
-                tools:ignore="ContentDescription" />
-
-            <TextView
-                android:id="@+id/tvVideoRecordTime"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
-                android:layout_marginTop="30dp"
-                android:drawablePadding="5dp"
-                android:textColor="@color/black"
-                android:textSize="14sp"
-                android:visibility="gone"
-                app:drawableLeftCompat="@drawable/ic_record_red_dot"
-                tools:text="99:99:99" />
-
-            <TextView
-                android:id="@+id/floating_label"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/KeyMouse_Drag"
-                android:layout_marginTop="5dp"
-                android:textColor="@color/black"
-                android:background="@drawable/lable_background"
-                android:layout_centerHorizontal="true"
-                android:visibility="gone"/>
-
-<!--            <com.google.android.material.floatingactionbutton.FloatingActionButton-->
-<!--                android:id="@+id/fabVideo"-->
-<!--                style="@style/MainFloatingActionButton"-->
-<!--                android:layout_above="@id/keyBoard"-->
-<!--                android:layout_alignParentRight="true"-->
-<!--                android:layout_centerVertical="true"-->
-<!--                android:layout_marginEnd="@dimen/fab_margin"-->
-<!--                android:visibility="invisible"-->
-<!--                app:srcCompat="@drawable/ic_switch_video" />-->
-
-<!--            <com.google.android.material.floatingactionbutton.FloatingActionButton-->
-<!--                android:id="@+id/fabPicture"-->
-<!--                style="@style/MainFloatingActionButton"-->
-<!--                android:layout_above="@id/fabVideo"-->
-<!--                android:layout_alignParentRight="true"-->
-<!--                android:layout_marginEnd="@dimen/fab_margin"-->
-<!--                android:visibility="invisible"-->
-<!--                app:srcCompat="@drawable/ic_switch_camera" />-->
-
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/keyBoard"
-                style="@style/MainFloatingActionButton"
-                android:layout_above="@id/set_up_button"
-                android:layout_alignParentEnd="true"
-                android:src="@drawable/baseline_keyboard_24"
-                android:contentDescription="@string/keyBoard_button_description"/>
-
-            <com.google.android.material.floatingactionbutton.FloatingActionButton
-                android:id="@+id/set_up_button"
-                style="@style/MainFloatingActionButton"
-                android:layout_alignParentEnd="true"
-                android:layout_alignParentBottom="true"
-                android:src="@drawable/baseline_menu_open_24"
-                android:contentDescription="@string/setup_button_description"/>
-
-            <LinearLayout
-                android:id="@+id/KeyBoard_View"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@color/white"
-                android:visibility="gone"
-                android:layout_alignParentBottom="true">
-
-                <LinearLayout
+                <com.serenegiant.widget.AspectRatioTextureView
+                    android:id="@+id/viewMainPreview"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="1dp"
-                    android:layout_marginLeft="1dp"
-                    android:layout_marginRight="1dp"
-                    android:layout_marginBottom="5dp">
+                    android:layout_alignWithParentIfMissing="true"
+                    android:layout_centerInParent="true"
+                    android:visibility="invisible" />
 
-                    <android.widget.Button
-                        android:id="@+id/KeyBoard_ShortCut"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/ShortCut"
-                        android:textColor="@color/black"
-                        android:background="@drawable/button_background"
-                        android:theme="@style/ButtonTheme"
-                        android:layout_marginHorizontal="1dp" />
+                <ImageView
+                    android:id="@+id/tvConnectUSBCameraTip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerInParent="true"
+                    app:srcCompat="@drawable/content_dark_eng"
+                    tools:ignore="ContentDescription" />
 
-                    <android.widget.Button
-                        android:id="@+id/KeyBoard_Shift"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/Shift"
-                        android:textColor="@color/black"
-                        android:background="@drawable/button_background"
-                        android:theme="@style/ButtonTheme"
-                        android:layout_marginHorizontal="1dp" />
+            </RelativeLayout>
 
-                    <android.widget.Button
-                        android:id="@+id/KeyBoard_Function"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="@string/Function"
-                        android:textColor="@color/black"
-                        android:background="@drawable/button_background"
-                        android:theme="@style/ButtonTheme"
-                        android:layout_marginHorizontal="1dp" />
+        </LinearLayout>
 
-                    <ImageButton
-                        android:id="@+id/KeyBoard_System"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:background="@drawable/button_background"
-                        android:theme="@style/ButtonTheme"
-                        android:layout_marginHorizontal="1dp"
-                        android:src="@drawable/windows"
-                        tools:ignore="ContentDescription">
-                    </ImageButton>
+    </androidx.drawerlayout.widget.DrawerLayout>
 
-                    <ImageButton
-                        android:id="@+id/KeyBoard_Close"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="0.5"
-                        android:background="@drawable/button_background"
-                        android:theme="@style/ButtonTheme"
-                        android:layout_marginHorizontal="1dp"
-                        android:src="@drawable/x_circle"
-                        tools:ignore="ContentDescription">
-                    </ImageButton>
-                </LinearLayout>
-
-                <include layout="@layout/short_cut_button" />
-                <include layout="@layout/function_button" />
-                <include layout="@layout/system_button" />
-            </LinearLayout>
-
-        </RelativeLayout>
-
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center|top">
+        <TextView
+            android:id="@+id/floating_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/KeyMouse_Drag"
+            android:layout_marginTop="5dp"
+            android:textColor="@color/black"
+            android:background="@drawable/lable_background"
+            android:visibility="gone"/>
     </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_gravity="bottom|end">
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/keyBoard"
+            style="@style/MainFloatingActionButton"
+            android:src="@drawable/baseline_keyboard_24"
+            android:contentDescription="@string/keyBoard_button_description"/>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/set_up_button"
+            style="@style/MainFloatingActionButton"
+            android:src="@drawable/baseline_menu_open_24"
+            android:contentDescription="@string/setup_button_description"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/KeyBoard_View"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/white"
+        android:visibility="gone"
+        android:layout_gravity="bottom">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="1dp"
+            android:layout_marginLeft="1dp"
+            android:layout_marginRight="1dp"
+            android:layout_marginBottom="5dp">
+
+            <android.widget.Button
+                android:id="@+id/KeyBoard_ShortCut"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/ShortCut"
+                android:textColor="@color/black"
+                android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme"
+                android:layout_marginHorizontal="1dp" />
+
+            <android.widget.Button
+                android:id="@+id/KeyBoard_Shift"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/Shift"
+                android:textColor="@color/black"
+                android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme"
+                android:layout_marginHorizontal="1dp" />
+
+            <android.widget.Button
+                android:id="@+id/KeyBoard_Function"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/Function"
+                android:textColor="@color/black"
+                android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme"
+                android:layout_marginHorizontal="1dp" />
+
+            <ImageButton
+                android:id="@+id/KeyBoard_System"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme"
+                android:layout_marginHorizontal="1dp"
+                android:src="@drawable/windows"
+                tools:ignore="ContentDescription">
+            </ImageButton>
+
+            <ImageButton
+                android:id="@+id/KeyBoard_Close"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0.5"
+                android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme"
+                android:layout_marginHorizontal="1dp"
+                android:src="@drawable/x_circle"
+                tools:ignore="ContentDescription">
+            </ImageButton>
+        </LinearLayout>
+
+        <include layout="@layout/short_cut_button" />
+        <include layout="@layout/function_button" />
+        <include layout="@layout/system_button" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvVideoRecordTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="30dp"
+        android:drawablePadding="5dp"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        android:visibility="gone"
+        app:drawableLeftCompat="@drawable/ic_record_red_dot"
+        tools:text="99:99:99" />
 
     <include layout="@layout/drawer_layout_setup"/>
 
-</androidx.drawerlayout.widget.DrawerLayout>
+    <RelativeLayout
+        android:id="@+id/thumbnail_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:background="@android:color/white"
+        android:elevation="8dp"
+        android:layout_marginTop="50dp"
+        android:layout_marginLeft="50dp">
+
+        <com.serenegiant.widget.AspectRatioSurfaceView
+            android:id="@+id/cameraViewSecond"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <View
+            android:id="@+id/view_indicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#6600ff00"
+            android:layout_centerInParent="true"/>
+    </RelativeLayout>
+
+    <ImageButton
+        android:id="@+id/drag_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@null"
+        android:visibility="gone"
+        style="@style/CameraViewDragButton"
+        android:src="@drawable/arrows_move"/>
+
+</FrameLayout>
