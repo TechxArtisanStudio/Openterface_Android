@@ -85,6 +85,9 @@ public class CustomTouchListener implements View.OnTouchListener {
     //zoom set
     private final DrawerLayout drawerLayout;
 
+    private long rightClickCurrentTime;
+    private long rightReleaseCurrentTime;
+
     public static void KeyMouse_state(boolean keyMouseState, boolean keyMouseAbsCtrlState) {
         KeyMouse_state = keyMouseState;
         keyMouseAbsCtrl = keyMouseAbsCtrlState;
@@ -216,6 +219,7 @@ public class CustomTouchListener implements View.OnTouchListener {
 
     private void handActionPointerDownMouse(MotionEvent event){
         if (event.getPointerCount() == 2) {
+            rightClickCurrentTime = System.currentTimeMillis();
             startX1 = event.getX(0);
             startX2 = event.getX(1);
             startY1 = event.getY(0);
@@ -407,10 +411,16 @@ public class CustomTouchListener implements View.OnTouchListener {
 
     private void handActionPointerUpMouse(MotionEvent event){
         if (event.getPointerCount() == 2) {
+            if ((rightReleaseCurrentTime - rightClickCurrentTime < 500) && !hasHandledMove) {
+                MouseManager.handleTwoPress();//deal right click
+                Log.d(TAG, "this release the right click");
+            }
             isPanning = false;
             hasHandledMove = false;
             Log.d(TAG, "ACTION_POINTER_UP");
             ignoreMoveUntil = System.currentTimeMillis() + 200;
+            rightReleaseCurrentTime = System.currentTimeMillis();
+
         }
     }
 
