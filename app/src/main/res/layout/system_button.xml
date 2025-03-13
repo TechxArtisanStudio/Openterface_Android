@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/Fragment_KeyBoard_System"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:layout_margin="1dp"
-    android:visibility="gone">
+    android:visibility="visible">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -23,7 +23,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp">
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute">
         </android.widget.Button>
 
         <android.widget.Button
@@ -35,8 +40,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp">
-        </android.widget.Button>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/Three_Pound_Button"
@@ -47,8 +56,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp">
-        </android.widget.Button>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/Four_Dollar_Button"
@@ -59,8 +72,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp">
-        </android.widget.Button>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/Five_Percent_Button"
@@ -71,8 +88,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp">
-        </android.widget.Button>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/Six_Caret_Button"
@@ -83,8 +104,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp">
-        </android.widget.Button>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/Seven_Ampersand_Button"
@@ -95,8 +120,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp">
-        </android.widget.Button>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/Eight_Asterisk_Button"
@@ -107,8 +136,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp">
-        </android.widget.Button>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/Nine_Left_Parenthesis_Button"
@@ -119,8 +152,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp">
-        </android.widget.Button>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/Zero_Right_Parenthesis_Button"
@@ -131,8 +168,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp">
-        </android.widget.Button>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
     </LinearLayout>
 
@@ -151,7 +192,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"/>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/W_Button"
@@ -162,7 +208,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"/>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/E_Button"
@@ -173,7 +224,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"/>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/R_Button"
@@ -184,7 +240,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"/>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/T_Button"
@@ -195,7 +256,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"/>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/Y_Button"
@@ -206,7 +272,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"/>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/U_Button"
@@ -217,7 +288,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"/>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/I_Button"
@@ -227,7 +303,12 @@
             android:text="@string/I_Button"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"/>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/O_Button"
@@ -239,7 +320,12 @@
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
             android:layout_marginHorizontal="1dp"
-            android:layout_gravity="center"/>
+            android:layout_gravity="center"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/P_Button"
@@ -250,7 +336,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"/>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
     </LinearLayout>
 
@@ -260,7 +351,6 @@
         android:orientation="horizontal"
         android:layout_margin="1dp">
 
-        <!-- 第二行 -->
         <android.widget.Button
             android:id="@+id/A_Button"
             android:layout_width="0dp"
@@ -270,7 +360,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"/>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/S_Button"
@@ -281,7 +376,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"/>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/D_Button"
@@ -292,7 +392,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"/>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/F_Button"
@@ -303,7 +408,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"/>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/G_Button"
@@ -314,7 +424,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"/>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/H_Button"
@@ -325,7 +440,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"/>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/J_Button"
@@ -336,7 +456,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"/>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/K_Button"
@@ -347,7 +472,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"/>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/L_Button"
@@ -358,7 +488,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"/>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <ImageButton
             android:id="@+id/DEL_Button"
@@ -379,7 +514,6 @@
         android:orientation="horizontal"
         android:layout_margin="1dp">
 
-        <!-- 第三行 -->
         <android.widget.Button
             android:id="@+id/Z_Button"
             android:layout_width="0dp"
@@ -389,7 +523,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"/>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/X_Button"
@@ -400,7 +539,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"/>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/C_Button"
@@ -411,7 +555,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"/>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/V_Button"
@@ -422,7 +571,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"/>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/B_Button"
@@ -433,7 +587,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"/>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/N_Button"
@@ -444,7 +603,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"/>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/M_Button"
@@ -455,7 +619,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"/>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/Space_Button"
@@ -466,7 +635,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"/>
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <ImageButton
             android:id="@+id/Enter_Button"

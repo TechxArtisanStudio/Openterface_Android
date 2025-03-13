@@ -55,10 +55,11 @@ public class KeyBoardClose {
             public void onClick(View v) {
                 InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);//open keyboard
                 imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
-                keyBoardView.setVisibility(View.GONE);
+
 
                 FloatKeyBoard.setVisibility(View.VISIBLE);
                 FloatSetUpButton.setVisibility(View.VISIBLE);
+                keyBoardView.setVisibility(View.GONE);
             }
         });
     }

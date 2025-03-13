@@ -61,8 +61,8 @@
 
     <string name="KeyBoard_Win_Add_Tab">Win+Tab\nTask View</string>
     <string name="KeyBoard_Win_Add_S">Win+S\nSearch</string>
-    <string name="KeyBoard_Win_Add_E">Win+E\nFile Explorer</string>
-    <string name="KeyBoard_Win_Add_R">Win+R\nRun command</string>
+    <string name="KeyBoard_Win_Add_E">Win+E\nExplorer</string>
+    <string name="KeyBoard_Win_Add_R">Win+R\nCommand</string>
     <string name="KeyBoard_Win_Add_D">Win+D\nDesktop</string>
     <string name="KeyBoard_Win_Add_L">Win+L\nLock PC</string>
 

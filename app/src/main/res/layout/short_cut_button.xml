@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/Fragment_KeyBoard_ShortCut"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:orientation="vertical"
     android:layout_margin="1dp"
-    android:visibility="gone">
+    android:visibility="visible">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -23,7 +23,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp" />
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/Ctrl_V"
@@ -34,7 +39,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp" />
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/Ctrl_Z"
@@ -45,7 +55,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp" />
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/Ctrl_X"
@@ -56,8 +71,20 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp" />
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_margin="1dp">
         <android.widget.Button
             android:id="@+id/Ctrl_A"
             android:layout_width="0dp"
@@ -67,7 +94,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp" />
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/Ctrl_S"
@@ -78,14 +110,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_margin="1dp">
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/Win_Tab"
@@ -96,7 +126,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp" />
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/Win_S"
@@ -107,7 +142,19 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp" />
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_margin="1dp">
 
         <android.widget.Button
             android:id="@+id/Win_E"
@@ -118,7 +165,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp" />
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/Win_R"
@@ -129,7 +181,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp" />
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/Win_D"
@@ -140,7 +197,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp" />
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/Win_L"
@@ -151,7 +213,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp" />
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
     </LinearLayout>
 
     <LinearLayout
@@ -169,7 +236,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp" />
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/CtrlAltDel"
@@ -180,7 +252,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp" />
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button
             android:id="@+id/Alt_PrtScr"
@@ -191,7 +268,12 @@
             android:textColor="@color/black"
             android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp" />
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute"/>
 
     </LinearLayout>
 

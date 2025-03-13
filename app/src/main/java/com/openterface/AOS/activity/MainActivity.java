@@ -413,17 +413,11 @@ public class MainActivity extends AppCompatActivity {
             keyBoardView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                 @Override
                 public void onGlobalLayout() {
-                    Rect r = new Rect();
-                    getWindow().getDecorView().getWindowVisibleDisplayFrame(r);
-                    int heightDiff = getResources().getDisplayMetrics().heightPixels - (r.bottom - r.top);
-                    if (heightDiff > 100) {
-                        keyBoardView.setVisibility(View.VISIBLE);
-                        keyBoardView.setTranslationY(-heightDiff);
-                    } else {
-                        keyBoardView.setTranslationY(0);
-                    }
+                    Log.d("keyBoardView","keyBoardView.getWidth():"+keyBoardView.getWidth() + "keyBoardView.getHeight():"+keyBoardView.getHeight());
+                    ZoomLayoutDeal.getViewWidthHeight(keyBoardView.getWidth(), keyBoardView.getHeight());
                 }
             });
+            keyBoardView.setVisibility(View.VISIBLE);
             //hide floating button keyboard and set_up_button
             FloatingActionButton keyBoard = findViewById(R.id.keyBoard);
             keyBoard.setVisibility(View.GONE);
