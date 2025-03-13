@@ -1,3 +1,27 @@
+/**
+* @Title: ZoomLayoutDeal
+* @Package com.openterface.AOS.drawerLayout
+* @Description:
+ * ========================================================================== *
+ *                                                                            *
+ *    This file is part of the Openterface Mini KVM App Android version       *
+ *                                                                            *
+ *    Copyright (C) 2024   <info@openterface.com>                             *
+ *                                                                            *
+ *    This program is free software: you can redistribute it and/or modify    *
+ *    it under the terms of the GNU General Public License as published by    *
+ *    the Free Software Foundation version 3.                                 *
+ *                                                                            *
+ *    This program is distributed in the hope that it will be useful, but     *
+ *    WITHOUT ANY WARRANTY; without even the implied warranty of              *
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU        *
+ *    General Public License for more details.                                *
+ *                                                                            *
+ *    You should have received a copy of the GNU General Public License       *
+ *    along with this program. If not, see <http://www.gnu.org/licenses/>.    *
+ *                                                                            *
+ * ========================================================================== *
+*/
 package com.openterface.AOS.drawerLayout;
 
 import android.annotation.SuppressLint;
@@ -8,9 +32,12 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -40,6 +67,19 @@ public class ZoomLayoutDeal {
     private static ImageButton dragButton;
     private float lastTouchX, lastTouchY;
 
+    private boolean isKeyboardScaled = false; // Track scaling state
+    private static int originalWidth;
+    private static int originalHeight; // Store original dimensions
+    private LinearLayout keyBoardView;
+    private ImageButton keyBoardZoomInOutButton;
+    private ImageButton dragHandle;
+
+    public static void getViewWidthHeight(int originalWidth, int originalHeight){
+
+        ZoomLayoutDeal.originalWidth = originalWidth;
+        ZoomLayoutDeal.originalHeight = originalHeight;
+    }
+
     public ZoomLayoutDeal(MainActivity activity, ICameraHelper mCameraHelper, ActivityMainBinding mBinding) {
         this.activity = activity;
         this.mCameraHelper = mCameraHelper;
@@ -49,6 +89,10 @@ public class ZoomLayoutDeal {
         thumbnailContainer = activity.findViewById(R.id.thumbnail_container);
         indicatorView = activity.findViewById(R.id.view_indicator);
         dragButton = activity.findViewById(R.id.drag_button);
+
+        keyBoardZoomInOutButton = activity.findViewById(R.id.KeyBoard_ZoomInOut); // Initialize
+        keyBoardView = activity.findViewById(R.id.KeyBoard_View); // Initialize
+        dragHandle = activity.findViewById(R.id.drag_handle);
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         activity.getWindowManager().getDefaultDisplay().getRealMetrics(displayMetrics);
@@ -65,8 +109,57 @@ public class ZoomLayoutDeal {
         indicatorView.getLayoutParams().width = screenWidth / 8;
         indicatorView.getLayoutParams().height = screenHeight / 8;
         indicatorView.requestLayout();
-
         setupDragButton();
+        
+        setupKeyboardZoomButton(); // New setup method
+        setupDragHandle();
+    }
+    
+    private void setupKeyboardZoomButton() {
+        keyBoardZoomInOutButton.setOnClickListener(v -> {
+            Log.d("keyBoard", "setupKeyboardZoomButton: " + originalWidth + " " + originalHeight);
+            FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) keyBoardView.getLayoutParams();
+            if (isKeyboardScaled){
+                params.width = ViewGroup.LayoutParams.MATCH_PARENT;
+                params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                isKeyboardScaled = false;
+                keyBoardZoomInOutButton.setImageResource(R.drawable.arrows_angle_contract);
+                keyBoardView.setX(0);
+            }else {
+                params.width = originalWidth / 2;
+                params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                keyBoardZoomInOutButton.setImageResource(R.drawable.arrows_angle_expand);
+                isKeyboardScaled = true;
+            }
+            Log.d("keyBoard", "setupKeyboardZoomButton: " + params.width + " " + params.height);
+            keyBoardView.setLayoutParams(params);
+        });
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private void setupDragHandle() {
+        dragHandle.setOnTouchListener((v, event) -> {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    lastTouchX = event.getRawX() - keyBoardView.getX();
+                    lastTouchY = event.getRawY() - keyBoardView.getY();
+                    return true;
+                case MotionEvent.ACTION_MOVE:
+                    float newX = event.getRawX() - lastTouchX;
+                    float newY = event.getRawY() - lastTouchY;
+
+                    // Constrain within screen boundaries
+                    newX = Math.max(0, Math.min(newX, screenWidth - keyBoardView.getWidth()));
+                    newY = Math.max(0, Math.min(newY, screenHeight - keyBoardView.getHeight()));
+
+                    keyBoardView.setX(newX);
+                    keyBoardView.setY(newY);
+                    return true;
+                case MotionEvent.ACTION_UP:
+                    return true;
+            }
+            return false;
+        });
     }
 
     public static void enlargeView(){
@@ -76,11 +169,25 @@ public class ZoomLayoutDeal {
         showThumbnailWindow();
         resetIndicatorToCenter();
 
-        float thumbnailRight = thumbnailContainer.getX() + thumbnailContainer.getWidth();
-        float thumbnailTop = thumbnailContainer.getY();
-        float offset = 10f; // Small offset to avoid overlapping indicatorView
-        dragButton.setX(thumbnailRight - offset); // Slightly left of right edge
-        dragButton.setY(thumbnailTop - dragButton.getHeight() + offset);
+        thumbnailContainer.post(() -> {
+            // Get thumbnailContainer's position and dimensions
+            float thumbnailX = thumbnailContainer.getX();
+            float thumbnailY = thumbnailContainer.getY();
+            float thumbnailWidth = thumbnailContainer.getWidth();
+            float dragButtonWidth = dragButton.getWidth();
+
+            // Calculate the center X position relative to thumbnailContainer
+            float thumbnailCenterX = thumbnailX + (thumbnailWidth / 2f);
+
+            // Position dragButton at the top center of thumbnailContainer
+            float dragButtonX = thumbnailCenterX - (dragButtonWidth / 2f); // Center horizontally relative to thumbnailContainer
+            float dragButtonY = thumbnailY - dragButton.getHeight() - (4 * activity.getResources().getDisplayMetrics().density); // Slightly above thumbnailContainer
+
+            dragButton.setX(dragButtonX);
+            dragButton.setY(dragButtonY);
+
+            Log.d("enlargeView", "thumbnailX=" + thumbnailX + ", thumbnailY=" + thumbnailY + ", thumbnailWidth=" + thumbnailWidth + ", dragButtonX=" + dragButtonX + ", dragButtonY=" + dragButtonY);
+        });
     }
 
 
@@ -120,22 +227,24 @@ public class ZoomLayoutDeal {
                     thumbnailContainer.setY(newTop);
 
                     // Update dragButton to stay at top-right with offset
-                    float offset = 10f;
-                    float buttonX = newLeft + thumbnailContainer.getWidth() - offset;
-                    float buttonY = newTop - dragButton.getHeight() + offset;
+                    float thumbnailX = thumbnailContainer.getX();
+                    float thumbnailY = thumbnailContainer.getY();
+                    float thumbnailWidth = thumbnailContainer.getWidth();
+                    float dragButtonWidth = dragButton.getWidth();
 
-                    // Clamp dragButton within screen bounds
-                    buttonX = Math.max(0, Math.min(buttonX, screenWidth - dragButton.getWidth()));
-                    buttonY = Math.max(0, Math.min(buttonY, screenHeight - dragButton.getHeight()));
+                    // Calculate the center X position relative to thumbnailContainer
+                    float thumbnailCenterX = thumbnailX + (thumbnailWidth / 2f);
 
-                    dragButton.setX(buttonX);
-                    dragButton.setY(buttonY);
+                    // Position dragButton at the top center of thumbnailContainer
+                    float dragButtonX = thumbnailCenterX - (dragButtonWidth / 2f); // Center horizontally relative to thumbnailContainer
+                    float dragButtonY = thumbnailY - dragButton.getHeight() - (4 * activity.getResources().getDisplayMetrics().density); // Slightly above thumbnailContainer
+
+                    dragButton.setX(dragButtonX);
+                    dragButton.setY(dragButtonY);
 
                     lastTouchX = event.getRawX();
                     lastTouchY = event.getRawY();
 
-                    Log.d("ZoomLayoutDeal", "Dragging: thumbnail x=" + newLeft + ", y=" + newTop +
-                            ", button x=" + buttonX + ", y=" + buttonY);
                     return true;
 
                 case MotionEvent.ACTION_UP:

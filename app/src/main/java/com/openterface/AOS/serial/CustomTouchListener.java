@@ -81,12 +81,16 @@ public class CustomTouchListener implements View.OnTouchListener {
     //click scope
     private static final float CLICK_RADIUS = 100f;           // Click radius
     private static final float PAN_SENSITIVITY = 100f;        // Sliding sensitivity
+    private static final float DRAG_THRESHOLD = 10f;
 
     //zoom set
     private final DrawerLayout drawerLayout;
 
     private long rightClickCurrentTime;
     private long rightReleaseCurrentTime;
+    private long dragModeStartTime;
+    private long dragModeEndTime;
+    private boolean hasEnteredDragMode = false;
 
     public static void KeyMouse_state(boolean keyMouseState, boolean keyMouseAbsCtrlState) {
         KeyMouse_state = keyMouseState;
@@ -200,10 +204,12 @@ public class CustomTouchListener implements View.OnTouchListener {
                 && Math.abs(event.getX() - firstClickX) < CLICK_RADIUS
                 && Math.abs(event.getY() - firstClickY) < CLICK_RADIUS) {
             isDoubleClickPhase = true;
+            Log.d("detectDoubleClick", "this is isDoubleClickPhase");
         } else {
             firstClickTime = currentTime;
             firstClickX = event.getX();
             firstClickY = event.getY();
+            isDoubleClickPhase = false;
         }
     }
 
@@ -241,6 +247,11 @@ public class CustomTouchListener implements View.OnTouchListener {
     private void handActionMoveMouse(MotionEvent event){
         // Added double-click drag and drop processing
         if (isDoubleClickPhase && event.getPointerCount() == 1) {
+            if (!hasEnteredDragMode){
+                dragModeStartTime = System.currentTimeMillis();
+                hasEnteredDragMode = true;
+                Log.d("handActionMoveMouse", "dragModeStartTime: " + dragModeStartTime);
+            }
             startMoveMSX = event.getX();
             startMoveMSY = event.getY();
 
@@ -426,8 +437,8 @@ public class CustomTouchListener implements View.OnTouchListener {
 
     private void handActionUpMouse(MotionEvent event){
         // double-click end processing
-        if (isDoubleClickPhase) {
-            Log.d(TAG, "Double click drag end");
+        dragModeEndTime = System.currentTimeMillis();
+        if (isDoubleClickPhase && ( dragModeEndTime - dragModeStartTime) > 500) {
             if (KeyMouse_state){
                 MouseManager.sendHexAbsData(startMoveMSX, startMoveMSY);//release abs state
             }else {
@@ -437,6 +448,7 @@ public class CustomTouchListener implements View.OnTouchListener {
             if (floatingLabel != null) {
                 floatingLabel.setVisibility(View.GONE);
             }
+            hasEnteredDragMode = false;
             lastMoveMSX = 0;
             lastMoveMSY = 0;
             return;
@@ -453,6 +465,7 @@ public class CustomTouchListener implements View.OnTouchListener {
             }
 
         }
+
         if (KeyMouse_state) {
             MouseManager.sendHexAbsData(startMoveMSX, startMoveMSY);
         }else{
@@ -465,6 +478,7 @@ public class CustomTouchListener implements View.OnTouchListener {
         lastMoveMSY = 0;
         lastClickTime = clickTime;
         isPanning = false;
+        hasEnteredDragMode = false;
         resetMouseClickState();
     }
 
