@@ -1,0 +1,192 @@
+<resources>
+    <string name="app_name">Openterface</string>
+    <string name="action_control">Controle</string>
+    <string name="show_options">Functie</string>
+    <string name="action_usb">USB-verbinding</string>
+    <string name="action_safely_eject">Veilig ontkoppelen</string>
+    <string name="action_settings">Instellingen</string>
+    <string name="action_video_format">Videoformaat</string>
+    <string name="action_rotate_90_CW">90° rechtsom draaien</string>
+    <string name="action_rotate_90_CCW">90° linksom draaien</string>
+    <string name="action_flip_horizontally">Horizontaal spiegelen</string>
+    <string name="action_flip_vertically">Verticaal spiegelen</string>
+
+    <string name="saved_preview_size">Opgeslagen voorbeeldgrootte</string>
+
+    <string name="main_connect_usb_tip">Verbind een USB-camera</string>
+
+    <string name="device_list_dialog_title">Apparaat</string>
+    <string name="device_list_empty_tip">Verbind een USB Openterface</string>
+    <string name="device_list_cancel_button">Annuleren</string>
+
+    <string name="video_format_title">Videoformaat</string>
+    <string name="video_format_format">Formaat</string>
+    <string name="video_format_resolution">Resolutie</string>
+    <string name="video_format_frame_rate">Framerate</string>
+    <string name="video_format_ok_button">OK</string>
+    <string name="video_format_cancel_button">Annuleren</string>
+    <string name="video_format_format_yuv">YUV</string>
+    <string name="video_format_format_mjped">MJPEG</string>
+
+    <string name="camera_controls_text_brightness">Helderheid</string>
+    <string name="camera_controls_text_contrast">Contrast</string>
+    <string name="camera_controls_text_hue">Tint</string>
+    <string name="camera_controls_text_auto">Automatisch</string>
+    <string name="camera_controls_text_saturation">Verzadiging</string>
+    <string name="camera_controls_text_sharpness">Scherpte</string>
+    <string name="camera_controls_text_gamma">Gamma</string>
+    <string name="camera_controls_text_white_balance">Witbalans</string>
+    <string name="camera_controls_text_backlight_comp">Tegenlichtcompensatie</string>
+    <string name="camera_controls_text_gain">Versterking</string>
+    <string name="camera_controls_text_exposure_time">Belichtingstijd</string>
+    <string name="camera_controls_text_iris">Iris</string>
+    <string name="camera_controls_text_focus">Focus</string>
+    <string name="camera_controls_text_zoom">Zoom</string>
+    <string name="camera_controls_text_pan">Pan</string>
+    <string name="camera_controls_text_tilt">Kantelen</string>
+    <string name="camera_controls_text_roll">Rollen</string>
+    <string name="camera_controls_text_disable">Uitschakelen</string>
+    <string name="camera_controls_text_50hz">50 Hz</string>
+    <string name="camera_controls_text_60hz">60 Hz</string>
+    <string name="camera_controls_button_close">Sluiten</string>
+    <string name="camera_controls_button_reset">Resetten</string>
+
+    <!-- Sneltoetsen -->
+    <string name="KeyBoard_Ctrl_Add_C">Ctrl+C\nKopiëren</string>
+    <string name="KeyBoard_Ctrl_Add_V">Ctrl+V\nPlakken</string>
+    <string name="KeyBoard_Ctrl_Add_A">Ctrl+A\nAlles selecteren</string>
+    <string name="KeyBoard_Ctrl_Add_X">Ctrl+X\nKnippen</string>
+    <string name="KeyBoard_Ctrl_Add_Z">Ctrl+Z\nOngedaan maken</string>
+    <string name="KeyBoard_Ctrl_Add_S">Ctrl+S\nOpslaan</string>
+
+    <string name="KeyBoard_Win_Add_Tab">Win+Tab\nTaakweergave</string>
+    <string name="KeyBoard_Win_Add_S">Win+S\nZoeken</string>
+    <string name="KeyBoard_Win_Add_E">Win+E\nVerkenner</string>
+    <string name="KeyBoard_Win_Add_R">Win+R\nOpdracht</string>
+    <string name="KeyBoard_Win_Add_D">Win+D\nBureaublad</string>
+    <string name="KeyBoard_Win_Add_L">Win+L\nComputer vergrendelen</string>
+
+    <string name="KeyBoard_Alt_Add_F4">Alt+F4\nVenster sluiten</string>
+    <string name="KeyBoard_Ctrl_Add_Alt_Add_Del">Ctrl+Alt+Del\nTaakbeheer</string>
+    <string name="KeyBoard_Alt_Add_PrtScr">Alt+PrtScr\nVenster screenshot</string>
+
+    <!-- Zwevende knoppen -->
+    <string name="setup_button_description">Beschrijving van de instellingenknop</string>
+    <string name="keyBoard_button_description">Beschrijving van de toetsenbordknop</string>
+
+    <!-- Functieknoppen -->
+    <string name="ShortCut">Snelkoppeling</string>
+    <string name="Shift">Shift</string>
+    <string name="Function">Functietoets</string>
+
+    <string name="Minus_Sign_Button">_\n-</string>
+    <string name="Plus_Sign_Button">+\n=</string>
+    <string name="Left_Bracket_Button">{\n[</string>
+    <string name="Right_Bracket_Button">}\n]</string>
+    <string name="Colon_Button">:\n;</string>
+    <string name="Quotation_Button">"\"\n'</string>
+    <string name="Bitwise_OR_Button">|\n\\</string>
+    <string name="Less_Sign_Button">&lt;\n,</string>
+    <string name="Greater_Sign_Button">&gt;\n.</string>
+    <string name="Question_Mark">\?\n/</string>
+
+    <string name="Function1">F1</string>
+    <string name="Function2">F2</string>
+    <string name="Function3">F3</string>
+    <string name="Function4">F4</string>
+    <string name="PrtSc">PrtSc</string>
+    <string name="ScrLk">ScrLk</string>
+    <string name="Pause">Pause</string>
+    <string name="Esc">Esc</string>
+    <string name="Tilde">~\n`</string>
+    <string name="TAB">TAB</string>
+
+    <string name="Function5">F5</string>
+    <string name="Function6">F6</string>
+    <string name="Function7">F7</string>
+    <string name="Function8">F8</string>
+    <string name="Ins">Ins</string>
+    <string name="Home">Home</string>
+    <string name="PgUp">PgUp</string>
+
+    <string name="Function9">F9</string>
+    <string name="Function10">F10</string>
+    <string name="Function11">F11</string>
+    <string name="Function12">F12</string>
+    <string name="Delete">DEL</string>
+    <string name="End">End</string>
+    <string name="PgDn">PgDn</string>
+
+    <!-- Systeemknoppen -->
+    <string name="One_Sigh_Button">!\n1</string>
+    <string name="Two_At_Button">@\n2</string>
+    <string name="Three_Pound_Button">#\n3</string>
+    <string name="Four_Dollar_Button">$\n4</string>
+    <string name="Five_Percent_Button">%\n5</string>
+    <string name="Six_Caret_Button">^\n6</string>
+    <string name="Seven_Ampersand_Button">&amp;\n7</string>
+    <string name="Eight_Asterisk_Button">*\n8</string>
+    <string name="Nine_Left_Parenthesis_Button">(\n9</string>
+    <string name="Zero_Right_Parenthesis_Button">)\n0</string>
+
+    <string name="Q_Button">Q</string>
+    <string name="W_Button">W</string>
+    <string name="E_Button">E</string>
+    <string name="R_Button">R</string>
+    <string name="T_Button">T</string>
+    <string name="Y_Button">Y</string>
+    <string name="U_Button">U</string>
+    <string name="I_Button">I</string>
+    <string name="O_Button">O</string>
+    <string name="P_Button">P</string>
+
+    <string name="A_Button">A</string>
+    <string name="S_Button">S</string>
+    <string name="D_Button">D</string>
+    <string name="F_Button">F</string>
+    <string name="G_Button">G</string>
+    <string name="H_Button">H</string>
+    <string name="J_Button">J</string>
+    <string name="K_Button">K</string>
+    <string name="L_Button">L</string>
+
+    <string name="Z_Button">Z</string>
+    <string name="X_Button">X</string>
+    <string name="C_Button">C</string>
+    <string name="V_Button">V</string>
+    <string name="B_Button">B</string>
+    <string name="N_Button">N</string>
+    <string name="M_Button">M</string>
+
+    <string name="DEL_Button">Verwijderen</string>
+    <string name="Space_Button">Spatie</string>
+    <string name="Enter_Button">Enter</string>
+
+    <!-- OpenterFace instellingen -->
+    <string name="Close_DrawLayout">Lade-indeling sluiten</string>
+    <string name="Device_Connect_Setting">Apparaat\nVerbinden</string>
+    <string name="Device_Disconnect_Setting">Apparaat\nOntkoppelen</string>
+    <string name="parameter_Setting">Parameters\nInstellingen</string>
+    <string name="Video_Setting">Video\nInstellingen</string>
+    <string name="Rotate_90_CW">Rechtsom\n90° draaien</string>
+    <string name="Rotate_90_CCW">Linksom\n90° draaien</string>
+    <string name="Flip_Horizontally">Horizontaal\nspiegelen</string>
+    <string name="Flip_Vertically">Verticaal\nspiegelen</string>
+    <string name="ScreenHost_Picture">Hostscherm\nScreenshot</string>
+    <string name="Recording_Video">Opname\nVideo</string>
+    <string name="about_device">Over het Openterface-apparaat</string>
+    <string name="Android_Version">Android-versie</string>
+    <string name="Openterface_Version">Openterface-versie</string>
+
+    <!-- Doelhost -->
+    <string name="Target_state">Doelstatus</string>
+    <string name="Target">Doel</string>
+    <string name="Host">Host</string>
+
+    <!-- Muisbesturingsmodus -->
+    <string name="KeyMouse_Ctrl_Way">Muisbesturingsmodus</string>
+    <string name="KeyMouse_Abs_Ctrl">Aanraking\nModus</string>
+    <string name="KeyMouse_Abs_Drag_Ctrl">Slepen\nModus</string>
+    <string name="KeyMouse_Drag">Slepen</string>
+    <string name="KeyMouse_Rel_Ctrl">Aanwijzer\nModus</string>
+</resources>
