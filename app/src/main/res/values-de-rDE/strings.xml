@@ -134,7 +134,7 @@
     <string name="E_Button">E</string>
     <string name="R_Button">R</string>
     <string name="T_Button">T</string>
-    <string name="Y_Button">Y</string>
+    <string name="Y_Button">Z</string>
     <string name="U_Button">U</string>
     <string name="I_Button">I</string>
     <string name="O_Button">O</string>
@@ -150,7 +150,7 @@
     <string name="K_Button">K</string>
     <string name="L_Button">L</string>
 
-    <string name="Z_Button">Z</string>
+    <string name="Z_Button">Y</string>
     <string name="X_Button">X</string>
     <string name="C_Button">C</string>
     <string name="V_Button">V</string>

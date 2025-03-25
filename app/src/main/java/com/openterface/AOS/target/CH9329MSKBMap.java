@@ -207,10 +207,10 @@ public class CH9329MSKBMap {
         keyCodeMap.put("]", "30");keyCodeMap.put("}", "30");
         keyCodeMap.put("|", "64");keyCodeMap.put("\\", "64");
         keyCodeMap.put(";", "33");keyCodeMap.put(":", "33");
+        keyCodeMap.put("'", "34");keyCodeMap.put("\"", "34");
         keyCodeMap.put(",", "36");keyCodeMap.put("<", "36");
         keyCodeMap.put(".", "37");keyCodeMap.put(">", "37");
         keyCodeMap.put("/", "38");keyCodeMap.put("?", "38");
-        keyCodeMap.put("'", "34");keyCodeMap.put("\"", "34");
 
         //function key
         keyCodeMap.put("GRAVE", "35");

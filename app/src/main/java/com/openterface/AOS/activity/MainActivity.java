@@ -109,6 +109,7 @@ import android.widget.Toast;
 
 import java.io.File;
 import java.text.DecimalFormat;
+import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Queue;
@@ -258,6 +259,21 @@ public class MainActivity extends AppCompatActivity {
         //Zoom layout deal
         setCameraViewSecond();
         ZoomLayoutDeal ZoomLayoutDeal = new ZoomLayoutDeal(this, mCameraHelper, mBinding);
+
+        KeyBoardManager.setKeyBoardLanguage();
+
+        String currentLang = Locale.getDefault().getLanguage();
+        if (currentLang.equals("us")) {
+            KeyBoardSystem.setKeyboardLanguage("us");
+            KeyBoardFunction.setKeyboardLanguage("us");
+        } else if (currentLang.equals("de")) {
+            KeyBoardSystem.setKeyboardLanguage("de");
+            KeyBoardFunction.setKeyboardLanguage("de");
+        }else {
+            KeyBoardSystem.setKeyboardLanguage("us");
+            KeyBoardFunction.setKeyboardLanguage("us");
+        }
+
     }
 
     private void setCameraViewSecond() {

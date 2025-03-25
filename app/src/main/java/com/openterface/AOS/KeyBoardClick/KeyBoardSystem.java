@@ -25,6 +25,7 @@
 package com.openterface.AOS.KeyBoardClick;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -34,6 +35,10 @@ import android.widget.LinearLayout;
 import com.openterface.AOS.R;
 import com.openterface.AOS.activity.MainActivity;
 import com.openterface.AOS.target.KeyBoardManager;
+import com.openterface.AOS.target.KeyBoardMapping;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class KeyBoardSystem {
 
@@ -46,12 +51,11 @@ public class KeyBoardSystem {
     private final Context context;
 
     private static boolean KeyBoard_ShIft_Press_state;
-
-    public static void KeyBoard_ShIft_Press(Boolean KeyBoard_ShIft_Press){
-        KeyBoard_ShIft_Press_state = KeyBoard_ShIft_Press;
-    }
-
     private final View[] SystemButtons;
+
+    private final Map<String, KeyBoardMapping> languageMappings = new HashMap<>();
+    private KeyBoardMapping currentMapping;
+    private String currentLanguage = "us";
 
     public KeyBoardSystem(MainActivity activity) {
         Fragment_KeyBoard_ShortCut = activity.findViewById(R.id.Fragment_KeyBoard_ShortCut);
@@ -108,100 +112,41 @@ public class KeyBoardSystem {
             activity.findViewById(R.id.Enter_Button),
         };
 
+        languageMappings.put("us", new KeyMapConfig_Us());
+        languageMappings.put("de", new KeyMapConfig_De());
+        currentMapping = languageMappings.get("us");
         SystemButtonListeners();
+    }
+
+    public static void KeyBoard_ShIft_Press(Boolean KeyBoard_ShIft_Press){
+        KeyBoard_ShIft_Press_state = KeyBoard_ShIft_Press;
+    }
+
+    public void setKeyboardLanguage(String language) {
+        currentLanguage = language;
+        currentMapping = languageMappings.get(language);
+        if (currentMapping == null) {
+            currentLanguage = "us";
+            currentMapping = languageMappings.get("us");
+        }
     }
 
     private void SystemButtonListeners() {
         for (View view : SystemButtons) {
             view.setOnClickListener(v -> {
                 String systemButtonId = getKey(view.getId());
+                Log.d("KeyBoardSystem", "System Button Pressed: " + systemButtonId);
                 handleShortcut(systemButtonId);
             });
         }
     }
 
-    private String getKey(int System_buttonId) {
-        if (System_buttonId == R.id.One_Sigh_Button) {
-            return KeyBoard_ShIft_Press_state ? "!" : "1";
-        } else if (System_buttonId == R.id.Two_At_Button) {
-            return KeyBoard_ShIft_Press_state ? "@" : "2";
-        } else if (System_buttonId == R.id.Three_Pound_Button) {
-            return KeyBoard_ShIft_Press_state ? "#" : "3";
-        } else if (System_buttonId == R.id.Four_Dollar_Button) {
-            return KeyBoard_ShIft_Press_state ? "$" : "4";
-        } else if (System_buttonId == R.id.Five_Percent_Button) {
-            return KeyBoard_ShIft_Press_state ? "%" : "5";
-        } else if (System_buttonId == R.id.Six_Caret_Button) {
-            return KeyBoard_ShIft_Press_state ? "^" : "6";
-        } else if (System_buttonId == R.id.Seven_Ampersand_Button) {
-            return KeyBoard_ShIft_Press_state ? "&" : "7";
-        } else if (System_buttonId == R.id.Eight_Asterisk_Button) {
-            return KeyBoard_ShIft_Press_state ? "*" : "8";
-        } else if (System_buttonId == R.id.Nine_Left_Parenthesis_Button) {
-            return KeyBoard_ShIft_Press_state ? "(" : "9";
-        } else if (System_buttonId == R.id.Zero_Right_Parenthesis_Button) {
-            return KeyBoard_ShIft_Press_state ? ")" : "0";
-        } else if (System_buttonId == R.id.Q_Button) {
-            return KeyBoard_ShIft_Press_state ? "Q" : "q";
-        } else if (System_buttonId == R.id.W_Button) {
-            return KeyBoard_ShIft_Press_state ? "W" : "w";
-        } else if (System_buttonId == R.id.E_Button) {
-            return KeyBoard_ShIft_Press_state ? "E" : "e";
-        } else if (System_buttonId == R.id.R_Button) {
-            return KeyBoard_ShIft_Press_state ? "R" : "r";
-        } else if (System_buttonId == R.id.T_Button) {
-            return KeyBoard_ShIft_Press_state ? "T" : "t";
-        } else if (System_buttonId == R.id.Y_Button) {
-            return KeyBoard_ShIft_Press_state ? "Y" : "y";
-        } else if (System_buttonId == R.id.U_Button) {
-            return KeyBoard_ShIft_Press_state ? "U" : "u";
-        } else if (System_buttonId == R.id.I_Button) {
-            return KeyBoard_ShIft_Press_state ? "I" : "i";
-        } else if (System_buttonId == R.id.O_Button) {
-            return KeyBoard_ShIft_Press_state ? "O" : "o";
-        } else if (System_buttonId == R.id.P_Button) {
-            return KeyBoard_ShIft_Press_state ? "P" : "p";
-        } else if (System_buttonId == R.id.A_Button) {
-            return KeyBoard_ShIft_Press_state ? "A" : "a";
-        } else if (System_buttonId == R.id.S_Button) {
-            return KeyBoard_ShIft_Press_state ? "S" : "s";
-        } else if (System_buttonId == R.id.D_Button) {
-            return KeyBoard_ShIft_Press_state ? "D" : "d";
-        } else if (System_buttonId == R.id.F_Button) {
-            return KeyBoard_ShIft_Press_state ? "F" : "f";
-        } else if (System_buttonId == R.id.G_Button) {
-            return KeyBoard_ShIft_Press_state ? "G" : "g";
-        } else if (System_buttonId == R.id.H_Button) {
-            return KeyBoard_ShIft_Press_state ? "H" : "h";
-        } else if (System_buttonId == R.id.J_Button) {
-            return KeyBoard_ShIft_Press_state ? "J" : "j";
-        } else if (System_buttonId == R.id.K_Button) {
-            return KeyBoard_ShIft_Press_state ? "K" : "k";
-        } else if (System_buttonId == R.id.L_Button) {
-            return KeyBoard_ShIft_Press_state ? "L" : "l";
-        } else if (System_buttonId == R.id.Z_Button) {
-            return KeyBoard_ShIft_Press_state ? "Z" : "z";
-        } else if (System_buttonId == R.id.X_Button) {
-            return KeyBoard_ShIft_Press_state ? "X" : "x";
-        } else if (System_buttonId == R.id.C_Button) {
-            return KeyBoard_ShIft_Press_state ? "C" : "c";
-        } else if (System_buttonId == R.id.V_Button) {
-            return KeyBoard_ShIft_Press_state ? "V" : "v";
-        } else if (System_buttonId == R.id.B_Button) {
-            return KeyBoard_ShIft_Press_state ? "B" : "b";
-        } else if (System_buttonId == R.id.N_Button) {
-            return KeyBoard_ShIft_Press_state ? "N" : "n";
-        } else if (System_buttonId == R.id.M_Button) {
-            return KeyBoard_ShIft_Press_state ? "M" : "m";
-        }  else if (System_buttonId == R.id.DEL_Button) {
-            return "DEL";
-        }  else if (System_buttonId == R.id.Space_Button) {
-            return "SPACE";
-        }  else if (System_buttonId == R.id.Enter_Button) {
-            return "ENTER";
-        }  else {
-            return "";
+    private String getKey(int systemButtonId) {
+        String[] mapping = currentMapping.getKeyMappings().get(systemButtonId);
+        if (mapping != null) {
+            return KeyBoard_ShIft_Press_state ? mapping[1] : mapping[0];
         }
+        return "";
     }
 
     private void handleShortcut(String System_buttonId) {

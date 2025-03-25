@@ -34,6 +34,10 @@ import android.widget.LinearLayout;
 import com.openterface.AOS.R;
 import com.openterface.AOS.activity.MainActivity;
 import com.openterface.AOS.target.KeyBoardManager;
+import com.openterface.AOS.target.KeyBoardMapping;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class KeyBoardFunction {
     private final Button KeyBoard_ShortCut;
@@ -51,6 +55,9 @@ public class KeyBoardFunction {
     }
 
     private final View[] FunctionButtons;
+    private KeyBoardMapping currentMapping;
+    private final Map<String, KeyBoardMapping> languageMappings = new HashMap<>();
+    private String currentLanguage = "us";
 
     public KeyBoardFunction(MainActivity activity) {
         Fragment_KeyBoard_ShortCut = activity.findViewById(R.id.Fragment_KeyBoard_ShortCut);
@@ -106,7 +113,20 @@ public class KeyBoardFunction {
                 activity.findViewById(R.id.Tilde),
         };
 
+        languageMappings.put("us", new KeyMapConfig_Us());
+        languageMappings.put("de", new KeyMapConfig_De());
+        currentMapping = languageMappings.get("us");
+
         FunctionButtonListeners();
+    }
+
+    public void setKeyboardLanguage(String language) {
+        currentLanguage = language;
+        currentMapping = languageMappings.get(language);
+        if (currentMapping == null) {
+            currentLanguage = "us";
+            currentMapping = languageMappings.get("us");
+        }
     }
 
     private void FunctionButtonListeners() {
@@ -119,85 +139,11 @@ public class KeyBoardFunction {
     }
 
     private String getKey(int Function_buttonId) {
-        if (Function_buttonId == R.id.Function1) {
-            return "F1";
-        } else if (Function_buttonId == R.id.Function2) {
-            return "F2";
-        } else if (Function_buttonId == R.id.Function3) {
-            return "F3";
-        } else if (Function_buttonId == R.id.Function4) {
-            return "F4";
-        } else if (Function_buttonId == R.id.Function5) {
-            return "F5";
-        } else if (Function_buttonId == R.id.Function6) {
-            return "F6";
-        } else if (Function_buttonId == R.id.Function7) {
-            return "F7";
-        } else if (Function_buttonId == R.id.Function8) {
-            return "F8";
-        } else if (Function_buttonId == R.id.Function9) {
-            return "F9";
-        } else if (Function_buttonId == R.id.Function10) {
-            return "F10";
-        } else if (Function_buttonId == R.id.Function11) {
-            return "F11";
-        } else if (Function_buttonId == R.id.Function12) {
-            return "F12";
-        } else if (Function_buttonId == R.id.PrtSc) {
-            return "PrtSc";
-        } else if (Function_buttonId == R.id.ScrLk) {
-            return "ScrLk";
-        } else if (Function_buttonId == R.id.Pause) {
-            return "Pause";
-        } else if (Function_buttonId == R.id.Ins) {
-            return "Ins";
-        } else if (Function_buttonId == R.id.Home) {
-            return "Home";
-        } else if (Function_buttonId == R.id.PgUp) {
-            return "PgUp";
-        } else if (Function_buttonId == R.id.Delete) {
-            return "Delete";
-        } else if (Function_buttonId == R.id.End) {
-            return "End";
-        } else if (Function_buttonId == R.id.PgDn) {
-            return "PgDn";
-        } else if (Function_buttonId == R.id.Esc) {
-            return "Esc";
-        } else if (Function_buttonId == R.id.TAB) {
-            return "TAB";
-        } else if (Function_buttonId == R.id.dropLeft) {
-            return "DPAD_LEFT";
-        } else if (Function_buttonId == R.id.dropRight) {
-            return "DPAD_RIGHT";
-        } else if (Function_buttonId == R.id.dropUp) {
-            return "DPAD_UP";
-        } else if (Function_buttonId == R.id.dropDown) {
-            return "DPAD_DOWN";
-        } else if (Function_buttonId == R.id.Minus_Sign_Button) {
-            return KeyBoard_ShIft_Press_state ? "_" : "-";
-        } else if (Function_buttonId == R.id.Plus_Sign_Button) {
-            return KeyBoard_ShIft_Press_state ? "+" : "=";
-        } else if (Function_buttonId == R.id.Left_Bracket_Button) {
-            return KeyBoard_ShIft_Press_state ? "{" : "[";
-        } else if (Function_buttonId == R.id.Right_Bracket_Button) {
-            return KeyBoard_ShIft_Press_state ? "}" : "]";
-        } else if (Function_buttonId == R.id.Colon_Button) {
-            return KeyBoard_ShIft_Press_state ? ":" : ";";
-        } else if (Function_buttonId == R.id.Quotation_Button) {
-            return KeyBoard_ShIft_Press_state ? "\"" : "'";
-        } else if (Function_buttonId == R.id.Bitwise_OR_Button) {
-            return KeyBoard_ShIft_Press_state ? "|" : "\\";
-        } else if (Function_buttonId == R.id.Less_Sign_Button) {
-            return KeyBoard_ShIft_Press_state ? "<" : ",";
-        } else if (Function_buttonId == R.id.Greater_Sign_Button) {
-            return KeyBoard_ShIft_Press_state ? ">" : ".";
-        } else if (Function_buttonId == R.id.Question_Mark) {
-            return KeyBoard_ShIft_Press_state ? "?" : "/";
-        } else if (Function_buttonId == R.id.Tilde) {
-            return "~";
-        } else {
-            return "";
+        String[] mapping = currentMapping.getKeyMappings().get(Function_buttonId);
+        if (mapping != null) {
+            return KeyBoard_ShIft_Press_state ? mapping[1] : mapping[0];
         }
+        return "";
     }
 
     private void handleShortcut(String Function_buttonId) {

@@ -30,17 +30,38 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.widget.Toast;
 
-import com.openterface.AOS.R;
+import com.openterface.AOS.KeyBoardClick.KeyBoardSystem;
+import com.openterface.AOS.KeyBoardClick.KeyMapConfig_De;
 import com.openterface.AOS.activity.MainActivity;
 import com.openterface.AOS.serial.CH9329Function;
 import com.openterface.AOS.serial.UsbDeviceManager;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Locale;
+import java.util.Map;
 
 public class KeyBoardManager {
     private static final String TAG = KeyBoardManager.class.getSimpleName();
     private static Context context;
+    private static Map<Object, String> currentKeyCodeMap;
+
+    static {
+        currentKeyCodeMap = CH9329MSKBMap.getKeyCodeMap();
+    }
+
+    public static void setKeyBoardLanguage() {
+        String currentLang = Locale.getDefault().getLanguage();
+        if (currentLang.equals("de")) {
+            currentKeyCodeMap = KeyMapConfig_De.getKeyCodeMap();
+//            KeyBoardSystem.setKeyboardLanguage("de");
+            Log.d("setKeyBoardLanguage", "language is de");
+        }else {
+            currentKeyCodeMap = CH9329MSKBMap.getKeyCodeMap();
+//            KeyBoardSystem.setKeyboardLanguage("us");
+            Log.d("setKeyBoardLanguage", "language is us");
+        }
+    }
 
     public static String getFunctionKey(KeyEvent event, int keyCode) {
         boolean isCtrlPressed = (event.getMetaState() & KeyEvent.META_CTRL_ON) != 0;
@@ -210,7 +231,7 @@ public class KeyBoardManager {
                             CH9329MSKBMap.DataLen().get("DataLenKB") +
                             CH9329MSKBMap.KBShortCutKey().get(FunctionKeyPress) +
                             CH9329MSKBMap.DataNull().get("DataNull") +
-                            CH9329MSKBMap.getKeyCodeMap().get(keyName) +
+                            currentKeyCodeMap.get(keyName) +
                             CH9329MSKBMap.DataNull().get("DataNull") +
                             CH9329MSKBMap.DataNull().get("DataNull") +
                             CH9329MSKBMap.DataNull().get("DataNull") +
@@ -218,6 +239,7 @@ public class KeyBoardManager {
                             CH9329MSKBMap.DataNull().get("DataNull");
                     System.out.println("FunctionKeyPress: " + CH9329MSKBMap.KBShortCutKey().get(FunctionKeyPress));
                     Log.e(TAG, "successful send keyboard data: " + keyName);
+                    Log.e(TAG, "successful send keyboard data currentKeyCodeMap: " + currentKeyCodeMap);
                     sendKBData = sendKBData + CH9329Function.makeChecksum(sendKBData);
 
                     CH9329Function.checkSendLogData(sendKBData);
@@ -259,7 +281,7 @@ public class KeyBoardManager {
                             CH9329MSKBMap.DataLen().get("DataLenKB") +
                             function_key +
                             CH9329MSKBMap.DataNull().get("DataNull") +
-                            CH9329MSKBMap.getKeyCodeMap().get(keyName) +
+                            currentKeyCodeMap.get(keyName) +
                             CH9329MSKBMap.DataNull().get("DataNull") +
                             CH9329MSKBMap.DataNull().get("DataNull") +
                             CH9329MSKBMap.DataNull().get("DataNull") +
