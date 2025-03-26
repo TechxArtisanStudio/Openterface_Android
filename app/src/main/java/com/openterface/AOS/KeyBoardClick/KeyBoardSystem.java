@@ -53,9 +53,9 @@ public class KeyBoardSystem {
     private static boolean KeyBoard_ShIft_Press_state;
     private final View[] SystemButtons;
 
-    private final Map<String, KeyBoardMapping> languageMappings = new HashMap<>();
-    private KeyBoardMapping currentMapping;
-    private String currentLanguage = "us";
+    private static final Map<String, KeyBoardMapping> languageMappings = new HashMap<>();
+    private static KeyBoardMapping currentMapping;
+    private static String currentLanguage = "us";
 
     public KeyBoardSystem(MainActivity activity) {
         Fragment_KeyBoard_ShortCut = activity.findViewById(R.id.Fragment_KeyBoard_ShortCut);
@@ -122,7 +122,7 @@ public class KeyBoardSystem {
         KeyBoard_ShIft_Press_state = KeyBoard_ShIft_Press;
     }
 
-    public void setKeyboardLanguage(String language) {
+    public static void setKeyboardLanguage(String language) {
         currentLanguage = language;
         currentMapping = languageMappings.get(language);
         if (currentMapping == null) {

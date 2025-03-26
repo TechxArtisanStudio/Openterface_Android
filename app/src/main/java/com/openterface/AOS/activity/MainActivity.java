@@ -262,18 +262,27 @@ public class MainActivity extends AppCompatActivity {
 
         KeyBoardManager.setKeyBoardLanguage();
 
+        setLanguage();
+
+    }
+
+    private void setLanguage(){
+        Button Left_Than_Button = findViewById(R.id.Left_Than_Button);
         String currentLang = Locale.getDefault().getLanguage();
         if (currentLang.equals("us")) {
+            Left_Than_Button.setText("");
             KeyBoardSystem.setKeyboardLanguage("us");
             KeyBoardFunction.setKeyboardLanguage("us");
         } else if (currentLang.equals("de")) {
+            Log.d("KeyBoardSystem", "German Button Pressed: ");
+
             KeyBoardSystem.setKeyboardLanguage("de");
             KeyBoardFunction.setKeyboardLanguage("de");
         }else {
+            Left_Than_Button.setText("");
             KeyBoardSystem.setKeyboardLanguage("us");
             KeyBoardFunction.setKeyboardLanguage("us");
         }
-
     }
 
     private void setCameraViewSecond() {

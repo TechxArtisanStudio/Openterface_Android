@@ -25,6 +25,7 @@
 package com.openterface.AOS.KeyBoardClick;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -37,6 +38,7 @@ import com.openterface.AOS.target.KeyBoardManager;
 import com.openterface.AOS.target.KeyBoardMapping;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class KeyBoardFunction {
@@ -55,9 +57,9 @@ public class KeyBoardFunction {
     }
 
     private final View[] FunctionButtons;
-    private KeyBoardMapping currentMapping;
-    private final Map<String, KeyBoardMapping> languageMappings = new HashMap<>();
-    private String currentLanguage = "us";
+    private static KeyBoardMapping currentMapping;
+    private static final Map<String, KeyBoardMapping> languageMappings = new HashMap<>();
+    private static String currentLanguage = "us";
 
     public KeyBoardFunction(MainActivity activity) {
         Fragment_KeyBoard_ShortCut = activity.findViewById(R.id.Fragment_KeyBoard_ShortCut);
@@ -67,6 +69,7 @@ public class KeyBoardFunction {
         KeyBoard_ShortCut = activity.findViewById(R.id.KeyBoard_ShortCut);
         KeyBoard_Function = activity.findViewById(R.id.KeyBoard_Function);
         KeyBoard_System = activity.findViewById(R.id.KeyBoard_System);
+
         this.context = activity;
         FunctionButtons = new View[]{
                 activity.findViewById(R.id.Function1),
@@ -118,9 +121,22 @@ public class KeyBoardFunction {
         currentMapping = languageMappings.get("us");
 
         FunctionButtonListeners();
+
+        Button Left_Than_Button = activity.findViewById(R.id.Left_Than_Button);
+        Left_Than_Button.setOnClickListener(v -> {
+            String currentLang = Locale.getDefault().getLanguage();
+            if (currentLang.equals("de")) {
+
+                String key = getKey(R.id.Left_Than_Button);
+                Log.d("KeyBoardSystem", "German Button Pressed: " + key);
+                handleShortcut(key);
+            } else if (currentLang.equals("us")) {
+
+            }
+        });
     }
 
-    public void setKeyboardLanguage(String language) {
+    public static void setKeyboardLanguage(String language) {
         currentLanguage = language;
         currentMapping = languageMappings.get(language);
         if (currentMapping == null) {

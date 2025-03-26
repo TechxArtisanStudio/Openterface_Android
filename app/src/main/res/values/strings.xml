@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Openterface</string>
     <string name="action_control">Controls</string>
     <string name="show_options">FUNCTION</string>
@@ -161,7 +161,7 @@
     <string name="DEL_Button">DEL</string>
     <string name="Space_Button">Space</string>
     <string name="Enter_Button">Enter</string>
-
+    <string name="Left_Than_Button_Text" tools:ignore="MissingTranslation">&gt;\n&lt; |</string>
     <!--    OpenterFace Setting-->
     <string name="Close_DrawLayout">Close_DrawLayout</string>
     <string name="Device_Connect_Setting">Device\nConnect</string>

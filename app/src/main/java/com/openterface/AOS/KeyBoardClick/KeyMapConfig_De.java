@@ -99,6 +99,7 @@ public class KeyMapConfig_De implements KeyBoardMapping {
         keyMappings.put(R.id.Greater_Sign_Button, new String[]{".", ":"});
         keyMappings.put(R.id.Question_Mark, new String[]{"-", "_"});
         keyMappings.put(R.id.Tilde, new String[]{"^", "°"});
+        keyMappings.put(R.id.Left_Than_Button, new String[]{"<", ">"});
     }
 
     public static Map<Object, String> getKeyCodeMap() {
@@ -178,10 +179,11 @@ public class KeyMapConfig_De implements KeyBoardMapping {
         keyCodeMap.put("+", "30");keyCodeMap.put("*", "30");
         keyCodeMap.put("ö", "33");keyCodeMap.put("Ö", "33");
         keyCodeMap.put("ä", "34");keyCodeMap.put("Ä", "34");
-        keyCodeMap.put("#", "36");keyCodeMap.put("'", "36");
+        keyCodeMap.put("#", "31");keyCodeMap.put("'", "31");
         keyCodeMap.put(",", "36");keyCodeMap.put(";", "36");
-        keyCodeMap.put(".", "38");keyCodeMap.put(":", "37");
+        keyCodeMap.put(".", "37");keyCodeMap.put(":", "37");
         keyCodeMap.put("-", "38");keyCodeMap.put("_", "38");
+        keyCodeMap.put("<", "64");keyCodeMap.put(">", "64");
 
         //function key
         keyCodeMap.put("GRAVE", "35");
