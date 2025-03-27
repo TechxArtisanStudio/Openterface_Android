@@ -50,11 +50,14 @@ import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.openterface.AOS.IImageCapture;
+import com.openterface.AOS.KeyBoardClick.KeyBoardAlt;
 import com.openterface.AOS.KeyBoardClick.KeyBoardClose;
+import com.openterface.AOS.KeyBoardClick.KeyBoardCtrl;
 import com.openterface.AOS.KeyBoardClick.KeyBoardFunction;
 import com.openterface.AOS.KeyBoardClick.KeyBoardShift;
 import com.openterface.AOS.KeyBoardClick.KeyBoardShortCut;
 import com.openterface.AOS.KeyBoardClick.KeyBoardSystem;
+import com.openterface.AOS.KeyBoardClick.KeyBoardWin;
 import com.openterface.AOS.drawerLayout.DrawerLayoutDeal;
 import com.openterface.AOS.drawerLayout.ZoomLayoutDeal;
 import com.openterface.AOS.serial.CustomTouchListener;
@@ -216,8 +219,14 @@ public class MainActivity extends AppCompatActivity {
 
         //Short Cut Button
         KeyBoardShortCut KeyBoardShortCut = new KeyBoardShortCut(this);
+        //Ctrl Button
+        KeyBoardCtrl KeyBoardCtrlButton = new KeyBoardCtrl(this);
         //Shift Button
         KeyBoardShift KeyBoardShiftButton = new KeyBoardShift(this);
+        //Alt Button
+        KeyBoardAlt KeyBoardAltButton = new KeyBoardAlt(this);
+        //Win Button
+        KeyBoardWin KeyBoardWinButton = new KeyBoardWin(this);
         //FunctionKey Button
         KeyBoardFunction KeyBoardFunction = new KeyBoardFunction(this);
         //System Button
@@ -238,7 +247,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        KeyBoardCtrlButton.setCtrlButtonClickColor();//deal Ctrl button click color
+
         KeyBoardShiftButton.setShiftButtonClickColor();//deal shift button click color
+
+        KeyBoardAltButton.setAltButtonClickColor();//deal Alt button click color
+
+        KeyBoardWinButton.setWinButtonClickColor();//deal Win button click color
 
         KeyBoardShortCut.setShortCutButtonsClickColor();//deal short cut button click color
 

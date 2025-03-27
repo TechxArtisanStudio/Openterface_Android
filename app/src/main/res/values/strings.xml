@@ -77,6 +77,9 @@
     <!--    Function button-->
     <string name="ShortCut">ShortCut</string>
     <string name="Shift">Shift</string>
+    <string name="Ctrl" tools:ignore="MissingTranslation">Ctrl</string>
+    <string name="Alt" tools:ignore="MissingTranslation">Alt</string>
+    <string name="Win" tools:ignore="MissingTranslation">Win</string>
     <string name="Function">Function</string>
 
     <string name="Minus_Sign_Button">_\n-</string>

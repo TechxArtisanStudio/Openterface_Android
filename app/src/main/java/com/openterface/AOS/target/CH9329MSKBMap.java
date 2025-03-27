@@ -62,7 +62,10 @@ public class CH9329MSKBMap {
 
     public static Map<Object, String> KBShortCutKey() {
         Map<Object, String> DataLen = new HashMap<>();
-        DataLen.put("ShortCutKeyNull", "00");
+        DataLen.put("ShortCutKeyCtrlNull", "00");
+        DataLen.put("ShortCutKeyShiftNull", "00");
+        DataLen.put("ShortCutKeyAltNull", "00");
+        DataLen.put("ShortCutKeyWinNull", "00");
         DataLen.put("Ctrl", "01");
         DataLen.put("Shift", "02");
         DataLen.put("Alt", "04");

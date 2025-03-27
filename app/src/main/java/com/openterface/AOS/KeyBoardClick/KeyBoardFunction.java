@@ -50,10 +50,25 @@ public class KeyBoardFunction {
     private final LinearLayout Fragment_KeyBoard_System;
     private final Context context;
 
+    private static boolean KeyBoard_Ctrl_Press_state;
     private static boolean KeyBoard_ShIft_Press_state;
+    private static boolean KeyBoard_Alt_Press_state;
+    private static boolean KeyBoard_Win_Press_state;
+
+    public static void KeyBoard_Ctrl_Press(Boolean KeyBoard_Ctrl_Press){
+        KeyBoard_Ctrl_Press_state = KeyBoard_Ctrl_Press;
+    }
 
     public static void KeyBoard_ShIft_Press(Boolean KeyBoard_ShIft_Press){
         KeyBoard_ShIft_Press_state = KeyBoard_ShIft_Press;
+    }
+
+    public static void KeyBoard_Alt_Press(Boolean KeyBoard_Alt_Press){
+        KeyBoard_Alt_Press_state = KeyBoard_Alt_Press;
+    }
+
+    public static void KeyBoard_Win_Press(Boolean KeyBoard_Win_Press){
+        KeyBoard_Win_Press_state = KeyBoard_Win_Press;
     }
 
     private final View[] FunctionButtons;
@@ -163,14 +178,44 @@ public class KeyBoardFunction {
     }
 
     private void handleShortcut(String Function_buttonId) {
-        String FunctionKeyPress;
-        if (KeyBoard_ShIft_Press_state){
-            FunctionKeyPress = "Shift";
-            KeyBoardManager.sendKeyBoardFunction(FunctionKeyPress, Function_buttonId);
+//        String FunctionKeyCtrlPress;
+//        if (KeyBoard_ShIft_Press_state){
+//            FunctionKeyCtrlPress = "Shift";
+//            KeyBoardManager.sendKeyBoardFunction(FunctionKeyCtrlPress, Function_buttonId);
+//        }else{
+//            FunctionKeyCtrlPress = "ShortCutKeyNull";
+//            KeyBoardManager.sendKeyBoardFunction(FunctionKeyCtrlPress, Function_buttonId);
+//        }
+//        System.out.println("Shift State: " + KeyBoard_ShIft_Press_state);
+
+        String FunctionKeyCtrlPress;
+        String FunctionKeyShiftPress;
+        String FunctionKeyAltPress;
+        String FunctionKeyWinPress;
+        if (KeyBoard_Ctrl_Press_state){
+            FunctionKeyCtrlPress = "Ctrl";
         }else{
-            FunctionKeyPress = "ShortCutKeyNull";
-            KeyBoardManager.sendKeyBoardFunction(FunctionKeyPress, Function_buttonId);
+            FunctionKeyCtrlPress = "ShortCutKeyCtrlNull";
         }
+
+        if (KeyBoard_ShIft_Press_state){
+            FunctionKeyShiftPress = "Shift";
+        }else{
+            FunctionKeyShiftPress = "ShortCutKeyShiftNull";
+        }
+
+        if (KeyBoard_Alt_Press_state){
+            FunctionKeyAltPress = "Alt";
+        }else{
+            FunctionKeyAltPress = "ShortCutKeyAltNull";
+        }
+
+        if (KeyBoard_Win_Press_state){
+            FunctionKeyWinPress = "Win";
+        }else{
+            FunctionKeyWinPress = "ShortCutKeyWinNull";
+        }
+        KeyBoardManager.sendKeyBoardFunction(FunctionKeyCtrlPress, FunctionKeyShiftPress, FunctionKeyAltPress, FunctionKeyWinPress, Function_buttonId);
         System.out.println("Shift State: " + KeyBoard_ShIft_Press_state);
 
     }

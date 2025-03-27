@@ -116,70 +116,119 @@
                 android:id="@+id/KeyBoard_ZoomInOut"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="0.5"
+                android:layout_weight="1"
                 android:background="@drawable/button_background"
                 android:theme="@style/ButtonTheme"
                 android:layout_marginHorizontal="1dp"
                 android:src="@drawable/arrows_angle_contract"
-                tools:ignore="ContentDescription">
-            </ImageButton>
+                android:scaleType="centerInside"
+                android:padding="4dp"
+                tools:ignore="ContentDescription"/>
 
-            <android.widget.Button
-                android:id="@+id/KeyBoard_ShortCut"
+            <HorizontalScrollView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/ShortCut"
-                android:textColor="@color/black"
-                android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
-                android:layout_marginHorizontal="1dp" />
+                android:layout_weight="7"
+                android:scrollbars="none">
 
-            <android.widget.Button
-                android:id="@+id/KeyBoard_Shift"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/Shift"
-                android:textColor="@color/black"
-                android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
-                android:layout_marginHorizontal="1dp" />
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
 
-            <android.widget.Button
-                android:id="@+id/KeyBoard_Function"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/Function"
-                android:textColor="@color/black"
-                android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
-                android:layout_marginHorizontal="1dp" />
+                    <android.widget.Button
+                        android:id="@+id/KeyBoard_ShortCut"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/ShortCut"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp" />
 
-            <ImageButton
-                android:id="@+id/KeyBoard_System"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
-                android:layout_marginHorizontal="1dp"
-                android:src="@drawable/keyboard"
-                tools:ignore="ContentDescription">
-            </ImageButton>
+                    <android.widget.Button
+                        android:id="@+id/KeyBoard_Function"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/Function"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp" />
+
+                    <android.widget.Button
+                        android:id="@+id/KeyBoard_Ctrl"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/Ctrl"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp" />
+
+                    <android.widget.Button
+                        android:id="@+id/KeyBoard_Shift"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/Shift"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp" />
+
+                    <android.widget.Button
+                        android:id="@+id/KeyBoard_Alt"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/Alt"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp" />
+
+                    <android.widget.Button
+                        android:id="@+id/KeyBoard_Win"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/Win"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp" />
+
+                    <ImageButton
+                        android:id="@+id/KeyBoard_System"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"
+                        android:src="@drawable/keyboard"
+                        android:scaleType="centerInside"
+                        android:padding="4dp"
+                        tools:ignore="ContentDescription"/>
+                </LinearLayout>
+            </HorizontalScrollView>
 
             <ImageButton
                 android:id="@+id/KeyBoard_Close"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_weight="0.5"
+                android:layout_weight="1"
                 android:background="@drawable/button_background"
                 android:theme="@style/ButtonTheme"
                 android:layout_marginHorizontal="1dp"
                 android:src="@drawable/x_circle"
-                tools:ignore="ContentDescription">
-            </ImageButton>
+                android:scaleType="centerInside"
+                android:padding="4dp"
+                tools:ignore="ContentDescription"/>
         </LinearLayout>
 
         <include layout="@layout/short_cut_button" />

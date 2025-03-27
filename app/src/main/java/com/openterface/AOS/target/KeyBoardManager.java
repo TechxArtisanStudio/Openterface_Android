@@ -213,7 +213,7 @@ public class KeyBoardManager {
         }).start();
     }
 
-    public static void sendKeyBoardFunction(String FunctionKeyPress, String keyName) {
+    public static void sendKeyBoardFunction(String FunctionKeyCtrlPress, String FunctionKeyShiftPress, String FunctionKeyAltPress, String FunctionKeyWinPress, String keyName) {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -223,13 +223,31 @@ public class KeyBoardManager {
                         return;
                     }
 
+                    // Gets the control key mapping value
+                    String ctrlValue = CH9329MSKBMap.KBShortCutKey().get(FunctionKeyCtrlPress);
+                    String shiftValue = CH9329MSKBMap.KBShortCutKey().get(FunctionKeyShiftPress);
+                    String altValue = CH9329MSKBMap.KBShortCutKey().get(FunctionKeyAltPress);
+                    String winValue = CH9329MSKBMap.KBShortCutKey().get(FunctionKeyWinPress);
+
+                    // Resolve to integers
+                    int ctrl = ctrlValue != null ? Integer.parseInt(ctrlValue.replace("0x", ""), 16) : 0;
+                    int shift = shiftValue != null ? Integer.parseInt(shiftValue.replace("0x", ""), 16) : 0;
+                    int alt = altValue != null ? Integer.parseInt(altValue.replace("0x", ""), 16) : 0;
+                    int win = winValue != null ? Integer.parseInt(winValue.replace("0x", ""), 16) : 0;
+
+                    // Direct accumulation
+                    int combinedValue = ctrl + shift + alt + win;
+
+                    // Convert to a two-digit hexadecimal string
+                    String combinationFunctionKey = String.format("%02X", combinedValue);
+
                     String sendKBData = "";
                     sendKBData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
                             CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
                             CH9329MSKBMap.getKeyCodeMap().get("address") +
                             CH9329MSKBMap.CmdData().get("CmdKB_HID") +
                             CH9329MSKBMap.DataLen().get("DataLenKB") +
-                            CH9329MSKBMap.KBShortCutKey().get(FunctionKeyPress) +
+                            combinationFunctionKey +
                             CH9329MSKBMap.DataNull().get("DataNull") +
                             currentKeyCodeMap.get(keyName) +
                             CH9329MSKBMap.DataNull().get("DataNull") +
@@ -237,7 +255,7 @@ public class KeyBoardManager {
                             CH9329MSKBMap.DataNull().get("DataNull") +
                             CH9329MSKBMap.DataNull().get("DataNull") +
                             CH9329MSKBMap.DataNull().get("DataNull");
-                    System.out.println("FunctionKeyPress: " + CH9329MSKBMap.KBShortCutKey().get(FunctionKeyPress));
+                    System.out.println("FunctionKeyPress: " + CH9329MSKBMap.KBShortCutKey().get(combinationFunctionKey));
                     Log.e(TAG, "successful send keyboard data: " + keyName);
                     Log.e(TAG, "successful send keyboard data currentKeyCodeMap: " + currentKeyCodeMap);
                     sendKBData = sendKBData + CH9329Function.makeChecksum(sendKBData);

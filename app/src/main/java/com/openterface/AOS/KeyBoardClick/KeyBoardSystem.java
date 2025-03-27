@@ -50,7 +50,10 @@ public class KeyBoardSystem {
     private final LinearLayout Fragment_KeyBoard_System;
     private final Context context;
 
+    private static boolean KeyBoard_Ctrl_Press_state;
     private static boolean KeyBoard_ShIft_Press_state;
+    private static boolean KeyBoard_Alt_Press_state;
+    private static boolean KeyBoard_Win_Press_state;
     private final View[] SystemButtons;
 
     private static final Map<String, KeyBoardMapping> languageMappings = new HashMap<>();
@@ -118,8 +121,20 @@ public class KeyBoardSystem {
         SystemButtonListeners();
     }
 
+    public static void KeyBoard_Ctrl_Press(Boolean KeyBoard_Ctrl_Press){
+        KeyBoard_Ctrl_Press_state = KeyBoard_Ctrl_Press;
+    }
+
     public static void KeyBoard_ShIft_Press(Boolean KeyBoard_ShIft_Press){
         KeyBoard_ShIft_Press_state = KeyBoard_ShIft_Press;
+    }
+
+    public static void KeyBoard_Alt_Press(Boolean KeyBoard_Alt_Press){
+        KeyBoard_Alt_Press_state = KeyBoard_Alt_Press;
+    }
+
+    public static void KeyBoard_Win_Press(Boolean KeyBoard_Win_Press){
+        KeyBoard_Win_Press_state = KeyBoard_Win_Press;
     }
 
     public static void setKeyboardLanguage(String language) {
@@ -150,14 +165,34 @@ public class KeyBoardSystem {
     }
 
     private void handleShortcut(String System_buttonId) {
-        String SystemKeyPress;
-        if (KeyBoard_ShIft_Press_state){
-            SystemKeyPress = "Shift";
-            KeyBoardManager.sendKeyBoardFunction(SystemKeyPress, System_buttonId);
+        String SystemKeyCtrlPress;
+        String SystemKeyShiftPress;
+        String SystemKeyAltPress;
+        String SystemKeyWinPress;
+        if (KeyBoard_Ctrl_Press_state){
+            SystemKeyCtrlPress = "Ctrl";
         }else{
-            SystemKeyPress = "ShortCutKeyNull";
-            KeyBoardManager.sendKeyBoardFunction(SystemKeyPress, System_buttonId);
+            SystemKeyCtrlPress = "ShortCutKeyCtrlNull";
         }
+
+        if (KeyBoard_ShIft_Press_state){
+            SystemKeyShiftPress = "Shift";
+        }else{
+            SystemKeyShiftPress = "ShortCutKeyShiftNull";
+        }
+
+        if (KeyBoard_Alt_Press_state){
+            SystemKeyAltPress = "Alt";
+        }else{
+            SystemKeyAltPress = "ShortCutKeyAltNull";
+        }
+
+        if (KeyBoard_Win_Press_state){
+            SystemKeyWinPress = "Win";
+        }else{
+            SystemKeyWinPress = "ShortCutKeyWinNull";
+        }
+        KeyBoardManager.sendKeyBoardFunction(SystemKeyCtrlPress, SystemKeyShiftPress, SystemKeyAltPress, SystemKeyWinPress, System_buttonId);
         System.out.println("Shift State: " + KeyBoard_ShIft_Press_state);
 
     }
