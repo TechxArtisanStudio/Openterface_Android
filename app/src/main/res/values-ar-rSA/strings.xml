@@ -1,0 +1,192 @@
+<resources>
+    <string name="app_name">Openterface</string>
+    <string name="action_control">تحكم</string>
+    <string name="show_options">وظيفة</string>
+    <string name="action_usb">اتصال USB</string>
+    <string name="action_safely_eject">فصل الاتصال</string>
+    <string name="action_settings">إعدادات</string>
+    <string name="action_video_format">تنسيق الفيديو</string>
+    <string name="action_rotate_90_CW">تدوير 90 درجة باتجاه عقارب الساعة</string>
+    <string name="action_rotate_90_CCW">تدوير 90 درجة عكس عقارب الساعة</string>
+    <string name="action_flip_horizontally">قلب أفقي</string>
+    <string name="action_flip_vertically">قلب عمودي</string>
+
+    <string name="saved_preview_size">حجم المعاينة المحفوظ</string>
+
+    <string name="main_connect_usb_tip">ربط كاميرا USB</string>
+
+    <string name="device_list_dialog_title">جهاز</string>
+    <string name="device_list_empty_tip">يرجى ربط جهاز USB Openterface</string>
+    <string name="device_list_cancel_button">إلغاء</string>
+
+    <string name="video_format_title">تنسيق الفيديو</string>
+    <string name="video_format_format">التنسيق</string>
+    <string name="video_format_resolution">الدقة</string>
+    <string name="video_format_frame_rate">معدل الإطارات</string>
+    <string name="video_format_ok_button">موافق</string>
+    <string name="video_format_cancel_button">إلغاء</string>
+    <string name="video_format_format_yuv">YUV</string>
+    <string name="video_format_format_mjped">MJPEG</string>
+
+    <string name="camera_controls_text_brightness">السطوع</string>
+    <string name="camera_controls_text_contrast">التباين</string>
+    <string name="camera_controls_text_hue">درجة اللون</string>
+    <string name="camera_controls_text_auto">تلقائي</string>
+    <string name="camera_controls_text_saturation">التشبع</string>
+    <string name="camera_controls_text_sharpness">الحدة</string>
+    <string name="camera_controls_text_gamma">جاما</string>
+    <string name="camera_controls_text_white_balance">توازن اللون الأبيض</string>
+    <string name="camera_controls_text_backlight_comp">تعويض الإضاءة الخلفية</string>
+    <string name="camera_controls_text_gain">الكسب</string>
+    <string name="camera_controls_text_exposure_time">وقت التعرض</string>
+    <string name="camera_controls_text_iris">القزحية</string>
+    <string name="camera_controls_text_focus">التركيز</string>
+    <string name="camera_controls_text_zoom">التكبير</string>
+    <string name="camera_controls_text_pan">التحريك</string>
+    <string name="camera_controls_text_tilt">الإمالة</string>
+    <string name="camera_controls_text_roll">التدوير</string>
+    <string name="camera_controls_text_disable">تعطيل</string>
+    <string name="camera_controls_text_50hz">50 هرتز</string>
+    <string name="camera_controls_text_60hz">60 هرتز</string>
+    <string name="camera_controls_button_close">إغلاق</string>
+    <string name="camera_controls_button_reset">إعادة تعيين</string>
+
+    <!-- مفاتيح الاختصار -->
+    <string name="KeyBoard_Ctrl_Add_C">Ctrl+C\nنسخ</string>
+    <string name="KeyBoard_Ctrl_Add_V">Ctrl+V\nلصق</string>
+    <string name="KeyBoard_Ctrl_Add_A">Ctrl+A\nتحديد الكل</string>
+    <string name="KeyBoard_Ctrl_Add_X">Ctrl+X\nقص</string>
+    <string name="KeyBoard_Ctrl_Add_Z">Ctrl+Z\nتراجع</string>
+    <string name="KeyBoard_Ctrl_Add_S">Ctrl+S\nحفظ</string>
+
+    <string name="KeyBoard_Win_Add_Tab">Win+Tab\nعرض المهام</string>
+    <string name="KeyBoard_Win_Add_S">Win+S\nبحث</string>
+    <string name="KeyBoard_Win_Add_E">Win+E\nمستكشف الملفات</string>
+    <string name="KeyBoard_Win_Add_R">Win+R\nأمر</string>
+    <string name="KeyBoard_Win_Add_D">Win+D\nسطح المكتب</string>
+    <string name="KeyBoard_Win_Add_L">Win+L\nقفل الحاسوب</string>
+
+    <string name="KeyBoard_Alt_Add_F4">Alt+F4\nإغلاق النافذة</string>
+    <string name="KeyBoard_Ctrl_Add_Alt_Add_Del">Ctrl+Alt+Del\nمدير المهام</string>
+    <string name="KeyBoard_Alt_Add_PrtScr">Alt+PrtScr\nلقطة شاشة النافذة</string>
+
+    <!-- أزرار عائمة -->
+    <string name="setup_button_description">وصف زر الإعداد</string>
+    <string name="keyBoard_button_description">وصف زر لوحة المفاتيح</string>
+
+    <!-- أزرار الوظائف -->
+    <string name="ShortCut">اختصار</string>
+    <string name="Shift">Shift</string>
+    <string name="Function">مفتاح وظيفي</string>
+
+    <string name="Minus_Sign_Button">_\n-</string>
+    <string name="Plus_Sign_Button">+\n=</string>
+    <string name="Left_Bracket_Button">{\n[</string>
+    <string name="Right_Bracket_Button">}\n]</string>
+    <string name="Colon_Button">:\n;</string>
+    <string name="Quotation_Button">"\"\n'</string>
+    <string name="Bitwise_OR_Button">|\n\\</string>
+    <string name="Less_Sign_Button">&lt;\n,</string>
+    <string name="Greater_Sign_Button">&gt;\n.</string>
+    <string name="Question_Mark">\?\n/</string>
+
+    <string name="Function1">F1</string>
+    <string name="Function2">F2</string>
+    <string name="Function3">F3</string>
+    <string name="Function4">F4</string>
+    <string name="PrtSc">PrtSc</string>
+    <string name="ScrLk">ScrLk</string>
+    <string name="Pause">Pause</string>
+    <string name="Esc">Esc</string>
+    <string name="Tilde">~\n`</string>
+    <string name="TAB">TAB</string>
+
+    <string name="Function5">F5</string>
+    <string name="Function6">F6</string>
+    <string name="Function7">F7</string>
+    <string name="Function8">F8</string>
+    <string name="Ins">Ins</string>
+    <string name="Home">Home</string>
+    <string name="PgUp">PgUp</string>
+
+    <string name="Function9">F9</string>
+    <string name="Function10">F10</string>
+    <string name="Function11">F11</string>
+    <string name="Function12">F12</string>
+    <string name="Delete">DEL</string>
+    <string name="End">End</string>
+    <string name="PgDn">PgDn</string>
+
+    <!-- أزرار النظام -->
+    <string name="One_Sigh_Button">!\n1</string>
+    <string name="Two_At_Button">@\n2</string>
+    <string name="Three_Pound_Button">#\n3</string>
+    <string name="Four_Dollar_Button">$\n4</string>
+    <string name="Five_Percent_Button">%\n5</string>
+    <string name="Six_Caret_Button">^\n6</string>
+    <string name="Seven_Ampersand_Button">&amp;\n7</string>
+    <string name="Eight_Asterisk_Button">*\n8</string>
+    <string name="Nine_Left_Parenthesis_Button">(\n9</string>
+    <string name="Zero_Right_Parenthesis_Button">)\n0</string>
+
+    <string name="Q_Button">Q</string>
+    <string name="W_Button">W</string>
+    <string name="E_Button">E</string>
+    <string name="R_Button">R</string>
+    <string name="T_Button">T</string>
+    <string name="Y_Button">Y</string>
+    <string name="U_Button">U</string>
+    <string name="I_Button">I</string>
+    <string name="O_Button">O</string>
+    <string name="P_Button">P</string>
+
+    <string name="A_Button">A</string>
+    <string name="S_Button">S</string>
+    <string name="D_Button">D</string>
+    <string name="F_Button">F</string>
+    <string name="G_Button">G</string>
+    <string name="H_Button">H</string>
+    <string name="J_Button">J</string>
+    <string name="K_Button">K</string>
+    <string name="L_Button">L</string>
+
+    <string name="Z_Button">Z</string>
+    <string name="X_Button">X</string>
+    <string name="C_Button">C</string>
+    <string name="V_Button">V</string>
+    <string name="B_Button">B</string>
+    <string name="N_Button">N</string>
+    <string name="M_Button">M</string>
+
+    <string name="DEL_Button">حذف</string>
+    <string name="Space_Button">مسافة</string>
+    <string name="Enter_Button">إدخال</string>
+
+    <!-- إعدادات OpenterFace -->
+    <string name="Close_DrawLayout">إغلاق تخطيط الدرج</string>
+    <string name="Device_Connect_Setting">جهاز\nاتصال</string>
+    <string name="Device_Disconnect_Setting">جهاز\nفصل</string>
+    <string name="parameter_Setting">معلمات\nإعدادات</string>
+    <string name="Video_Setting">فيديو\nإعدادات</string>
+    <string name="Rotate_90_CW">تدوير\n90 درجة باتجاه عقارب الساعة</string>
+    <string name="Rotate_90_CCW">تدوير\n90 درجة عكس عقارب الساعة</string>
+    <string name="Flip_Horizontally">قلب\nأفقي</string>
+    <string name="Flip_Vertically">قلب\nعمودي</string>
+    <string name="ScreenHost_Picture">شاشة المضيف\nلقطة</string>
+    <string name="Recording_Video">تسجيل\nفيديو</string>
+    <string name="about_device">حول جهاز Openterface</string>
+    <string name="Android_Version">إصدار أندرويد</string>
+    <string name="Openterface_Version">إصدار Openterface</string>
+
+    <!-- المضيف المستهدف -->
+    <string name="Target_state">حالة الهدف</string>
+    <string name="Target">هدف</string>
+    <string name="Host">مضيف</string>
+
+    <!-- وضع التحكم بالفأرة -->
+    <string name="KeyMouse_Ctrl_Way">طريقة التحكم بالفأرة</string>
+    <string name="KeyMouse_Abs_Ctrl">لمس\nوضع</string>
+    <string name="KeyMouse_Abs_Drag_Ctrl">سحب\nوضع</string>
+    <string name="KeyMouse_Drag">سحب</string>
+    <string name="KeyMouse_Rel_Ctrl">مؤشر\nوضع</string>
+</resources>

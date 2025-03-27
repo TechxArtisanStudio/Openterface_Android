@@ -260,7 +260,7 @@
         <android.widget.Button
             android:id="@+id/PrtSc"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="@string/PrtSc"
             android:textColor="@color/black"
@@ -276,7 +276,7 @@
         <android.widget.Button
             android:id="@+id/ScrLk"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="@string/ScrLk"
             android:textColor="@color/black"
@@ -292,7 +292,7 @@
         <android.widget.Button
             android:id="@+id/Pause"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="@string/Pause"
             android:textColor="@color/black"
@@ -360,143 +360,175 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:layout_margin="1dp">
-
-        <android.widget.Button
-            android:id="@+id/Function5"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/Function5"
-            android:textColor="@color/black"
-            android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"
-            android:autoSizeTextType="uniform"
-            android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp"
-            android:autoSizeStepGranularity="1sp"
-            tools:ignore="UnusedAttribute"/>
+            android:layout_weight="7"
+            android:orientation="horizontal">
+            <android.widget.Button
+                android:id="@+id/Function5"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/Function5"
+                android:textColor="@color/black"
+                android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme"
+                android:layout_marginHorizontal="1dp"
+                android:autoSizeTextType="uniform"
+                android:autoSizeMinTextSize="5sp"
+                android:autoSizeMaxTextSize="12sp"
+                android:autoSizeStepGranularity="1sp"
+                tools:ignore="UnusedAttribute"/>
 
-        <android.widget.Button
-            android:id="@+id/Function6"
+            <android.widget.Button
+                android:id="@+id/Function6"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/Function6"
+                android:textColor="@color/black"
+                android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme"
+                android:layout_marginHorizontal="1dp"
+                android:autoSizeTextType="uniform"
+                android:autoSizeMinTextSize="5sp"
+                android:autoSizeMaxTextSize="12sp"
+                android:autoSizeStepGranularity="1sp"
+                tools:ignore="UnusedAttribute"/>
+
+            <android.widget.Button
+                android:id="@+id/Function7"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/Function7"
+                android:textColor="@color/black"
+                android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme"
+                android:layout_marginHorizontal="1dp"
+                android:autoSizeTextType="uniform"
+                android:autoSizeMinTextSize="5sp"
+                android:autoSizeMaxTextSize="12sp"
+                android:autoSizeStepGranularity="1sp"
+                tools:ignore="UnusedAttribute"/>
+
+            <android.widget.Button
+                android:id="@+id/Function8"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/Function8"
+                android:textColor="@color/black"
+                android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme"
+                android:layout_marginHorizontal="1dp"
+                android:autoSizeTextType="uniform"
+                android:autoSizeMinTextSize="5sp"
+                android:autoSizeMaxTextSize="12sp"
+                android:autoSizeStepGranularity="1sp"
+                tools:ignore="UnusedAttribute"/>
+
+            <android.widget.Button
+                android:id="@+id/Ins"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="@string/Ins"
+                android:textColor="@color/black"
+                android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme"
+                android:layout_marginHorizontal="1dp"
+                android:autoSizeTextType="uniform"
+                android:autoSizeMinTextSize="5sp"
+                android:autoSizeMaxTextSize="12sp"
+                android:autoSizeStepGranularity="1sp"
+                tools:ignore="UnusedAttribute"/>
+
+            <android.widget.Button
+                android:id="@+id/Home"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="@string/Home"
+                android:textColor="@color/black"
+                android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme"
+                android:layout_marginHorizontal="1dp"
+                android:autoSizeTextType="uniform"
+                android:autoSizeMinTextSize="5sp"
+                android:autoSizeMaxTextSize="12sp"
+                android:autoSizeStepGranularity="1sp"
+                tools:ignore="UnusedAttribute"/>
+
+            <android.widget.Button
+                android:id="@+id/PgUp"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="@string/PgUp"
+                android:textColor="@color/black"
+                android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme"
+                android:layout_marginHorizontal="1dp"
+                android:autoSizeTextType="uniform"
+                android:autoSizeMinTextSize="5sp"
+                android:autoSizeMaxTextSize="12sp"
+                android:autoSizeStepGranularity="1sp"
+                tools:ignore="UnusedAttribute"/>
+        </LinearLayout>
+
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/Function6"
-            android:textColor="@color/black"
-            android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"
-            android:autoSizeTextType="uniform"
-            android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp"
-            android:autoSizeStepGranularity="1sp"
-            tools:ignore="UnusedAttribute"/>
+            android:layout_weight="3"
+            android:orientation="horizontal">
+            <android.widget.Button
+                android:id="@+id/Left_Than_Button"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="@string/Left_Than_Button_Text"
+                android:textColor="@color/black"
+                android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme"
+                android:layout_marginHorizontal="1dp"
+                android:autoSizeTextType="uniform"
+                android:autoSizeMinTextSize="5sp"
+                android:autoSizeMaxTextSize="12sp"
+                android:autoSizeStepGranularity="1sp"
+                android:visibility="visible"
+                tools:ignore="UnusedAttribute"/>
 
-        <android.widget.Button
-            android:id="@+id/Function7"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/Function7"
-            android:textColor="@color/black"
-            android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"
-            android:autoSizeTextType="uniform"
-            android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp"
-            android:autoSizeStepGranularity="1sp"
-            tools:ignore="UnusedAttribute"/>
+            <ImageButton
+                android:id="@+id/dropUp"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/button_background"
+                android:contentDescription="TODO"
+                android:theme="@style/ButtonTheme"
+                android:layout_marginHorizontal="1dp"
+                android:src="@drawable/baseline_arrow_drop_up_24"
+                android:layout_gravity="center"/>
 
-        <android.widget.Button
-            android:id="@+id/Function8"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/Function8"
-            android:textColor="@color/black"
-            android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"
-            android:autoSizeTextType="uniform"
-            android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp"
-            android:autoSizeStepGranularity="1sp"
-            tools:ignore="UnusedAttribute"/>
-
-        <android.widget.Button
-            android:id="@+id/Ins"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/Ins"
-            android:textColor="@color/black"
-            android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"
-            android:autoSizeTextType="uniform"
-            android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp"
-            android:autoSizeStepGranularity="1sp"
-            tools:ignore="UnusedAttribute"/>
-
-        <android.widget.Button
-            android:id="@+id/Home"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/Home"
-            android:textColor="@color/black"
-            android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"
-            android:autoSizeTextType="uniform"
-            android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp"
-            android:autoSizeStepGranularity="1sp"
-            tools:ignore="UnusedAttribute"/>
-
-        <android.widget.Button
-            android:id="@+id/PgUp"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/PgUp"
-            android:textColor="@color/black"
-            android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"
-            android:autoSizeTextType="uniform"
-            android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp"
-            android:autoSizeStepGranularity="1sp"
-            tools:ignore="UnusedAttribute"/>
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:layout_marginHorizontal="1dp"/>
-
-        <ImageButton
-            android:id="@+id/dropUp"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="@drawable/button_background"
-            android:contentDescription="TODO"
-            android:theme="@style/ButtonTheme"
-            android:layout_marginHorizontal="1dp"
-            android:src="@drawable/baseline_arrow_drop_up_24"
-            android:layout_gravity="center"/>
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:layout_marginHorizontal="1dp"/>
-
+            <android.widget.Button
+                android:id="@+id/german_right_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text=" "
+                android:textColor="@color/black"
+                android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme"
+                android:layout_marginHorizontal="1dp"
+                android:autoSizeTextType="uniform"
+                android:autoSizeMinTextSize="5sp"
+                android:autoSizeMaxTextSize="12sp"
+                android:autoSizeStepGranularity="1sp"
+                android:visibility="visible"
+                tools:ignore="UnusedAttribute"/>
+        </LinearLayout>
     </LinearLayout>
 
     <LinearLayout
@@ -572,7 +604,7 @@
         <android.widget.Button
             android:id="@+id/Delete"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="@string/Delete"
             android:textColor="@color/black"
@@ -588,7 +620,7 @@
         <android.widget.Button
             android:id="@+id/End"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="@string/End"
             android:textColor="@color/black"
@@ -604,7 +636,7 @@
         <android.widget.Button
             android:id="@+id/PgDn"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:layout_weight="1"
             android:text="@string/PgDn"
             android:textColor="@color/black"

@@ -50,11 +50,14 @@ import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.openterface.AOS.IImageCapture;
+import com.openterface.AOS.KeyBoardClick.KeyBoardAlt;
 import com.openterface.AOS.KeyBoardClick.KeyBoardClose;
+import com.openterface.AOS.KeyBoardClick.KeyBoardCtrl;
 import com.openterface.AOS.KeyBoardClick.KeyBoardFunction;
 import com.openterface.AOS.KeyBoardClick.KeyBoardShift;
 import com.openterface.AOS.KeyBoardClick.KeyBoardShortCut;
 import com.openterface.AOS.KeyBoardClick.KeyBoardSystem;
+import com.openterface.AOS.KeyBoardClick.KeyBoardWin;
 import com.openterface.AOS.drawerLayout.DrawerLayoutDeal;
 import com.openterface.AOS.drawerLayout.ZoomLayoutDeal;
 import com.openterface.AOS.serial.CustomTouchListener;
@@ -109,6 +112,7 @@ import android.widget.Toast;
 
 import java.io.File;
 import java.text.DecimalFormat;
+import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Queue;
@@ -215,8 +219,14 @@ public class MainActivity extends AppCompatActivity {
 
         //Short Cut Button
         KeyBoardShortCut KeyBoardShortCut = new KeyBoardShortCut(this);
+        //Ctrl Button
+        KeyBoardCtrl KeyBoardCtrlButton = new KeyBoardCtrl(this);
         //Shift Button
         KeyBoardShift KeyBoardShiftButton = new KeyBoardShift(this);
+        //Alt Button
+        KeyBoardAlt KeyBoardAltButton = new KeyBoardAlt(this);
+        //Win Button
+        KeyBoardWin KeyBoardWinButton = new KeyBoardWin(this);
         //FunctionKey Button
         KeyBoardFunction KeyBoardFunction = new KeyBoardFunction(this);
         //System Button
@@ -237,7 +247,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        KeyBoardCtrlButton.setCtrlButtonClickColor();//deal Ctrl button click color
+
         KeyBoardShiftButton.setShiftButtonClickColor();//deal shift button click color
+
+        KeyBoardAltButton.setAltButtonClickColor();//deal Alt button click color
+
+        KeyBoardWinButton.setWinButtonClickColor();//deal Win button click color
 
         KeyBoardShortCut.setShortCutButtonsClickColor();//deal short cut button click color
 
@@ -258,6 +274,30 @@ public class MainActivity extends AppCompatActivity {
         //Zoom layout deal
         setCameraViewSecond();
         ZoomLayoutDeal ZoomLayoutDeal = new ZoomLayoutDeal(this, mCameraHelper, mBinding);
+
+        KeyBoardManager.setKeyBoardLanguage();
+
+        setLanguage();
+
+    }
+
+    private void setLanguage(){
+        Button Left_Than_Button = findViewById(R.id.Left_Than_Button);
+        String currentLang = Locale.getDefault().getLanguage();
+        if (currentLang.equals("us")) {
+            Left_Than_Button.setText("");
+            KeyBoardSystem.setKeyboardLanguage("us");
+            KeyBoardFunction.setKeyboardLanguage("us");
+        } else if (currentLang.equals("de")) {
+            Log.d("KeyBoardSystem", "German Button Pressed: ");
+
+            KeyBoardSystem.setKeyboardLanguage("de");
+            KeyBoardFunction.setKeyboardLanguage("de");
+        }else {
+            Left_Than_Button.setText("");
+            KeyBoardSystem.setKeyboardLanguage("us");
+            KeyBoardFunction.setKeyboardLanguage("us");
+        }
     }
 
     private void setCameraViewSecond() {

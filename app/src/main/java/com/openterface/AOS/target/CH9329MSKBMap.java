@@ -62,7 +62,10 @@ public class CH9329MSKBMap {
 
     public static Map<Object, String> KBShortCutKey() {
         Map<Object, String> DataLen = new HashMap<>();
-        DataLen.put("ShortCutKeyNull", "00");
+        DataLen.put("ShortCutKeyCtrlNull", "00");
+        DataLen.put("ShortCutKeyShiftNull", "00");
+        DataLen.put("ShortCutKeyAltNull", "00");
+        DataLen.put("ShortCutKeyWinNull", "00");
         DataLen.put("Ctrl", "01");
         DataLen.put("Shift", "02");
         DataLen.put("Alt", "04");
@@ -207,10 +210,10 @@ public class CH9329MSKBMap {
         keyCodeMap.put("]", "30");keyCodeMap.put("}", "30");
         keyCodeMap.put("|", "64");keyCodeMap.put("\\", "64");
         keyCodeMap.put(";", "33");keyCodeMap.put(":", "33");
+        keyCodeMap.put("'", "34");keyCodeMap.put("\"", "34");
         keyCodeMap.put(",", "36");keyCodeMap.put("<", "36");
         keyCodeMap.put(".", "37");keyCodeMap.put(">", "37");
         keyCodeMap.put("/", "38");keyCodeMap.put("?", "38");
-        keyCodeMap.put("'", "34");keyCodeMap.put("\"", "34");
 
         //function key
         keyCodeMap.put("GRAVE", "35");
