@@ -326,7 +326,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-
+    //new logcat
     @Override
     public boolean onGenericMotionEvent(MotionEvent event) {
         return CustomTouchListener.handleGenericMotionEvent(event) || super.onGenericMotionEvent(event);
