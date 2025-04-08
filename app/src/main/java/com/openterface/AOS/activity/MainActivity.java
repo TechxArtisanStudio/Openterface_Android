@@ -28,6 +28,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
@@ -43,12 +44,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.openterface.AOS.DebugLogcat.FileLoggingTree;
+import com.openterface.AOS.DebugLogcat.LogViewerActivity;
 import com.openterface.AOS.IImageCapture;
 import com.openterface.AOS.KeyBoardClick.KeyBoardAlt;
 import com.openterface.AOS.KeyBoardClick.KeyBoardClose;
@@ -118,6 +122,8 @@ import java.util.TimerTask;
 import java.util.Queue;
 import java.util.LinkedList;
 
+import timber.log.Timber;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getSimpleName();
@@ -175,22 +181,36 @@ public class MainActivity extends AppCompatActivity {
 
     public AspectRatioSurfaceView cameraViewSecond;
     private RelativeLayout thumbnail_container;
+    private FileLoggingTree fileLoggingTree;
 
-    @SuppressLint("ClickableViewAccessibility")//add
+    private static final int PERMISSION_REQUEST_CODE = 100;
+
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // Check and request permissions
+        checkAndRequestPermissions();
+
+        // init Timber
+        fileLoggingTree = new FileLoggingTree(getApplication());
+        Timber.plant(fileLoggingTree);
+        
+        // Add some test logs
+        Timber.d("MainActivity onCreate");
+        Timber.i("Application started");
+        Timber.e("Test error log");
+
+        //Prevent screen from turning off
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         Window window = getWindow();
         WindowInsetsControllerCompat windowInsetsController =
                 WindowCompat.getInsetsController(window, window.getDecorView());
         // Hide the system bars.
         windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
-        super.onCreate(savedInstanceState);
-
-        //Recording Permission
-        ActivityCompat.requestPermissions(this, permissions, 200);
-
-        //Prevent screen from turning off
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         mBinding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(mBinding.getRoot());
@@ -279,6 +299,12 @@ public class MainActivity extends AppCompatActivity {
 
         setLanguage();
 
+        Button viewLogsButton = findViewById(R.id.view_logs_button);
+        viewLogsButton.setOnClickListener(v -> {
+            LogViewerActivity logDialog = new LogViewerActivity(this, fileLoggingTree);
+            logDialog.show();
+        });
+
     }
 
     private void setLanguage(){
@@ -326,7 +352,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    //new logcat
     @Override
     public boolean onGenericMotionEvent(MotionEvent event) {
         return CustomTouchListener.handleGenericMotionEvent(event) || super.onGenericMotionEvent(event);
@@ -1021,5 +1046,45 @@ public class MainActivity extends AppCompatActivity {
         String mm = mDecimalFormat.format(time % 3600 / 60);
         String ss = mDecimalFormat.format(time % 60);
         return hh + ":" + mm + ":" + ss;
+    }
+
+    private void checkAndRequestPermissions() {
+        String[] permissions = {
+            Manifest.permission.ACCESS_NETWORK_STATE,
+            Manifest.permission.INTERNET,
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE
+        };
+
+        boolean allPermissionsGranted = true;
+        for (String permission : permissions) {
+            if (ContextCompat.checkSelfPermission(this, permission) 
+                != PackageManager.PERMISSION_GRANTED) {
+                allPermissionsGranted = false;
+                break;
+            }
+        }
+
+        if (!allPermissionsGranted) {
+            ActivityCompat.requestPermissions(this, permissions, PERMISSION_REQUEST_CODE);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, 
+            @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            boolean allGranted = true;
+            for (int result : grantResults) {
+                if (result != PackageManager.PERMISSION_GRANTED) {
+                    allGranted = false;
+                    break;
+                }
+            }
+            if (!allGranted) {
+                Toast.makeText(this, "Requires permissions to function properly", Toast.LENGTH_LONG).show();
+            }
+        }
     }
 }

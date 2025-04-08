@@ -49,6 +49,8 @@ import android.hardware.usb.UsbDeviceConnection;
 import android.widget.TextView;
 import android.os.Build;
 
+import timber.log.Timber;
+
 public class UsbDeviceManager {
     private static final String TAG = UsbDeviceManager.class.getSimpleName();
 
@@ -136,20 +138,27 @@ public class UsbDeviceManager {
         }
     }
 
-    private void closeDevice() {
-        try {
-            port.close();
-            Log.d(TAG, "port close: ");
-        } catch (IOException e) {
-            Log.d(TAG, "port close failed ");
-        }
-    }
-
     public void release() {
-        context.unregisterReceiver(usbReceiver);
-        closeDevice();
-        mSerialThread.quitSafely();
-        Log.d(TAG, "serial is close");
+        try {
+            Timber.tag(TAG).d("release");
+            context.unregisterReceiver(usbReceiver);
+            if (port != null) {
+                port.close();
+                port = null;
+                Timber.tag(TAG).i("port close");
+            }
+            if (driver != null) {
+                driver = null;
+                Timber.tag(TAG).i("driver null");
+            }
+            if (mSerialThread != null) {
+                mSerialThread.quitSafely();
+                Timber.tag(TAG).i("mSerialThread quitSafely");
+            }
+            isReading = false;
+        } catch (Exception e) {
+            Timber.tag(TAG).e(e, "Error during release");
+        }
     }
 
     private void requestUsbPermission(UsbDevice serialDevice) {
@@ -157,25 +166,24 @@ public class UsbDeviceManager {
         IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
         context.registerReceiver(usbReceiver, filter, Context.RECEIVER_EXPORTED);
         usbManager.requestPermission(serialDevice, permissionIntent);
-        Log.e(TAG, "requestUsbPermission serialDevice");
+        Timber.tag(TAG).d("requestUsbPermission serialDevice");
 
         UsbDeviceConnection connection = usbManager.openDevice(serialDevice);
-        Log.d("serial", "open port successful11 ");
         if (connection != null) {
-            Log.d("serial", "open port successful22 ");
+            Timber.tag(TAG).i("open port successful");
             // Proceed with serialDevice communication
             // ...
             port = driver.getPorts().get(0); // Most serialDevices have just one port (port 0)
             try {
                 port.open(connection);
                 port.setParameters(115200, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE);
-                Log.d("serial", "open port successful33 ");
+                Timber.tag(TAG).i("set port baudRate 115200");
                 startReading();
             } catch (Exception e) {
                 e.printStackTrace();
             }
         } else {
-            Log.e(TAG, "Failed to open serialDevice");
+            Timber.tag(TAG).e("Failed to open serialDevice");
         }
     }
 
