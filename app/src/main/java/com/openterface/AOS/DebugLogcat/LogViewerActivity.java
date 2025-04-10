@@ -3,6 +3,8 @@ package com.openterface.AOS.DebugLogcat;
 import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
@@ -19,12 +21,17 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import timber.log.Timber;
 
 public class LogViewerActivity extends Dialog {
     private final FileLoggingTree fileLoggingTree;
     private TextView logTextView;
+    private Timer refreshTimer;
+    private static final long REFRESH_INTERVAL = 1000;
+    private final Handler handler = new Handler(Looper.getMainLooper());
 
     public LogViewerActivity(@NonNull Context context, FileLoggingTree fileLoggingTree) {
         super(context);
@@ -37,23 +44,61 @@ public class LogViewerActivity extends Dialog {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.dialog_log_viewer);
 
-        // 初始化视图
+        // Initialize view
         logTextView = findViewById(R.id.log_text_view);
         Button exportButton = findViewById(R.id.export_button);
         Button closeButton = findViewById(R.id.close_button);
-        Button refreshButton = findViewById(R.id.refresh_button);
+        Button clearButton = findViewById(R.id.clear_button);
 
-        // 显示日志内容
+        // Display log content
         refreshLogs();
 
-        // 设置导出按钮点击事件
+        // Set export button click event
         exportButton.setOnClickListener(v -> exportLogs());
 
-        // 设置关闭按钮点击事件
+        // Set the close button click event
         closeButton.setOnClickListener(v -> dismiss());
 
-        // 设置刷新按钮点击事件
-        refreshButton.setOnClickListener(v -> refreshLogs());
+        // Set clear button click event
+        clearButton.setOnClickListener(v -> clearLogs());
+
+        // Set log added listener
+        fileLoggingTree.setOnLogAddedListener(logEntry -> {
+            handler.post(() -> {
+                String currentText = logTextView.getText().toString();
+                logTextView.setText(currentText + logEntry + "\n");
+                // Scroll to bottom
+                int scrollAmount = logTextView.getLayout().getLineTop(logTextView.getLineCount()) - logTextView.getHeight();
+                if (scrollAmount > 0) {
+                    logTextView.scrollTo(0, scrollAmount);
+                }
+            });
+        });
+
+        // Start auto refresh timer
+        startAutoRefresh();
+    }
+
+    private void startAutoRefresh() {
+        refreshTimer = new Timer();
+        refreshTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                handler.post(() -> refreshLogs());
+            }
+        }, REFRESH_INTERVAL, REFRESH_INTERVAL);
+    }
+
+    @Override
+    public void dismiss() {
+        // Stop auto refresh timer when dialog is dismissed
+        if (refreshTimer != null) {
+            refreshTimer.cancel();
+            refreshTimer = null;
+        }
+        // Remove log added listener
+        fileLoggingTree.setOnLogAddedListener(null);
+        super.dismiss();
     }
 
     private void refreshLogs() {
@@ -63,7 +108,7 @@ public class LogViewerActivity extends Dialog {
             logContent.append(log).append("\n");
         }
         logTextView.setText(logContent.toString());
-        // 滚动到底部
+        // Roll to the bottom
         logTextView.post(() -> {
             int scrollAmount = logTextView.getLayout().getLineTop(logTextView.getLineCount()) - logTextView.getHeight();
             if (scrollAmount > 0) {
@@ -74,7 +119,7 @@ public class LogViewerActivity extends Dialog {
 
     private void exportLogs() {
         try {
-            // 使用应用专属目录
+            // Use application-specific directories
             File exportDir = new File(fileLoggingTree.getContext().getExternalFilesDir(null), "exported_logs");
             if (!exportDir.exists()) {
                 exportDir.mkdirs();
@@ -90,10 +135,16 @@ public class LogViewerActivity extends Dialog {
             writer.flush();
             writer.close();
 
-            Toast.makeText(getContext(), "日志已导出到: " + exportFile.getAbsolutePath(), Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), "Logs have been exported to: " + exportFile.getAbsolutePath(), Toast.LENGTH_LONG).show();
         } catch (Exception e) {
-            Toast.makeText(getContext(), "导出失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            Timber.e(e, "导出日志失败");
+            Toast.makeText(getContext(), "exported fail: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Timber.e(e, "Failure to export logs");
         }
+    }
+
+    private void clearLogs() {
+        fileLoggingTree.clearLogs();
+        refreshLogs();
+        Toast.makeText(getContext(), "Log cleared", Toast.LENGTH_SHORT).show();
     }
 }

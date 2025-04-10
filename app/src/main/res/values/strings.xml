@@ -192,4 +192,11 @@
     <string name="KeyMouse_Abs_Drag_Ctrl">Drag\nMode</string>
     <string name="KeyMouse_Drag">Dragging</string>
     <string name="KeyMouse_Rel_Ctrl">Pointer\nMode</string>
+
+    <!--    debug logcat-->
+    <string name="view_log">view log</string>
+    <string name="Export_Log_File">Export Log File</string>
+    <string name="close">close</string>
+    <string name="Log_Cat">Logcat:</string>
+    <string name="clear_logs">clear log</string>
 </resources>

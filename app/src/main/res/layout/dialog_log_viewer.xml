@@ -1,10 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="16dp"
     android:background="@android:color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <TextView
+            android:id="@+id/log_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/Log_Cat"
+            android:textSize="18sp"
+            android:textColor="@android:color/black"
+            android:layout_marginBottom="8dp" />
+    </LinearLayout>
 
     <ScrollView
         android:layout_width="match_parent"
@@ -29,24 +43,55 @@
         android:gravity="center"
         android:layout_marginTop="16dp">
 
-        <Button
+        <android.widget.Button
             android:id="@+id/export_button"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="导出日志"
-            android:layout_marginEnd="8dp" />
+            android:layout_weight="1"
+            android:text="@string/Export_Log_File"
+            android:textColor="@color/black"
+            android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme"
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute">
+        </android.widget.Button>
 
-        <Button
-            android:id="@+id/refresh_button"
-            android:layout_width="wrap_content"
+        <android.widget.Button
+            android:id="@+id/clear_button"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="刷新"
-            android:layout_marginEnd="8dp" />
+            android:layout_weight="1"
+            android:text="@string/clear_logs"
+            android:textColor="@color/black"
+            android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme"
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute">
+        </android.widget.Button>
 
-        <Button
+        <android.widget.Button
             android:id="@+id/close_button"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="关闭" />
+            android:layout_weight="1"
+            android:text="@string/close"
+            android:textColor="@color/black"
+            android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme"
+            android:layout_marginHorizontal="1dp"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp"
+            android:autoSizeStepGranularity="1sp"
+            tools:ignore="UnusedAttribute">
+        </android.widget.Button>
     </LinearLayout>
 </LinearLayout>

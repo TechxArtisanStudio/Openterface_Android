@@ -29,10 +29,19 @@ public class FileLoggingTree extends Timber.Tree {
     private final File logFile;
     private final Application.ActivityLifecycleCallbacks lifecycleCallbacks;
     private final Context context;
+    private OnLogAddedListener logAddedListener;
+
+    public interface OnLogAddedListener {
+        void onLogAdded(String logEntry);
+    }
+
+    public void setOnLogAddedListener(OnLogAddedListener listener) {
+        this.logAddedListener = listener;
+    }
 
     public FileLoggingTree(Application application) {
         this.context = application;
-        // 使用应用专属目录
+        // Use application-specific directories
         File logDir = new File(context.getExternalFilesDir(null), "logs");
         if (!logDir.exists()) {
             boolean created = logDir.mkdirs();
@@ -41,7 +50,7 @@ public class FileLoggingTree extends Timber.Tree {
         logFile = new File(logDir, "app_log.txt");
         Log.d(TAG, "Log file path: " + logFile.getAbsolutePath());
 
-        // 注册Activity生命周期回调
+        // register Activity Life cycle callback
         lifecycleCallbacks = new Application.ActivityLifecycleCallbacks() {
             @Override
             public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
@@ -85,7 +94,7 @@ public class FileLoggingTree extends Timber.Tree {
     }
 
     private void logSystemInfo(Activity activity) {
-        // 记录系统信息
+        // Recording system information
         Timber.i("System Info: Android %s, SDK %d", 
             android.os.Build.VERSION.RELEASE, 
             android.os.Build.VERSION.SDK_INT);
@@ -155,6 +164,11 @@ public class FileLoggingTree extends Timber.Tree {
         } catch (IOException e) {
             Log.e(TAG, "Error writing to log file", e);
         }
+
+        // Notify listener if exists
+        if (logAddedListener != null) {
+            logAddedListener.onLogAdded(logEntry);
+        }
     }
 
     private String getPriorityString(int priority) {
@@ -179,5 +193,17 @@ public class FileLoggingTree extends Timber.Tree {
 
     public Context getContext() {
         return context;
+    }
+
+    public void clearLogs() {
+        logList.clear();
+        try {
+            FileWriter writer = new FileWriter(logFile, false);
+            writer.write("");
+            writer.flush();
+            writer.close();
+        } catch (IOException e) {
+            Log.e(TAG, "Error clearing log file", e);
+        }
     }
 }
