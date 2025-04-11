@@ -49,6 +49,8 @@ import android.hardware.usb.UsbDeviceConnection;
 import android.widget.TextView;
 import android.os.Build;
 
+import timber.log.Timber;
+
 public class UsbDeviceManager {
     private static final String TAG = UsbDeviceManager.class.getSimpleName();
 
@@ -66,6 +68,11 @@ public class UsbDeviceManager {
     private static final String ACTION_USB_PERMISSION = "com.example.openterface.USB_PERMISSION";
     private UsbDeviceManager usbDeviceManager;
 
+    private static final int MAX_RETRY_COUNT = 3;
+    private static final int RETRY_DELAY_MS = 1000;
+    private int retryCount = 0;
+    private boolean isConnected = false;
+
     public interface OnDataReadListener {
         void onDataRead();
     }
@@ -74,6 +81,18 @@ public class UsbDeviceManager {
 
     public void setOnDataReadListener(OnDataReadListener listener) {
         this.onDataReadListener = listener;
+    }
+
+    public interface OnConnectionStateListener {
+        void onConnected();
+        void onDisconnected();
+        void onError(String error);
+    }
+
+    private OnConnectionStateListener connectionStateListener;
+
+    public void setOnConnectionStateListener(OnConnectionStateListener listener) {
+        this.connectionStateListener = listener;
     }
 
 //    public UsbDeviceManager(Context context, TextView tvReceivedData) {
@@ -100,7 +119,7 @@ public class UsbDeviceManager {
     public void handleUsbDevice(Intent intent) {
         if ("android.hardware.usb.action.USB_DEVICE_ATTACHED".equals(intent.getAction())) {
             Log.d(TAG, "handleUsbDevice data successful");
-            init();
+//            init();
         }
     }
 
@@ -136,20 +155,49 @@ public class UsbDeviceManager {
         }
     }
 
-    private void closeDevice() {
-        try {
-            port.close();
-            Log.d(TAG, "port close: ");
-        } catch (IOException e) {
-            Log.d(TAG, "port close failed ");
-        }
-    }
-
     public void release() {
-        context.unregisterReceiver(usbReceiver);
-        closeDevice();
-        mSerialThread.quitSafely();
-        Log.d(TAG, "serial is close");
+        try {
+            Timber.tag(TAG).d("Releasing USB resources");
+            isReading = false;
+            isConnected = false;
+
+            if (context != null) {
+                context.unregisterReceiver(usbReceiver);
+                Timber.tag(TAG).i("USB receiver unregistered");
+            }
+
+            if (port != null) {
+                try {
+                    port.close();
+                    Timber.tag(TAG).i("USB port closed successfully");
+                } catch (IOException e) {
+                    Timber.tag(TAG).e(e, "Error closing USB port");
+                }
+                port = null;
+            }
+
+            if (driver != null) {
+                driver = null;
+                Timber.tag(TAG).i("USB driver released");
+            }
+
+            if (mSerialThread != null) {
+                mSerialThread.quitSafely();
+                try {
+                    mSerialThread.join();
+                    Timber.tag(TAG).i("Serial thread terminated");
+                } catch (InterruptedException e) {
+                    Timber.tag(TAG).e(e, "Error joining serial thread");
+                }
+            }
+
+            if (mSerialAsyncHandler != null) {
+                mSerialAsyncHandler.removeCallbacksAndMessages(null);
+            }
+
+        } catch (Exception e) {
+            Timber.tag(TAG).e(e, "Error during USB resource release");
+        }
     }
 
     private void requestUsbPermission(UsbDevice serialDevice) {
@@ -157,25 +205,24 @@ public class UsbDeviceManager {
         IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
         context.registerReceiver(usbReceiver, filter, Context.RECEIVER_EXPORTED);
         usbManager.requestPermission(serialDevice, permissionIntent);
-        Log.e(TAG, "requestUsbPermission serialDevice");
+        Timber.tag(TAG).i("Requesting USB permission for device: %s", serialDevice.getDeviceName());
 
         UsbDeviceConnection connection = usbManager.openDevice(serialDevice);
-        Log.d("serial", "open port successful11 ");
         if (connection != null) {
-            Log.d("serial", "open port successful22 ");
+            Timber.tag(TAG).i("USB device opened successfully: %s", serialDevice.getDeviceName());
             // Proceed with serialDevice communication
             // ...
             port = driver.getPorts().get(0); // Most serialDevices have just one port (port 0)
             try {
                 port.open(connection);
                 port.setParameters(115200, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE);
-                Log.d("serial", "open port successful33 ");
+                Timber.tag(TAG).i("USB port opened and configured successfully");
                 startReading();
             } catch (Exception e) {
-                e.printStackTrace();
+                Timber.tag(TAG).e(e, "Failed to open USB port");
             }
         } else {
-            Log.e(TAG, "Failed to open serialDevice");
+            Timber.tag(TAG).e("Failed to open USB device: %s", serialDevice.getDeviceName());
         }
     }
 
@@ -192,16 +239,39 @@ public class UsbDeviceManager {
                             allReadData.append(String.format("%02X ", buffer[i]));
                         }
                         Log.d(TAG, "Read data: " + allReadData.toString().trim());
-                        
+
                         if (onDataReadListener != null) {
                             onDataReadListener.onDataRead();
                         }
                     }
                 } catch (IOException e) {
                     Log.e(TAG, "Error reading from port", e);
+                    handleConnectionError(e);
                     break;
                 }
             }
         });
+    }
+
+    private void handleConnectionError(Exception e) {
+        if (retryCount < MAX_RETRY_COUNT) {
+            retryCount++;
+            Log.d(TAG, "Retrying connection, attempt " + retryCount);
+            mSerialAsyncHandler.postDelayed(() -> {
+                try {
+                    if (port != null) {
+                        port.close();
+                    }
+                    init();
+                } catch (Exception ex) {
+                    Log.e(TAG, "Retry failed", ex);
+                }
+            }, RETRY_DELAY_MS);
+        } else {
+            isConnected = false;
+            if (connectionStateListener != null) {
+                connectionStateListener.onError("Failed to connect after " + MAX_RETRY_COUNT + " attempts");
+            }
+        }
     }
 }

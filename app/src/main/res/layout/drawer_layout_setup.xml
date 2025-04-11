@@ -298,6 +298,17 @@
                         android:textSize="18sp"
                         android:theme="@style/FontStyle"/>
 
+                    <Button
+                        android:id="@+id/view_logs_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/view_log"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp">
+                    </Button>
+
                 </LinearLayout>
 
             </LinearLayout>

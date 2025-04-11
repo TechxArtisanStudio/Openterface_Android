@@ -28,6 +28,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
@@ -43,12 +44,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.openterface.AOS.DebugLogcat.FileLoggingTree;
+import com.openterface.AOS.DebugLogcat.LogViewerActivity;
 import com.openterface.AOS.IImageCapture;
 import com.openterface.AOS.KeyBoardClick.KeyBoardAlt;
 import com.openterface.AOS.KeyBoardClick.KeyBoardClose;
@@ -118,6 +122,8 @@ import java.util.TimerTask;
 import java.util.Queue;
 import java.util.LinkedList;
 
+import timber.log.Timber;
+
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = MainActivity.class.getSimpleName();
@@ -175,22 +181,34 @@ public class MainActivity extends AppCompatActivity {
 
     public AspectRatioSurfaceView cameraViewSecond;
     private RelativeLayout thumbnail_container;
+    private FileLoggingTree fileLoggingTree;
 
-    @SuppressLint("ClickableViewAccessibility")//add
+    private static final int PERMISSION_REQUEST_CODE = 100;
+
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // Check and request permissions
+        checkAndRequestPermissions();
+
+        // init Timber
+        fileLoggingTree = new FileLoggingTree(getApplication());
+        Timber.plant(fileLoggingTree);
+        
+        // Add some test logs
+        Timber.d("MainActivity onCreate");
+
+        //Prevent screen from turning off
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         Window window = getWindow();
         WindowInsetsControllerCompat windowInsetsController =
                 WindowCompat.getInsetsController(window, window.getDecorView());
         // Hide the system bars.
         windowInsetsController.hide(WindowInsetsCompat.Type.systemBars());
-        super.onCreate(savedInstanceState);
-
-        //Recording Permission
-        ActivityCompat.requestPermissions(this, permissions, 200);
-
-        //Prevent screen from turning off
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         mBinding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(mBinding.getRoot());
@@ -202,7 +220,7 @@ public class MainActivity extends AppCompatActivity {
         //init serial-2.0 permission,you must agree
         usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
         usbDeviceManager = new UsbDeviceManager(this, usbManager);
-        usbDeviceManager.init();
+//        usbDeviceManager.init();
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
@@ -279,6 +297,12 @@ public class MainActivity extends AppCompatActivity {
 
         setLanguage();
 
+        Button viewLogsButton = findViewById(R.id.view_logs_button);
+        viewLogsButton.setOnClickListener(v -> {
+            LogViewerActivity logDialog = new LogViewerActivity(this, fileLoggingTree);
+            logDialog.show();
+        });
+
     }
 
     private void setLanguage(){
@@ -325,7 +349,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-
 
     @Override
     public boolean onGenericMotionEvent(MotionEvent event) {
@@ -432,9 +455,19 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        clearCameraHelper();
-
-//        usbDeviceManager.release();
+        if (mCameraHelper != null) {
+            mCameraHelper.release();
+            mCameraHelper = null;
+        }
+        if (usbDeviceManager != null) {
+            usbDeviceManager.release();
+            usbDeviceManager = null;
+        }
+        if (mRecordTimer != null) {
+            mRecordTimer.cancel();
+            mRecordTimer = null;
+        }
+        Timber.tag(TAG).v("MainActivity destroyed");
     }
 
     private void setListeners() {
@@ -596,7 +629,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void clearCameraHelper() {
-        if (DEBUG) Log.v(TAG, "clearCameraHelper:");
+        if (DEBUG) Timber.tag(TAG).v("clearCameraHelper is run");
         if (mCameraHelper != null) {
             mCameraHelper.release();
             mCameraHelper = null;
@@ -678,7 +711,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onAttach(UsbDevice device) {
             if (DEBUG) Log.v(TAG, "onAttach:device=" + device.getDeviceName());
-
+            Timber.tag(TAG).i("Camera device attached: %s", device.getDeviceName());
             attachNewDevice(device);
         }
 
@@ -688,12 +721,14 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onDeviceOpen(UsbDevice device, boolean isFirstOpen) {
             if (DEBUG) Log.v(TAG, "onDeviceOpen:device=" + device.getDeviceName());
+            Timber.tag(TAG).i("Camera device opened successfully: %s", device.getDeviceName());
 
             mCameraHelper.openCamera(getSavedPreviewSize());
 
             mCameraHelper.setButtonCallback(new IButtonCallback() {
                 @Override
                 public void onButton(int button, int state) {
+                    Timber.tag(TAG).d("Camera button pressed: button=%d, state=%d", button, state);
                     Toast.makeText(MainActivity.this, "onButton(button=" + button + "; " +
                             "state=" + state + ")", Toast.LENGTH_SHORT).show();
                 }
@@ -705,38 +740,39 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onCameraOpen(UsbDevice device) {
             if (DEBUG) Log.v(TAG, "onCameraOpen:device=" + device.getDeviceName());
+            Timber.tag(TAG).i("Camera opened and preview started: %s", device.getDeviceName());
             mCameraHelper.startPreview();
             // After connecting to the camera, you can get preview size of the camera
             Size size = mCameraHelper.getPreviewSize();
             if (size != null) {
                 resizePreviewView(size);
-//                cameraViewSecond.setAspectRatio(640, 480);
-
+                Timber.tag(TAG).i("Camera preview size: %dx%d", size.width, size.height);
             }
 
             if (mBinding.viewMainPreview.getSurfaceTexture() != null) {
                 mCameraHelper.addSurface(mBinding.viewMainPreview.getSurfaceTexture(), false);
                 mCameraHelper.addSurface(mBinding.cameraViewSecond.getHolder().getSurface(), false);
+                Timber.tag(TAG).i("Camera surfaces added successfully");
             }
 
             mIsCameraConnected = true;
             updateUIControls();
-//            usbDeviceManager.init();
         }
 
         @Override
         public void onCameraClose(UsbDevice device) {
             if (DEBUG) Log.v(TAG, "onCameraClose:device=" + device.getDeviceName());
-
-//            usbDeviceManager.release();
+            Timber.tag(TAG).i("Camera closed: %s", device.getDeviceName());
 
             if (mIsRecording) {
                 toggleVideoRecord(false);
+                Timber.tag(TAG).i("Recording stopped due to camera close");
             }
 
             if (mCameraHelper != null && mBinding.viewMainPreview.getSurfaceTexture() != null) {
                 mCameraHelper.removeSurface(mBinding.viewMainPreview.getSurfaceTexture());
                 mCameraHelper.removeSurface(cameraViewSecond.getHolder().getSurface());
+                Timber.tag(TAG).i("Camera surfaces removed");
             }
 
             mIsCameraConnected = false;
@@ -750,6 +786,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onDeviceClose(UsbDevice device) {
             if (DEBUG) Log.v(TAG, "onDeviceClose:device=" + device.getDeviceName());
+            Timber.tag(TAG).i("Camera device closed: %s", device.getDeviceName());
             action_safely_eject_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
             action_safely_eject.setTextColor(getResources().getColor(android.R.color.holo_red_light));
 
@@ -760,6 +797,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onDetach(UsbDevice device) {
             if (DEBUG) Log.v(TAG, "onDetach:device=" + device.getDeviceName());
+            Timber.tag(TAG).i("Camera device detached: %s", device.getDeviceName());
 
             if (device.equals(mUsbDevice)) {
                 mUsbDevice = null;
@@ -769,6 +807,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onCancel(UsbDevice device) {
             if (DEBUG) Log.v(TAG, "onCancel:device=" + device.getDeviceName());
+            Timber.tag(TAG).i("Camera device operation cancelled: %s", device.getDeviceName());
 
             if (device.equals(mUsbDevice)) {
                 mUsbDevice = null;
@@ -1021,5 +1060,47 @@ public class MainActivity extends AppCompatActivity {
         String mm = mDecimalFormat.format(time % 3600 / 60);
         String ss = mDecimalFormat.format(time % 60);
         return hh + ":" + mm + ":" + ss;
+    }
+
+    private void checkAndRequestPermissions() {
+        String[] permissions = {
+            Manifest.permission.ACCESS_NETWORK_STATE,
+            Manifest.permission.INTERNET,
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.CAMERA,
+            Manifest.permission.RECORD_AUDIO
+        };
+
+        boolean allPermissionsGranted = true;
+        for (String permission : permissions) {
+            if (ContextCompat.checkSelfPermission(this, permission) 
+                != PackageManager.PERMISSION_GRANTED) {
+                allPermissionsGranted = false;
+                break;
+            }
+        }
+
+        if (!allPermissionsGranted) {
+            ActivityCompat.requestPermissions(this, permissions, PERMISSION_REQUEST_CODE);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, 
+            @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == PERMISSION_REQUEST_CODE) {
+            boolean allGranted = true;
+            for (int result : grantResults) {
+                if (result != PackageManager.PERMISSION_GRANTED) {
+                    allGranted = false;
+                    break;
+                }
+            }
+            if (!allGranted) {
+//                Toast.makeText(this, "Requires permissions to function properly", Toast.LENGTH_LONG).show();
+            }
+        }
     }
 }
