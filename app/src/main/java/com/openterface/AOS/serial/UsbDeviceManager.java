@@ -196,7 +196,7 @@ public class UsbDeviceManager {
             }
 
         } catch (Exception e) {
-            Timber.tag(TAG).e(e, "Error during USB resource release");
+//            Timber.tag(TAG).e(e, "Error during USB resource release");
         }
     }
 
@@ -272,6 +272,13 @@ public class UsbDeviceManager {
             if (connectionStateListener != null) {
                 connectionStateListener.onError("Failed to connect after " + MAX_RETRY_COUNT + " attempts");
             }
+        }
+    }
+
+    public void stopReading() {
+        isReading = false;
+        if (mSerialAsyncHandler != null) {
+            mSerialAsyncHandler.removeCallbacksAndMessages(null);
         }
     }
 }
