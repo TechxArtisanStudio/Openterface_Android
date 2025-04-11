@@ -309,6 +309,18 @@
                         android:layout_marginHorizontal="1dp">
                     </Button>
 
+                    <Button
+                        android:id="@+id/clear_interface_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/clear_interface_info"
+                        android:textColor="@color/black"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"
+                        android:layout_marginTop="10dp">
+                    </Button>
+
                 </LinearLayout>
 
             </LinearLayout>

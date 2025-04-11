@@ -199,4 +199,5 @@
     <string name="close">close</string>
     <string name="Log_Cat">Logcat:</string>
     <string name="clear_logs">clear log</string>
+    <string name="clear_interface_info">Clearing interface information</string>
 </resources>

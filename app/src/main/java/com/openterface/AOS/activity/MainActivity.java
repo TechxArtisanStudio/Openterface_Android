@@ -303,6 +303,28 @@ public class MainActivity extends AppCompatActivity {
             logDialog.show();
         });
 
+        Button clearInterfaceButton = findViewById(R.id.clear_interface_button);
+        clearInterfaceButton.setOnClickListener(v -> {
+            // Clear camera authorization information
+            safelyEject();
+
+            // Clearing serial Port Information
+            if (usbDeviceManager != null) {
+                try {
+                    usbDeviceManager.stopReading();
+                    Thread.sleep(100);
+                    usbDeviceManager.release();
+                    usbDeviceManager = new UsbDeviceManager(this, usbManager);
+                } catch (Exception e) {
+                    Timber.e(e, "Error while clearing serial port information");
+                }
+            }
+
+            Timber.tag(TAG).i("clear interface information");
+
+//            Toast.makeText(this, "The interface information is cleared. Procedure", Toast.LENGTH_SHORT).show();
+        });
+
     }
 
     private void setLanguage(){
