@@ -26,6 +26,8 @@ package com.openterface.AOS.activity;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -199,7 +201,7 @@ public class MainActivity extends AppCompatActivity {
         Timber.plant(fileLoggingTree);
         
         // Add some test logs
-        Timber.d("MainActivity onCreate");
+        Timber.tag(TAG).d("MainActivity onCreate");
 
         //Prevent screen from turning off
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -316,7 +318,7 @@ public class MainActivity extends AppCompatActivity {
                     usbDeviceManager.release();
                     usbDeviceManager = new UsbDeviceManager(this, usbManager);
                 } catch (Exception e) {
-                    Timber.e(e, "Error while clearing serial port information");
+                    Timber.tag(TAG).e(e, "Error while clearing serial port information");
                 }
             }
 
@@ -477,6 +479,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        clearCameraHelper();
+//        if (mDeviceListDialog != null) {
+//            if (mDeviceListDialog.isAdded()) {
+//                mDeviceListDialog.dismissAllowingStateLoss();
+//            }
+//            mDeviceListDialog = null;
+//        }
+//
         if (mCameraHelper != null) {
             mCameraHelper.release();
             mCameraHelper = null;
@@ -489,6 +499,17 @@ public class MainActivity extends AppCompatActivity {
             mRecordTimer.cancel();
             mRecordTimer = null;
         }
+
+        if (mDeviceListDialog != null) {
+            mDeviceListDialog = null;
+        }
+        if (mControlsDialog != null) {
+            mControlsDialog = null;
+        }
+        if (mFormatDialog != null) {
+            mFormatDialog = null;
+        }
+        
         Timber.tag(TAG).v("MainActivity destroyed");
     }
 
@@ -563,7 +584,7 @@ public class MainActivity extends AppCompatActivity {
 
         //Determine whether to open the video
         if (mCameraHelper == null || !mIsCameraConnected) {
-            Log.e("MainActivity", "Camera not connected");
+            Timber.tag(TAG).e("Camera not connected");
             return;
         }
 
@@ -660,7 +681,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void initPreviewView() {
         mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
-        Log.d(TAG, "1mPreviewWidth: " + mPreviewWidth + " mPreviewHeight: " + mPreviewHeight);
+        Timber.tag(TAG).d("mPreviewWidth: " + mPreviewWidth + " mPreviewHeight: " + mPreviewHeight);
         mBinding.viewMainPreview.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
             @Override
             public void onSurfaceTextureAvailable(@NonNull SurfaceTexture surface, int width, int height) {
@@ -685,7 +706,6 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onSurfaceTextureUpdated(@NonNull SurfaceTexture surface) {
-
             }
         });
     }
@@ -725,6 +745,7 @@ public class MainActivity extends AppCompatActivity {
 
                         action_safely_eject_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
                         action_safely_eject.setTextColor(getResources().getColor(android.R.color.white));
+                        Timber.tag(TAG).i("Camera device selectDevice");
                     }
                 });
     }
@@ -775,6 +796,8 @@ public class MainActivity extends AppCompatActivity {
                 mCameraHelper.addSurface(mBinding.viewMainPreview.getSurfaceTexture(), false);
                 mCameraHelper.addSurface(mBinding.cameraViewSecond.getHolder().getSurface(), false);
                 Timber.tag(TAG).i("Camera surfaces added successfully");
+            }else{
+                Timber.tag(TAG).i("Camera surfaces added unsuccessfully");
             }
 
             mIsCameraConnected = true;
@@ -838,19 +861,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void resizePreviewView(Size size) {
-        // Update the preview size
-//        mPreviewWidth = size.width;
-//        mPreviewHeight = size.height;
-        WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
-        DisplayMetrics metrics = new DisplayMetrics();
-        if (wm != null) {
-            Display display = wm.getDefaultDisplay();
-            display.getRealMetrics(metrics);
-            mPreviewWidth = metrics.widthPixels;
-            mPreviewHeight = metrics.heightPixels;
-
-        }
-        Log.d(TAG, "22mPreviewWidth: " + mPreviewWidth + " mPreviewHeight: " + mPreviewHeight);
+//         Update the preview size
+        mPreviewWidth = size.width;
+        mPreviewHeight = size.height;
+//        WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
+//        DisplayMetrics metrics = new DisplayMetrics();
+//        if (wm != null) {
+//            Display display = wm.getDefaultDisplay();
+//            display.getRealMetrics(metrics);
+//            mPreviewWidth = metrics.widthPixels;
+//            mPreviewHeight = metrics.heightPixels;
+//
+//        }
+        Timber.tag(TAG).i("resizePreviewView 22mPreviewWidth: " + mPreviewWidth + " mPreviewHeight: " + mPreviewHeight);
         // Set the aspect ratio of TextureView to match the aspect ratio of the camera
         mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
     }
@@ -883,6 +906,7 @@ public class MainActivity extends AppCompatActivity {
                 mBinding.tvVideoRecordTime.setVisibility(View.GONE);
             }
             invalidateOptionsMenu();
+            Timber.tag(TAG).i("updateUIControls");
         });
     }
 
@@ -893,6 +917,7 @@ public class MainActivity extends AppCompatActivity {
             return null;
         }
         Gson gson = new Gson();
+        Timber.tag(TAG).i("getSavedPreviewSize");
         return gson.fromJson(sizeStr, Size.class);
     }
 

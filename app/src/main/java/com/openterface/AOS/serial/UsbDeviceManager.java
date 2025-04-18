@@ -141,7 +141,7 @@ public class UsbDeviceManager {
                 return;
             }
             driver = availableDrivers.get(0);
-            Log.d("serial", "find available drivers:" + driver.getDevice());
+            Timber.tag(TAG).d("find available drivers:%s", driver.getDevice());
             requestUsbPermission(driver.getDevice());
         });
 

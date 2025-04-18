@@ -56,6 +56,9 @@ public class DeviceListDialogFragment extends DialogFragment {
         mUsbDevice = usbDevice;
     }
 
+    public DeviceListDialogFragment() {
+    }
+
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
@@ -100,5 +103,68 @@ public class DeviceListDialogFragment extends DialogFragment {
 
     public interface OnDeviceItemSelectListener {
         void onItemSelect(UsbDevice usbDevice);
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setRetainInstance(false);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        // Make sure the dialog box is displayed correctly when the Activity is restored
+        Dialog dialog = getDialog();
+        if (dialog != null) {
+            dialog.setOnDismissListener(dialog1 -> {
+                if (mOnDeviceItemSelectListener != null) {
+                    mOnDeviceItemSelectListener = null;
+                }
+            });
+        }
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        // Clear the resources when it stops
+        if (mBinding != null) {
+            mBinding = null;
+        }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (mBinding != null) {
+            mBinding = null;
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if (mOnDeviceItemSelectListener != null) {
+            mOnDeviceItemSelectListener = null;
+        }
+        if (mCameraHelperWeak != null) {
+            mCameraHelperWeak.clear();
+            mCameraHelperWeak = null;
+        }
+        mUsbDevice = null;
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mOnDeviceItemSelectListener = null;
+    }
+
+    public static DeviceListDialogFragment newInstance(ICameraHelper cameraHelper, UsbDevice usbDevice) {
+        DeviceListDialogFragment fragment = new DeviceListDialogFragment();
+        fragment.mCameraHelperWeak = new WeakReference<>(cameraHelper);
+        fragment.mUsbDevice = usbDevice;
+        return fragment;
     }
 }
