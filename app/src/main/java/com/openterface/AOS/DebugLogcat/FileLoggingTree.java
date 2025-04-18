@@ -54,40 +54,40 @@ public class FileLoggingTree extends Timber.Tree {
         lifecycleCallbacks = new Application.ActivityLifecycleCallbacks() {
             @Override
             public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
-                Timber.i("Activity Created: %s", activity.getClass().getSimpleName());
+                Timber.tag(TAG).i("Activity Created: %s", activity.getClass().getSimpleName());
                 logSystemInfo(activity);
             }
 
             @Override
             public void onActivityStarted(Activity activity) {
-//                Timber.i("Activity Started: %s", activity.getClass().getSimpleName());
+//                Timber.tag(TAG).i("Activity Started: %s", activity.getClass().getSimpleName());
             }
 
             @Override
             public void onActivityResumed(Activity activity) {
-//                Timber.i("Activity Resumed: %s", activity.getClass().getSimpleName());
+//                Timber.tag(TAG).i("Activity Resumed: %s", activity.getClass().getSimpleName());
 //                logNetworkInfo(activity);
 //                logBatteryInfo(activity);
             }
 
             @Override
             public void onActivityPaused(Activity activity) {
-                Timber.i("Activity Paused: %s", activity.getClass().getSimpleName());
+                Timber.tag(TAG).i("Activity Paused: %s", activity.getClass().getSimpleName());
             }
 
             @Override
             public void onActivityStopped(Activity activity) {
-                Timber.i("Activity Stopped: %s", activity.getClass().getSimpleName());
+                Timber.tag(TAG).i("Activity Stopped: %s", activity.getClass().getSimpleName());
             }
 
             @Override
             public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
-                Timber.i("Activity SaveInstanceState: %s", activity.getClass().getSimpleName());
+                Timber.tag(TAG).i("Activity SaveInstanceState: %s", activity.getClass().getSimpleName());
             }
 
             @Override
             public void onActivityDestroyed(Activity activity) {
-                Timber.i("Activity Destroyed: %s", activity.getClass().getSimpleName());
+                Timber.tag(TAG).i("Activity Destroyed: %s", activity.getClass().getSimpleName());
             }
         };
         application.registerActivityLifecycleCallbacks(lifecycleCallbacks);
@@ -95,13 +95,13 @@ public class FileLoggingTree extends Timber.Tree {
 
     private void logSystemInfo(Activity activity) {
         // Recording system information
-        Timber.i("System Info: Android %s, SDK %d", 
+        Timber.tag(TAG).i("System Info: Android %s, SDK %d",
             android.os.Build.VERSION.RELEASE, 
             android.os.Build.VERSION.SDK_INT);
-        Timber.i("Device Info: %s %s", 
+        Timber.tag(TAG).i("Device Info: %s %s",
             android.os.Build.MANUFACTURER, 
             android.os.Build.MODEL);
-        Timber.i("Memory Info: Total=%dMB, Available=%dMB", 
+        Timber.tag(TAG).i("Memory Info: Total=%dMB, Available=%dMB",
             Runtime.getRuntime().totalMemory() / (1024 * 1024),
             Runtime.getRuntime().freeMemory() / (1024 * 1024));
     }
@@ -112,17 +112,17 @@ public class FileLoggingTree extends Timber.Tree {
             if (cm != null) {
                 NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
                 if (activeNetwork != null) {
-                    Timber.i("Network Info: Type=%s, Connected=%b", 
+                    Timber.tag(TAG).i("Network Info: Type=%s, Connected=%b",
                         activeNetwork.getTypeName(), 
                         activeNetwork.isConnected());
                 } else {
-                    Timber.i("Network Info: No active network");
+                    Timber.tag(TAG).i("Network Info: No active network");
                 }
             }
         } catch (SecurityException e) {
-            Timber.w("No permission to access network info");
+            Timber.tag(TAG).w("No permission to access network info");
         } catch (Exception e) {
-            Timber.e(e, "Error getting network info");
+            Timber.tag(TAG).e(e, "Error getting network info");
         }
     }
 
@@ -137,7 +137,7 @@ public class FileLoggingTree extends Timber.Tree {
                 Timber.i("Battery Info: Level=%.1f%%", batteryPct);
             }
         } catch (Exception e) {
-            Timber.e(e, "Error getting battery info");
+            Timber.tag(TAG).e(e, "Error getting battery info");
         }
     }
 
