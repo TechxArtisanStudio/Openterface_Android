@@ -117,6 +117,10 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Queue;
 import java.util.LinkedList;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.provider.Settings;
+import android.app.AlertDialog;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -187,7 +191,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         //Recording Permission
-        ActivityCompat.requestPermissions(this, permissions, 200);
+//        ActivityCompat.requestPermissions(this, permissions, 200);
 
         //Prevent screen from turning off
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -895,7 +899,33 @@ public class MainActivity extends AppCompatActivity {
         try {
             if (isRecording) {
                 if (mIsCameraConnected && mCameraHelper != null && !mCameraHelper.isRecording()) {
-                    startRecord();
+                    // Check the recording permission
+                    if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) 
+                            == PackageManager.PERMISSION_GRANTED) {
+                        startRecord();
+                    } else {
+                        // Check if we should show an explanation for why we need the permission
+                        if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO)) {
+                            // Show an explanation to the user
+                            new AlertDialog.Builder(this)
+                                    .setTitle("Permission Required")
+                                    .setMessage("Recording permission is required to record videos with audio. Please grant the permission to continue.")
+                                    .setPositiveButton("OK", (dialog, which) -> {
+                                        // Request the permission again
+                                        ActivityCompat.requestPermissions(this, 
+                                                new String[]{Manifest.permission.RECORD_AUDIO}, 
+                                                200);
+                                    })
+                                    .setNegativeButton("Cancel", null)
+                                    .create()
+                                    .show();
+                        } else {
+                            // Request recording permission
+                            ActivityCompat.requestPermissions(this, 
+                                    new String[]{Manifest.permission.RECORD_AUDIO}, 
+                                    200);
+                        }
+                    }
                 }
             } else {
                 if (mIsCameraConnected && mCameraHelper != null && mCameraHelper.isRecording()) {
@@ -911,6 +941,40 @@ public class MainActivity extends AppCompatActivity {
         mIsRecording = isRecording;
 
         updateUIControls();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 200) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // The permission acquisition was successful.Start Recording
+                if (mIsCameraConnected && mCameraHelper != null && !mCameraHelper.isRecording()) {
+                    startRecord();
+                }
+            } else {
+                // The permission was rejected.
+                if (!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO)) {
+                    // User has permanently denied the permission
+                    new AlertDialog.Builder(this)
+                            .setTitle("Permission Required")
+                            .setMessage("Recording permission is required to record videos with audio. Please enable it in Settings.")
+                            .setPositiveButton("Settings", (dialog, which) -> {
+                                // Open app settings
+                                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                                Uri uri = Uri.fromParts("package", getPackageName(), null);
+                                intent.setData(uri);
+                                startActivity(intent);
+                            })
+                            .setNegativeButton("Cancel", null)
+                            .create()
+                            .show();
+                }
+                Toast.makeText(this, "Recording permission is required to record videos", Toast.LENGTH_SHORT).show();
+                mIsRecording = false;
+                updateUIControls();
+            }
+        }
     }
 
     private void setCustomVideoCaptureConfig() {
