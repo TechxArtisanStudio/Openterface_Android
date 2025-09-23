@@ -89,6 +89,18 @@
                         android:theme="@style/FontStyle" />
 
                     <android.widget.Button
+                        android:id="@+id/action_baudrate"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="5dp"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:drawableTop="@drawable/baseline_sliders"
+                        android:text="@string/Baudrate_Setting"
+                        android:textColor="@color/white"
+                        android:theme="@style/FontStyle" />
+
+                    <android.widget.Button
                         android:id="@+id/action_control"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"

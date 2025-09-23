@@ -170,6 +170,7 @@
     <string name="Device_Connect_Setting">Device\nConnect</string>
     <string name="Device_Disconnect_Setting">Device\nDisconnect</string>
     <string name="parameter_Setting">Parameter\nSetting</string>
+    <string name="Baudrate_Setting">Baudrate\nSetting</string>
     <string name="Video_Setting">Video\nSetting</string>
     <string name="Rotate_90_CW">Rotate\n90 CW</string>
     <string name="Rotate_90_CCW">Rotate\n90 CCW</string>
@@ -192,4 +193,12 @@
     <string name="KeyMouse_Abs_Drag_Ctrl">Drag\nMode</string>
     <string name="KeyMouse_Drag">Dragging</string>
     <string name="KeyMouse_Rel_Ctrl">Pointer\nMode</string>
+    
+    <!-- Baudrate Setting Dialog -->
+    <string name="baudrate_dialog_title">Select Baudrate</string>
+    <string name="baudrate_9600">9600 bps (Stable)</string>
+    <string name="baudrate_115200">115200 bps (Fast)</string>
+    <string name="baudrate_auto">Auto (Try 115200, fallback to 9600)</string>
+    <string name="baudrate_dialog_cancel">Cancel</string>
+    <string name="baudrate_current">Current: %s bps</string>
 </resources>

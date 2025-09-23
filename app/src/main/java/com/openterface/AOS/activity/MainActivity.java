@@ -555,6 +555,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Get the UsbDeviceManager instance
+     * @return the UsbDeviceManager instance
+     */
+    public UsbDeviceManager getUsbDeviceManager() {
+        return usbDeviceManager;
+    }
+
     public void rotateBy(int angle) {
         mPreviewRotation += angle;
         mPreviewRotation %= 360;

@@ -1,6 +1,7 @@
 package com.openterface.AOS.drawerLayout;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -9,10 +10,13 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import androidx.core.view.GravityCompat;
@@ -24,6 +28,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.openterface.AOS.R;
 import com.openterface.AOS.activity.MainActivity;
 import com.openterface.AOS.serial.CustomTouchListener;
+import com.openterface.AOS.serial.UsbDeviceManager;
 
 public class DrawerLayoutDeal extends Fragment {
     private final MainActivity activity;
@@ -48,6 +53,7 @@ public class DrawerLayoutDeal extends Fragment {
     private final Button action_device;
     private final Button action_safely_eject;
     private final Button action_control;
+    private final Button action_baudrate;
     private final Button action_video_format;
     private final Button action_rotate_90_CW;
     private final Button action_rotate_90_CCW;
@@ -87,6 +93,7 @@ public class DrawerLayoutDeal extends Fragment {
         action_device = activity.findViewById(R.id.action_device);
         action_safely_eject = activity.findViewById(R.id.action_safely_eject);
         action_control = activity.findViewById(R.id.action_control);
+        action_baudrate = activity.findViewById(R.id.action_baudrate);
         action_video_format = activity.findViewById(R.id.action_video_format);
         action_rotate_90_CW = activity.findViewById(R.id.action_rotate_90_CW);
         action_rotate_90_CCW = activity.findViewById(R.id.action_rotate_90_CCW);
@@ -228,6 +235,9 @@ public class DrawerLayoutDeal extends Fragment {
                 case R.id.action_control:
                     activity.showCameraControlsDialog();
                     break;
+                case R.id.action_baudrate:
+                    showBaudrateDialog();
+                    break;
                 case R.id.action_video_format:
                     activity.showVideoFormatDialog();
                     break;
@@ -265,6 +275,7 @@ public class DrawerLayoutDeal extends Fragment {
         action_device.setOnClickListener(buttonClickListener);
         action_safely_eject.setOnClickListener(buttonClickListener);
         action_control.setOnClickListener(buttonClickListener);
+        action_baudrate.setOnClickListener(buttonClickListener);
         action_video_format.setOnClickListener(buttonClickListener);
         action_rotate_90_CW.setOnClickListener(buttonClickListener);
         action_rotate_90_CCW.setOnClickListener(buttonClickListener);
@@ -273,5 +284,84 @@ public class DrawerLayoutDeal extends Fragment {
         ScreenHost_Picture.setOnClickListener(buttonClickListener);
         Recording_Video.setOnClickListener(buttonClickListener);
         Close_DrawLayout.setOnClickListener(buttonClickListener);
+    }
+
+    /**
+     * Show baudrate selection dialog
+     */
+    private void showBaudrateDialog() {
+        LayoutInflater inflater = LayoutInflater.from(context);
+        View dialogView = inflater.inflate(R.layout.dialog_baudrate_selection, null);
+        
+        RadioGroup radioGroup = dialogView.findViewById(R.id.baudrate_radio_group);
+        RadioButton radioAuto = dialogView.findViewById(R.id.radio_auto);
+        RadioButton radio115200 = dialogView.findViewById(R.id.radio_115200);
+        RadioButton radio9600 = dialogView.findViewById(R.id.radio_9600);
+        TextView currentBaudrateText = dialogView.findViewById(R.id.current_baudrate_text);
+        
+        // Get the UsbDeviceManager instance
+        UsbDeviceManager usbManager = activity.getUsbDeviceManager();
+        
+        // Set current baudrate text
+        int currentBaudrate = usbManager.getCurrentBaudrate();
+        String currentText;
+        if (currentBaudrate > 0) {
+            currentText = context.getString(R.string.baudrate_current, String.valueOf(currentBaudrate));
+        } else {
+            currentText = "Current: Not connected";
+        }
+        currentBaudrateText.setText(currentText);
+        
+        // Set the current selection based on preferred baudrate
+        int preferredBaudrate = usbManager.getPreferredBaudrate();
+        if (preferredBaudrate == -1) {
+            radioAuto.setChecked(true);
+        } else if (preferredBaudrate == 115200) {
+            radio115200.setChecked(true);
+        } else if (preferredBaudrate == 9600) {
+            radio9600.setChecked(true);
+        }
+        
+        AlertDialog dialog = new AlertDialog.Builder(context)
+                .setView(dialogView)
+                .setCancelable(true)
+                .create();
+        
+        Button buttonOk = dialogView.findViewById(R.id.button_ok);
+        Button buttonCancel = dialogView.findViewById(R.id.button_cancel);
+        
+        buttonOk.setOnClickListener(v -> {
+            int selectedId = radioGroup.getCheckedRadioButtonId();
+            int newBaudrate;
+            
+            if (selectedId == R.id.radio_auto) {
+                newBaudrate = -1; // Auto mode
+            } else if (selectedId == R.id.radio_115200) {
+                newBaudrate = 115200;
+            } else if (selectedId == R.id.radio_9600) {
+                newBaudrate = 9600;
+            } else {
+                newBaudrate = -1; // Default to auto
+            }
+            
+            // Apply the new baudrate setting
+            if (newBaudrate != preferredBaudrate) {
+                Log.d("BaudrateDialog", "Changing baudrate from " + preferredBaudrate + " to " + newBaudrate);
+                
+                if (usbManager.isConnected()) {
+                    // If connected, reconnect with new baudrate
+                    usbManager.reconnectWithBaudrate(newBaudrate);
+                } else {
+                    // If not connected, just set the preference
+                    usbManager.setPreferredBaudrate(newBaudrate);
+                }
+            }
+            
+            dialog.dismiss();
+        });
+        
+        buttonCancel.setOnClickListener(v -> dialog.dismiss());
+        
+        dialog.show();
     }
 }
