@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Generic USB Video Class (UVC) devices -->
+    <usb-device class="14" subclass="1" protocol="0" />
+    <usb-device class="14" subclass="2" protocol="0" />
+    
+    <!-- Common UVC camera vendor IDs -->
+    <!-- Add specific vendor/product IDs if needed -->
+    <usb-device vendor-id="1133" />  <!-- Logitech -->
+    <usb-device vendor-id="1452" />  <!-- Apple -->
+    <usb-device vendor-id="1118" />  <!-- Microsoft -->
+    <usb-device vendor-id="1155" />  <!-- Chicony -->
+    
+    <!-- Generic catch-all for video devices -->
+    <usb-device class="14" />
+</resources>
