@@ -244,10 +244,8 @@ public class MainActivity extends AppCompatActivity {
 
         usbDeviceManager.setOnDataReadListener(new UsbDeviceManager.OnDataReadListener() {
             @Override
-            public void onDataRead() {
-
+            public void onDataRead(byte[] data, int length) {
                 sendNextCharacter();
-
             }
         });
 
