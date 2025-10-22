@@ -121,6 +121,8 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.provider.Settings;
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
+import android.content.IntentFilter;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -207,6 +209,12 @@ public class MainActivity extends AppCompatActivity {
         usbManager = (UsbManager) getSystemService(Context.USB_SERVICE);
         usbDeviceManager = new UsbDeviceManager(this, usbManager);
         usbDeviceManager.init();
+        
+        // Set UsbDeviceManager instance in KeyBoardManager for enhanced FE0C support
+        KeyBoardManager.setUsbDeviceManager(usbDeviceManager);
+        
+        // Set UsbDeviceManager instance in MouseManager for enhanced FE0C support
+        MouseManager.setUsbDeviceManager(usbDeviceManager);
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
@@ -248,6 +256,12 @@ public class MainActivity extends AppCompatActivity {
                 sendNextCharacter();
             }
         });
+        
+        // Enable debugging for FE0C keyboard testing
+        enableKeyboardDebugging();
+        
+        // Register debug broadcast receiver
+        registerDebugReceiver();
 
         KeyBoardCtrlButton.setCtrlButtonClickColor();//deal Ctrl button click color
 
@@ -369,10 +383,74 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        Log.d(TAG, "event: " + event);
+        Log.d(TAG, "=== onKeyDown Debug ===");
+        Log.d(TAG, "Android KeyCode: " + keyCode + " (" + KeyEvent.keyCodeToString(keyCode) + ")");
+        Log.d(TAG, "Event: " + event);
 
+        // Debug trigger: F12 key for FE0C keyboard testing
+        if (keyCode == KeyEvent.KEYCODE_F12) {
+            Log.d(TAG, "F12 pressed - triggering FE0C keyboard debug test");
+            if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                usbDeviceManager.debugFE0CKeyboard();
+                return true;
+            } else {
+                Log.w(TAG, "Cannot run debug test - UsbDeviceManager not connected");
+                return true;
+            }
+        }
+
+        // Use the new UsbDeviceManager for keyboard handling if available
+        if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+            Log.d(TAG, "Using UsbDeviceManager (connected)");
+            Log.d(TAG, "Device type: " + (usbDeviceManager.isFE0CDevice() ? "FE0C" : "Other"));
+            
+            // Convert Android key codes to HID
+            int hidKeyCode = UsbDeviceManager.androidKeyToHID(keyCode);
+            int modifiers = UsbDeviceManager.getHIDModifiers(event);
+            
+            Log.d(TAG, "HID KeyCode: 0x" + Integer.toHexString(hidKeyCode));
+            Log.d(TAG, "Modifiers: 0x" + Integer.toHexString(modifiers));
+            
+            if (hidKeyCode != 0) {
+                Log.d(TAG, "Sending key via UsbDeviceManager.sendKeyPressWithAutoRelease()");
+                // Use the enhanced method with automatic release
+                boolean success = usbDeviceManager.sendKeyPressWithAutoRelease(hidKeyCode, modifiers);
+                Log.d(TAG, "UsbDeviceManager result: " + (success ? "SUCCESS" : "FAILED"));
+                if (success) {
+                    mKeyboardRequestSent = true;
+                    return true;
+                }
+            } else {
+                Log.w(TAG, "Unsupported key code for HID conversion");
+            }
+        } else {
+            Log.d(TAG, "UsbDeviceManager not available or not connected");
+        }
+        
+        // Fallback to enhanced method first, then original method
         String functionKey = KeyBoardManager.getFunctionKey(event, keyCode);
         String keyName = KeyBoardManager.getKeyName(keyCode);
+        
+        Log.d(TAG, "=== FALLBACK METHODS DEBUG ===");
+        Log.d(TAG, "FunctionKey: '" + functionKey + "', KeyName: '" + keyName + "'");
+        Log.d(TAG, "UsbDeviceManager available: " + (usbDeviceManager != null));
+        Log.d(TAG, "UsbDeviceManager connected: " + (usbDeviceManager != null && usbDeviceManager.isConnected()));
+        
+        // Try enhanced method first (for proper FE0C support)
+        if (usbDeviceManager != null) {
+            Log.d(TAG, ">>> Trying KeyBoardManager.sendKeyBoardDataEnhanced()");
+            boolean success = KeyBoardManager.sendKeyBoardDataEnhanced(usbDeviceManager, functionKey, keyName);
+            Log.d(TAG, "Enhanced method result: " + (success ? "SUCCESS" : "FAILED"));
+            if (success) {
+                mKeyboardRequestSent = true;
+                return true;
+            }
+        } else {
+            Log.w(TAG, "UsbDeviceManager not available for enhanced method");
+        }
+        
+        // Original method as final fallback
+        Log.d(TAG, "Using original KeyBoardManager.sendKeyBoardData()");
         KeyBoardManager.sendKeyBoardData(functionKey, keyName);
 
         return super.onKeyDown(keyCode, event);
@@ -380,7 +458,26 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
-        Log.d(TAG, "event: " + event);
+        Log.d(TAG, "=== onKeyUp Debug ===");
+        Log.d(TAG, "Android KeyCode: " + keyCode + " (" + KeyEvent.keyCodeToString(keyCode) + ")");
+        Log.d(TAG, "mKeyboardRequestSent: " + mKeyboardRequestSent);
+        
+        // Check if we're using the new UsbDeviceManager with FE0C device
+        if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+            Log.d(TAG, "UsbDeviceManager connected, device type: " + 
+                  (usbDeviceManager.isFE0CDevice() ? "FE0C" : "Other"));
+            // For FE0C and other devices using UsbDeviceManager, 
+            // key release is handled automatically, just reset flag
+            if (mKeyboardRequestSent) {
+                Log.d(TAG, "Key release handled automatically, resetting flag");
+                mKeyboardRequestSent = false;
+                return true;
+            }
+        } else {
+            Log.d(TAG, "UsbDeviceManager not connected, using original release logic");
+        }
+        
+        // Original release logic for fallback cases
         new Handler().post(new Runnable() {
             @Override
             public void run() {
@@ -435,6 +532,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         clearCameraHelper();
+        
+        // Cleanup debug broadcast receiver
+        if (debugReceiver != null) {
+            unregisterReceiver(debugReceiver);
+        }
 
 //        usbDeviceManager.release();
     }
@@ -1080,7 +1182,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      *
      *
-     * @param time 秒
+     * @param time seconds
      * @return
      */
     private String formatTime(long time) {
@@ -1091,5 +1193,113 @@ public class MainActivity extends AppCompatActivity {
         String mm = mDecimalFormat.format(time % 3600 / 60);
         String ss = mDecimalFormat.format(time % 60);
         return hh + ":" + mm + ":" + ss;
+    }
+    
+    /**
+     * Enable keyboard debugging for FE0C testing
+     */
+    private void enableKeyboardDebugging() {
+        Log.d(TAG, "=== MainActivity Keyboard Debug Enabled ===");
+        
+        // Enable UsbDeviceManager debugging
+        if (usbDeviceManager != null) {
+            usbDeviceManager.enableDebugLogging();
+            
+            // Delayed debug test (wait for device to be ready)
+            new Handler().postDelayed(() -> {
+                if (usbDeviceManager.isConnected()) {
+                    usbDeviceManager.debugFE0CKeyboard();
+                } else {
+                    Log.d(TAG, "Debug: Device not connected yet, skipping test");
+                }
+            }, 2000); // Wait 2 seconds for device initialization
+        }
+    }
+    
+    /**
+     * Debug specific key press (can be called from ADB or buttons)
+     */
+    public void debugKeyPress(int androidKeyCode) {
+        Log.d(TAG, "=== Debug Key Press: " + androidKeyCode + " ===");
+        
+        if (usbDeviceManager == null || !usbDeviceManager.isConnected()) {
+            Log.e(TAG, "Debug: UsbDeviceManager not ready");
+            return;
+        }
+        
+        int hidKeyCode = UsbDeviceManager.androidKeyToHID(androidKeyCode);
+        if (hidKeyCode == 0) {
+            Log.e(TAG, "Debug: Unsupported key code: " + androidKeyCode);
+            return;
+        }
+        
+        Log.d(TAG, "Debug: Android key " + androidKeyCode + " -> HID key 0x" + Integer.toHexString(hidKeyCode));
+        
+        // Test with debug timing
+        usbDeviceManager.debugKeyboardTiming(hidKeyCode, 0);
+    }
+    
+    /**
+     * Test keyboard sequence for debugging
+     */
+    public void testKeyboardSequence() {
+        Log.d(TAG, "=== Testing Keyboard Sequence ===");
+        
+        if (usbDeviceManager == null || !usbDeviceManager.isConnected()) {
+            Log.e(TAG, "Debug: UsbDeviceManager not ready");
+            return;
+        }
+        
+        // Test sequence: H-E-L-L-O
+        int[] testKeys = {
+            KeyEvent.KEYCODE_H,  // H
+            KeyEvent.KEYCODE_E,  // E  
+            KeyEvent.KEYCODE_L,  // L
+            KeyEvent.KEYCODE_L,  // L
+            KeyEvent.KEYCODE_O   // O
+        };
+        
+        for (int i = 0; i < testKeys.length; i++) {
+            final int keyCode = testKeys[i];
+            final int delay = i * 200; // 200ms between keys
+            
+            new Handler().postDelayed(() -> {
+                debugKeyPress(keyCode);
+            }, delay);
+        }
+    }
+    
+    private BroadcastReceiver debugReceiver;
+    
+    /**
+     * Register broadcast receiver for remote debugging
+     */
+    private void registerDebugReceiver() {
+        debugReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String action = intent.getAction();
+                Log.d(TAG, "Debug broadcast received: " + action);
+                
+                if ("com.openterface.AOS.DEBUG_KEYBOARD".equals(action)) {
+                    testKeyboardSequence();
+                } else if ("com.openterface.AOS.DEBUG_SINGLE_KEY".equals(action)) {
+                    int keyCode = intent.getIntExtra("keyCode", KeyEvent.KEYCODE_A);
+                    debugKeyPress(keyCode);
+                } else if ("com.openterface.AOS.DEBUG_DEVICE_INFO".equals(action)) {
+                    if (usbDeviceManager != null) {
+                        usbDeviceManager.debugFE0CKeyboard();
+                    }
+                }
+            }
+        };
+        
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("com.openterface.AOS.DEBUG_KEYBOARD");
+        filter.addAction("com.openterface.AOS.DEBUG_SINGLE_KEY");
+        filter.addAction("com.openterface.AOS.DEBUG_DEVICE_INFO");
+        
+        registerReceiver(debugReceiver, filter, RECEIVER_NOT_EXPORTED);
+        Log.d(TAG, "Debug broadcast receiver registered");
     }
 }

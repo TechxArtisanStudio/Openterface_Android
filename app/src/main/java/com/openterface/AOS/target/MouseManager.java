@@ -27,12 +27,16 @@ package com.openterface.AOS.target;
 import android.util.Log;
 import com.openterface.AOS.serial.CH9329Function;
 import com.openterface.AOS.serial.UsbDeviceManager;
-import java.io.IOException;
 
 public class MouseManager {
     private static final String TAG = MouseManager.class.getSimpleName();
     private static UsbDeviceManager usbDeviceManager;
     public static int screenWidth, screenHeight;
+
+    public static void setUsbDeviceManager(UsbDeviceManager deviceManager) {
+        usbDeviceManager = deviceManager;
+        Log.d(TAG, "UsbDeviceManager instance set for enhanced FE0C support");
+    }
 
     public static void width_height(int width, int height) {
         screenWidth = width;
@@ -73,9 +77,17 @@ public class MouseManager {
                     byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendMSData);
 
                     try {
-                        usbDeviceManager.port.write(sendKBDataBytes, 20);
-                        Log.d(TAG, "send sendHexAbsData successful");
-                    } catch (IOException e) {
+                        if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                            boolean result = usbDeviceManager.writeData(sendKBDataBytes);
+                            if (result) {
+                                Log.d(TAG, "send sendHexAbsData successful");
+                            } else {
+                                Log.e(TAG, "Failed to write sendHexAbsData");
+                            }
+                        } else {
+                            Log.e(TAG, "USB device not connected for sendHexAbsData");
+                        }
+                    } catch (Exception e) {
                         Log.e(TAG, "Error writing to port: " + e.getMessage());
                     }
 
@@ -120,9 +132,17 @@ public class MouseManager {
                     byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendMSData);
 
                     try {
-                        usbDeviceManager.port.write(sendKBDataBytes, 20);
-                        Log.d(TAG, "send sendHexAbsButtonClickData successful");
-                    } catch (IOException e) {
+                        if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                            boolean result = usbDeviceManager.writeData(sendKBDataBytes);
+                            if (result) {
+                                Log.d(TAG, "send sendHexAbsButtonClickData successful");
+                            } else {
+                                Log.e(TAG, "Failed to write sendHexAbsButtonClickData");
+                            }
+                        } else {
+                            Log.e(TAG, "USB device not connected for sendHexAbsButtonClickData");
+                        }
+                    } catch (Exception e) {
                         Log.e(TAG, "Error writing to port: " + e.getMessage());
                     }
 
@@ -167,9 +187,17 @@ public class MouseManager {
                     byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendMSData);
 
                     try {
-                        usbDeviceManager.port.write(sendKBDataBytes, 20);
-                        Log.d(TAG, "send sendHexAbsDragData successful");
-                    } catch (IOException e) {
+                        if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                            boolean result = usbDeviceManager.writeData(sendKBDataBytes);
+                            if (result) {
+                                Log.d(TAG, "send sendHexAbsDragData successful");
+                            } else {
+                                Log.e(TAG, "Failed to write sendHexAbsDragData");
+                            }
+                        } else {
+                            Log.e(TAG, "USB device not connected for sendHexAbsDragData");
+                        }
+                    } catch (Exception e) {
                         Log.e(TAG, "Error writing to port: " + e.getMessage());
                     }
 
@@ -219,10 +247,18 @@ public class MouseManager {
                     byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendMSDoubleClickData);
 
                     try {
-                        usbDeviceManager.port.write(sendKBDataBytes, 20);
-                        Log.d(TAG, "send handleDoubleClickAbs successful");
-                        releaseMSAbsData(xBytes0, xBytes1, yBytes0, yBytes1);
-                    } catch (IOException e) {
+                        if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                            boolean result = usbDeviceManager.writeData(sendKBDataBytes);
+                            if (result) {
+                                Log.d(TAG, "send handleDoubleClickAbs successful");
+                                releaseMSAbsData(xBytes0, xBytes1, yBytes0, yBytes1);
+                            } else {
+                                Log.e(TAG, "Failed to write handleDoubleClickAbs");
+                            }
+                        } else {
+                            Log.e(TAG, "USB device not connected for handleDoubleClickAbs");
+                        }
+                    } catch (Exception e) {
                         Log.e(TAG, "Error writing to port: " + e.getMessage());
                     }
 
@@ -259,11 +295,19 @@ public class MouseManager {
                     byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendMSDoubleClickData);
 
                     try {
-                        usbDeviceManager.port.write(sendKBDataBytes, 20);
-                        Log.d(TAG, "send handleTwoPress successful");
-                        releaseMSRelData();
-                    } catch (IOException e) {
+                        if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                            boolean result = usbDeviceManager.writeData(sendKBDataBytes);
+                            if (result) {
+                                Log.d(TAG, "send handleTwoPress successful");
+                            } else {
+                                Log.e(TAG, "Failed to write handleTwoPress");
+                            }
+                        } else {
+                            Log.e(TAG, "USB device not connected for handleTwoPress");
+                        }
+                    } catch (Exception e) {
                         Log.e(TAG, "Error writing to port: " + e.getMessage());
+                        releaseMSRelData();
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -318,9 +362,17 @@ public class MouseManager {
                     byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendMSData);
 
                     try {
-                        usbDeviceManager.port.write(sendKBDataBytes, 20);
-                        Log.d(TAG, "send handleDoubleFingerPan successful");
-                    } catch (IOException e) {
+                        if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                            boolean result = usbDeviceManager.writeData(sendKBDataBytes);
+                            if (result) {
+                                Log.d(TAG, "send handleDoubleFingerPan successful");
+                            } else {
+                                Log.e(TAG, "Failed to write handleDoubleFingerPan");
+                            }
+                        } else {
+                            Log.e(TAG, "USB device not connected for handleDoubleFingerPan");
+                        }
+                    } catch (Exception e) {
                         Log.e(TAG, "Error writing to port: " + e.getMessage());
                     }
 
@@ -368,10 +420,18 @@ public class MouseManager {
                     byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendMSData);
 
                     try {
-                        usbDeviceManager.port.write(sendKBDataBytes, 20);
-                        Log.d(TAG, "send handleTwoFingerPanSlideUpDown successful");
-                        releaseMSRelData();
-                    } catch (IOException e) {
+                        if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                            boolean result = usbDeviceManager.writeData(sendKBDataBytes);
+                            if (result) {
+                                Log.d(TAG, "send handleTwoFingerPanSlideUpDown successful");
+                                releaseMSRelData();
+                            } else {
+                                Log.e(TAG, "Failed to write handleTwoFingerPanSlideUpDown");
+                            }
+                        } else {
+                            Log.e(TAG, "USB device not connected for handleTwoFingerPanSlideUpDown");
+                        }
+                    } catch (Exception e) {
                         Log.e(TAG, "Error writing to port: " + e.getMessage());
                     }
 
@@ -404,9 +464,17 @@ public class MouseManager {
         byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendReleaseMSData);
 
         try {
-            usbDeviceManager.port.write(sendKBDataBytes, 20);
-            Log.d(TAG, "release all MS data");
-        } catch (IOException e) {
+            if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                boolean result = usbDeviceManager.writeData(sendKBDataBytes);
+                if (result) {
+                    Log.d(TAG, "release all MS data");
+                } else {
+                    Log.e(TAG, "Failed to write release MS data");
+                }
+            } else {
+                Log.e(TAG, "USB device not connected for release MS data");
+            }
+        } catch (Exception e) {
             Log.e(TAG, "Error writing to port: " + e.getMessage());
         }
     }
@@ -438,10 +506,18 @@ public class MouseManager {
                     byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendMSDoubleClickData);
 
                     try {
-                        usbDeviceManager.port.write(sendKBDataBytes, 20);
-                        Log.d(TAG, "send handleDoubleClickRel successful");
-                        releaseMSRelData();
-                    } catch (IOException e) {
+                        if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                            boolean result = usbDeviceManager.writeData(sendKBDataBytes);
+                            if (result) {
+                                Log.d(TAG, "send handleDoubleClickRel successful");
+                                releaseMSRelData();
+                            } else {
+                                Log.e(TAG, "Failed to write handleDoubleClickRel");
+                            }
+                        } else {
+                            Log.e(TAG, "USB device not connected for handleDoubleClickRel");
+                        }
+                    } catch (Exception e) {
                         Log.e(TAG, "Error writing to port: " + e.getMessage());
                     }
 
@@ -505,9 +581,16 @@ public class MouseManager {
                     byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendMSData);
 
                     try {
-                        usbDeviceManager.port.write(sendKBDataBytes, 20);
+                        if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                            boolean result = usbDeviceManager.writeData(sendKBDataBytes);
+                            if (!result) {
+                                Log.e(TAG, "Failed to write sendHexRelData");
+                            }
 //                        Log.d(TAG, "send sendHexRelData successful");
-                    } catch (IOException e) {
+                        } else {
+                            Log.e(TAG, "USB device not connected for sendHexRelData");
+                        }
+                    } catch (Exception e) {
 //                        Log.e(TAG, "Error writing to port: " + e.getMessage());
                     }
 
@@ -539,9 +622,17 @@ public class MouseManager {
         byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendReleaseMSData);
 
         try {
-            usbDeviceManager.port.write(sendKBDataBytes, 20);
-            Log.d(TAG, "release all MS data");
-        } catch (IOException e) {
+            if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                boolean result = usbDeviceManager.writeData(sendKBDataBytes);
+                if (result) {
+                    Log.d(TAG, "release all MS data");
+                } else {
+                    Log.e(TAG, "Failed to write release MS rel data");
+                }
+            } else {
+                Log.e(TAG, "USB device not connected for release MS rel data");
+            }
+        } catch (Exception e) {
             Log.e(TAG, "Error writing to port: " + e.getMessage());
         }
     }
