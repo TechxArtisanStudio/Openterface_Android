@@ -38,6 +38,18 @@
                 android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
                 android:resource="@xml/device_filter" />
         </activity>
+        
+        <!-- Debug Activity for Serial Communication -->
+        <activity
+            android:name="com.openterface.AOS.debug.SerialDebugActivity"
+            android:label="Serial Debug"
+            android:exported="true"
+            android:theme="@style/Theme.Usbvideo">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>
