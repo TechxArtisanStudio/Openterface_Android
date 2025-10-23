@@ -68,7 +68,7 @@ public class UsbDeviceManager {
     private boolean isReading = false;
     private TextView tvReceivedData;
     private int currentBaudrate = -1; // Track the working baudrate
-    private int preferredBaudrate = -1;
+    private int preferredBaudrate = DEFAULT_BAUDRATE;
     private UsbDevice pendingDevice; // Device waiting for permission
 
     private static final int WRITE_WAIT_MILLIS = 2000;
@@ -102,14 +102,6 @@ public class UsbDeviceManager {
         this.onConnectionStatusListener = listener;
     }
 
-    /**
-     * Get alternative baudrate - similar to anotherBaudrate() in C++ version
-     * @param currentBaudrate the current baudrate
-     * @return the alternative baudrate (115200 <-> 9600)
-     */
-    private int getAlternativeBaudrate(int currentBaudrate) {
-        return currentBaudrate == BAUDRATE_HIGHSPEED ? BAUDRATE_LOWSPEED : BAUDRATE_HIGHSPEED;
-    }
     
     /**
      * Scan all connected USB devices and find Openterface devices by VID/PID
@@ -1703,22 +1695,21 @@ public class UsbDeviceManager {
             if (pid == 0xFE0C) {
                 // Mini-KVM v2: Only supports 115200
                 preferredBaudrate = BAUDRATE_HIGHSPEED;
-                Log.d(TAG, "Device 1A86:FE0C - Mini-KVM v2: Only supports 115200 baud");
+                Log.d(TAG, "Device 1A86:FE0C - Mini-KVM v2: Default to 115200 baud");
             } else if (pid == 0x7523) {
-                // Mini-KVM v1: Supports both 9600 and 115200, auto-detect
-                preferredBaudrate = -1; // Auto-detect
-                Log.d(TAG, "Device 1A86:7523 - Mini-KVM v1: Supports 9600 and 115200 baud (auto-detect)");
+                // Mini-KVM v1: Default to 9600
+                preferredBaudrate = BAUDRATE_LOWSPEED;
+                Log.d(TAG, "Device 1A86:7523 - Mini-KVM v1: Default to 9600 baud");
             } else {
                 Log.w(TAG, "Unknown 1A86 device PID: " + String.format("%04X", pid));
-                preferredBaudrate = -1; // Auto-detect for unknown devices
+                preferredBaudrate = DEFAULT_BAUDRATE; // Use default baudrate for unknown devices
             }
         } else {
             Log.w(TAG, "Unsupported device VID: " + String.format("%04X", vid));
-            preferredBaudrate = -1; // Auto-detect for unsupported devices
+            preferredBaudrate = DEFAULT_BAUDRATE; // Use default baudrate for unsupported devices
         }
         
-        Log.d(TAG, "Preferred baudrate set to: " + 
-            (preferredBaudrate == -1 ? "Auto (will try 9600 and 115200)" : preferredBaudrate));
+        Log.d(TAG, "Preferred baudrate set to: " + preferredBaudrate);
         
         // Additional device-specific configuration
         // For CH340 devices, we might need to set specific DTR/RTS states later
@@ -2030,59 +2021,22 @@ public class UsbDeviceManager {
         
         Log.d(TAG, "USB device connection opened successfully");
         
-        // Implement baudrate switching logic 
-        // Use preferred baudrate if set, otherwise try default first
-        int tryBaudrate;
-            Log.d(TAG, "KVMGO device detected - enforcing 115200 baud rate only");
-        if (preferredBaudrate == -1) {
-            // Auto mode: try DEFAULT_BAUDRATE first, then fallback
-            tryBaudrate = DEFAULT_BAUDRATE;
-        } else {
-            // Use user's preferred baudrate
-            tryBaudrate = preferredBaudrate;
-        }
+        // Use the configured preferred baudrate
+        Log.d(TAG, "Attempting serial connection with baudrate: " + preferredBaudrate);
         
-        boolean connectionSuccessful = false;
-        int workingBaudrate = tryBaudrate;
-        // For auto mode try both baudrates, for specific baudrate try only once
-        final int maxRetries = (preferredBaudrate == -1) ? 2 : 1;
-        int retryCount = 0;
-        
-        while (retryCount < maxRetries && !connectionSuccessful) {
-            Log.d(TAG, "Attempting serial connection with baudrate: " + tryBaudrate + " (attempt " + (retryCount + 1) + "/" + maxRetries + ")");
-            
-            connectionSuccessful = trySerialConfiguration(connection, tryBaudrate);
-            
-            if (connectionSuccessful) {
-                workingBaudrate = tryBaudrate;
-                Log.d(TAG, "Serial connection successful with baudrate: " + workingBaudrate);
-                break;
-            } else {
-                Log.w(TAG, "Failed to connect with baudrate: " + tryBaudrate);
-                
-                // Only try alternative baudrate in auto mode
-                if (preferredBaudrate == -1) {
-                    // Try alternative baudrate on next iteration
-                    tryBaudrate = getAlternativeBaudrate(tryBaudrate);
-                    Log.d(TAG, "Trying alternative baudrate: " + tryBaudrate);
-                } else {
-                    Log.w(TAG, "Specific baudrate failed - no other baudrates will be attempted");
-                }
-                retryCount++;
-            }
-        }
+        boolean connectionSuccessful = trySerialConfiguration(connection, preferredBaudrate);
         
         if (connectionSuccessful) {
-            Log.d(TAG, "Serial connection established successfully with baudrate: " + workingBaudrate);
+            Log.d(TAG, "Serial connection established successfully with baudrate: " + preferredBaudrate);
             if (onConnectionStatusListener != null) {
-                onConnectionStatusListener.onConnected(workingBaudrate);
+                onConnectionStatusListener.onConnected(preferredBaudrate);
             }
             startReading();
         } else {
-            Log.e(TAG, "Failed to establish serial connection with any baudrate");
+            Log.e(TAG, "Failed to establish serial connection with baudrate: " + preferredBaudrate);
             connection.close();
             if (onConnectionStatusListener != null) {
-                onConnectionStatusListener.onError("Failed to establish serial connection with any baudrate");
+                onConnectionStatusListener.onError("Failed to establish serial connection with baudrate: " + preferredBaudrate);
             }
         }
     }
@@ -2139,16 +2093,16 @@ public class UsbDeviceManager {
 
     /**
      * Set the preferred baudrate for serial communication
-     * @param baudrate the preferred baudrate (9600, 115200, or -1 for auto)
+     * @param baudrate the preferred baudrate (9600 or 115200)
      */
     public void setPreferredBaudrate(int baudrate) {
         this.preferredBaudrate = baudrate;
-        Log.d(TAG, "Preferred baudrate set to: " + (baudrate == -1 ? "Auto" : baudrate));
+        Log.d(TAG, "Preferred baudrate set to: " + baudrate);
     }
 
     /**
      * Get the preferred baudrate setting
-     * @return the preferred baudrate (-1 for auto, otherwise specific baudrate)
+     * @return the preferred baudrate
      */
     public int getPreferredBaudrate() {
         return preferredBaudrate;
@@ -2353,7 +2307,7 @@ public class UsbDeviceManager {
         
         info.append("Port Open: ").append(isConnected()).append("\n");
         info.append("Current Baudrate: ").append(getCurrentBaudrate()).append("\n");
-        info.append("Preferred Baudrate: ").append(getPreferredBaudrate() == -1 ? "Auto" : getPreferredBaudrate()).append("\n");
+        info.append("Preferred Baudrate: ").append(getPreferredBaudrate()).append("\n");
         info.append("Driver: ").append(driver != null ? driver.getClass().getSimpleName() : "null").append("\n");
         
         if (port != null) {

@@ -231,8 +231,7 @@ public class SerialDebugUtils {
             Log.d(TAG, "Connection Details:\n" + connectionInfo);
         } else {
             Log.w(TAG, "Serial port is not connected");
-            Log.d(TAG, "Preferred Baudrate: " + 
-                (serialManager.getPreferredBaudrate() == -1 ? "Auto" : serialManager.getPreferredBaudrate()));
+            Log.d(TAG, "Preferred Baudrate: " + serialManager.getPreferredBaudrate());
         }
     }
     

@@ -374,8 +374,8 @@ public class KeyBoardManager {
             @Override
             public void run() {
                 try {
-                    if (usbDeviceManager == null || !usbDeviceManager.isConnected()){
-                        Log.d(TAG, "sendKeyboardRequest USB device not connected");
+                    if (UsbDeviceManager.port == null){
+                        Log.d(TAG, "sendKeyboardRequest port is null");
                         return;
                     }
 
@@ -403,15 +403,22 @@ public class KeyBoardManager {
                     byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendKBData);
 
                     try {
-                        boolean result = usbDeviceManager.writeData(sendKBDataBytes);
-                        if (!result) {
-                            Log.e(TAG, "Failed to write keyboard request data");
+                        // Use direct port write for reliable key press at any baudrate
+                        UsbDeviceManager.port.write(sendKBDataBytes, 10);
+                        Log.d(TAG, "Key press sent successfully");
+                        
+                        // Add small delay before releasing key to ensure proper key press registration
+                        try {
+                            Thread.sleep(10);
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
                         }
-                    } catch (Exception e) {
+                        
+                        // Release the key immediately after
+                        KeyBoardManager.EmptyKeyboard();
+                    } catch (IOException e) {
                         Log.e(TAG, "Error writing to port: " + e.getMessage());
                     }
-
-//                    KeyBoardManager.EmptyKeyboard();
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -477,21 +484,9 @@ public class KeyBoardManager {
 
     //release all keyboard button
     public static void EmptyKeyboard() {
-        // Try enhanced method first
-        if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
-            Log.d(TAG, "EmptyKeyboard: Using enhanced method for FE0C support");
-            boolean success = usbDeviceManager.sendKeyRelease();
-            if (success) {
-                Log.d(TAG, "EmptyKeyboard: Enhanced method succeeded");
-                return;
-            } else {
-                Log.w(TAG, "EmptyKeyboard: Enhanced method failed, trying fallback");
-            }
-        }
-        
-        // Fallback to original method
+        // For 7523 devices at 9600 baud, use direct port access for reliable key release
         if (UsbDeviceManager.port == null) {
-            Log.d(TAG, "EmptyKeyboard port is null");
+            Log.d(TAG, "EmptyKeyboard: port is null");
             return;
         }
 
@@ -512,18 +507,14 @@ public class KeyBoardManager {
         Log.d(TAG, "EmptyKeyboard: Writing " + releaseKBDataBytes.length + " bytes: " + Arrays.toString(releaseKBDataBytes));
 
         try {
-            // Use enhanced writeData method if available, otherwise fallback to direct port access
-            if (usbDeviceManager != null) {
-                boolean success = usbDeviceManager.writeData(releaseKBDataBytes, 200);
-                if (!success) {
-                    Log.e(TAG, "EmptyKeyboard: Enhanced writeData failed");
-                }
-            } else {
-                UsbDeviceManager.port.write(releaseKBDataBytes, 200);
-            }
+            // Direct port write for all devices - most reliable method
+            UsbDeviceManager.port.write(releaseKBDataBytes, 200);
+            Log.d(TAG, "EmptyKeyboard: Key release sent successfully");
         } catch (IOException e) {
-            Toast.makeText(context, "Please Restart APP", Toast.LENGTH_SHORT).show();
-//            Log.e(TAG, "EmptyKeyboard: IOException while writing to port", e);
+            Log.e(TAG, "EmptyKeyboard: IOException while writing to port: " + e.getMessage());
+            if (context != null) {
+                Toast.makeText(context, "Please Restart APP", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 }

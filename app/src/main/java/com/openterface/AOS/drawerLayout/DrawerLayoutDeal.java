@@ -294,7 +294,6 @@ public class DrawerLayoutDeal extends Fragment {
         View dialogView = inflater.inflate(R.layout.dialog_baudrate_selection, null);
         
         RadioGroup radioGroup = dialogView.findViewById(R.id.baudrate_radio_group);
-        RadioButton radioAuto = dialogView.findViewById(R.id.radio_auto);
         RadioButton radio115200 = dialogView.findViewById(R.id.radio_115200);
         RadioButton radio9600 = dialogView.findViewById(R.id.radio_9600);
         TextView currentBaudrateText = dialogView.findViewById(R.id.current_baudrate_text);
@@ -314,12 +313,13 @@ public class DrawerLayoutDeal extends Fragment {
         
         // Set the current selection based on preferred baudrate
         int preferredBaudrate = usbManager.getPreferredBaudrate();
-        if (preferredBaudrate == -1) {
-            radioAuto.setChecked(true);
-        } else if (preferredBaudrate == 115200) {
+        if (preferredBaudrate == 115200) {
             radio115200.setChecked(true);
         } else if (preferredBaudrate == 9600) {
             radio9600.setChecked(true);
+        } else {
+            // Default to 115200 if unknown
+            radio115200.setChecked(true);
         }
         
         AlertDialog dialog = new AlertDialog.Builder(context)
@@ -334,14 +334,12 @@ public class DrawerLayoutDeal extends Fragment {
             int selectedId = radioGroup.getCheckedRadioButtonId();
             int newBaudrate;
             
-            if (selectedId == R.id.radio_auto) {
-                newBaudrate = -1; // Auto mode
-            } else if (selectedId == R.id.radio_115200) {
+            if (selectedId == R.id.radio_115200) {
                 newBaudrate = 115200;
             } else if (selectedId == R.id.radio_9600) {
                 newBaudrate = 9600;
             } else {
-                newBaudrate = -1; // Default to auto
+                newBaudrate = 115200; // Default to 115200
             }
             
             // Apply the new baudrate setting
