@@ -50,6 +50,24 @@ jobs:
         ENCODED_STRING: ${{ secrets.SIGNING_KEY }}
       run: |
         echo $ENCODED_STRING | base64 -di > app/keystore.jks
+        echo "Keystore file created: app/keystore.jks"
+        ls -lh app/keystore.jks
+
+    - name: Verify Keystore
+      env:
+        SIGNING_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+        SIGNING_KEY_ALIAS: ${{ secrets.ALIAS }}
+      run: |
+        echo "Verifying keystore can be read..."
+        keytool -list -keystore app/keystore.jks -storepass "$SIGNING_STORE_PASSWORD" -alias "$SIGNING_KEY_ALIAS" || {
+          echo "❌ Error: Cannot read keystore with provided credentials"
+          echo "This means one of the following is incorrect:"
+          echo "  - SIGNING_KEY (base64 encoded keystore)"
+          echo "  - KEY_STORE_PASSWORD"
+          echo "  - ALIAS"
+          exit 1
+        }
+        echo "✅ Keystore verified successfully!"
 
     - name: Clean Gradle
       run: ./gradlew clean
