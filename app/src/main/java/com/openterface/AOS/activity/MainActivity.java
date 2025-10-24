@@ -258,7 +258,7 @@ public class MainActivity extends AppCompatActivity {
         });
         
         // Enable debugging for FE0C keyboard testing
-        enableKeyboardDebugging();
+        // enableKeyboardDebugging(); // Commented out - was auto-typing 'B' key on startup
         
         // Register debug broadcast receiver
         registerDebugReceiver();

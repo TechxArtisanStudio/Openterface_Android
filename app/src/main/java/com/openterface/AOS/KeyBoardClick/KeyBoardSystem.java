@@ -148,10 +148,46 @@ public class KeyBoardSystem {
 
     private void SystemButtonListeners() {
         for (View view : SystemButtons) {
-            view.setOnClickListener(v -> {
+            final boolean[] isKeyPressed = {false}; // Track if key is already pressed
+            
+            view.setOnTouchListener((v, event) -> {
                 String systemButtonId = getKey(view.getId());
-                Log.d("KeyBoardSystem", "System Button Pressed: " + systemButtonId);
-                handleShortcut(systemButtonId);
+                
+                Log.e("KeyBoardSystem", "📱 Touch Event: action=" + event.getAction() + 
+                      ", key=" + systemButtonId + 
+                      ", isPressed=" + isKeyPressed[0] + 
+                      ", time=" + System.currentTimeMillis());
+                
+                switch (event.getAction()) {
+                    case android.view.MotionEvent.ACTION_DOWN:
+                        // Only send key press if not already pressed (prevent repeat ACTION_DOWN)
+                        if (!isKeyPressed[0]) {
+                            Log.e("KeyBoardSystem", "✅ System Button PRESSED: " + systemButtonId + " (sending press command)");
+                            handleKeyPress(systemButtonId);
+                            isKeyPressed[0] = true;
+                        } else {
+                            Log.e("KeyBoardSystem", "⚠️ System Button ALREADY PRESSED: " + systemButtonId + " (ignored duplicate)");
+                        }
+                        return true;
+                        
+                    case android.view.MotionEvent.ACTION_UP:
+                    case android.view.MotionEvent.ACTION_CANCEL:
+                        // Only send release if key was pressed
+                        if (isKeyPressed[0]) {
+                            Log.e("KeyBoardSystem", "✅ System Button RELEASED: " + systemButtonId + " (sending release command)");
+                            handleKeyRelease();
+                            isKeyPressed[0] = false;
+                        } else {
+                            Log.e("KeyBoardSystem", "⚠️ System Button RELEASE WITHOUT PRESS: " + systemButtonId + " (ignored)");
+                        }
+                        return true;
+                        
+                    case android.view.MotionEvent.ACTION_MOVE:
+                        // Key hold - do nothing
+                        Log.d("KeyBoardSystem", "🔄 System Button MOVE (holding): " + systemButtonId);
+                        return true;
+                }
+                return false;
             });
         }
     }
@@ -195,6 +231,60 @@ public class KeyBoardSystem {
         KeyBoardManager.sendKeyBoardFunction(SystemKeyCtrlPress, SystemKeyShiftPress, SystemKeyAltPress, SystemKeyWinPress, System_buttonId);
         System.out.println("Shift State: " + KeyBoard_ShIft_Press_state);
 
+    }
+
+    /**
+     * Handle key press event - send key press without auto-release
+     */
+    private void handleKeyPress(String System_buttonId) {
+        Log.e("KeyBoardSystem", "🟢 handleKeyPress called for: " + System_buttonId);
+        
+        String SystemKeyCtrlPress;
+        String SystemKeyShiftPress;
+        String SystemKeyAltPress;
+        String SystemKeyWinPress;
+        
+        if (KeyBoard_Ctrl_Press_state){
+            SystemKeyCtrlPress = "Ctrl";
+        }else{
+            SystemKeyCtrlPress = "ShortCutKeyCtrlNull";
+        }
+
+        if (KeyBoard_ShIft_Press_state){
+            SystemKeyShiftPress = "Shift";
+        }else{
+            SystemKeyShiftPress = "ShortCutKeyShiftNull";
+        }
+
+        if (KeyBoard_Alt_Press_state){
+            SystemKeyAltPress = "Alt";
+        }else{
+            SystemKeyAltPress = "ShortCutKeyAltNull";
+        }
+
+        if (KeyBoard_Win_Press_state){
+            SystemKeyWinPress = "Win";
+        }else{
+            SystemKeyWinPress = "ShortCutKeyWinNull";
+        }
+        
+        Log.e("KeyBoardSystem", "🟢 Modifiers - Ctrl:" + SystemKeyCtrlPress + 
+              ", Shift:" + SystemKeyShiftPress + 
+              ", Alt:" + SystemKeyAltPress + 
+              ", Win:" + SystemKeyWinPress);
+        
+        // Send key press without automatic release
+        KeyBoardManager.sendKeyBoardFunctionPress(SystemKeyCtrlPress, SystemKeyShiftPress, SystemKeyAltPress, SystemKeyWinPress, System_buttonId);
+        Log.e("KeyBoardSystem", "🟢 Key press command sent - Shift State: " + KeyBoard_ShIft_Press_state);
+    }
+
+    /**
+     * Handle key release event - send key release command
+     */
+    private void handleKeyRelease() {
+        Log.e("KeyBoardSystem", "🔴 handleKeyRelease called");
+        KeyBoardManager.sendKeyBoardRelease();
+        Log.e("KeyBoardSystem", "🔴 Key release command sent");
     }
 
     public void setSystemButtonsClickColor(){

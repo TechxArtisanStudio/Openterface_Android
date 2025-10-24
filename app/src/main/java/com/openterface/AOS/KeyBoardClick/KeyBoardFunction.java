@@ -162,9 +162,36 @@ public class KeyBoardFunction {
 
     private void FunctionButtonListeners() {
         for (View view : FunctionButtons) {
-            view.setOnClickListener(v -> {
+            final boolean[] isKeyPressed = {false}; // Track if key is already pressed
+            
+            view.setOnTouchListener((v, event) -> {
                 String functionButtonId = getKey(view.getId());
-                handleShortcut(functionButtonId);
+                
+                switch (event.getAction()) {
+                    case android.view.MotionEvent.ACTION_DOWN:
+                        // Only send key press if not already pressed (prevent repeat ACTION_DOWN)
+                        if (!isKeyPressed[0]) {
+                            Log.d("KeyBoardFunction", "Function Button PRESSED: " + functionButtonId);
+                            handleKeyPress(functionButtonId);
+                            isKeyPressed[0] = true;
+                        }
+                        return true;
+                        
+                    case android.view.MotionEvent.ACTION_UP:
+                    case android.view.MotionEvent.ACTION_CANCEL:
+                        // Only send release if key was pressed
+                        if (isKeyPressed[0]) {
+                            Log.d("KeyBoardFunction", "Function Button RELEASED: " + functionButtonId);
+                            handleKeyRelease();
+                            isKeyPressed[0] = false;
+                        }
+                        return true;
+                        
+                    case android.view.MotionEvent.ACTION_MOVE:
+                        // Key hold - do nothing
+                        return true;
+                }
+                return false;
             });
         }
     }
@@ -218,6 +245,52 @@ public class KeyBoardFunction {
         KeyBoardManager.sendKeyBoardFunction(FunctionKeyCtrlPress, FunctionKeyShiftPress, FunctionKeyAltPress, FunctionKeyWinPress, Function_buttonId);
         System.out.println("Shift State: " + KeyBoard_ShIft_Press_state);
 
+    }
+
+    /**
+     * Handle key press event - send key press without auto-release
+     */
+    private void handleKeyPress(String Function_buttonId) {
+        String FunctionKeyCtrlPress;
+        String FunctionKeyShiftPress;
+        String FunctionKeyAltPress;
+        String FunctionKeyWinPress;
+        
+        if (KeyBoard_Ctrl_Press_state){
+            FunctionKeyCtrlPress = "Ctrl";
+        }else{
+            FunctionKeyCtrlPress = "ShortCutKeyCtrlNull";
+        }
+
+        if (KeyBoard_ShIft_Press_state){
+            FunctionKeyShiftPress = "Shift";
+        }else{
+            FunctionKeyShiftPress = "ShortCutKeyShiftNull";
+        }
+
+        if (KeyBoard_Alt_Press_state){
+            FunctionKeyAltPress = "Alt";
+        }else{
+            FunctionKeyAltPress = "ShortCutKeyAltNull";
+        }
+
+        if (KeyBoard_Win_Press_state){
+            FunctionKeyWinPress = "Win";
+        }else{
+            FunctionKeyWinPress = "ShortCutKeyWinNull";
+        }
+        
+        // Send key press without automatic release
+        KeyBoardManager.sendKeyBoardFunctionPress(FunctionKeyCtrlPress, FunctionKeyShiftPress, FunctionKeyAltPress, FunctionKeyWinPress, Function_buttonId);
+        Log.d("KeyBoardFunction", "Key press sent - Shift State: " + KeyBoard_ShIft_Press_state);
+    }
+
+    /**
+     * Handle key release event - send key release command
+     */
+    private void handleKeyRelease() {
+        KeyBoardManager.sendKeyBoardRelease();
+        Log.d("KeyBoardFunction", "Key released");
     }
 
     public void setFunctionButtonsClickColor(){

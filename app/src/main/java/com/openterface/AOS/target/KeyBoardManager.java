@@ -203,6 +203,97 @@ public class KeyBoardManager {
         }
     }
 
+    /**
+     * Send keyboard press event (key down) - without automatic release
+     * @param functionKey modifier keys
+     * @param keyName key to press
+     */
+    public static void sendKeyBoardPress(String functionKey, String keyName) {
+        if (keyName == null) {
+            Log.w(TAG, "❌ sendKeyBoardPress: keyName is null");
+            return;
+        }
+        
+        Log.e(TAG, "🔵 ========== KEY PRESS START ==========");
+        Log.e(TAG, "🔵 Thread: " + Thread.currentThread().getName());
+        Log.e(TAG, "🔵 functionKey: '" + functionKey + "', keyName: '" + keyName + "'");
+        Log.e(TAG, "🔵 Time: " + System.currentTimeMillis());
+        
+        new Thread(() -> {
+            try {
+                if (UsbDeviceManager.port == null){
+                    Log.e(TAG, "❌ sendKeyBoardPress port is null");
+                    return;
+                }
+
+                // Check if port is actually open before trying to write
+                if (!UsbDeviceManager.port.isOpen()) {
+                    Log.e(TAG, "❌ sendKeyBoardPress: port is not open");
+                    return;
+                }
+
+                String sendKBData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
+                        CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
+                        CH9329MSKBMap.getKeyCodeMap().get("address") +
+                        CH9329MSKBMap.CmdData().get("CmdKB_HID") +
+                        CH9329MSKBMap.DataLen().get("DataLenKB") +
+                        functionKey +
+                        CH9329MSKBMap.DataNull().get("DataNull") +
+                        currentKeyCodeMap.get(keyName) +
+                        CH9329MSKBMap.DataNull().get("DataNull") +
+                        CH9329MSKBMap.DataNull().get("DataNull") +
+                        CH9329MSKBMap.DataNull().get("DataNull") +
+                        CH9329MSKBMap.DataNull().get("DataNull") +
+                        CH9329MSKBMap.DataNull().get("DataNull");
+
+                sendKBData = sendKBData + CH9329Function.makeChecksum(sendKBData);
+
+                Log.e(TAG, "🔵 Full command: " + sendKBData);
+                CH9329Function.checkSendLogData(sendKBData);
+
+                byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendKBData);
+
+                try {
+                    long startTime = System.currentTimeMillis();
+                    UsbDeviceManager.port.write(sendKBDataBytes, 100);
+                    long endTime = System.currentTimeMillis();
+                    Log.e(TAG, "✅ Key press sent successfully in " + (endTime - startTime) + "ms (no auto-release)");
+                } catch (IOException e) {
+                    Log.e(TAG, "❌ Error writing key press to port: " + e.getMessage(), e);
+                }
+
+            } catch (Exception e) {
+                Log.e(TAG, "❌ Exception in sendKeyBoardPress: " + e.getMessage(), e);
+            }
+            Log.e(TAG, "🔵 ========== KEY PRESS END ==========");
+        }).start();
+    }
+
+    /**
+     * Send keyboard release event (key up) - releases all keys
+     */
+    public static void sendKeyBoardRelease() {
+        Log.e(TAG, "🔴 ========== KEY RELEASE START ==========");
+        Log.e(TAG, "🔴 Thread: " + Thread.currentThread().getName());
+        Log.e(TAG, "🔴 Time: " + System.currentTimeMillis());
+        
+        new Thread(() -> {
+            // Small delay to ensure press was sent before release
+            // This prevents release from overtaking press in the serial queue
+            try {
+                Log.e(TAG, "🔴 Waiting 20ms before release...");
+                Thread.sleep(20);
+                Log.e(TAG, "🔴 Now sending release command");
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                Log.e(TAG, "🔴 Release delay interrupted: " + e.getMessage());
+            }
+            
+            EmptyKeyboard();
+            Log.e(TAG, "🔴 ========== KEY RELEASE END ==========");
+        }).start();
+    }
+
     public static void sendKeyBoardShortCut(String modifier, String key) {
         new Thread(new Runnable() {
             @Override
@@ -369,6 +460,83 @@ public class KeyBoardManager {
         }).start();
     }
 
+    /**
+     * Send keyboard function key press (without automatic release)
+     * @param FunctionKeyCtrlPress Ctrl key state
+     * @param FunctionKeyShiftPress Shift key state
+     * @param FunctionKeyAltPress Alt key state
+     * @param FunctionKeyWinPress Win key state
+     * @param keyName the key to press
+     */
+    public static void sendKeyBoardFunctionPress(String FunctionKeyCtrlPress, String FunctionKeyShiftPress, String FunctionKeyAltPress, String FunctionKeyWinPress, String keyName) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    if (usbDeviceManager == null || !usbDeviceManager.isConnected()){
+                        Log.d(TAG, "sendKeyBoardFunctionPress USB device not connected");
+                        return;
+                    }
+
+                    // Gets the control key mapping value
+                    String ctrlValue = CH9329MSKBMap.KBShortCutKey().get(FunctionKeyCtrlPress);
+                    String shiftValue = CH9329MSKBMap.KBShortCutKey().get(FunctionKeyShiftPress);
+                    String altValue = CH9329MSKBMap.KBShortCutKey().get(FunctionKeyAltPress);
+                    String winValue = CH9329MSKBMap.KBShortCutKey().get(FunctionKeyWinPress);
+
+                    // Resolve to integers
+                    int ctrl = ctrlValue != null ? Integer.parseInt(ctrlValue.replace("0x", ""), 16) : 0;
+                    int shift = shiftValue != null ? Integer.parseInt(shiftValue.replace("0x", ""), 16) : 0;
+                    int alt = altValue != null ? Integer.parseInt(altValue.replace("0x", ""), 16) : 0;
+                    int win = winValue != null ? Integer.parseInt(winValue.replace("0x", ""), 16) : 0;
+
+                    // Direct accumulation
+                    int combinedValue = ctrl + shift + alt + win;
+
+                    // Convert to a two-digit hexadecimal string
+                    String combinationFunctionKey = String.format("%02X", combinedValue);
+
+                    String sendKBData = "";
+                    sendKBData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
+                            CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
+                            CH9329MSKBMap.getKeyCodeMap().get("address") +
+                            CH9329MSKBMap.CmdData().get("CmdKB_HID") +
+                            CH9329MSKBMap.DataLen().get("DataLenKB") +
+                            combinationFunctionKey +
+                            CH9329MSKBMap.DataNull().get("DataNull") +
+                            currentKeyCodeMap.get(keyName) +
+                            CH9329MSKBMap.DataNull().get("DataNull") +
+                            CH9329MSKBMap.DataNull().get("DataNull") +
+                            CH9329MSKBMap.DataNull().get("DataNull") +
+                            CH9329MSKBMap.DataNull().get("DataNull") +
+                            CH9329MSKBMap.DataNull().get("DataNull");
+                    
+                    Log.d(TAG, "=== KEY PRESS === FunctionKey: " + combinationFunctionKey + ", keyName: " + keyName);
+                    
+                    sendKBData = sendKBData + CH9329Function.makeChecksum(sendKBData);
+
+                    CH9329Function.checkSendLogData(sendKBData);
+
+                    byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendKBData);
+
+                    try {
+                        boolean result = usbDeviceManager.writeData(sendKBDataBytes);
+                        if (result) {
+                            Log.d(TAG, "Key press sent successfully (no auto-release)");
+                        } else {
+                            Log.e(TAG, "Failed to write keyboard function press data");
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error writing to port: " + e.getMessage());
+                    }
+
+                } catch (Exception e) {
+                    Log.e(TAG, "Exception in sendKeyBoardFunctionPress: " + e.getMessage(), e);
+                }
+            }
+        }).start();
+    }
+
     public static void sendKeyboardRequest(String function_key, String keyName) {
         new Thread(new Runnable() {
             @Override
@@ -484,37 +652,86 @@ public class KeyBoardManager {
 
     //release all keyboard button
     public static void EmptyKeyboard() {
+        Log.e(TAG, "🔴 EmptyKeyboard called - checking conditions...");
+        
+        // Check using usbDeviceManager first (consistent with press)
+        if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+            Log.e(TAG, "🔴 Using usbDeviceManager.writeData() for release");
+            
+            String releaseKBData = CH9329MSKBMap.getKeyCodeMap().get("release");
+            if (releaseKBData == null) {
+                Log.e(TAG, "❌ EmptyKeyboard: releaseKBData is null");
+                return;
+            }
+
+            Log.e(TAG, "🔴 EmptyKeyboard: Release command: " + releaseKBData);
+            CH9329Function.ReleaseSendLogData(releaseKBData);
+
+            byte[] releaseKBDataBytes = CH9329Function.hexStringToByteArray(releaseKBData);
+            if (releaseKBDataBytes == null || releaseKBDataBytes.length == 0) {
+                Log.e(TAG, "❌ EmptyKeyboard: releaseKBDataBytes is null or empty");
+                return;
+            }
+
+            Log.e(TAG, "🔴 EmptyKeyboard: Writing " + releaseKBDataBytes.length + " bytes: " + Arrays.toString(releaseKBDataBytes));
+
+            try {
+                long startTime = System.currentTimeMillis();
+                boolean result = usbDeviceManager.writeData(releaseKBDataBytes);
+                long endTime = System.currentTimeMillis();
+                if (result) {
+                    Log.e(TAG, "✅ EmptyKeyboard: Key release sent successfully via usbDeviceManager in " + (endTime - startTime) + "ms");
+                } else {
+                    Log.e(TAG, "❌ EmptyKeyboard: usbDeviceManager.writeData() returned false");
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "❌ EmptyKeyboard: Exception while writing via usbDeviceManager: " + e.getMessage(), e);
+            }
+            return;
+        }
+        
+        // Fallback to direct port access
+        Log.e(TAG, "🔴 Falling back to UsbDeviceManager.port direct access");
+        
         // For 7523 devices at 9600 baud, use direct port access for reliable key release
         if (UsbDeviceManager.port == null) {
-            Log.d(TAG, "EmptyKeyboard: port is null");
+            Log.e(TAG, "❌ EmptyKeyboard: port is null");
+            return;
+        }
+
+        // Check if port is actually open before trying to write
+        if (!UsbDeviceManager.port.isOpen()) {
+            Log.e(TAG, "❌ EmptyKeyboard: port is not open, skipping release");
             return;
         }
 
         String releaseKBData = CH9329MSKBMap.getKeyCodeMap().get("release");
         if (releaseKBData == null) {
-            Log.e(TAG, "EmptyKeyboard: releaseKBData is null");
+            Log.e(TAG, "❌ EmptyKeyboard: releaseKBData is null");
             return;
         }
 
+        Log.e(TAG, "🔴 EmptyKeyboard: Release command: " + releaseKBData);
         CH9329Function.ReleaseSendLogData(releaseKBData);
 
         byte[] releaseKBDataBytes = CH9329Function.hexStringToByteArray(releaseKBData);
         if (releaseKBDataBytes == null || releaseKBDataBytes.length == 0) {
-            Log.e(TAG, "EmptyKeyboard: releaseKBDataBytes is null or empty");
+            Log.e(TAG, "❌ EmptyKeyboard: releaseKBDataBytes is null or empty");
             return;
         }
 
-        Log.d(TAG, "EmptyKeyboard: Writing " + releaseKBDataBytes.length + " bytes: " + Arrays.toString(releaseKBDataBytes));
+        Log.e(TAG, "🔴 EmptyKeyboard: Writing " + releaseKBDataBytes.length + " bytes: " + Arrays.toString(releaseKBDataBytes));
 
         try {
+            long startTime = System.currentTimeMillis();
             // Direct port write for all devices - most reliable method
             UsbDeviceManager.port.write(releaseKBDataBytes, 200);
-            Log.d(TAG, "EmptyKeyboard: Key release sent successfully");
+            long endTime = System.currentTimeMillis();
+            Log.e(TAG, "✅ EmptyKeyboard: Key release sent successfully via port.write() in " + (endTime - startTime) + "ms");
         } catch (IOException e) {
-            Log.e(TAG, "EmptyKeyboard: IOException while writing to port: " + e.getMessage());
-            if (context != null) {
-                Toast.makeText(context, "Please Restart APP", Toast.LENGTH_SHORT).show();
-            }
+            Log.e(TAG, "❌ EmptyKeyboard: IOException while writing to port: " + e.getMessage(), e);
+            // Only show toast for critical errors, not for transient port issues
+            // Most likely the port is just busy or in a temporary state
         }
     }
 }
