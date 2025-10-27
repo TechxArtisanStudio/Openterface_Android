@@ -8,7 +8,9 @@ buildscript {
 		mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.1.2'
+        // AGP 7.4.2 supports SDK 35 and works with Java 11
+        // For AGP 8.1.4 (latest), you need Java 17+
+        classpath 'com.android.tools.build:gradle:7.4.2'
     }
 }
 
