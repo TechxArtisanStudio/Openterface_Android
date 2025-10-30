@@ -47,10 +47,9 @@ GitHub → Actions → Bump Version → Run workflow
 ```
 GitHub → Actions → Create GitHub Release → Run workflow
 - Release type: release (or pre-release for testing)
-- Tag name: v1.2.1 (matches your version)
-- Release title: (optional) "Openterface v1.2.1 - Bug Fixes"
 ```
 **Result**: GitHub release created with downloadable APK/AAB
+**Note**: Tag (v1.2.1) and title are automatically generated from `build.gradle` version
 
 ## 📊 Version Bump Types
 
@@ -142,9 +141,9 @@ Actions → Bump Version → Run workflow
 ### Create Release from Existing Build
 ```
 Actions → Create GitHub Release → Run workflow
-- Tag name: v1.2.0 (your version)
-- Release type: release
+- Release type: release (or pre-release)
 ```
+**Note**: Tag and title are auto-generated from the version in `build.gradle`
 
 ## ✨ Benefits
 

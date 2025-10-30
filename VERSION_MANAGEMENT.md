@@ -85,9 +85,8 @@ The build workflow runs automatically and creates:
 ```
 Actions → Create GitHub Release → Run workflow
 - Release type: release (or pre-release)
-- Tag name: v1.2.1 (must match version)
-- Release title: (optional)
 ```
+**Note**: The workflow automatically uses the version from `build.gradle` for the tag and title.
 
 ## 🔄 Automated Workflows
 
@@ -108,6 +107,8 @@ Actions → Create GitHub Release → Run workflow
 ### `create-release.yaml`
 **Purpose**: Create GitHub releases
 - Downloads latest build artifacts
+- Auto-generates tag from build.gradle version
+- Auto-generates title from version
 - Creates GitHub release with APK/AAB
 - Supports pre-release and release types
 
