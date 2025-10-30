@@ -49,9 +49,11 @@ jobs:
       env:
         ENCODED_STRING: ${{ secrets.SIGNING_KEY }}
       run: |
-        echo $ENCODED_STRING | base64 -di > app/keystore.jks
+        echo "$ENCODED_STRING" | base64 -d > app/keystore.jks
         echo "Keystore file created: app/keystore.jks"
         ls -lh app/keystore.jks
+        echo "Verifying keystore format..."
+        file app/keystore.jks
 
     - name: Verify Keystore
       env:
