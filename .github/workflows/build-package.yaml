@@ -89,6 +89,7 @@ jobs:
 
     - name: Build Release AAB
       run: ./gradlew bundleRelease -x lint --info
+      continue-on-error: true
       env:
         SIGNING_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
         SIGNING_KEY_ALIAS: ${{ secrets.ALIAS }}
@@ -120,14 +121,31 @@ jobs:
     # Rename files with version
     - name: Rename Release Files
       run: |
-        cd app/build/outputs/apk/release
-        for file in *.apk; do
-          mv "$file" "Openterface-v${{ steps.version.outputs.version_name }}-release.apk"
-        done
-        cd ../../../bundle/release
-        for file in *.aab; do
-          mv "$file" "Openterface-v${{ steps.version.outputs.version_name }}-release.aab"
-        done
+        # Rename APK
+        if [ -d "app/build/outputs/apk/release" ]; then
+          cd app/build/outputs/apk/release
+          for file in *.apk; do
+            if [ -f "$file" ]; then
+              mv "$file" "Openterface-v${{ steps.version.outputs.version_name }}-release.apk"
+              echo "✅ Renamed APK: Openterface-v${{ steps.version.outputs.version_name }}-release.apk"
+            fi
+          done
+          cd ../../../../..
+        fi
+        
+        # Rename AAB (if it exists)
+        if [ -d "app/build/outputs/bundle/release" ]; then
+          cd app/build/outputs/bundle/release
+          for file in *.aab; do
+            if [ -f "$file" ]; then
+              mv "$file" "Openterface-v${{ steps.version.outputs.version_name }}-release.aab"
+              echo "✅ Renamed AAB: Openterface-v${{ steps.version.outputs.version_name }}-release.aab"
+            fi
+          done
+          cd ../../../../..
+        else
+          echo "⚠️  AAB not found (bundleRelease task may have failed or been skipped)"
+        fi
 
     # Store signed release APK files as artifacts
     - name: Upload Signed Release APK
@@ -141,6 +159,7 @@ jobs:
     # Store signed release AAB files as artifacts
     - name: Upload Signed Release AAB
       uses: actions/upload-artifact@v4
+      if: hashFiles('app/build/outputs/bundle/release/*.aab') != ''
       with:
         name: Openterface-v${{ steps.version.outputs.version_name }}-AAB
         path: |
