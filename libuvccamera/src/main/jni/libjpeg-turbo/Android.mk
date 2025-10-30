@@ -184,6 +184,9 @@ LOCAL_DISABLE_FATAL_LINKER_WARNINGS := true
 
 LOCAL_LDLIBS := -L$(SYSROOT)/usr/lib -ldl	# to avoid NDK issue(no need for static library)
 
+# Enable 16KB page size support for Android 15+
+LOCAL_LDFLAGS += -Wl,-z,max-page-size=16384
+
 LOCAL_WHOLE_STATIC_LIBRARIES = jpeg-turbo212_static
 
 LOCAL_MODULE := jpeg-turbo212

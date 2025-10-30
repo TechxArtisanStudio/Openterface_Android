@@ -75,6 +75,10 @@ include $(CLEAR_VARS)
 
 LOCAL_WHOLE_STATIC_LIBRARIES := libyuv_static
 LOCAL_MODULE := libyuv
+
+# Enable 16KB page size support for Android 15+
+LOCAL_LDFLAGS += -Wl,-z,max-page-size=16384
+
 ifneq ($(LIBYUV_DISABLE_JPEG), "yes")
 # LOCAL_SHARED_LIBRARIES := libjpeg
 LOCAL_SHARED_LIBRARIES := jpeg-turbo212

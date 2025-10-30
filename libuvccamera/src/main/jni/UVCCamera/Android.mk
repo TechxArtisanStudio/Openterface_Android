@@ -47,6 +47,9 @@ LOCAL_LDLIBS := -L$(SYSROOT)/usr/lib -ldl
 LOCAL_LDLIBS += -llog
 LOCAL_LDLIBS += -landroid
 
+# Enable 16KB page size support for Android 15+
+LOCAL_LDFLAGS += -Wl,-z,max-page-size=16384
+
 LOCAL_SHARED_LIBRARIES += usb1.0 uvc
 LOCAL_SHARED_LIBRARIES += jpeg-turbo212
 LOCAL_SHARED_LIBRARIES += yuv

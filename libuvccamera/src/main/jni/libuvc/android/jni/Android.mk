@@ -80,6 +80,9 @@ include $(CLEAR_VARS)
 LOCAL_MODULE_TAGS := optional
 LOCAL_EXPORT_LDLIBS += -llog
 
+# Enable 16KB page size support for Android 15+
+LOCAL_LDFLAGS += -Wl,-z,max-page-size=16384
+
 LOCAL_WHOLE_STATIC_LIBRARIES = libuvc_static
 LOCAL_DISABLE_FATAL_LINKER_WARNINGS := true
 
