@@ -59,12 +59,18 @@ jobs:
         SIGNING_KEY_ALIAS: ${{ secrets.ALIAS }}
       run: |
         echo "Verifying keystore can be read..."
+        echo "Listing all aliases in keystore:"
+        keytool -list -keystore app/keystore.jks -storepass "$SIGNING_STORE_PASSWORD" || {
+          echo "❌ Error: Cannot read keystore with store password"
+          echo "This means KEY_STORE_PASSWORD is incorrect"
+          exit 1
+        }
+        echo ""
+        echo "Verifying specific alias: $SIGNING_KEY_ALIAS"
         keytool -list -keystore app/keystore.jks -storepass "$SIGNING_STORE_PASSWORD" -alias "$SIGNING_KEY_ALIAS" || {
-          echo "❌ Error: Cannot read keystore with provided credentials"
-          echo "This means one of the following is incorrect:"
-          echo "  - SIGNING_KEY (base64 encoded keystore)"
-          echo "  - KEY_STORE_PASSWORD"
-          echo "  - ALIAS"
+          echo "❌ Error: Alias '$SIGNING_KEY_ALIAS' does not exist in keystore"
+          echo "Please check the ALIAS secret in GitHub"
+          echo "Available aliases are listed above"
           exit 1
         }
         echo "✅ Keystore verified successfully!"
