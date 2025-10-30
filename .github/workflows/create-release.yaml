@@ -11,18 +11,6 @@ on:
           - pre-release
           - release
         default: 'pre-release'
-      tag_name:
-        description: 'Tag name (e.g., v1.2.0)'
-        required: true
-        type: string
-      release_title:
-        description: 'Release title (leave empty to use tag name)'
-        required: false
-        type: string
-      release_notes:
-        description: 'Release notes (optional)'
-        required: false
-        type: string
   push:
     tags:
       - 'v*.*.*'
@@ -39,24 +27,30 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Get Version Info
+      id: version
+      run: |
+        VERSION_NAME=$(grep "versionName" app/build.gradle | awk '{print $2}' | tr -d '"')
+        VERSION_CODE=$(grep "versionCode" app/build.gradle | awk '{print $2}')
+        echo "version_name=${VERSION_NAME}" >> $GITHUB_OUTPUT
+        echo "version_code=${VERSION_CODE}" >> $GITHUB_OUTPUT
+        echo "App Version: ${VERSION_NAME} (${VERSION_CODE})"
+
     - name: Set Release Variables
       id: vars
       run: |
-        # Determine tag name
+        # Determine tag name and release type
         if [ "${{ github.event_name }}" = "push" ]; then
           TAG_NAME="${GITHUB_REF#refs/tags/}"
           RELEASE_TYPE="release"
         else
-          TAG_NAME="${{ inputs.tag_name }}"
+          # Use version from build.gradle for tag
+          TAG_NAME="v${{ steps.version.outputs.version_name }}"
           RELEASE_TYPE="${{ inputs.release_type }}"
         fi
         
-        # Set release title
-        if [ -n "${{ inputs.release_title }}" ]; then
-          RELEASE_TITLE="${{ inputs.release_title }}"
-        else
-          RELEASE_TITLE="Openterface Android ${TAG_NAME}"
-        fi
+        # Always use version from build.gradle for title
+        RELEASE_TITLE="Openterface Android v${{ steps.version.outputs.version_name }}"
         
         # Determine if pre-release
         if [ "$RELEASE_TYPE" = "pre-release" ]; then
@@ -74,15 +68,6 @@ jobs:
         echo "📝 Title: ${RELEASE_TITLE}"
         echo "🏷️  Type: ${RELEASE_TYPE}"
         echo "🔖 Pre-release: ${IS_PRERELEASE}"
-
-    - name: Get Version Info
-      id: version
-      run: |
-        VERSION_NAME=$(grep "versionName" app/build.gradle | awk '{print $2}' | tr -d '"')
-        VERSION_CODE=$(grep "versionCode" app/build.gradle | awk '{print $2}')
-        echo "version_name=${VERSION_NAME}" >> $GITHUB_OUTPUT
-        echo "version_code=${VERSION_CODE}" >> $GITHUB_OUTPUT
-        echo "App Version: ${VERSION_NAME} (${VERSION_CODE})"
 
     - name: Download Latest Build Artifacts
       uses: dawidd6/action-download-artifact@v3
@@ -109,12 +94,8 @@ jobs:
     - name: Generate Release Notes
       id: release_notes
       run: |
-        # Start with user-provided notes if available
-        if [ -n "${{ inputs.release_notes }}" ]; then
-          NOTES="${{ inputs.release_notes }}"
-        else
-          # Generate automatic release notes
-          cat > release_notes.md << 'EOF'
+        # Generate automatic release notes
+        cat > release_notes.md << 'EOF'
         ## Openterface Android ${{ steps.vars.outputs.tag_name }}
         
         ### 📱 Application Information
@@ -147,14 +128,13 @@ jobs:
         ---
         **Full Changelog**: https://github.com/${{ github.repository }}/commits/${{ steps.vars.outputs.tag_name }}
         EOF
-          
-          # Replace variables in the file
-          sed -i "s|\${{ steps.vars.outputs.tag_name }}|${{ steps.vars.outputs.tag_name }}|g" release_notes.md
-          sed -i "s|\${{ steps.version.outputs.version_name }}|${{ steps.version.outputs.version_name }}|g" release_notes.md
-          sed -i "s|\${{ steps.version.outputs.version_code }}|${{ steps.version.outputs.version_code }}|g" release_notes.md
-          sed -i "s|\${{ github.repository }}|${{ github.repository }}|g" release_notes.md
-          sed -i "s|\$(date '+%Y-%m-%d')|$(date '+%Y-%m-%d')|g" release_notes.md
-        fi
+        
+        # Replace variables in the file
+        sed -i "s|\${{ steps.vars.outputs.tag_name }}|${{ steps.vars.outputs.tag_name }}|g" release_notes.md
+        sed -i "s|\${{ steps.version.outputs.version_name }}|${{ steps.version.outputs.version_name }}|g" release_notes.md
+        sed -i "s|\${{ steps.version.outputs.version_code }}|${{ steps.version.outputs.version_code }}|g" release_notes.md
+        sed -i "s|\${{ github.repository }}|${{ github.repository }}|g" release_notes.md
+        sed -i "s|\$(date '+%Y-%m-%d')|$(date '+%Y-%m-%d')|g" release_notes.md
         
         echo "notes_file=release_notes.md" >> $GITHUB_OUTPUT
 
