@@ -8,14 +8,87 @@ on:
     branches:
       - 'main'
   workflow_dispatch:
+    inputs:
+      version_bump:
+        description: 'Version bump type (none = no version change)'
+        required: false
+        type: choice
+        options:
+          - none
+          - patch
+          - minor
+          - major
+        default: 'none'
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Bump Version
+      if: github.event.inputs.version_bump != 'none' && github.event.inputs.version_bump != ''
+      id: bump_version
+      run: |
+        # Read current version
+        CURRENT_VERSION=$(grep "versionName" app/build.gradle | awk '{print $2}' | tr -d '"')
+        CURRENT_CODE=$(grep "versionCode" app/build.gradle | awk '{print $2}')
+        
+        echo "Current version: $CURRENT_VERSION (code: $CURRENT_CODE)"
+        
+        # Parse version (e.g., 1.2.0 -> major=1, minor=2, patch=0)
+        IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+        
+        # Bump version based on input
+        BUMP_TYPE="${{ github.event.inputs.version_bump }}"
+        case "$BUMP_TYPE" in
+          major)
+            MAJOR=$((MAJOR + 1))
+            MINOR=0
+            PATCH=0
+            ;;
+          minor)
+            MINOR=$((MINOR + 1))
+            PATCH=0
+            ;;
+          patch)
+            PATCH=$((PATCH + 1))
+            ;;
+        esac
+        
+        NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+        NEW_CODE=$((CURRENT_CODE + 1))
+        
+        echo "New version: $NEW_VERSION (code: $NEW_CODE)"
+        
+        # Update build.gradle
+        sed -i "s/versionCode $CURRENT_CODE/versionCode $NEW_CODE/" app/build.gradle
+        sed -i "s/versionName \"$CURRENT_VERSION\"/versionName \"$NEW_VERSION\"/" app/build.gradle
+        
+        # Verify changes
+        echo "Updated build.gradle:"
+        grep -A 2 "versionCode" app/build.gradle | head -3
+        
+        # Set outputs
+        echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+        echo "new_code=$NEW_CODE" >> $GITHUB_OUTPUT
+        echo "bumped=true" >> $GITHUB_OUTPUT
+        
+    - name: Commit Version Bump
+      if: steps.bump_version.outputs.bumped == 'true'
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git add app/build.gradle
+        git commit -m "Bump version to ${{ steps.bump_version.outputs.new_version }} (code: ${{ steps.bump_version.outputs.new_code }})"
+        git push
 
     - name: Set up JDK 17
       uses: actions/setup-java@v4
