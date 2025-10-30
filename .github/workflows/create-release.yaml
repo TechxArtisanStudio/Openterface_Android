@@ -1,0 +1,215 @@
+name: Create GitHub Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release Type'
+        required: true
+        type: choice
+        options:
+          - pre-release
+          - release
+        default: 'pre-release'
+      tag_name:
+        description: 'Tag name (e.g., v1.2.0)'
+        required: true
+        type: string
+      release_title:
+        description: 'Release title (leave empty to use tag name)'
+        required: false
+        type: string
+      release_notes:
+        description: 'Release notes (optional)'
+        required: false
+        type: string
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set Release Variables
+      id: vars
+      run: |
+        # Determine tag name
+        if [ "${{ github.event_name }}" = "push" ]; then
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          RELEASE_TYPE="release"
+        else
+          TAG_NAME="${{ inputs.tag_name }}"
+          RELEASE_TYPE="${{ inputs.release_type }}"
+        fi
+        
+        # Set release title
+        if [ -n "${{ inputs.release_title }}" ]; then
+          RELEASE_TITLE="${{ inputs.release_title }}"
+        else
+          RELEASE_TITLE="Openterface Android ${TAG_NAME}"
+        fi
+        
+        # Determine if pre-release
+        if [ "$RELEASE_TYPE" = "pre-release" ]; then
+          IS_PRERELEASE="true"
+        else
+          IS_PRERELEASE="false"
+        fi
+        
+        echo "tag_name=${TAG_NAME}" >> $GITHUB_OUTPUT
+        echo "release_title=${RELEASE_TITLE}" >> $GITHUB_OUTPUT
+        echo "is_prerelease=${IS_PRERELEASE}" >> $GITHUB_OUTPUT
+        echo "release_type=${RELEASE_TYPE}" >> $GITHUB_OUTPUT
+        
+        echo "📦 Tag: ${TAG_NAME}"
+        echo "📝 Title: ${RELEASE_TITLE}"
+        echo "🏷️  Type: ${RELEASE_TYPE}"
+        echo "🔖 Pre-release: ${IS_PRERELEASE}"
+
+    - name: Get Version Info
+      id: version
+      run: |
+        VERSION_NAME=$(grep "versionName" app/build.gradle | awk '{print $2}' | tr -d '"')
+        VERSION_CODE=$(grep "versionCode" app/build.gradle | awk '{print $2}')
+        echo "version_name=${VERSION_NAME}" >> $GITHUB_OUTPUT
+        echo "version_code=${VERSION_CODE}" >> $GITHUB_OUTPUT
+        echo "App Version: ${VERSION_NAME} (${VERSION_CODE})"
+
+    - name: Download Latest Build Artifacts
+      uses: dawidd6/action-download-artifact@v3
+      with:
+        workflow: build-package.yaml
+        branch: main
+        name: Openterface-v${{ steps.version.outputs.version_name }}-APK
+        path: ./release-artifacts/apk
+        
+    - name: Download AAB Artifacts
+      uses: dawidd6/action-download-artifact@v3
+      continue-on-error: true
+      with:
+        workflow: build-package.yaml
+        branch: main
+        name: Openterface-v${{ steps.version.outputs.version_name }}-AAB
+        path: ./release-artifacts/aab
+
+    - name: List Downloaded Artifacts
+      run: |
+        echo "📂 Downloaded Artifacts:"
+        ls -lhR ./release-artifacts/
+        
+    - name: Generate Release Notes
+      id: release_notes
+      run: |
+        # Start with user-provided notes if available
+        if [ -n "${{ inputs.release_notes }}" ]; then
+          NOTES="${{ inputs.release_notes }}"
+        else
+          # Generate automatic release notes
+          cat > release_notes.md << 'EOF'
+        ## Openterface Android ${{ steps.vars.outputs.tag_name }}
+        
+        ### 📱 Application Information
+        - **Version**: ${{ steps.version.outputs.version_name }}
+        - **Version Code**: ${{ steps.version.outputs.version_code }}
+        - **Release Date**: $(date '+%Y-%m-%d')
+        
+        ### 📦 Downloads
+        This release includes:
+        - **APK**: For direct installation on Android devices
+        - **AAB**: For Google Play Store submission (if available)
+        
+        ### ✨ Features
+        - Support for 16 KB page size (Android 15+ compatible)
+        - Target SDK: Android 14 (API 34)
+        - Minimum SDK: Android 5.0 (API 21)
+        
+        ### 📥 Installation
+        **APK Installation:**
+        1. Download the APK file below
+        2. Enable 'Install from Unknown Sources' in Android settings
+        3. Open the APK file to install
+        
+        **Google Play:**
+        Upload the AAB file to Google Play Console for distribution.
+        
+        ### 🔐 Security
+        Both APK and AAB files are signed with the official release keystore.
+        
+        ---
+        **Full Changelog**: https://github.com/${{ github.repository }}/commits/${{ steps.vars.outputs.tag_name }}
+        EOF
+          
+          # Replace variables in the file
+          sed -i "s|\${{ steps.vars.outputs.tag_name }}|${{ steps.vars.outputs.tag_name }}|g" release_notes.md
+          sed -i "s|\${{ steps.version.outputs.version_name }}|${{ steps.version.outputs.version_name }}|g" release_notes.md
+          sed -i "s|\${{ steps.version.outputs.version_code }}|${{ steps.version.outputs.version_code }}|g" release_notes.md
+          sed -i "s|\${{ github.repository }}|${{ github.repository }}|g" release_notes.md
+          sed -i "s|\$(date '+%Y-%m-%d')|$(date '+%Y-%m-%d')|g" release_notes.md
+        fi
+        
+        echo "notes_file=release_notes.md" >> $GITHUB_OUTPUT
+
+    - name: Create Git Tag
+      if: github.event_name == 'workflow_dispatch'
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        
+        # Check if tag already exists
+        if git rev-parse "${{ steps.vars.outputs.tag_name }}" >/dev/null 2>&1; then
+          echo "⚠️  Tag ${{ steps.vars.outputs.tag_name }} already exists, skipping tag creation"
+        else
+          git tag -a "${{ steps.vars.outputs.tag_name }}" -m "Release ${{ steps.vars.outputs.tag_name }}"
+          git push origin "${{ steps.vars.outputs.tag_name }}"
+          echo "✅ Created and pushed tag: ${{ steps.vars.outputs.tag_name }}"
+        fi
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.vars.outputs.tag_name }}
+        name: ${{ steps.vars.outputs.release_title }}
+        body_path: release_notes.md
+        draft: false
+        prerelease: ${{ steps.vars.outputs.is_prerelease }}
+        files: |
+          ./release-artifacts/apk/*.apk
+          ./release-artifacts/aab/*.aab
+        fail_on_unmatched_files: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Release Summary
+      run: |
+        echo "## 🎉 Release Created Successfully!" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📋 Release Information" >> $GITHUB_STEP_SUMMARY
+        echo "- **Tag**: ${{ steps.vars.outputs.tag_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Title**: ${{ steps.vars.outputs.release_title }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Type**: ${{ steps.vars.outputs.release_type }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Version**: ${{ steps.version.outputs.version_name }} (code: ${{ steps.version.outputs.version_code }})" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔗 Links" >> $GITHUB_STEP_SUMMARY
+        echo "- [View Release](https://github.com/${{ github.repository }}/releases/tag/${{ steps.vars.outputs.tag_name }})" >> $GITHUB_STEP_SUMMARY
+        echo "- [All Releases](https://github.com/${{ github.repository }}/releases)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📦 Artifacts Included" >> $GITHUB_STEP_SUMMARY
+        if [ -d "./release-artifacts/apk" ] && [ -n "$(ls -A ./release-artifacts/apk)" ]; then
+          echo "- ✅ APK files" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "- ⚠️  No APK files found" >> $GITHUB_STEP_SUMMARY
+        fi
+        if [ -d "./release-artifacts/aab" ] && [ -n "$(ls -A ./release-artifacts/aab)" ]; then
+          echo "- ✅ AAB files" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "- ⚠️  No AAB files found" >> $GITHUB_STEP_SUMMARY
+        fi
