@@ -94,14 +94,15 @@ jobs:
     - name: Generate Release Notes
       id: release_notes
       run: |
-        # Generate automatic release notes
-        cat > release_notes.md << 'EOF'
+        # Generate automatic release notes (using unquoted heredoc to allow variable expansion)
+        RELEASE_DATE=$(date '+%Y-%m-%d')
+        cat > release_notes.md << EOF
         ## Openterface Android ${{ steps.vars.outputs.tag_name }}
         
         ### 📱 Application Information
         - **Version**: ${{ steps.version.outputs.version_name }}
         - **Version Code**: ${{ steps.version.outputs.version_code }}
-        - **Release Date**: $(date '+%Y-%m-%d')
+        - **Release Date**: ${RELEASE_DATE}
         
         ### 📦 Downloads
         This release includes:
@@ -110,7 +111,7 @@ jobs:
         
         ### ✨ Features
         - Support for 16 KB page size (Android 15+ compatible)
-        - Target SDK: Android 14 (API 34)
+        - Target SDK: Android 15 (API 35)
         - Minimum SDK: Android 5.0 (API 21)
         
         ### 📥 Installation
@@ -128,13 +129,6 @@ jobs:
         ---
         **Full Changelog**: https://github.com/${{ github.repository }}/commits/${{ steps.vars.outputs.tag_name }}
         EOF
-        
-        # Replace variables in the file
-        sed -i "s|\${{ steps.vars.outputs.tag_name }}|${{ steps.vars.outputs.tag_name }}|g" release_notes.md
-        sed -i "s|\${{ steps.version.outputs.version_name }}|${{ steps.version.outputs.version_name }}|g" release_notes.md
-        sed -i "s|\${{ steps.version.outputs.version_code }}|${{ steps.version.outputs.version_code }}|g" release_notes.md
-        sed -i "s|\${{ github.repository }}|${{ github.repository }}|g" release_notes.md
-        sed -i "s|\$(date '+%Y-%m-%d')|$(date '+%Y-%m-%d')|g" release_notes.md
         
         echo "notes_file=release_notes.md" >> $GITHUB_OUTPUT
 
