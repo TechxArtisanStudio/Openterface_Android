@@ -223,52 +223,37 @@ public class DrawerLayoutDeal extends Fragment {
     }
 
     private void CameraVideoDeal(){
-        @SuppressLint("NonConstantResourceId")
         View.OnClickListener buttonClickListener = view -> {
-            switch (view.getId()) {
-                case R.id.action_device:
-                    activity.showDeviceListDialog();
-                    break;
-                case R.id.action_safely_eject:
-                    activity.safelyEject();
-                    break;
-                case R.id.action_control:
-                    activity.showCameraControlsDialog();
-                    break;
-                case R.id.action_baudrate:
-                    showBaudrateDialog();
-                    break;
-                case R.id.action_video_format:
-                    activity.showVideoFormatDialog();
-                    break;
-                case R.id.action_rotate_90_CW:
-                    activity.rotateBy(90);
-                    break;
-                case R.id.action_rotate_90_CCW:
-                    activity.rotateBy(-90);
-                    break;
-                case R.id.action_flip_horizontally:
-                    activity.flipHorizontally();
-                    break;
-                case R.id.action_flip_vertically:
-                    activity.flipVertically();
-                    break;
-                case R.id.ScreenHost_Picture:
-                    activity.takePicture();
-                    break;
-                case R.id.Recording_Video:
-                    activity.toggleVideoRecord(!mIsRecording);
-                    mIsRecording = !mIsRecording;
-                    break;
-                case R.id.Close_DrawLayout:
-                    Log.d("DrawerLayoutDeal", "Close_DrawLayout");
-                    drawer_layout_setup.setVisibility(View.GONE);
+            int id = view.getId();
+            if (id == R.id.action_device) {
+                activity.showDeviceListDialog();
+            } else if (id == R.id.action_safely_eject) {
+                activity.safelyEject();
+            } else if (id == R.id.action_control) {
+                activity.showCameraControlsDialog();
+            } else if (id == R.id.action_baudrate) {
+                showBaudrateDialog();
+            } else if (id == R.id.action_video_format) {
+                activity.showVideoFormatDialog();
+            } else if (id == R.id.action_rotate_90_CW) {
+                activity.rotateBy(90);
+            } else if (id == R.id.action_rotate_90_CCW) {
+                activity.rotateBy(-90);
+            } else if (id == R.id.action_flip_horizontally) {
+                activity.flipHorizontally();
+            } else if (id == R.id.action_flip_vertically) {
+                activity.flipVertically();
+            } else if (id == R.id.ScreenHost_Picture) {
+                activity.takePicture();
+            } else if (id == R.id.Recording_Video) {
+                activity.toggleVideoRecord(!mIsRecording);
+                mIsRecording = !mIsRecording;
+            } else if (id == R.id.Close_DrawLayout) {
+                Log.d("DrawerLayoutDeal", "Close_DrawLayout");
+                drawer_layout_setup.setVisibility(View.GONE);
 //                    if (drawer_layout.isDrawerOpen(GravityCompat.END)) {
 //                        drawer_layout.closeDrawer(GravityCompat.END);
 //                    }
-                    break;
-                default:
-                    break;
             }
         };
 

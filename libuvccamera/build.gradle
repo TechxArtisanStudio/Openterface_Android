@@ -28,6 +28,7 @@ plugins {
 }
 
 android {
+    namespace 'com.serenegiant.uvccamera'
     compileSdkVersion versionCompiler
 
     compileOptions {
@@ -39,6 +40,7 @@ android {
         minSdkVersion versionMin
         targetSdkVersion versionTarget
 
+        ndkVersion '23.1.7779620'
         ndk {
             abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
         }
