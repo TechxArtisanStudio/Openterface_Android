@@ -544,8 +544,9 @@ public class MainActivity extends AppCompatActivity {
     private void setListeners() {
 
         mBinding.keyBoard.setOnClickListener(v -> {
-            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);//open keyboard
-            imm.toggleSoftInput(InputMethodManager.SHOW_FORCED,0);
+            // Removed InputMethodManager to prevent Android soft keyboard from appearing
+            // InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            // imm.toggleSoftInput(InputMethodManager.SHOW_FORCED,0);
             LinearLayout Fragment_KeyBoard_ShortCut = findViewById(R.id.Fragment_KeyBoard_ShortCut);
             LinearLayout Fragment_KeyBoard_Function = findViewById(R.id.Fragment_KeyBoard_Function);
             LinearLayout Fragment_KeyBoard_System = findViewById(R.id.Fragment_KeyBoard_System);
