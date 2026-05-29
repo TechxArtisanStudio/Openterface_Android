@@ -216,6 +216,9 @@ public class MainActivity extends AppCompatActivity {
         // Set UsbDeviceManager instance in MouseManager for enhanced FE0C support
         MouseManager.setUsbDeviceManager(usbDeviceManager);
 
+        // Initialize the mouse event worker thread
+        MouseManager.init();
+
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
 
@@ -532,6 +535,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         clearCameraHelper();
+
+        // Release the mouse event worker thread
+        MouseManager.release();
         
         // Cleanup debug broadcast receiver
         if (debugReceiver != null) {

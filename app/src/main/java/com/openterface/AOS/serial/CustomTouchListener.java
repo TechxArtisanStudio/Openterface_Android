@@ -52,7 +52,7 @@ public class CustomTouchListener implements View.OnTouchListener {
     //Event processing time
     private static final long DOUBLE_CLICK_TIME_DELTA = 300;    // double click time threshold
     private static final long TWO_FINGER_PRESS_DELAY = 750;     // two finger press delay
-    private static final long MOVE_DELAY = 50; //move delay
+    private static final long MOVE_THROTTLE_MS = 16; // ~60fps throttle for mouse move events
 
     //coordinate record
     private float firstClickX, firstClickY;
@@ -245,6 +245,13 @@ public class CustomTouchListener implements View.OnTouchListener {
     }
 
     private void handActionMoveMouse(MotionEvent event){
+        long currentTime = System.currentTimeMillis();
+        // Throttle mouse move events to avoid overwhelming the USB serial port
+        if (currentTime - lastMoveTime < MOVE_THROTTLE_MS) {
+            return;
+        }
+        lastMoveTime = currentTime;
+
         // Added double-click drag and drop processing
         if (isDoubleClickPhase && event.getPointerCount() == 1) {
             if (!hasEnteredDragMode){
@@ -256,10 +263,8 @@ public class CustomTouchListener implements View.OnTouchListener {
             startMoveMSY = event.getY();
 
             if (KeyMouse_state) {
-                System.out.println("double click drag AbsDragData");
                 MouseManager.sendHexAbsDragData(startMoveMSX, startMoveMSY);
             } else {
-                System.out.println("double click drag RelDragData");
                 MouseManager.sendHexRelData("SecLeftData", startMoveMSX, startMoveMSY, lastMoveMSX, lastMoveMSY);
                 lastMoveMSX = startMoveMSX;
                 lastMoveMSY = startMoveMSY;
@@ -272,26 +277,7 @@ public class CustomTouchListener implements View.OnTouchListener {
             return;
         }
 
-        long currentTime = System.currentTimeMillis();
         if (isPanning && event.getPointerCount() == 2) {  //deal Middle click
-
-//            float y1 = event.getY(0) - startY1;
-//            float y2 = event.getY(1) - startY2;
-//            startMoveMSY = event.getY();
-//            if (((y1 > PAN_SENSITIVITY && y2 > PAN_SENSITIVITY) || (y1 < -PAN_SENSITIVITY && y2 < -PAN_SENSITIVITY))) {
-//                // Check if enough time has elapsed since the last move
-//                if (currentTime - lastMoveTime >= MOVE_DELAY) {
-//                    handler.removeCallbacks(twoFingerPressRunnable);
-//                    Log.d(TAG, "ACTION_MOVE");
-//
-//                    MouseManager.handleDoubleFingerPan(startMoveMSY, lastMoveMSY);
-//                    hasHandledMove = true;
-//                    lastMoveMSY = startMoveMSY;
-//
-//                    // Update lastMoveTime to the current time
-//                    lastMoveTime = currentTime;
-//                }
-//            }
 
             float zoomX1 = event.getX(0);
             float zoomY1 = event.getY(0);
@@ -373,7 +359,6 @@ public class CustomTouchListener implements View.OnTouchListener {
                     }
                 }
             } else {
-                Log.d(TAG, "Rel data send now");
                 MouseManager.sendHexRelData("SecNullData", startMoveMSX, startMoveMSY, lastMoveMSX, lastMoveMSY);
                 lastMoveMSX = startMoveMSX;
                 lastMoveMSY = startMoveMSY;
