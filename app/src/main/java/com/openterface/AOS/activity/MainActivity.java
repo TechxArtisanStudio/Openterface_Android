@@ -54,6 +54,7 @@ import com.openterface.AOS.KeyBoardClick.KeyBoardAlt;
 import com.openterface.AOS.KeyBoardClick.KeyBoardClose;
 import com.openterface.AOS.KeyBoardClick.KeyBoardCtrl;
 import com.openterface.AOS.KeyBoardClick.KeyBoardFunction;
+import com.openterface.AOS.KeyBoardClick.KeyBoardOpacity;
 import com.openterface.AOS.KeyBoardClick.KeyBoardShift;
 import com.openterface.AOS.KeyBoardClick.KeyBoardShortCut;
 import com.openterface.AOS.KeyBoardClick.KeyBoardSystem;
@@ -162,6 +163,8 @@ public class MainActivity extends AppCompatActivity {
     private CameraControlsDialogFragment mControlsDialog;
     private DeviceListDialogFragment mDeviceListDialog;
     private VideoFormatDialogFragment mFormatDialog;
+
+    private KeyBoardOpacity mKeyBoardOpacity;
 
     private UsbManager usbManager;
 
@@ -281,6 +284,10 @@ public class MainActivity extends AppCompatActivity {
         KeyBoardSystem.setSystemButtonsClickColor();//deal system button click color
 
         KeyBoardClose.setCloseButtonClickColor();//deal close button click color
+
+        //Keyboard Opacity
+        mKeyBoardOpacity = new KeyBoardOpacity(this);
+        mKeyBoardOpacity.setOpacityButtonClick();
 
         DrawerLayoutDeal.setDrawerLayoutButtonClickColor();//deal drawer layout button click color
 
@@ -569,6 +576,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
             keyBoardView.setVisibility(View.VISIBLE);
+            mKeyBoardOpacity.restoreOpacity();
             //hide floating button keyboard and set_up_button
             FloatingActionButton keyBoard = findViewById(R.id.keyBoard);
             keyBoard.setVisibility(View.GONE);

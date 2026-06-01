@@ -55,7 +55,7 @@ public class KeyMapConfig_De implements KeyBoardMapping {
         keyMappings.put(R.id.N_Button, new String[]{"n", "N"});
         keyMappings.put(R.id.M_Button, new String[]{"m", "M"});
 
-        keyMappings.put(R.id.DEL_Button, new String[]{"DEL", "DEL"});
+        keyMappings.put(R.id.Key_Backspace, new String[]{"BACK", "BACK"});
         keyMappings.put(R.id.Space_Button, new String[]{"SPACE", "SPACE"});
         keyMappings.put(R.id.Enter_Button, new String[]{"ENTER", "ENTER"});
 
@@ -100,6 +100,37 @@ public class KeyMapConfig_De implements KeyBoardMapping {
         keyMappings.put(R.id.Question_Mark, new String[]{"-", "_"});
         keyMappings.put(R.id.Tilde, new String[]{"^", "°"});
         keyMappings.put(R.id.Left_Than_Button, new String[]{"<", ">"});
+
+        // New keyboard layout keys
+        keyMappings.put(R.id.Key_Tilde, new String[]{"^", "°"});
+        keyMappings.put(R.id.Key_Minus, new String[]{"ß", "?"});
+        keyMappings.put(R.id.Key_Equals, new String[]{"´", "`"});
+        keyMappings.put(R.id.Key_Backspace, new String[]{"BACK", "BACK"});
+
+        keyMappings.put(R.id.Key_Tab, new String[]{"TAB", "TAB"});
+        keyMappings.put(R.id.Key_LeftBracket, new String[]{"ü", "Ü"});
+        keyMappings.put(R.id.Key_RightBracket, new String[]{"+", "*"});
+        keyMappings.put(R.id.Key_Backslash, new String[]{"#", "'"});
+
+        keyMappings.put(R.id.Key_Caps, new String[]{"CAPS_LOCK", "CAPS_LOCK"});
+        keyMappings.put(R.id.Key_Semicolon, new String[]{"ö", "Ö"});
+        keyMappings.put(R.id.Key_Apostrophe, new String[]{"ä", "Ä"});
+
+        keyMappings.put(R.id.Key_LeftShift, new String[]{"SHIFT_LEFT", "SHIFT_LEFT"});
+        keyMappings.put(R.id.Key_RightShift, new String[]{"SHIFT_RIGHT", "SHIFT_RIGHT"});
+        keyMappings.put(R.id.Key_Comma, new String[]{",", ";"});
+        keyMappings.put(R.id.Key_Period, new String[]{".", ":"});
+        keyMappings.put(R.id.Key_Slash, new String[]{"-", "_"});
+
+        keyMappings.put(R.id.Key_Ctrl, new String[]{"CTRL_LEFT", "CTRL_LEFT"});
+        keyMappings.put(R.id.Key_CtrlGr, new String[]{"CTRL_RIGHT", "CTRL_RIGHT"});
+        keyMappings.put(R.id.Key_Win, new String[]{"Win", "Win"});
+        keyMappings.put(R.id.Key_Alt, new String[]{"ALT_LEFT", "ALT_LEFT"});
+        keyMappings.put(R.id.Key_AltGr, new String[]{"ALT_RIGHT", "ALT_RIGHT"});
+        keyMappings.put(R.id.Key_Up, new String[]{"DPAD_UP", "DPAD_UP"});
+        keyMappings.put(R.id.Key_Left, new String[]{"DPAD_LEFT", "DPAD_LEFT"});
+        keyMappings.put(R.id.Key_Down, new String[]{"DPAD_DOWN", "DPAD_DOWN"});
+        keyMappings.put(R.id.Key_Right, new String[]{"DPAD_RIGHT", "DPAD_RIGHT"});
     }
 
     public static Map<Object, String> getKeyCodeMap() {

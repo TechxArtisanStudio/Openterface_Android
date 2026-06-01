@@ -55,7 +55,7 @@ public class KeyMapConfig_Jp implements KeyBoardMapping {
         keyMappings.put(R.id.N_Button, new String[]{"n", "N"});
         keyMappings.put(R.id.M_Button, new String[]{"m", "M"});
 
-        keyMappings.put(R.id.DEL_Button, new String[]{"DEL", "DEL"});
+        keyMappings.put(R.id.Key_Backspace, new String[]{"BACK", "BACK"});
         keyMappings.put(R.id.Space_Button, new String[]{"SPACE", "SPACE"});
         keyMappings.put(R.id.Enter_Button, new String[]{"ENTER", "ENTER"});
 

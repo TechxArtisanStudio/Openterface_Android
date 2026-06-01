@@ -70,6 +70,8 @@ public class KeyBoardSystem {
         KeyBoard_System = activity.findViewById(R.id.KeyBoard_System);
         this.context = activity;
         SystemButtons = new View[]{
+            // Row 1: Number row
+            activity.findViewById(R.id.Key_Tilde),
             activity.findViewById(R.id.One_Sigh_Button),
             activity.findViewById(R.id.Two_At_Button),
             activity.findViewById(R.id.Three_Pound_Button),
@@ -80,7 +82,12 @@ public class KeyBoardSystem {
             activity.findViewById(R.id.Eight_Asterisk_Button),
             activity.findViewById(R.id.Nine_Left_Parenthesis_Button),
             activity.findViewById(R.id.Zero_Right_Parenthesis_Button),
+            activity.findViewById(R.id.Key_Minus),
+            activity.findViewById(R.id.Key_Equals),
+            activity.findViewById(R.id.Key_Backspace),
 
+            // Row 2: Q row
+            activity.findViewById(R.id.Key_Tab),
             activity.findViewById(R.id.Q_Button),
             activity.findViewById(R.id.W_Button),
             activity.findViewById(R.id.E_Button),
@@ -91,7 +98,12 @@ public class KeyBoardSystem {
             activity.findViewById(R.id.I_Button),
             activity.findViewById(R.id.O_Button),
             activity.findViewById(R.id.P_Button),
+            activity.findViewById(R.id.Key_LeftBracket),
+            activity.findViewById(R.id.Key_RightBracket),
+            activity.findViewById(R.id.Key_Backslash),
 
+            // Row 3: A row
+            activity.findViewById(R.id.Key_Caps),
             activity.findViewById(R.id.A_Button),
             activity.findViewById(R.id.S_Button),
             activity.findViewById(R.id.D_Button),
@@ -101,7 +113,12 @@ public class KeyBoardSystem {
             activity.findViewById(R.id.J_Button),
             activity.findViewById(R.id.K_Button),
             activity.findViewById(R.id.L_Button),
+            activity.findViewById(R.id.Key_Semicolon),
+            activity.findViewById(R.id.Key_Apostrophe),
+            activity.findViewById(R.id.Enter_Button),
 
+            // Row 4: Z row
+            activity.findViewById(R.id.Key_LeftShift),
             activity.findViewById(R.id.Z_Button),
             activity.findViewById(R.id.X_Button),
             activity.findViewById(R.id.C_Button),
@@ -109,10 +126,22 @@ public class KeyBoardSystem {
             activity.findViewById(R.id.B_Button),
             activity.findViewById(R.id.N_Button),
             activity.findViewById(R.id.M_Button),
+            activity.findViewById(R.id.Key_Comma),
+            activity.findViewById(R.id.Key_Period),
+            activity.findViewById(R.id.Key_Slash),
+            activity.findViewById(R.id.Key_RightShift),
 
-            activity.findViewById(R.id.DEL_Button),
+            // Row 5: Bottom row
+            activity.findViewById(R.id.Key_Ctrl),
+            activity.findViewById(R.id.Key_Win),
+            activity.findViewById(R.id.Key_Alt),
             activity.findViewById(R.id.Space_Button),
-            activity.findViewById(R.id.Enter_Button),
+            activity.findViewById(R.id.Key_Up),
+            activity.findViewById(R.id.Key_AltGr),
+            activity.findViewById(R.id.Key_CtrlGr),
+            activity.findViewById(R.id.Key_Left),
+            activity.findViewById(R.id.Key_Down),
+            activity.findViewById(R.id.Key_Right),
         };
 
         languageMappings.put("us", new KeyMapConfig_Us());

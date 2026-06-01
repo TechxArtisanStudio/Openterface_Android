@@ -121,17 +121,24 @@
     <string name="PgDn">PgDn</string>
 
     <!--    system button-->
+    <!-- Row 1: Number row -->
+    <string name="Key_Tilde">~\n`</string>
     <string name="One_Sigh_Button">!\n1</string>
-    <string name="Two_At_Button">@\n2</string>
+    <string name="Two_At_Button">\@\n2</string>
     <string name="Three_Pound_Button">#\n3</string>
     <string name="Four_Dollar_Button">$\n4</string>
     <string name="Five_Percent_Button">%\n5</string>
     <string name="Six_Caret_Button">^\n6</string>
     <string name="Seven_Ampersand_Button">&amp;\n7</string>
-    <string name="Eight_Asterisk_Button">*\n8</string>
-    <string name="Nine_Left_Parenthesis_Button">(\n9</string>
-    <string name="Zero_Right_Parenthesis_Button">)\n0</string>
+    <string name="Eight_Asterisk_Button" tools:ignore="MissingTranslation">*\n8</string>
+    <string name="Nine_Left_Parenthesis_Button" tools:ignore="MissingTranslation">(\n9</string>
+    <string name="Zero_Right_Parenthesis_Button" tools:ignore="MissingTranslation">)\n0</string>
+    <string name="Key_Minus">_\n-</string>
+    <string name="Key_Equals">+\n=</string>
+    <string name="Key_Backspace" tools:ignore="MissingTranslation">⌫</string>
 
+    <!-- Row 2: Q row -->
+    <string name="Key_Tab" tools:ignore="MissingTranslation">Tab</string>
     <string name="Q_Button">Q</string>
     <string name="W_Button">W</string>
     <string name="E_Button">E</string>
@@ -142,7 +149,12 @@
     <string name="I_Button">I</string>
     <string name="O_Button">O</string>
     <string name="P_Button">P</string>
+    <string name="Key_LeftBracket">{\n[</string>
+    <string name="Key_RightBracket">}\n]</string>
+    <string name="Key_Backslash">|\n\\</string>
 
+    <!-- Row 3: A row -->
+    <string name="Key_Caps" tools:ignore="MissingTranslation">Caps</string>
     <string name="A_Button">A</string>
     <string name="S_Button">S</string>
     <string name="D_Button">D</string>
@@ -152,7 +164,12 @@
     <string name="J_Button">J</string>
     <string name="K_Button">K</string>
     <string name="L_Button">L</string>
+    <string name="Key_Semicolon">:\n;</string>
+    <string name="Key_Apostrophe">\"\n\'</string>
+    <string name="Enter_Button">Enter</string>
 
+    <!-- Row 4: Z row -->
+    <string name="Key_LeftShift" tools:ignore="MissingTranslation">⇧</string>
     <string name="Z_Button">Z</string>
     <string name="X_Button">X</string>
     <string name="C_Button">C</string>
@@ -160,10 +177,25 @@
     <string name="B_Button">B</string>
     <string name="N_Button">N</string>
     <string name="M_Button">M</string>
+    <string name="Key_Comma">&lt;\n,</string>
+    <string name="Key_Period">&gt;\n.</string>
+    <string name="Key_Slash">\?\n/</string>
+    <string name="Key_RightShift" tools:ignore="MissingTranslation">⇧</string>
 
+    <!-- Row 5: Bottom row -->
+    <string name="Key_Ctrl" tools:ignore="MissingTranslation">Ctrl</string>
+    <string name="Key_Win" tools:ignore="MissingTranslation">Win</string>
+    <string name="Key_Alt" tools:ignore="MissingTranslation">Alt</string>
+    <string name="Space_Button" />
+    <string name="Key_AltGr" tools:ignore="MissingTranslation">Alt</string>
+    <string name="Key_CtrlGr" tools:ignore="MissingTranslation">Ctrl</string>
+    <string name="Key_Up" tools:ignore="MissingTranslation">↑</string>
+    <string name="Key_Left" tools:ignore="MissingTranslation">←</string>
+    <string name="Key_Down" tools:ignore="MissingTranslation">↓</string>
+    <string name="Key_Right" tools:ignore="MissingTranslation">→</string>
+
+    <!--    legacy keys (used in function_button.xml) -->
     <string name="DEL_Button">DEL</string>
-    <string name="Space_Button">Space</string>
-    <string name="Enter_Button">Enter</string>
     <string name="Left_Than_Button_Text" tools:ignore="MissingTranslation">&gt;\n&lt; |</string>
     <!--    OpenterFace Setting-->
     <string name="Close_DrawLayout">Close_DrawLayout</string>
