@@ -54,6 +54,7 @@ import com.openterface.AOS.KeyBoardClick.KeyBoardAlt;
 import com.openterface.AOS.KeyBoardClick.KeyBoardClose;
 import com.openterface.AOS.KeyBoardClick.KeyBoardCtrl;
 import com.openterface.AOS.KeyBoardClick.KeyBoardFunction;
+import com.openterface.AOS.KeyBoardClick.KeyBoardOpacity;
 import com.openterface.AOS.KeyBoardClick.KeyBoardShift;
 import com.openterface.AOS.KeyBoardClick.KeyBoardShortCut;
 import com.openterface.AOS.KeyBoardClick.KeyBoardSystem;
@@ -163,6 +164,8 @@ public class MainActivity extends AppCompatActivity {
     private DeviceListDialogFragment mDeviceListDialog;
     private VideoFormatDialogFragment mFormatDialog;
 
+    private KeyBoardOpacity mKeyBoardOpacity;
+
     private UsbManager usbManager;
 
     private GestureDetector gestureDetector;
@@ -216,6 +219,9 @@ public class MainActivity extends AppCompatActivity {
         // Set UsbDeviceManager instance in MouseManager for enhanced FE0C support
         MouseManager.setUsbDeviceManager(usbDeviceManager);
 
+        // Initialize the mouse event worker thread
+        MouseManager.init();
+
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
 
@@ -262,14 +268,8 @@ public class MainActivity extends AppCompatActivity {
         
         // Register debug broadcast receiver
         registerDebugReceiver();
-
-        KeyBoardCtrlButton.setCtrlButtonClickColor();//deal Ctrl button click color
-
-        KeyBoardShiftButton.setShiftButtonClickColor();//deal shift button click color
-
-        KeyBoardAltButton.setAltButtonClickColor();//deal Alt button click color
-
-        KeyBoardWinButton.setWinButtonClickColor();//deal Win button click color
+        // Modifier keys (Ctrl, Shift, Alt, Win) are now initialized in their constructors
+        // with long-press toggle and press visual feedback
 
         KeyBoardShortCut.setShortCutButtonsClickColor();//deal short cut button click color
 
@@ -278,6 +278,10 @@ public class MainActivity extends AppCompatActivity {
         KeyBoardSystem.setSystemButtonsClickColor();//deal system button click color
 
         KeyBoardClose.setCloseButtonClickColor();//deal close button click color
+
+        //Keyboard Opacity
+        mKeyBoardOpacity = new KeyBoardOpacity(this);
+        mKeyBoardOpacity.setOpacityButtonClick();
 
         DrawerLayoutDeal.setDrawerLayoutButtonClickColor();//deal drawer layout button click color
 
@@ -532,6 +536,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         clearCameraHelper();
+
+        // Release the mouse event worker thread
+        MouseManager.release();
         
         // Cleanup debug broadcast receiver
         if (debugReceiver != null) {
@@ -563,6 +570,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
             keyBoardView.setVisibility(View.VISIBLE);
+            mKeyBoardOpacity.restoreOpacity();
             //hide floating button keyboard and set_up_button
             FloatingActionButton keyBoard = findViewById(R.id.keyBoard);
             keyBoard.setVisibility(View.GONE);

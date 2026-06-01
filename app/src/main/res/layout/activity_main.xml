@@ -136,6 +136,32 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
 
+                    <ImageButton
+                        android:id="@+id/KeyBoard_System"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"
+                        android:src="@drawable/keyboard"
+                        android:scaleType="centerInside"
+                        android:padding="4dp"
+                        tools:ignore="ContentDescription"/>
+
+                    <ImageButton
+                        android:id="@+id/KeyBoard_Opacity"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"
+                        android:src="@drawable/ic_opacity"
+                        android:scaleType="centerInside"
+                        android:padding="4dp"
+                        tools:ignore="ContentDescription"/>
+
                     <android.widget.Button
                         android:id="@+id/KeyBoard_ShortCut"
                         android:layout_width="0dp"
@@ -202,19 +228,7 @@
                         android:theme="@style/ButtonTheme"
                         android:layout_marginHorizontal="1dp" />
 
-                    <ImageButton
-                        android:id="@+id/KeyBoard_System"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:background="@drawable/button_background"
-                        android:theme="@style/ButtonTheme"
-                        android:layout_marginHorizontal="1dp"
-                        android:src="@drawable/keyboard"
-                        android:scaleType="centerInside"
-                        android:padding="4dp"
-                        tools:ignore="ContentDescription"/>
-                </LinearLayout>
+                    </LinearLayout>
             </HorizontalScrollView>
 
             <ImageButton
