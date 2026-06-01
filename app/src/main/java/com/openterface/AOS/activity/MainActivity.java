@@ -268,14 +268,8 @@ public class MainActivity extends AppCompatActivity {
         
         // Register debug broadcast receiver
         registerDebugReceiver();
-
-        KeyBoardCtrlButton.setCtrlButtonClickColor();//deal Ctrl button click color
-
-        KeyBoardShiftButton.setShiftButtonClickColor();//deal shift button click color
-
-        KeyBoardAltButton.setAltButtonClickColor();//deal Alt button click color
-
-        KeyBoardWinButton.setWinButtonClickColor();//deal Win button click color
+        // Modifier keys (Ctrl, Shift, Alt, Win) are now initialized in their constructors
+        // with long-press toggle and press visual feedback
 
         KeyBoardShortCut.setShortCutButtonsClickColor();//deal short cut button click color
 

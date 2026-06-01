@@ -123,10 +123,8 @@ public class KeyMapConfig_De implements KeyBoardMapping {
         keyMappings.put(R.id.Key_Slash, new String[]{"-", "_"});
 
         keyMappings.put(R.id.Key_Ctrl, new String[]{"CTRL_LEFT", "CTRL_LEFT"});
-        keyMappings.put(R.id.Key_CtrlGr, new String[]{"CTRL_RIGHT", "CTRL_RIGHT"});
         keyMappings.put(R.id.Key_Win, new String[]{"Win", "Win"});
         keyMappings.put(R.id.Key_Alt, new String[]{"ALT_LEFT", "ALT_LEFT"});
-        keyMappings.put(R.id.Key_AltGr, new String[]{"ALT_RIGHT", "ALT_RIGHT"});
         keyMappings.put(R.id.Key_Up, new String[]{"DPAD_UP", "DPAD_UP"});
         keyMappings.put(R.id.Key_Left, new String[]{"DPAD_LEFT", "DPAD_LEFT"});
         keyMappings.put(R.id.Key_Down, new String[]{"DPAD_DOWN", "DPAD_DOWN"});
