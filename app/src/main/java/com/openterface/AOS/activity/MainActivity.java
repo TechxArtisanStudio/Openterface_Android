@@ -28,6 +28,8 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
+import android.content.ComponentName;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
@@ -38,6 +40,7 @@ import android.graphics.drawable.Drawable;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
 import android.os.Bundle;
+import android.os.IBinder;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -81,6 +84,17 @@ import com.openterface.AOS.databinding.ActivityMainBinding;
 import com.openterface.AOS.fragment.CameraControlsDialogFragment;
 import com.openterface.AOS.fragment.DeviceListDialogFragment;
 import com.openterface.AOS.fragment.VideoFormatDialogFragment;
+import com.openterface.AOS.fragment.VncServerSettingsDialogFragment;
+import com.openterface.AOS.fragment.WebRtcDialogFragment;
+import com.openterface.AOS.vnc.VncFrameCapture;
+import com.openterface.AOS.vnc.VncKeyMap;
+import com.openterface.AOS.vnc.VncServerCallback;
+import com.openterface.AOS.vnc.VncServerConfig;
+import com.openterface.AOS.vnc.VncServerService;
+import com.openterface.AOS.webrtc.WebRtcConfig;
+import com.openterface.AOS.webrtc.WebRtcFrameCapture;
+import com.openterface.AOS.webrtc.WebRtcInputRouter;
+import com.openterface.AOS.webrtc.WebRtcServerService;
 import com.serenegiant.widget.AspectRatioSurfaceView;
 
 import android.os.Environment;
@@ -172,6 +186,57 @@ public class MainActivity extends AppCompatActivity {
 
     private UsbDeviceManager usbDeviceManager;
 
+    // VNC Server
+    private VncServerService vncService;
+    private VncFrameCapture vncFrameCapture;
+    private VncServerConfig vncConfig;
+    private boolean vncServiceBound = false;
+
+    // VNC server resolution (used for mouse coordinate mapping)
+    private int vncServerWidth = 0;
+    private int vncServerHeight = 0;
+
+    // WebRTC Server
+    private WebRtcServerService webRtcService;
+    private WebRtcFrameCapture webRtcFrameCapture;
+    private WebRtcConfig webRtcConfig;
+    private WebRtcInputRouter webRtcInputRouter;
+    private boolean webRtcServiceBound = false;
+
+    // WebRTC server resolution (used for mouse coordinate mapping)
+    private int webRtcServerWidth = 0;
+    private int webRtcServerHeight = 0;
+
+    private final VncServerCallback vncCallback = new VncServerCallback() {
+        @Override
+        public void onClientConnected(String ip) {
+            Log.i(TAG, "VNC client connected: " + ip);
+        }
+
+        @Override
+        public void onClientDisconnected(String ip) {
+            Log.i(TAG, "VNC client disconnected: " + ip);
+        }
+
+        @Override
+        public void onPointerEvent(int buttonMask, int x, int y) {
+            // Handle VNC client mouse input - route to target via USB serial
+            handleVncMouseEvent(buttonMask, x, y);
+        }
+
+        @Override
+        public void onKeyboardEvent(int keysym, boolean down) {
+            // Handle VNC client keyboard input - route to target via USB serial
+            handleVncKeyboardEvent(keysym, down);
+        }
+
+        @Override
+        public void onEncodingChanged(String ip, String encoding) {
+            // Show encoding notification popup
+            showVncEncodingPopup(ip, encoding);
+        }
+    };
+
     public static boolean mKeyboardRequestSent = false;
 
     private final Queue<Character> characterQueue = new LinkedList<>();
@@ -221,6 +286,16 @@ public class MainActivity extends AppCompatActivity {
 
         // Initialize the mouse event worker thread
         MouseManager.init();
+
+        // Initialize VNC server components
+        vncConfig = new VncServerConfig(this);
+        vncFrameCapture = new VncFrameCapture(15);
+        bindVncService();
+
+        // Initialize WebRTC server components
+        webRtcConfig = new WebRtcConfig(this);
+        webRtcInputRouter = new WebRtcInputRouter();
+        bindWebRtcService();
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
@@ -509,7 +584,7 @@ public class MainActivity extends AppCompatActivity {
         super.onNewIntent(intent);
         setIntent(intent);
         usbDeviceManager.handleUsbDevice(intent);
-        if (intent.getAction().equals(UsbManager.ACTION_USB_DEVICE_ATTACHED)) {
+        if (intent.getAction() != null && intent.getAction().equals(UsbManager.ACTION_USB_DEVICE_ATTACHED)) {
             if (!mIsCameraConnected) {
                 mUsbDevice = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
                 selectDevice(mUsbDevice);
@@ -537,9 +612,21 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
         clearCameraHelper();
 
+        // Stop VNC server
+        if (vncService != null && vncServiceBound) {
+            vncService.stopServer();
+            unbindService(vncServiceConnection);
+        }
+
+        // Stop WebRTC server
+        if (webRtcService != null && webRtcServiceBound) {
+            webRtcService.stopServer();
+            unbindService(webRtcServiceConnection);
+        }
+
         // Release the mouse event worker thread
         MouseManager.release();
-        
+
         // Cleanup debug broadcast receiver
         if (debugReceiver != null) {
             unregisterReceiver(debugReceiver);
@@ -843,6 +930,18 @@ public class MainActivity extends AppCompatActivity {
             mIsCameraConnected = true;
             updateUIControls();
 //            usbDeviceManager.init();
+
+            // Start VNC frame capture if VNC server is running
+            // Use actual camera resolution, not screen dimensions
+            Size cameraSize = mCameraHelper.getPreviewSize();
+            if (vncService != null && vncService.isRunning() && cameraSize != null) {
+                vncFrameCapture.start(mCameraHelper, vncService, cameraSize.width, cameraSize.height);
+            }
+
+            // Auto-start VNC server if configured (camera is now ready)
+            if (vncConfig.isAutoStart() && vncService != null && !vncService.isRunning()) {
+                startVncServer();
+            }
         }
 
         @Override
@@ -853,6 +952,11 @@ public class MainActivity extends AppCompatActivity {
 
             if (mIsRecording) {
                 toggleVideoRecord(false);
+            }
+
+            // Stop VNC frame capture
+            if (vncFrameCapture != null) {
+                vncFrameCapture.stop(mCameraHelper);
             }
 
             if (mCameraHelper != null && mBinding.viewMainPreview.getSurfaceTexture() != null) {
@@ -1310,5 +1414,395 @@ public class MainActivity extends AppCompatActivity {
         
         registerReceiver(debugReceiver, filter, RECEIVER_NOT_EXPORTED);
         Log.d(TAG, "Debug broadcast receiver registered");
+    }
+
+    // ========================= VNC Server =========================
+
+    private final ServiceConnection vncServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            VncServerService.LocalBinder binder = (VncServerService.LocalBinder) service;
+            vncService = binder.getService();
+            vncServiceBound = true;
+            vncService.setCallback(vncCallback);
+
+            // Auto-start will be handled when camera connects (onCameraOpen)
+            // to ensure camera is ready before starting VNC server
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            vncServiceBound = false;
+            vncService = null;
+        }
+    };
+
+    private void bindVncService() {
+        Intent intent = new Intent(this, VncServerService.class);
+        bindService(intent, vncServiceConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    private void startVncServer() {
+        if (vncService == null || !vncServiceBound) return;
+
+        // Use actual camera resolution, not screen dimensions
+        int width = DEFAULT_WIDTH;
+        int height = DEFAULT_HEIGHT;
+        if (mCameraHelper != null) {
+            Size size = mCameraHelper.getPreviewSize();
+            if (size != null) {
+                width = size.width;
+                height = size.height;
+            }
+        }
+
+        // Store VNC resolution for mouse coordinate mapping
+        vncServerWidth = width;
+        vncServerHeight = height;
+        Log.e(TAG, "VNC resolution set to: " + width + "x" + height);
+        MouseManager.width_height(width, height);
+
+        boolean started = vncService.startServer(vncConfig.getPassword(), vncConfig.getPort(), width, height, vncConfig.getEncoding(), vncConfig.getQualityLevel(), vncConfig.getCompressLevel());
+        if (started && mCameraHelper != null) {
+            vncFrameCapture.start(mCameraHelper, vncService, width, height);
+        }
+    }
+
+    public void showVncServerDialog() {
+        VncServerSettingsDialogFragment dialog = new VncServerSettingsDialogFragment();
+        dialog.setVncService(vncService);
+
+        // Pass current camera resolution to dialog
+        final int cameraWidth;
+        final int cameraHeight;
+        if (mCameraHelper != null) {
+            Size size = mCameraHelper.getPreviewSize();
+            if (size != null) {
+                cameraWidth = size.width;
+                cameraHeight = size.height;
+            } else {
+                cameraWidth = DEFAULT_WIDTH;
+                cameraHeight = DEFAULT_HEIGHT;
+            }
+        } else {
+            cameraWidth = DEFAULT_WIDTH;
+            cameraHeight = DEFAULT_HEIGHT;
+        }
+        dialog.setPreviewSize(cameraWidth, cameraHeight);
+
+        dialog.setListener(new VncServerSettingsDialogFragment.OnVncSettingsListener() {
+            @Override
+            public void onServerStarted(int port, String password) {
+                // Store VNC resolution for mouse mapping
+                vncServerWidth = cameraWidth;
+                vncServerHeight = cameraHeight;
+                // Start frame capture when VNC server starts
+                if (mCameraHelper != null) {
+                    Size size = mCameraHelper.getPreviewSize();
+                    if (size != null) {
+                        vncFrameCapture.start(mCameraHelper, vncService, size.width, size.height);
+                    }
+                }
+            }
+
+            @Override
+            public void onServerStopped() {
+                if (vncFrameCapture != null) {
+                    vncFrameCapture.stop(mCameraHelper);
+                }
+            }
+
+            @Override
+            public void onSettingsChanged() {
+                // No action needed
+            }
+        });
+        dialog.show(getSupportFragmentManager(), "VncServerSettingsDialog");
+    }
+
+    private int lastVncButtonMask = 0;
+
+    private void handleVncMouseEvent(int buttonMask, int x, int y) {
+        // Set MouseManager dimensions to VNC resolution for proper normalization
+        if (vncServerWidth > 0 && vncServerHeight > 0) {
+            MouseManager.width_height(vncServerWidth, vncServerHeight);
+        }
+
+        Log.e(TAG, "VNC mouse: button=" + buttonMask + " pos=" + x + "," + y);
+
+        // Button state change detection
+        if (buttonMask != lastVncButtonMask) {
+            // Button state changed
+            if (buttonMask != 0) {
+                // Button press - send click
+                String mouseClick = "SecNullData";
+                if ((buttonMask & 0x01) != 0) mouseClick = "SecLeftData";
+                else if ((buttonMask & 0x02) != 0) mouseClick = "SecMiddleData";
+                else if ((buttonMask & 0x04) != 0) mouseClick = "SecRightData";
+                Log.e(TAG, "VNC mouse click: " + mouseClick);
+                MouseManager.sendHexAbsButtonClickData(mouseClick, x, y);
+            } else {
+                // Button release - send release (null click at position)
+                Log.e(TAG, "VNC mouse release");
+                MouseManager.sendHexAbsData(x, y);
+            }
+            lastVncButtonMask = buttonMask;
+        } else if (buttonMask == 0) {
+            // Pure movement - just move cursor
+            MouseManager.sendHexAbsData(x, y);
+        }
+    }
+
+    private void handleVncKeyboardEvent(int keysym, boolean down) {
+        String keyName = VncKeyMap.vncKeysymToKeyName(keysym);
+        if (keyName == null) {
+            Log.w(TAG, "VNC keysym 0x" + Integer.toHexString(keysym) + " not mapped to keyName");
+            return;
+        }
+
+        Log.d(TAG, "VNC keyboard: keysym=0x" + Integer.toHexString(keysym) + " keyName=" + keyName + " down=" + down);
+
+        if (VncKeyMap.isModifier(keysym)) {
+            // Modifier key
+            String functionKey = getModifierFunctionKey(keysym);
+            if (down) {
+                KeyBoardManager.sendKeyBoardPress(functionKey, keyName);
+            } else {
+                KeyBoardManager.sendKeyBoardRelease();
+            }
+        } else {
+            // Regular key - check if it exists in keycode map
+            if (down) {
+                KeyBoardManager.sendKeyBoardData("00", keyName);
+            } else {
+                KeyBoardManager.sendKeyBoardRelease();
+            }
+        }
+    }
+
+    private String getModifierFunctionKey(int keysym) {
+        switch (keysym) {
+            case VncKeyMap.XK_Shift_L:
+            case VncKeyMap.XK_Shift_R: return "Shift";
+            case VncKeyMap.XK_Control_L:
+            case VncKeyMap.XK_Control_R: return "Ctrl";
+            case VncKeyMap.XK_Alt_L:
+            case VncKeyMap.XK_Alt_R: return "Alt";
+            case VncKeyMap.XK_Meta_L:
+            case VncKeyMap.XK_Meta_R:
+            case VncKeyMap.XK_Super_L:
+            case VncKeyMap.XK_Super_R: return "Win";
+            default: return "00";
+        }
+    }
+
+    /* ======================== WebRTC Server ======================== */
+
+    /**
+     * Callback for WebRTC server events.
+     */
+    private final WebRtcServerService.WebRtcCallback webRtcCallback = new WebRtcServerService.WebRtcCallback() {
+        @Override
+        public void onClientConnected(String clientInfo) {
+            Log.i(TAG, "WebRTC client connected: " + clientInfo);
+        }
+
+        @Override
+        public void onClientDisconnected(String clientInfo) {
+            Log.i(TAG, "WebRTC client disconnected: " + clientInfo);
+        }
+
+        @Override
+        public void onServerError(String error) {
+            Log.e(TAG, "WebRTC server error: " + error);
+        }
+
+        @Override
+        public void onMouseEvent(int buttonMask, int x, int y, boolean pressed) {
+            if (webRtcInputRouter != null) {
+                webRtcInputRouter.onMouseEvent(buttonMask, x, y, pressed);
+            }
+        }
+
+        @Override
+        public void onKeyboardEvent(int keysym, boolean down) {
+            if (webRtcInputRouter != null) {
+                webRtcInputRouter.onKeyboardEvent(keysym, down);
+            }
+        }
+
+        @Override
+        public void onConnectionStateChanged(String state) {
+            Log.i(TAG, "WebRTC connection state: " + state);
+        }
+    };
+
+    /**
+     * Bind to WebRTC service.
+     */
+    private void bindWebRtcService() {
+        Intent intent = new Intent(this, WebRtcServerService.class);
+        bindService(intent, webRtcServiceConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    /**
+     * Service connection for WebRTC.
+     */
+    private final ServiceConnection webRtcServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            WebRtcServerService.LocalBinder binder = (WebRtcServerService.LocalBinder) service;
+            webRtcService = binder.getService();
+            webRtcServiceBound = true;
+            webRtcService.setCallback(webRtcCallback);
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            webRtcServiceBound = false;
+            webRtcService = null;
+        }
+    };
+
+    /**
+     * Start WebRTC server.
+     */
+    private void startWebRtcServer() {
+        if (webRtcService == null || !webRtcServiceBound) return;
+
+        WebRtcConfig config = webRtcConfig;
+
+        // Use actual camera resolution
+        int width = DEFAULT_WIDTH;
+        int height = DEFAULT_HEIGHT;
+        if (mCameraHelper != null) {
+            Size size = mCameraHelper.getPreviewSize();
+            if (size != null) {
+                width = size.width;
+                height = size.height;
+            }
+        }
+
+        // Store WebRTC resolution for mouse coordinate mapping
+        webRtcServerWidth = width;
+        webRtcServerHeight = height;
+        Log.i(TAG, "WebRTC resolution set to: " + width + "x" + height);
+        MouseManager.width_height(width, height);
+
+        boolean started = webRtcService.startServer(
+                config.getSignallingPort(),
+                config.getStunServer(),
+                width,
+                height,
+                config.getVideoFps()
+        );
+
+        if (started && mCameraHelper != null) {
+            if (webRtcFrameCapture == null) {
+                webRtcFrameCapture = new WebRtcFrameCapture(config.getVideoFps());
+            }
+            webRtcFrameCapture.start(mCameraHelper, webRtcService, width, height);
+
+            if (webRtcInputRouter != null) {
+                webRtcInputRouter.setFramebufferSize(width, height);
+            }
+        }
+    }
+
+    /**
+     * Stop WebRTC server.
+     */
+    private void stopWebRtcServer() {
+        if (webRtcService == null || !webRtcServiceBound) return;
+
+        if (webRtcFrameCapture != null) {
+            webRtcFrameCapture.stop(mCameraHelper);
+        }
+        webRtcService.stopServer();
+    }
+
+    /**
+     * Show WebRTC server settings dialog.
+     */
+    public void showWebRtcDialog() {
+        if (webRtcService == null || !webRtcServiceBound) {
+            Toast.makeText(this, "WebRTC service not available", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        WebRtcDialogFragment dialog = new WebRtcDialogFragment();
+        dialog.setWebRtcService(webRtcService);
+        dialog.setWebRtcConfig(webRtcConfig);
+
+        // Pass current camera resolution
+        final int cameraWidth;
+        final int cameraHeight;
+        if (mCameraHelper != null) {
+            Size size = mCameraHelper.getPreviewSize();
+            if (size != null) {
+                cameraWidth = size.width;
+                cameraHeight = size.height;
+            } else {
+                cameraWidth = DEFAULT_WIDTH;
+                cameraHeight = DEFAULT_HEIGHT;
+            }
+        } else {
+            cameraWidth = DEFAULT_WIDTH;
+            cameraHeight = DEFAULT_HEIGHT;
+        }
+        dialog.setPreviewSize(cameraWidth, cameraHeight);
+
+        dialog.setListener(new WebRtcDialogFragment.OnWebRtcSettingsListener() {
+            @Override
+            public void onServerStarted() {
+                webRtcServerWidth = cameraWidth;
+                webRtcServerHeight = cameraHeight;
+                if (mCameraHelper != null) {
+                    Size size = mCameraHelper.getPreviewSize();
+                    if (size != null) {
+                        if (webRtcFrameCapture == null) {
+                            webRtcFrameCapture = new WebRtcFrameCapture(webRtcConfig.getVideoFps());
+                        }
+                        webRtcFrameCapture.start(mCameraHelper, webRtcService, size.width, size.height);
+                        if (webRtcInputRouter != null) {
+                            webRtcInputRouter.setFramebufferSize(size.width, size.height);
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onServerStopped() {
+                if (webRtcFrameCapture != null) {
+                    webRtcFrameCapture.stop(mCameraHelper);
+                }
+            }
+
+            @Override
+            public void onSettingsChanged() {
+            }
+        });
+
+        dialog.show(getSupportFragmentManager(), "WebRtcDialog");
+    }
+
+    /* ======================== VNC encoding popup ======================== */
+    private TextView tvVncEncodingPopup;
+    private Runnable vncEncodingHideRunnable;
+
+    private void showVncEncodingPopup(String ip, String encoding) {
+        runOnUiThread(() -> {
+            if (tvVncEncodingPopup == null) {
+                tvVncEncodingPopup = findViewById(R.id.vnc_encoding_popup);
+            }
+            // Cancel any pending hide
+            if (vncEncodingHideRunnable != null) {
+                tvVncEncodingPopup.removeCallbacks(vncEncodingHideRunnable);
+            }
+            tvVncEncodingPopup.setText("VNC: " + encoding + " (" + ip + ")");
+            tvVncEncodingPopup.setVisibility(View.VISIBLE);
+            vncEncodingHideRunnable = () -> tvVncEncodingPopup.setVisibility(View.GONE);
+            tvVncEncodingPopup.postDelayed(vncEncodingHideRunnable, 5000);
+        });
     }
 }

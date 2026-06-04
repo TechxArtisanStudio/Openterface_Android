@@ -1,0 +1,3 @@
+[submodule "libvncserver/src/main/jni/libvnc"]
+	path = libvncserver/src/main/jni/libvnc
+	url = https://github.com/LibVNC/libvncserver.git

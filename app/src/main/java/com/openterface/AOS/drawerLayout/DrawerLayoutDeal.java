@@ -29,6 +29,7 @@ import com.openterface.AOS.R;
 import com.openterface.AOS.activity.MainActivity;
 import com.openterface.AOS.serial.CustomTouchListener;
 import com.openterface.AOS.serial.UsbDeviceManager;
+import com.openterface.AOS.vnc.VncServerConfig;
 
 public class DrawerLayoutDeal extends Fragment {
     private final MainActivity activity;
@@ -64,6 +65,8 @@ public class DrawerLayoutDeal extends Fragment {
     private final Button Close_DrawLayout;
     private final Button close_about_device_button;
     private final Button about_device;
+    private final Button action_vnc_server;
+    private final Button action_webrtc_server;
 
     private final LinearLayout main_drawer_layout;
     private final LinearLayout about_device_layout;
@@ -107,6 +110,8 @@ public class DrawerLayoutDeal extends Fragment {
         main_drawer_layout = activity.findViewById(R.id.main_drawer_layout);
         drawer_layout_setup = activity.findViewById(R.id.drawer_layout_setup);
         about_device = activity.findViewById(R.id.about_device);
+        action_vnc_server = activity.findViewById(R.id.action_vnc_server);
+        action_webrtc_server = activity.findViewById(R.id.action_webrtc_server);
         about_device_layout = activity.findViewById(R.id.about_device_layout);
         close_about_device_button = activity.findViewById(R.id.close_button);
         android_version = activity.findViewById(R.id.android_version);
@@ -254,6 +259,10 @@ public class DrawerLayoutDeal extends Fragment {
 //                    if (drawer_layout.isDrawerOpen(GravityCompat.END)) {
 //                        drawer_layout.closeDrawer(GravityCompat.END);
 //                    }
+            } else if (id == R.id.action_vnc_server) {
+                activity.showVncServerDialog();
+            } else if (id == R.id.action_webrtc_server) {
+                activity.showWebRtcDialog();
             }
         };
 
@@ -269,6 +278,8 @@ public class DrawerLayoutDeal extends Fragment {
         ScreenHost_Picture.setOnClickListener(buttonClickListener);
         Recording_Video.setOnClickListener(buttonClickListener);
         Close_DrawLayout.setOnClickListener(buttonClickListener);
+        action_vnc_server.setOnClickListener(buttonClickListener);
+        action_webrtc_server.setOnClickListener(buttonClickListener);
     }
 
     /**
