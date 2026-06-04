@@ -63,7 +63,7 @@ public class KeyMapConfig_Us implements KeyBoardMapping {
         keyMappings.put(R.id.Key_Tab, new String[]{"TAB", "TAB"});
         keyMappings.put(R.id.Key_LeftBracket, new String[]{"[", "{"});
         keyMappings.put(R.id.Key_RightBracket, new String[]{"]", "}"});
-        keyMappings.put(R.id.Key_Backslash, new String[]{"\\", "|"});
+        keyMappings.put(R.id.Key_Backslash, new String[]{"BACKSLASH", "BACKSLASH"});
 
         keyMappings.put(R.id.Key_Caps, new String[]{"CAPS_LOCK", "CAPS_LOCK"});
         keyMappings.put(R.id.Key_Semicolon, new String[]{";", ":"});

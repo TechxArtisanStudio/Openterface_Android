@@ -70,6 +70,11 @@ public class CH9329MSKBMap {
         DataLen.put("Shift", "02");
         DataLen.put("Alt", "04");
         DataLen.put("Win", "08");
+        // Right-hand modifiers (USB HID boot protocol right modifier bits)
+        DataLen.put("CtrlR", "10");
+        DataLen.put("ShiftR", "20");
+        DataLen.put("AltR", "40");
+        DataLen.put("WinR", "80");
 
         return DataLen;
     }
@@ -262,9 +267,9 @@ public class CH9329MSKBMap {
         keyCodeMap.put("ALT_RIGHT", "E6");
         keyCodeMap.put("TAB", "2B");
         keyCodeMap.put("SPACE", "2C");
-        keyCodeMap.put("BACK", "29");
+        keyCodeMap.put("BACK", "2A");
         keyCodeMap.put("ENTER", "28");
-        keyCodeMap.put("DEL", "2A");
+        keyCodeMap.put("DEL", "4C");
         keyCodeMap.put("Esc", "29");
         keyCodeMap.put("PrtSc", "46");
         keyCodeMap.put("ScrLk", "47");
