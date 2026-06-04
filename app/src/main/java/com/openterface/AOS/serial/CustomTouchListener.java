@@ -475,51 +475,39 @@ public class CustomTouchListener implements View.OnTouchListener {
                     float cx = (event.getX(0) + event.getX(1)) / 2f;
                     float cy = (event.getY(0) + event.getY(1)) / 2f;
 
-                    // --- Direction-based classification ---
-                    // Scroll: both fingers move in the same direction (center moves)
-                    // Pinch: fingers move in opposite directions (distance changes)
-                    float f0dx = event.getX(0) - finger0StartX;
-                    float f0dy = event.getY(0) - finger0StartY;
-                    float f1dx = event.getX(1) - finger1StartX;
-                    float f1dy = event.getY(1) - finger1StartY;
+                    // --- Gesture classification: compare distance change vs center movement ---
+                    float currentDist = calculateDistance(
+                            event.getX(0), event.getY(0),
+                            event.getX(1), event.getY(1));
+                    float distChange = Math.abs(currentDist - twoFingerStartDist);
+                    float centerDx = cx - twoFingerDownCenterX;
+                    float centerDy = cy - twoFingerDownCenterY;
+                    float centerMove = (float) Math.sqrt(centerDx * centerDx + centerDy * centerDy);
 
-                    // Dot product: positive = same direction (scroll), negative = opposite (pinch)
-                    float dotProduct = f0dx * f1dx + f0dy * f1dy;
-
-                    // Only classify after enough movement to avoid noise
-                    float f0Dist = (float) Math.sqrt(f0dx * f0dx + f0dy * f0dy);
-                    float f1Dist = (float) Math.sqrt(f1dx * f1dx + f1dy * f1dy);
-                    float minMove = Math.min(f0Dist, f1Dist);
-
-                    if (minMove > PINCH_THRESHOLD && !isPinching) {
-                        // Enough movement to classify — use dot product sign
-                        if (dotProduct < 0) {
-                            // Opposite directions → pinch/zoom
+                    // Only classify after enough total movement
+                    float totalActivity = distChange + centerMove;
+                    if (totalActivity > PINCH_THRESHOLD && !isPinching && !twoFingerDragConfirmed) {
+                        if (distChange > centerMove) {
+                            // Distance changed more than center moved → pinch/zoom
                             isPinching = true;
                             twoFingerDragConfirmed = true;
                             isTwoFingerClick = false;
-                            Log.d(TAG, "Pinch detected (dotProduct=" + dotProduct + ")");
+                            Log.d(TAG, "Pinch: distChange=" + distChange + " centerMove=" + centerMove);
                         } else {
-                            // Same direction → scroll
+                            // Center moved more than distance → scroll
                             twoFingerMoved = true;
                             twoFingerDragConfirmed = true;
                             isTwoFingerClick = false;
                             isTwoFingerScrolling = true;
-                            Log.d(TAG, "Scroll detected (dotProduct=" + dotProduct + ")");
+                            Log.d(TAG, "Scroll: distChange=" + distChange + " centerMove=" + centerMove);
                         }
                     }
 
                     if (isPinching) {
-                        // Pinch-to-zoom: use distance ratio
-                        float currentDist = calculateDistance(
-                                event.getX(0), event.getY(0),
-                                event.getX(1), event.getY(1));
                         float zoomFactor = currentDist / twoFingerStartDist;
                         adjustZoom(zoomFactor);
-                        // Update starting distance for continuous zoom
                         twoFingerStartDist = currentDist;
                     } else {
-                        // Scroll: use center position for scroll delta
                         float dx = cx - twoFingerPrevX;
                         float dy = cy - twoFingerPrevY;
 
