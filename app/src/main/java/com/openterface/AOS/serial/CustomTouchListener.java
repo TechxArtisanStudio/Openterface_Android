@@ -898,6 +898,11 @@ public class CustomTouchListener implements View.OnTouchListener {
             ZoomLayoutDeal.enlargeView();
         }
 
+        // If zoomed in at all, show the thumbnail window
+        if (newScale > MIN_SCALE) {
+            ZoomLayoutDeal.enlargeView();
+        }
+
         // Apply the new scale
         drawerLayout.setScaleX(newScale);
         drawerLayout.setScaleY(newScale);
@@ -905,6 +910,10 @@ public class CustomTouchListener implements View.OnTouchListener {
         // Ensure pivot is centered for proper scaling
         drawerLayout.setPivotX(drawerLayout.getWidth() / 2f);
         drawerLayout.setPivotY(drawerLayout.getHeight() / 2f);
+
+        // Enforce clipping to prevent white edges from showing
+        drawerLayout.setClipChildren(true);
+        drawerLayout.setClipToPadding(true);
 
         Log.d(TAG, "Zoom adjusted: newScale=" + newScale);
     }
