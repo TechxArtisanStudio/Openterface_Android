@@ -125,6 +125,14 @@ public class CustomTouchListener implements View.OnTouchListener {
     // Two-finger right-click button state
     private boolean rightButtonPressed = false;      // 右键当前是否按下
     private boolean isTwoFingerClick = false;      // 是否为点击模式(未拖动)
+    private boolean twoFingerDragConfirmed = false;  // 已确认为拖动(不再发送右键)
+
+    // Two-finger pinch-to-zoom state
+    private float twoFingerStartDist = 0f;       // Initial distance between two fingers
+    private boolean isPinching = false;          // Currently in pinch-to-zoom mode
+    private float finger0StartX, finger0StartY;  // Finger 0 starting position
+    private float finger1StartX, finger1StartY;  // Finger 1 starting position
+    private static final float PINCH_THRESHOLD = 15f; // px distance change to start zoom
 
     // Timing thresholds (aligned with KeyCmd TouchPadView)
     private static final long TAP_DELAY_MS = 150;           // wait before confirming single tap
@@ -441,76 +449,101 @@ public class CustomTouchListener implements View.OnTouchListener {
                 twoFingerScrollAccumY = 0f;
                 twoFingerMoved = false;
                 isTwoFingerScrolling = false;
-                isTwoFingerClick = true;   // starts as click mode
+                isTwoFingerClick = true;
+                rightButtonPressed = false;
                 rightClickCurrentTime = System.currentTimeMillis();
 
-                // Send RIGHT BUTTON DOWN — pressed on two-finger down
-                rightButtonPressed = true;
-                if (KeyMouse_state) {
-                    MouseManager.sendHexAbsButtonClickData("SecRightData", twoFingerDownCenterX, twoFingerDownCenterY);
-                } else {
-                    MouseManager.sendHexRelData("SecRightData",
-                            twoFingerDownCenterX, twoFingerDownCenterY, 0, 0);
-                }
-                Log.d(TAG, "Two fingers pressed → RIGHT BUTTON DOWN");
+                // Record initial distance between two fingers for pinch-to-zoom
+                twoFingerStartDist = calculateDistance(
+                        event.getX(0), event.getY(0),
+                        event.getX(1), event.getY(1));
+                isPinching = false;
+
+                // Record individual finger start positions for direction analysis
+                finger0StartX = event.getX(0);
+                finger0StartY = event.getY(0);
+                finger1StartX = event.getX(1);
+                finger1StartY = event.getY(1);
+
+                Log.d(TAG, "Two fingers pressed — waiting to confirm tap or drag");
                 break;
 
             case MotionEvent.ACTION_MOVE:
                 int activePointers = event.getPointerCount();
 
                 if (activePointers == 2) {
-                    // Both fingers still down — normal two-finger scroll
                     float cx = (event.getX(0) + event.getX(1)) / 2f;
                     float cy = (event.getY(0) + event.getY(1)) / 2f;
 
-                    float totalDist = dist(cx, cy, twoFingerDownCenterX, twoFingerDownCenterY);
-                    if (totalDist > TWO_FINGER_TAP_MOVE_THRESHOLD) {
-                        twoFingerMoved = true;
+                    // --- Direction-based classification ---
+                    // Scroll: both fingers move in the same direction (center moves)
+                    // Pinch: fingers move in opposite directions (distance changes)
+                    float f0dx = event.getX(0) - finger0StartX;
+                    float f0dy = event.getY(0) - finger0StartY;
+                    float f1dx = event.getX(1) - finger1StartX;
+                    float f1dy = event.getY(1) - finger1StartY;
+
+                    // Dot product: positive = same direction (scroll), negative = opposite (pinch)
+                    float dotProduct = f0dx * f1dx + f0dy * f1dy;
+
+                    // Only classify after enough movement to avoid noise
+                    float f0Dist = (float) Math.sqrt(f0dx * f0dx + f0dy * f0dy);
+                    float f1Dist = (float) Math.sqrt(f1dx * f1dx + f1dy * f1dy);
+                    float minMove = Math.min(f0Dist, f1Dist);
+
+                    if (minMove > PINCH_THRESHOLD && !isPinching) {
+                        // Enough movement to classify — use dot product sign
+                        if (dotProduct < 0) {
+                            // Opposite directions → pinch/zoom
+                            isPinching = true;
+                            twoFingerDragConfirmed = true;
+                            isTwoFingerClick = false;
+                            Log.d(TAG, "Pinch detected (dotProduct=" + dotProduct + ")");
+                        } else {
+                            // Same direction → scroll
+                            twoFingerMoved = true;
+                            twoFingerDragConfirmed = true;
+                            isTwoFingerClick = false;
+                            isTwoFingerScrolling = true;
+                            Log.d(TAG, "Scroll detected (dotProduct=" + dotProduct + ")");
+                        }
                     }
 
-                    // If we moved and right button is still pressed → release it
-                    if (twoFingerMoved && rightButtonPressed) {
-                        releaseRightButton();
-                        rightButtonPressed = false;
-                        isTwoFingerClick = false;
-                        Log.d(TAG, "Two-finger drag detected → right button released");
+                    if (isPinching) {
+                        // Pinch-to-zoom: use distance ratio
+                        float currentDist = calculateDistance(
+                                event.getX(0), event.getY(0),
+                                event.getX(1), event.getY(1));
+                        float zoomFactor = currentDist / twoFingerStartDist;
+                        adjustZoom(zoomFactor);
+                        // Update starting distance for continuous zoom
+                        twoFingerStartDist = currentDist;
+                    } else {
+                        // Scroll: use center position for scroll delta
+                        float dx = cx - twoFingerPrevX;
+                        float dy = cy - twoFingerPrevY;
+
+                        twoFingerScrollAccumX += dx / 3f;
+                        twoFingerScrollAccumY += -dy / 3f;
+
+                        int scrollX = (int) twoFingerScrollAccumX;
+                        int scrollY = (int) twoFingerScrollAccumY;
+
+                        if (scrollX != 0) twoFingerScrollAccumX -= scrollX;
+                        if (scrollY != 0) twoFingerScrollAccumY -= scrollY;
+
+                        if (scrollX != 0 || scrollY != 0) {
+                            MouseManager.handleTwoFingerPanSlideUpDown(scrollY);
+                        }
+
+                        twoFingerPrevX = cx;
+                        twoFingerPrevY = cy;
                     }
-
-                    float dx = cx - twoFingerPrevX;
-                    float dy = cy - twoFingerPrevY;
-
-                    if (Math.abs(dx) > 0f || Math.abs(dy) > 0f) {
-                        isTwoFingerScrolling = true;
-                    }
-
-                    twoFingerScrollAccumX += dx / 3f;
-                    twoFingerScrollAccumY += -dy / 3f;
-
-                    int scrollX = (int) twoFingerScrollAccumX;
-                    int scrollY = (int) twoFingerScrollAccumY;
-
-                    if (scrollX != 0) twoFingerScrollAccumX -= scrollX;
-                    if (scrollY != 0) twoFingerScrollAccumY -= scrollY;
-
-                    if (scrollX != 0 || scrollY != 0) {
-                        MouseManager.handleTwoFingerPanSlideUpDown(scrollY);
-                    }
-
-                    twoFingerPrevX = cx;
-                    twoFingerPrevY = cy;
                 } else if (activePointers == 1) {
                     // First finger already lifted, second finger still dragging
-                    // This happens when fingers are not lifted simultaneously.
-                    // The second finger is now the only active pointer.
-                    // If right button is still pressed → release it (drag mode)
-                    if (rightButtonPressed) {
-                        releaseRightButton();
-                        rightButtonPressed = false;
-                        isTwoFingerClick = false;
-                        Log.d(TAG, "First finger lifted during drag → right button released");
-                    }
+                    isTwoFingerClick = false;
+                    twoFingerDragConfirmed = true;
 
-                    // Use remaining finger position for scroll
                     float cx = event.getX(0);
                     float cy = event.getY(0);
                     float dx = cx - twoFingerPrevX;
@@ -539,37 +572,65 @@ public class CustomTouchListener implements View.OnTouchListener {
                 break;
 
             case MotionEvent.ACTION_POINTER_UP:
-                // First finger lifted — check if this was a tap
-                if (isTwoFingerClick && rightButtonPressed) {
-                    // Was a click, release right button
-                    releaseRightButton();
-                    rightButtonPressed = false;
-                    Log.d(TAG, "Two-finger tap → RIGHT BUTTON UP");
+                // First finger lifted — check if this was a tap using the permanent drag flag
+                if (twoFingerDragConfirmed) {
+                    // Already confirmed as drag/pinch — do NOT send right click
+                    Log.d(TAG, "First finger lifted during drag/pinch — no right click");
+                } else if (isTwoFingerClick) {
+                    // Still in tap mode — send RIGHT CLICK
+                    if (KeyMouse_state) {
+                        MouseManager.sendHexAbsButtonClickData("SecRightData", twoFingerDownCenterX, twoFingerDownCenterY);
+                        MouseManager.sendHexAbsData(twoFingerDownCenterX, twoFingerDownCenterY);
+                    } else {
+                        MouseManager.sendHexRelData("SecRightData",
+                                twoFingerDownCenterX, twoFingerDownCenterY, 0, 0);
+                        MouseManager.releaseMSRelData();
+                    }
+                    Log.d(TAG, "Two-finger tap confirmed on POINTER_UP → RIGHT CLICK");
                 }
 
-                // Reset two-finger state
+                // Update twoFingerPrevX/Y to the remaining finger's position
+                // to avoid a large scroll delta jump when the remaining finger moves
+                if (event.getPointerCount() == 1) {
+                    twoFingerPrevX = event.getX(0);
+                    twoFingerPrevY = event.getY(0);
+                }
+
+                // Reset scroll accumulators and pinch state
                 twoFingerScrollAccumX = 0f;
                 twoFingerScrollAccumY = 0f;
-                twoFingerMoved = false;
-                isTwoFingerScrolling = false;
+                isPinching = false;
                 rightReleaseCurrentTime = System.currentTimeMillis();
                 Log.d(TAG, "ACTION_POINTER_UP");
                 break;
 
             case MotionEvent.ACTION_UP:
                 // Last finger lifted — final cleanup
-                if (rightButtonPressed) {
-                    // Right button still pressed (short tap that didn't trigger on POINTER_UP)
-                    releaseRightButton();
-                    rightButtonPressed = false;
-                    Log.d(TAG, "Two-finger release → RIGHT BUTTON UP");
+                // Only send right click if drag/pinch was never confirmed
+                if (!twoFingerDragConfirmed) {
+                    // Confirmed tap — send RIGHT CLICK
+                    if (KeyMouse_state) {
+                        MouseManager.sendHexAbsButtonClickData("SecRightData", twoFingerDownCenterX, twoFingerDownCenterY);
+                        MouseManager.sendHexAbsData(twoFingerDownCenterX, twoFingerDownCenterY);
+                    } else {
+                        MouseManager.sendHexRelData("SecRightData",
+                                twoFingerDownCenterX, twoFingerDownCenterY, 0, 0);
+                        MouseManager.releaseMSRelData();
+                    }
+                    Log.d(TAG, "Two-finger final lift → RIGHT CLICK");
+                } else {
+                    Log.d(TAG, "Two-finger drag/pinch ended — no right click");
                 }
 
+                // Full reset
                 twoFingerScrollAccumX = 0f;
                 twoFingerScrollAccumY = 0f;
                 twoFingerMoved = false;
                 isTwoFingerScrolling = false;
                 isTwoFingerClick = false;
+                twoFingerDragConfirmed = false;
+                rightButtonPressed = false;
+                isPinching = false;
                 break;
         }
         return true;
