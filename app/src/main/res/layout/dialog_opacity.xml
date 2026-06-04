@@ -5,6 +5,15 @@
     android:orientation="vertical"
     android:padding="20dp">
 
+    <!-- Keyboard Opacity -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="键盘透明度"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="4dp"/>
+
     <TextView
         android:id="@+id/opacity_text"
         android:layout_width="wrap_content"
@@ -12,10 +21,35 @@
         android:text="100%"
         android:textSize="24sp"
         android:layout_gravity="center"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginBottom="8dp"/>
 
     <SeekBar
         android:id="@+id/opacity_seekbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="100"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- TouchPad Opacity -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="触摸屏透明度"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="4dp"/>
+
+    <TextView
+        android:id="@+id/touchpad_opacity_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="100%"
+        android:textSize="24sp"
+        android:layout_gravity="center"
+        android:layout_marginBottom="8dp"/>
+
+    <SeekBar
+        android:id="@+id/touchpad_opacity_seekbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:max="100"/>

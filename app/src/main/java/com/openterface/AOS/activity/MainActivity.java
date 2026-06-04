@@ -59,10 +59,16 @@ import com.openterface.AOS.KeyBoardClick.KeyBoardShift;
 import com.openterface.AOS.KeyBoardClick.KeyBoardShortCut;
 import com.openterface.AOS.KeyBoardClick.KeyBoardSystem;
 import com.openterface.AOS.KeyBoardClick.KeyBoardWin;
+import com.openterface.AOS.view.TouchPadView;
+import com.openterface.AOS.view.TouchPadHelpDialog;
+import com.openterface.AOS.view.MouseControlStripView;
+import com.openterface.AOS.KeyBoardClick.TouchPadSettings;
 import com.openterface.AOS.drawerLayout.DrawerLayoutDeal;
 import com.openterface.AOS.drawerLayout.ZoomLayoutDeal;
 import com.openterface.AOS.serial.CustomTouchListener;
+import com.openterface.AOS.serial.CH9329Function;
 import com.openterface.AOS.serial.UsbDeviceManager;
+import com.openterface.AOS.target.CH9329MSKBMap;
 import com.openterface.AOS.target.KeyBoardManager;
 import com.openterface.AOS.target.MouseManager;
 import com.google.gson.Gson;
@@ -165,6 +171,12 @@ public class MainActivity extends AppCompatActivity {
     private VideoFormatDialogFragment mFormatDialog;
 
     private KeyBoardOpacity mKeyBoardOpacity;
+
+    private TouchPadView touchPadView;
+    private MouseControlStripView mouseControlStripView;
+    private FrameLayout touchPadContainer;
+    private boolean isTouchPadMode = false;
+    private TouchPadSettings touchPadSettings;
 
     private UsbManager usbManager;
 
@@ -282,6 +294,15 @@ public class MainActivity extends AppCompatActivity {
         //Keyboard Opacity
         mKeyBoardOpacity = new KeyBoardOpacity(this);
         mKeyBoardOpacity.setOpacityButtonClick();
+
+        // Initialize TouchPad
+        initTouchPad();
+
+        // TouchPad toggle button
+        ImageButton KeyBoard_TouchPad = findViewById(R.id.KeyBoard_TouchPad);
+        if (KeyBoard_TouchPad != null) {
+            KeyBoard_TouchPad.setOnClickListener(v -> toggleTouchPadMode());
+        }
 
         DrawerLayoutDeal.setDrawerLayoutButtonClickColor();//deal drawer layout button click color
 
@@ -584,6 +605,9 @@ public class MainActivity extends AppCompatActivity {
             KeyBoard_Function.setBackgroundResource(R.drawable.nopress_button_background);
             KeyBoard_ShortCut.setBackgroundResource(R.drawable.nopress_button_background);
             KeyBoard_System.setBackgroundResource(R.drawable.nopress_button_background);
+
+            // Initialize TouchPad settings and help buttons
+            initTouchPadButtons();
 
         });
     }
@@ -1310,5 +1334,308 @@ public class MainActivity extends AppCompatActivity {
         
         registerReceiver(debugReceiver, filter, RECEIVER_NOT_EXPORTED);
         Log.d(TAG, "Debug broadcast receiver registered");
+    }
+
+    /**
+     * Initialize the TouchPad for mouse control with gesture support
+     * (Same gesture logic as KeyCmd: single tap=left click, double tap=double click,
+     * two-finger tap=right click, long press=drag, two-finger pan=scroll)
+     */
+    private void initTouchPad() {
+        touchPadView = findViewById(R.id.touchPadArea);
+        mouseControlStripView = findViewById(R.id.mouseButtonStrip);
+        touchPadContainer = findViewById(R.id.TouchPad_View);
+
+        if (touchPadView != null) {
+            restoreTouchPadOpacity();
+
+            touchPadView.setOnTouchPadListener(new TouchPadView.OnTouchPadListener() {
+                @Override
+                public void onTouchMove(float startX, float startY, float lastX, float lastY) {
+                    if (lastX == 0 && lastY == 0) {
+                        // Scroll mode (two-finger pan)
+                        MouseManager.handleTwoFingerPanSlideUpDown(startY);
+                    } else {
+                        // Mouse move (relative)
+                        MouseManager.sendHexRelData("SecNullData", startX, startY, lastX, lastY);
+                    }
+                }
+
+                @Override
+                public void onTouchClick() {
+                    Log.d(TAG, "TouchPad single tap -> left click");
+                    new Thread(() -> {
+                        try {
+                            String clickData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
+                                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
+                                    CH9329MSKBMap.getKeyCodeMap().get("address") +
+                                    CH9329MSKBMap.CmdData().get("CmdMS_REL") +
+                                    CH9329MSKBMap.DataLen().get("DataLenRelMS") +
+                                    CH9329MSKBMap.MSRelData().get("FirstData") +
+                                    CH9329MSKBMap.MSRelData().get("SecLeftData") +
+                                    "00" + "00" + "00";
+                            clickData += CH9329Function.makeChecksum(clickData);
+                            byte[] bytes = CH9329Function.hexStringToByteArray(clickData);
+                            if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                                usbDeviceManager.writeData(bytes);
+                            }
+                            Thread.sleep(30);
+                            // Release
+                            String releaseData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
+                                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
+                                    CH9329MSKBMap.getKeyCodeMap().get("address") +
+                                    CH9329MSKBMap.CmdData().get("CmdMS_REL") +
+                                    CH9329MSKBMap.DataLen().get("DataLenRelMS") +
+                                    CH9329MSKBMap.MSRelData().get("FirstData") +
+                                    CH9329MSKBMap.MSRelData().get("SecNullData") +
+                                    "00" + "00" + "00";
+                            releaseData += CH9329Function.makeChecksum(releaseData);
+                            bytes = CH9329Function.hexStringToByteArray(releaseData);
+                            if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                                usbDeviceManager.writeData(bytes);
+                            }
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error sending left click: " + e.getMessage());
+                        }
+                    }).start();
+                }
+
+                @Override
+                public void onTouchDoubleClick() {
+                    Log.d(TAG, "TouchPad double tap -> double click");
+                    new Thread(() -> {
+                        try {
+                            String clickData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
+                                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
+                                    CH9329MSKBMap.getKeyCodeMap().get("address") +
+                                    CH9329MSKBMap.CmdData().get("CmdMS_REL") +
+                                    CH9329MSKBMap.DataLen().get("DataLenRelMS") +
+                                    CH9329MSKBMap.MSRelData().get("FirstData") +
+                                    CH9329MSKBMap.MSRelData().get("SecLeftData") +
+                                    "00" + "00" + "00";
+                            clickData += CH9329Function.makeChecksum(clickData);
+                            byte[] bytes = CH9329Function.hexStringToByteArray(clickData);
+                            for (int i = 0; i < 2; i++) {
+                                if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                                    usbDeviceManager.writeData(bytes);
+                                }
+                                Thread.sleep(30);
+                                // Release
+                                String releaseData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
+                                        CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
+                                        CH9329MSKBMap.getKeyCodeMap().get("address") +
+                                        CH9329MSKBMap.CmdData().get("CmdMS_REL") +
+                                        CH9329MSKBMap.DataLen().get("DataLenRelMS") +
+                                        CH9329MSKBMap.MSRelData().get("FirstData") +
+                                        CH9329MSKBMap.MSRelData().get("SecNullData") +
+                                        "00" + "00" + "00";
+                                releaseData += CH9329Function.makeChecksum(releaseData);
+                                bytes = CH9329Function.hexStringToByteArray(releaseData);
+                                if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                                    usbDeviceManager.writeData(bytes);
+                                }
+                                Thread.sleep(30);
+                            }
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error sending double click: " + e.getMessage());
+                        }
+                    }).start();
+                }
+
+                @Override
+                public void onTouchRightClick() {
+                    Log.d(TAG, "TouchPad two-finger tap -> right click");
+                    new Thread(() -> {
+                        try {
+                            String clickData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
+                                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
+                                    CH9329MSKBMap.getKeyCodeMap().get("address") +
+                                    CH9329MSKBMap.CmdData().get("CmdMS_REL") +
+                                    CH9329MSKBMap.DataLen().get("DataLenRelMS") +
+                                    CH9329MSKBMap.MSRelData().get("FirstData") +
+                                    CH9329MSKBMap.MSRelData().get("SecRightData") +
+                                    "00" + "00" + "00";
+                            clickData += CH9329Function.makeChecksum(clickData);
+                            byte[] bytes = CH9329Function.hexStringToByteArray(clickData);
+                            if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                                usbDeviceManager.writeData(bytes);
+                            }
+                            Thread.sleep(30);
+                            // Release
+                            String releaseData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
+                                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
+                                    CH9329MSKBMap.getKeyCodeMap().get("address") +
+                                    CH9329MSKBMap.CmdData().get("CmdMS_REL") +
+                                    CH9329MSKBMap.DataLen().get("DataLenRelMS") +
+                                    CH9329MSKBMap.MSRelData().get("FirstData") +
+                                    CH9329MSKBMap.MSRelData().get("SecNullData") +
+                                    "00" + "00" + "00";
+                            releaseData += CH9329Function.makeChecksum(releaseData);
+                            bytes = CH9329Function.hexStringToByteArray(releaseData);
+                            if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                                usbDeviceManager.writeData(bytes);
+                            }
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error sending right click: " + e.getMessage());
+                        }
+                    }).start();
+                }
+
+                @Override
+                public void onTouchLongPress() {
+                    Log.d(TAG, "TouchPad long press -> drag mode");
+                }
+
+                @Override
+                public void onTouchRelease() {
+                    MouseManager.releaseMSRelData();
+                }
+            });
+        }
+
+        if (mouseControlStripView != null) {
+            mouseControlStripView.setOnMouseClickListener(new MouseControlStripView.OnMouseClickListener() {
+                @Override
+                public void onMouseClick(int buttonMask) {
+                    String clickType;
+                    switch (buttonMask) {
+                        case MouseControlStripView.BTN_LEFT:
+                            clickType = "SecLeftData";
+                            break;
+                        case MouseControlStripView.BTN_RIGHT:
+                            clickType = "SecRightData";
+                            break;
+                        case MouseControlStripView.BTN_MIDDLE:
+                            clickType = "SecMiddleData";
+                            break;
+                        default:
+                            clickType = "SecNullData";
+                    }
+                    Log.d(TAG, "Mouse strip button click: " + clickType);
+                    new Thread(() -> {
+                        try {
+                            String clickData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
+                                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
+                                    CH9329MSKBMap.getKeyCodeMap().get("address") +
+                                    CH9329MSKBMap.CmdData().get("CmdMS_REL") +
+                                    CH9329MSKBMap.DataLen().get("DataLenRelMS") +
+                                    CH9329MSKBMap.MSRelData().get("FirstData") +
+                                    clickType + "00" + "00" + "00";
+                            clickData += CH9329Function.makeChecksum(clickData);
+                            byte[] bytes = CH9329Function.hexStringToByteArray(clickData);
+                            if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                                usbDeviceManager.writeData(bytes);
+                            }
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error sending mouse click: " + e.getMessage());
+                        }
+                    }).start();
+                }
+
+                @Override
+                public void onMouseRelease() {
+                    Log.d(TAG, "Mouse strip button release");
+                    new Thread(() -> {
+                        try {
+                            String releaseData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
+                                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
+                                    CH9329MSKBMap.getKeyCodeMap().get("address") +
+                                    CH9329MSKBMap.CmdData().get("CmdMS_REL") +
+                                    CH9329MSKBMap.DataLen().get("DataLenRelMS") +
+                                    CH9329MSKBMap.MSRelData().get("FirstData") +
+                                    CH9329MSKBMap.MSRelData().get("SecNullData") +
+                                    "00" + "00" + "00";
+                            releaseData += CH9329Function.makeChecksum(releaseData);
+                            byte[] bytes = CH9329Function.hexStringToByteArray(releaseData);
+                            if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                                usbDeviceManager.writeData(bytes);
+                            }
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error releasing mouse button: " + e.getMessage());
+                        }
+                    }).start();
+                }
+
+                @Override
+                public void onScrollClick() {
+                    MouseManager.handleTwoPress();
+                }
+            });
+        }
+
+        // Initialize settings and help buttons
+        initTouchPadButtons();
+
+        Log.d(TAG, "TouchPad initialized");
+    }
+
+    /**
+     * Initialize TouchPad settings and help buttons
+     */
+    public void initTouchPadButtons() {
+        android.widget.ImageButton settingsButton = findViewById(R.id.touchPadSettingsButton);
+        android.widget.ImageButton helpButton = findViewById(R.id.touchPadHelpButton);
+
+        if (settingsButton != null) {
+            settingsButton.setOnClickListener(v -> {
+                if (touchPadSettings == null) {
+                    touchPadSettings = new TouchPadSettings(MainActivity.this);
+                }
+                // Create a temporary TouchPadView reference for settings if needed
+                touchPadSettings.setTouchPadView(touchPadView);
+                touchPadSettings.showSettingsDialog();
+            });
+        }
+
+        if (helpButton != null) {
+            helpButton.setOnClickListener(v -> TouchPadHelpDialog.show(MainActivity.this));
+        }
+    }
+
+    /**
+     * Toggle the TouchPad overlay visibility
+     */
+    public void toggleTouchPadMode() {
+        isTouchPadMode = !isTouchPadMode;
+        if (touchPadContainer != null) {
+            touchPadContainer.setVisibility(isTouchPadMode ? View.VISIBLE : View.GONE);
+        }
+        Log.d(TAG, "TouchPad mode " + (isTouchPadMode ? "ON" : "OFF"));
+    }
+
+    /**
+     * Set TouchPad opacity
+     */
+    public void setTouchPadOpacity(int opacity) {
+        if (touchPadContainer != null) {
+            touchPadContainer.setAlpha(opacity / 100f);
+        }
+        if (mouseControlStripView != null) {
+            mouseControlStripView.setOpacity(opacity);
+        }
+        // Save opacity
+        getPreferences(Context.MODE_PRIVATE).edit()
+                .putInt("touchpad_opacity", opacity).apply();
+    }
+
+    /**
+     * Restore saved TouchPad opacity
+     */
+    public void restoreTouchPadOpacity() {
+        int savedOpacity = getPreferences(Context.MODE_PRIVATE)
+                .getInt("touchpad_opacity", 100);
+        if (touchPadContainer != null) {
+            touchPadContainer.setAlpha(savedOpacity / 100f);
+        }
+        if (mouseControlStripView != null) {
+            mouseControlStripView.setOpacity(savedOpacity);
+        }
+    }
+
+    /**
+     * Get current TouchPad opacity
+     */
+    public int getTouchPadOpacity() {
+        return getPreferences(Context.MODE_PRIVATE).getInt("touchpad_opacity", 100);
     }
 }
