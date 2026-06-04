@@ -122,6 +122,10 @@ public class CustomTouchListener implements View.OnTouchListener {
     // Gesture phase tracking — prevents single-click from firing after two-finger gesture
     private boolean inTwoFingerSequence = false;
 
+    // Two-finger right-click button state
+    private boolean rightButtonPressed = false;      // 右键当前是否按下
+    private boolean isTwoFingerClick = false;      // 是否为点击模式(未拖动)
+
     // Timing thresholds (aligned with KeyCmd TouchPadView)
     private static final long TAP_DELAY_MS = 150;           // wait before confirming single tap
     private static final long TAP_TIMEOUT_MS = 400;         // finger must lift within this time
@@ -190,16 +194,23 @@ public class CustomTouchListener implements View.OnTouchListener {
         int pointerCount = event.getPointerCount();
 
         // ---- Track gesture phase ----
-        // Once a two-finger sequence starts, ALL events in that sequence go to two-finger handler
-        // even if the pointer count drops to 1 when one finger lifts
-        if (pointerCount == 2 || action == MotionEvent.ACTION_POINTER_DOWN) {
+        // Once two fingers are detected, stay in two-finger event routing until
+        // ALL fingers are lifted. This handles non-simultaneous finger lifts.
+        // Key insight: ACTION_POINTER_DOWN starts the sequence; the subsequent
+        // ACTION_POINTER_UP is "first finger lifts" (still 1 finger down);
+        // final ACTION_UP (or ACTION_CANCEL) is "last finger lifts".
+        if (action == MotionEvent.ACTION_POINTER_DOWN || pointerCount == 2) {
             inTwoFingerSequence = true;
-        }
-        if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
-            inTwoFingerSequence = false;
         }
 
         if (inTwoFingerSequence) {
+            // Only exit when we see the final lift event AND no fingers remain
+            if ((action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) && pointerCount <= 1) {
+                // Still route this last event to two-finger handler, then clear flag
+                boolean result = handleTwoFingerGesture(event);
+                inTwoFingerSequence = false;
+                return result;
+            }
             return handleTwoFingerGesture(event);
         }
 
@@ -276,6 +287,11 @@ public class CustomTouchListener implements View.OnTouchListener {
                 break;
 
             case MotionEvent.ACTION_UP:
+                // Safety: if we're somehow in a two-finger sequence, don't process single-finger
+                if (inTwoFingerSequence) {
+                    return true;
+                }
+
                 // Cancel long press detection
                 if (longPressRunnable != null) {
                     handler.removeCallbacks(longPressRunnable);
@@ -289,23 +305,18 @@ public class CustomTouchListener implements View.OnTouchListener {
                 if (suppressSingleTapFromDoubleTap) {
                     suppressSingleTapFromDoubleTap = false;
                     if (isDragMode) {
-                        // Release any held button
                         releaseMouseAndReset();
                     }
                     isDragMode = false;
                     lastMoveX = 0;
                     lastMoveY = 0;
-                    // Don't call handActionUpMouse — it would send an unwanted move delta
                     break;
                 }
 
                 if (isDragMode) {
-                    // KeyCmd-style: long-press drag mode stays on until tap exits
                     Log.d(TAG, "Drag ended, releasing left button");
                     releaseMouseAndReset();
                     isDragMode = false;
-                    // Don't call handActionUpMouse — it would send an unwanted move delta
-                    // from startMoveMSX (down position) to lastMoveMSX (drag position), causing a jump
                     lastMoveMSX = 0;
                     lastMoveMSY = 0;
                     break;
@@ -342,7 +353,6 @@ public class CustomTouchListener implements View.OnTouchListener {
                 if (!tapCancelled) {
                     handActionUpMouse(event);
                 } else {
-                    // Movement happened — just release any held mouse state
                     MouseManager.releaseMSRelData();
                     lastMoveMSX = 0;
                     lastMoveMSY = 0;
@@ -350,17 +360,20 @@ public class CustomTouchListener implements View.OnTouchListener {
                 break;
 
             case MotionEvent.ACTION_CANCEL:
+                // Safety: if we're in a two-finger sequence, don't process
+                if (inTwoFingerSequence) {
+                    return true;
+                }
+
                 if (longPressRunnable != null) {
                     handler.removeCallbacks(longPressRunnable);
                     longPressRunnable = null;
                 }
                 cancelPendingSingleTap();
-                // KeyCmd-style: release mouse state on cancel
                 if (isDragMode) {
                     releaseMouseAndReset();
                     isDragMode = false;
                 } else {
-                    // Just release — don't call handActionUpMouse which sends unwanted move
                     MouseManager.releaseMSRelData();
                 }
                 lastMoveMSX = 0;
@@ -401,16 +414,24 @@ public class CustomTouchListener implements View.OnTouchListener {
     }
 
     /**
-     * 2-finger gesture handler (right-click / scroll).
-     * KeyCmd-style: uses accumulator to distinguish tap from scroll.
+     * 2-finger gesture handler — clean right-click press/release + scroll.
+     *
+     * Behavior:
+     *   - Two fingers press   → right button DOWN
+     *   - Two fingers drag    → scroll only (right button released if pressed)
+     *   - Two fingers release → right button UP (only if still pressed, meaning no drag)
      */
     private boolean handleTwoFingerGesture(MotionEvent event) {
         int action = event.getActionMasked();
 
         switch (action) {
             case MotionEvent.ACTION_POINTER_DOWN:
-                // Second finger came down — cancel any pending single-tap
+                // Second finger came down — cancel any pending single-tap AND long press
                 cancelPendingSingleTap();
+                if (longPressRunnable != null) {
+                    handler.removeCallbacks(longPressRunnable);
+                    longPressRunnable = null;
+                }
 
                 twoFingerDownCenterX = (event.getX(0) + event.getX(1)) / 2f;
                 twoFingerDownCenterY = (event.getY(0) + event.getY(1)) / 2f;
@@ -420,72 +441,148 @@ public class CustomTouchListener implements View.OnTouchListener {
                 twoFingerScrollAccumY = 0f;
                 twoFingerMoved = false;
                 isTwoFingerScrolling = false;
+                isTwoFingerClick = true;   // starts as click mode
                 rightClickCurrentTime = System.currentTimeMillis();
 
-                handActionPointerDownMouse(event);
+                // Send RIGHT BUTTON DOWN — pressed on two-finger down
+                rightButtonPressed = true;
+                if (KeyMouse_state) {
+                    MouseManager.sendHexAbsButtonClickData("SecRightData", twoFingerDownCenterX, twoFingerDownCenterY);
+                } else {
+                    MouseManager.sendHexRelData("SecRightData",
+                            twoFingerDownCenterX, twoFingerDownCenterY, 0, 0);
+                }
+                Log.d(TAG, "Two fingers pressed → RIGHT BUTTON DOWN");
                 break;
 
             case MotionEvent.ACTION_MOVE:
-                float cx = (event.getX(0) + event.getX(1)) / 2f;
-                float cy = (event.getY(0) + event.getY(1)) / 2f;
+                int activePointers = event.getPointerCount();
 
-                // Check if moved significantly from start position
-                float totalDist = dist(cx, cy, twoFingerDownCenterX, twoFingerDownCenterY);
-                if (totalDist > TWO_FINGER_TAP_MOVE_THRESHOLD) {
-                    twoFingerMoved = true;
+                if (activePointers == 2) {
+                    // Both fingers still down — normal two-finger scroll
+                    float cx = (event.getX(0) + event.getX(1)) / 2f;
+                    float cy = (event.getY(0) + event.getY(1)) / 2f;
+
+                    float totalDist = dist(cx, cy, twoFingerDownCenterX, twoFingerDownCenterY);
+                    if (totalDist > TWO_FINGER_TAP_MOVE_THRESHOLD) {
+                        twoFingerMoved = true;
+                    }
+
+                    // If we moved and right button is still pressed → release it
+                    if (twoFingerMoved && rightButtonPressed) {
+                        releaseRightButton();
+                        rightButtonPressed = false;
+                        isTwoFingerClick = false;
+                        Log.d(TAG, "Two-finger drag detected → right button released");
+                    }
+
+                    float dx = cx - twoFingerPrevX;
+                    float dy = cy - twoFingerPrevY;
+
+                    if (Math.abs(dx) > 0f || Math.abs(dy) > 0f) {
+                        isTwoFingerScrolling = true;
+                    }
+
+                    twoFingerScrollAccumX += dx / 3f;
+                    twoFingerScrollAccumY += -dy / 3f;
+
+                    int scrollX = (int) twoFingerScrollAccumX;
+                    int scrollY = (int) twoFingerScrollAccumY;
+
+                    if (scrollX != 0) twoFingerScrollAccumX -= scrollX;
+                    if (scrollY != 0) twoFingerScrollAccumY -= scrollY;
+
+                    if (scrollX != 0 || scrollY != 0) {
+                        MouseManager.handleTwoFingerPanSlideUpDown(scrollY);
+                    }
+
+                    twoFingerPrevX = cx;
+                    twoFingerPrevY = cy;
+                } else if (activePointers == 1) {
+                    // First finger already lifted, second finger still dragging
+                    // This happens when fingers are not lifted simultaneously.
+                    // The second finger is now the only active pointer.
+                    // If right button is still pressed → release it (drag mode)
+                    if (rightButtonPressed) {
+                        releaseRightButton();
+                        rightButtonPressed = false;
+                        isTwoFingerClick = false;
+                        Log.d(TAG, "First finger lifted during drag → right button released");
+                    }
+
+                    // Use remaining finger position for scroll
+                    float cx = event.getX(0);
+                    float cy = event.getY(0);
+                    float dx = cx - twoFingerPrevX;
+                    float dy = cy - twoFingerPrevY;
+
+                    if (Math.abs(dx) > 0f || Math.abs(dy) > 0f) {
+                        isTwoFingerScrolling = true;
+                    }
+
+                    twoFingerScrollAccumX += dx / 3f;
+                    twoFingerScrollAccumY += -dy / 3f;
+
+                    int scrollX = (int) twoFingerScrollAccumX;
+                    int scrollY = (int) twoFingerScrollAccumY;
+
+                    if (scrollX != 0) twoFingerScrollAccumX -= scrollX;
+                    if (scrollY != 0) twoFingerScrollAccumY -= scrollY;
+
+                    if (scrollX != 0 || scrollY != 0) {
+                        MouseManager.handleTwoFingerPanSlideUpDown(scrollY);
+                    }
+
+                    twoFingerPrevX = cx;
+                    twoFingerPrevY = cy;
                 }
-
-                float dx = cx - twoFingerPrevX;
-                float dy = cy - twoFingerPrevY;
-
-                // Accumulate scroll values (KeyCmd approach)
-                twoFingerScrollAccumX += dx / 3f;
-                twoFingerScrollAccumY += -dy / 3f;
-
-                int scrollX = (int) twoFingerScrollAccumX;
-                int scrollY = (int) twoFingerScrollAccumY;
-
-                if (scrollX != 0) twoFingerScrollAccumX -= scrollX;
-                if (scrollY != 0) twoFingerScrollAccumY -= scrollY;
-
-                if (scrollX != 0 || scrollY != 0) {
-                    isTwoFingerScrolling = true;
-                    MouseManager.handleTwoFingerPanSlideUpDown(scrollY);
-                }
-
-                twoFingerPrevX = cx;
-                twoFingerPrevY = cy;
-
-                // Also handle original move logic (zoom, drag)
-                handActionMoveMouse(event);
                 break;
 
             case MotionEvent.ACTION_POINTER_UP:
-                handleTwoFingerRelease();
-                handActionPointerUpMouse(event);
+                // First finger lifted — check if this was a tap
+                if (isTwoFingerClick && rightButtonPressed) {
+                    // Was a click, release right button
+                    releaseRightButton();
+                    rightButtonPressed = false;
+                    Log.d(TAG, "Two-finger tap → RIGHT BUTTON UP");
+                }
+
+                // Reset two-finger state
+                twoFingerScrollAccumX = 0f;
+                twoFingerScrollAccumY = 0f;
+                twoFingerMoved = false;
+                isTwoFingerScrolling = false;
+                rightReleaseCurrentTime = System.currentTimeMillis();
+                Log.d(TAG, "ACTION_POINTER_UP");
                 break;
 
             case MotionEvent.ACTION_UP:
-                // Last finger lifted — also a two-finger gesture end
-                handleTwoFingerRelease();
-                handActionUpMouse(event);
+                // Last finger lifted — final cleanup
+                if (rightButtonPressed) {
+                    // Right button still pressed (short tap that didn't trigger on POINTER_UP)
+                    releaseRightButton();
+                    rightButtonPressed = false;
+                    Log.d(TAG, "Two-finger release → RIGHT BUTTON UP");
+                }
+
+                twoFingerScrollAccumX = 0f;
+                twoFingerScrollAccumY = 0f;
+                twoFingerMoved = false;
+                isTwoFingerScrolling = false;
+                isTwoFingerClick = false;
                 break;
         }
         return true;
     }
 
     /**
-     * Decide whether two-finger gesture should trigger right-click.
-     * Only right-click if there was NO significant movement AND NO scrolling.
+     * Release right button — sends release command for both abs and rel modes.
      */
-    private void handleTwoFingerRelease() {
-        long pressDuration = System.currentTimeMillis() - rightClickCurrentTime;
-        if (pressDuration < 500 && !twoFingerMoved && !isTwoFingerScrolling) {
-            MouseManager.handleTwoPress();
-            Log.d(TAG, "Two-finger tap -> right click");
+    private void releaseRightButton() {
+        if (KeyMouse_state) {
+            MouseManager.sendHexAbsData(lastMoveMSX, lastMoveMSY);
         } else {
-            Log.d(TAG, "Two-finger ended: moved=" + twoFingerMoved
-                    + " scrolled=" + isTwoFingerScrolling + " duration=" + pressDuration);
+            MouseManager.releaseMSRelData();
         }
     }
 
