@@ -92,15 +92,16 @@ task buildWebClient(type: Exec) {
     group = 'build'
 
     def webDir = file('../Openterface_WebUI')
+    def distDir = file('../Openterface_WebUI/packages/webrtc/dist/webrtc-android')
 
-    // Only run if the submodule exists
+    // Only run if the submodule exists and dist is not already built
     onlyIf {
-        webDir.exists()
+        webDir.exists() && !distDir.exists()
     }
 
     workingDir webDir
     executable 'bash'
-    args '-c', 'npm install && npm run build:webrtc:android'
+    args '-c', 'npm ci && npm run build:webrtc:android'
 
     // Handle build failure gracefully
     ignoreExitValue true
