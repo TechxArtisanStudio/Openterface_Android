@@ -64,13 +64,15 @@ The WebRTC server enables browser-based remote control of the target device with
 | `app/src/main/java/com/openterface/AOS/vnc/VncKeyMap.java` | Maps VNC keysyms to CH9329 key names (reused from VNC) |
 | `app/src/main/java/com/openterface/AOS/target/KeyBoardManager.java` | Enhanced with synchronized keyboard executor |
 
-### Web Client (Openterface_Web submodule)
+### Web Client (Openterface_WebUI submodule)
 
-| File | Description |
-|------|-------------|
-| `Openterface_Web/packages/webrtc/src/App.vue` | WebRTC client UI and main logic |
-| `Openterface_Web/packages/webrtc/src/composables/useWebRtcTransport.ts` | WebRTC transport composable |
-| `Openterface_Web/packages/webrtc/src/composables/useWebRtcJsonCommands.ts` | HID command translation |
+| Package | Description |
+|---------|-------------|
+| `@openterface/webrtc` | WebRTC client application (builds to dist/webrtc-android/) |
+| `@openterface/webrtc-core` | WebRTC transport layer with CH9329→JSON translation |
+| `@openterface/control-ui` | Shared Vue UI components (Layout, VideoStream, etc.) |
+
+The web client is sourced from the `Openterface_WebUI` submodule, not `Openterface_Web`. This allows Android to consume only the necessary web assets without pulling in the full web monorepo.
 
 ---
 
@@ -78,17 +80,19 @@ The WebRTC server enables browser-based remote control of the target device with
 
 ### Prerequisites
 
-The WebRTC web client must be built and copied to Android assets:
+The WebRTC web client must be built and copied to Android assets. It lives in the `Openterface_WebUI` submodule:
 
 ```bash
 # Build web client
-cd Openterface_Web/packages/webrtc
+cd Openterface_WebUI
 npm install
-npm run build
+npm run build:webrtc:android
 
-# Or use Gradle task (automatic)
-./gradlew :app:copyWebRtcWeb
+# Or use Gradle task (automatic during build)
+./gradlew :app:buildWebClient
 ```
+
+The Gradle `buildWebClient` task automatically runs before `preBuild`, so web assets are always up to date.
 
 ### Build APK
 

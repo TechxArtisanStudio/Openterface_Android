@@ -78,20 +78,20 @@ android {
         disable 'all'  // Disable all lint checks
     }
 
-    // Add WebRTC client assets from submodule
+    // Add WebRTC client assets from WebUI submodule
     sourceSets {
         main {
-            assets.srcDirs += ['src/main/assets', '../openterface-web/packages/webrtc/dist/webrtc-android']
+            assets.srcDirs += ['src/main/assets', '../Openterface_WebUI/packages/webrtc/dist/webrtc-android']
         }
     }
 }
 
-// Task to build WebRTC client from submodule
+// Task to build WebRTC client from WebUI submodule
 task buildWebClient(type: Exec) {
-    description = 'Build WebRTC client from openterface-web submodule'
+    description = 'Build WebRTC client from Openterface_WebUI submodule'
     group = 'build'
 
-    def webDir = file('../openterface-web')
+    def webDir = file('../Openterface_WebUI')
 
     // Only run if the submodule exists
     onlyIf {
