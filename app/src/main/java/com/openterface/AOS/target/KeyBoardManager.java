@@ -277,10 +277,13 @@ public class KeyBoardManager {
             return t;
         });
 
+    // Track currently pressed keys to avoid duplicate presses from browser duplicate events
+    private static final java.util.Set<String> currentlyPressedKeys = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
     /**
-     * Send a complete key press and release sequence synchronously.
-     * This ensures press completes before release is sent, preventing race conditions.
-     * Used by WebRTC to ensure reliable key input.
+     * Send a complete key press and release sequence for simple key events.
+     * Used by WebRTC sendKeyboardKey() for single key events where browser sends
+     * both keydown and keyup - this handles the full cycle atomically.
      */
     public static void sendKeyBoardPressAndRelease(String functionKey, String keyName) {
         if (keyName == null) {
@@ -288,8 +291,13 @@ public class KeyBoardManager {
             return;
         }
 
+        // Skip if key is already pressed (prevents duplicate from browser double-firing)
+        if (!currentlyPressedKeys.add(keyName)) {
+            Log.w(TAG, "🟣 Key '" + keyName + "' already pressed, ignoring duplicate");
+            return;
+        }
+
         Log.e(TAG, "🟣 ========== KEY PRESS+RELEASE START ==========");
-        Log.e(TAG, "🟣 Thread: " + Thread.currentThread().getName());
         Log.e(TAG, "🟣 functionKey: '" + functionKey + "', keyName: '" + keyName + "'");
 
         keyboardExecutor.execute(() -> {
@@ -301,6 +309,7 @@ public class KeyBoardManager {
                 boolean pressSent = sendKeyBoardPressSync(functionKey, keyName);
                 if (!pressSent) {
                     Log.e(TAG, "❌ Press failed, aborting release");
+                    currentlyPressedKeys.remove(keyName);
                     return;
                 }
 
@@ -312,13 +321,69 @@ public class KeyBoardManager {
                 Log.e(TAG, "🟣 Step 3: Sending RELEASE...");
                 sendKeyBoardReleaseSync();
 
+                currentlyPressedKeys.remove(keyName);
+
                 long endTime = System.currentTimeMillis();
                 Log.e(TAG, "✅ Key press+release completed in " + (endTime - startTime) + "ms");
 
             } catch (Exception e) {
                 Log.e(TAG, "❌ Exception in sendKeyBoardPressAndRelease: " + e.getMessage(), e);
+                currentlyPressedKeys.remove(keyName);
             }
             Log.e(TAG, "🟣 ========== KEY PRESS+RELEASE END ==========");
+        });
+    }
+
+    /**
+     * Queue a key press on the executor thread.
+     * Used by WebRTC when browser sends keydown separately from keyup.
+     */
+    public static void sendKeyBoardPressQueued(String functionKey, String keyName) {
+        if (keyName == null) {
+            Log.w(TAG, "❌ sendKeyBoardPressQueued: keyName is null");
+            return;
+        }
+
+        // Skip if key is already pressed (prevents duplicate from browser double-firing)
+        if (!currentlyPressedKeys.add(keyName)) {
+            Log.w(TAG, "🟣 Key '" + keyName + "' already pressed, ignoring duplicate");
+            return;
+        }
+
+        Log.e(TAG, "🔵 ========== QUEUED KEY PRESS START ==========");
+        Log.e(TAG, "🔵 functionKey: '" + functionKey + "', keyName: '" + keyName + "'");
+
+        keyboardExecutor.execute(() -> {
+            try {
+                Log.e(TAG, "🔵 Sending PRESS...");
+                boolean result = sendKeyBoardPressSync(functionKey, keyName);
+                Log.e(TAG, "🔵 Press result: " + (result ? "SUCCESS" : "FAILED"));
+            } catch (Exception e) {
+                Log.e(TAG, "❌ Exception in sendKeyBoardPressQueued: " + e.getMessage(), e);
+                currentlyPressedKeys.remove(keyName);
+            }
+            Log.e(TAG, "🔵 ========== QUEUED KEY PRESS END ==========");
+        });
+    }
+
+    /**
+     * Queue a key release on the executor thread.
+     * Used by WebRTC when browser sends keyup separately from keydown.
+     * This ensures release always happens AFTER all queued press operations.
+     */
+    public static void sendKeyBoardReleaseQueued() {
+        Log.e(TAG, "🔴 ========== QUEUED KEY RELEASE START ==========");
+
+        keyboardExecutor.execute(() -> {
+            try {
+                Log.e(TAG, "🔴 Sending RELEASE...");
+                sendKeyBoardReleaseSync();
+                currentlyPressedKeys.clear();
+                Log.e(TAG, "✅ Release sent, cleared all pressed keys");
+            } catch (Exception e) {
+                Log.e(TAG, "❌ Exception in sendKeyBoardReleaseQueued: " + e.getMessage(), e);
+            }
+            Log.e(TAG, "🔴 ========== QUEUED KEY RELEASE END ==========");
         });
     }
 

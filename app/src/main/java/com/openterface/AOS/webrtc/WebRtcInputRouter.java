@@ -1,5 +1,6 @@
 package com.openterface.AOS.webrtc;
 
+import com.openterface.AOS.target.KeyBoardManager;
 import com.openterface.AOS.vnc.VncKeyMap;
 
 /**
@@ -96,19 +97,22 @@ public class WebRtcInputRouter {
         }
 
         if (VncKeyMap.isModifier(keysym)) {
-            // Modifier key
+            // Modifier key - use separate press/release on single-threaded executor
             String functionKey = getModifierFunctionKey(keysym);
             if (down) {
-                hidSender.sendKeyboardPress(functionKey, keyName);
+                KeyBoardManager.sendKeyBoardPressQueued(functionKey, keyName);
             } else {
-                hidSender.sendKeyboardRelease();
+                KeyBoardManager.sendKeyBoardReleaseQueued();
             }
         } else {
-            // Regular key
+            // Regular key - use atomic press+release to avoid double characters
+            // Browser sends both keydown and keyup, but we handle the full cycle on keydown
             if (down) {
-                hidSender.sendKeyboardKey(keyName);
+                KeyBoardManager.sendKeyBoardPressAndRelease("00", keyName);
             } else {
-                hidSender.sendKeyboardRelease();
+                // Release is handled by sendKeyBoardPressAndRelease, ignore keyup for regular keys
+                // But clear any pending pressed keys state
+                KeyBoardManager.sendKeyBoardReleaseQueued();
             }
         }
     }
