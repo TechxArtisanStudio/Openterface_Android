@@ -39,6 +39,12 @@ jobs:
       with:
         node-version: '22'
 
+    - name: Install WebUI dependencies
+      run: |
+        cd Openterface_WebUI
+        npm ci
+        cd ..
+
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
