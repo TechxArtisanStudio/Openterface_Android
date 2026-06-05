@@ -140,6 +140,7 @@ public class WebRtcServerService extends Service {
 
             // Start signaling server
             signalingServer = new WebRtcSignalingServer(signalingPort, new SignalingHandler());
+            signalingServer.setContext(this);
             signalingServer.start();
 
             isRunning.set(true);

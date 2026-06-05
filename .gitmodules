@@ -1,3 +1,6 @@
 [submodule "libvncserver/src/main/jni/libvnc"]
 	path = libvncserver/src/main/jni/libvnc
 	url = https://github.com/LibVNC/libvncserver.git
+[submodule "openterface-web"]
+	path = openterface-web
+	url = https://github.com/Openterface/Openterface_Web.git

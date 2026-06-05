@@ -77,6 +77,40 @@ android {
         ignoreWarnings true  // Ignore all warnings
         disable 'all'  // Disable all lint checks
     }
+
+    // Add WebRTC client assets from submodule
+    sourceSets {
+        main {
+            assets.srcDirs += ['src/main/assets', '../openterface-web/packages/webrtc/dist/webrtc-android']
+        }
+    }
+}
+
+// Task to build WebRTC client from submodule
+task buildWebClient(type: Exec) {
+    description = 'Build WebRTC client from openterface-web submodule'
+    group = 'build'
+
+    def webDir = file('../openterface-web')
+
+    // Only run if the submodule exists
+    onlyIf {
+        webDir.exists()
+    }
+
+    workingDir webDir
+    executable 'bash'
+    args '-c', 'npm install && npm run build:webrtc:android'
+
+    // Handle build failure gracefully
+    ignoreExitValue true
+}
+
+// Make preBuild depend on buildWebClient
+tasks.whenTaskAdded { task ->
+    if (task.name == 'preBuild') {
+        task.dependsOn buildWebClient
+    }
 }
 
 dependencies {

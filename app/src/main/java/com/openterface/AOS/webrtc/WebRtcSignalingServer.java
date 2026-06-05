@@ -1,17 +1,16 @@
 package com.openterface.AOS.webrtc;
 
-import android.util.Log;
 import android.content.Context;
+import android.content.res.AssetManager;
+import android.util.Log;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
 import fi.iki.elonen.NanoHTTPD;
@@ -55,6 +54,12 @@ public class WebRtcSignalingServer extends NanoHTTPD {
         return getListeningPort();
     }
 
+    private Context context;
+
+    public void setContext(Context context) {
+        this.context = context;
+    }
+
     @Override
     public Response serve(IHTTPSession session) {
         Method method = session.getMethod();
@@ -63,6 +68,23 @@ public class WebRtcSignalingServer extends NanoHTTPD {
         Log.d(TAG, "Request: " + method + " " + uri);
 
         try {
+            // Static file serving first
+            if (uri.equals("/") || uri.equals("/index.html")) {
+                return serveAsset("webrtc/index.html", "text/html");
+            }
+            if (uri.startsWith("/assets/")) {
+                String assetPath = "webrtc" + uri;
+                String mimeType = getMimeType(uri);
+                return serveAsset(assetPath, mimeType);
+            }
+            if (uri.equals("/keymod.js")) {
+                return serveAsset("webrtc/keymod.js", "application/javascript");
+            }
+            if (uri.equals("/keymod.wasm")) {
+                return serveAsset("webrtc/keymod.wasm", "application/wasm");
+            }
+
+            // API endpoints
             switch (uri) {
                 case "/offer":
                     if (method == Method.POST) {
@@ -96,13 +118,59 @@ public class WebRtcSignalingServer extends NanoHTTPD {
                             "Only POST allowed");
 
                 default:
-                    return handleGetIndex();
+                    // SPA fallback - serve index.html for unknown routes
+                    return serveAsset("webrtc/index.html", "text/html");
             }
         } catch (Exception e) {
             Log.e(TAG, "Error handling request", e);
             return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT,
                     "Error: " + e.getMessage());
         }
+    }
+
+    private Response serveAsset(String assetPath, String mimeType) {
+        if (context == null) {
+            Log.e(TAG, "Context not set, cannot serve assets");
+            return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_PLAINTEXT,
+                    "Server not initialized");
+        }
+
+        try {
+            AssetManager assets = context.getAssets();
+            InputStream is = assets.open(assetPath);
+
+            // Read entire asset into byte array
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = is.read(buffer)) != -1) {
+                baos.write(buffer, 0, read);
+            }
+            is.close();
+
+            byte[] data = baos.toByteArray();
+            Log.d(TAG, "Serving asset: " + assetPath + " (" + data.length + " bytes, " + mimeType + ")");
+
+            return newFixedLengthResponse(Response.Status.OK, mimeType,
+                    new ByteArrayInputStream(data), data.length);
+
+        } catch (IOException e) {
+            Log.w(TAG, "Asset not found: " + assetPath);
+            return newFixedLengthResponse(Response.Status.NOT_FOUND, MIME_PLAINTEXT,
+                    "Asset not found: " + assetPath);
+        }
+    }
+
+    private String getMimeType(String uri) {
+        if (uri.endsWith(".html")) return "text/html";
+        if (uri.endsWith(".js")) return "application/javascript";
+        if (uri.endsWith(".css")) return "text/css";
+        if (uri.endsWith(".wasm")) return "application/wasm";
+        if (uri.endsWith(".json")) return "application/json";
+        if (uri.endsWith(".png")) return "image/png";
+        if (uri.endsWith(".jpg") || uri.endsWith(".jpeg")) return "image/jpeg";
+        if (uri.endsWith(".svg")) return "image/svg+xml";
+        return "application/octet-stream";
     }
 
     private Response handleOffer(IHTTPSession session) {
