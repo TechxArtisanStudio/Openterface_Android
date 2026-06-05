@@ -42,11 +42,13 @@ public class KeyBoardOpacity {
     private final ImageButton KeyBoard_Opacity;
     private final LinearLayout keyBoardView;
     private final android.content.SharedPreferences prefs;
+    private final MainActivity activity;
 
     public KeyBoardOpacity(MainActivity activity) {
         KeyBoard_Opacity = activity.findViewById(R.id.KeyBoard_Opacity);
         keyBoardView = activity.findViewById(R.id.KeyBoard_View);
         prefs = activity.getPreferences(Context.MODE_PRIVATE);
+        this.activity = activity;
     }
 
     public void setOpacityButtonClick() {
@@ -55,6 +57,7 @@ public class KeyBoardOpacity {
 
     private void showOpacityDialog() {
         int currentOpacity = prefs.getInt(PREF_KEY, DEFAULT_OPACITY);
+        int currentTouchPadOpacity = prefs.getInt("touchpad_opacity", DEFAULT_OPACITY);
 
         View dialogView = View.inflate(keyBoardView.getContext(), R.layout.dialog_opacity, null);
         SeekBar seekBar = dialogView.findViewById(R.id.opacity_seekbar);
@@ -77,8 +80,31 @@ public class KeyBoardOpacity {
             }
         });
 
+        // Add TouchPad opacity SeekBar
+        SeekBar touchPadSeekBar = dialogView.findViewById(R.id.touchpad_opacity_seekbar);
+        TextView touchPadOpacityText = dialogView.findViewById(R.id.touchpad_opacity_text);
+        if (touchPadSeekBar != null && touchPadOpacityText != null) {
+            touchPadSeekBar.setProgress(currentTouchPadOpacity);
+            touchPadOpacityText.setText(currentTouchPadOpacity + "%");
+            touchPadSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    touchPadOpacityText.setText(progress + "%");
+                    if (activity != null) {
+                        activity.setTouchPadOpacity(progress);
+                    }
+                }
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+                    prefs.edit().putInt("touchpad_opacity", seekBar.getProgress()).apply();
+                }
+            });
+        }
+
         new AlertDialog.Builder(keyBoardView.getContext())
-                .setTitle("调整键盘透明度")
+                .setTitle("调整键盘/触摸屏透明度")
                 .setView(dialogView)
                 .setPositiveButton("确定", null)
                 .show();
@@ -90,5 +116,9 @@ public class KeyBoardOpacity {
     public void restoreOpacity() {
         int savedOpacity = prefs.getInt(PREF_KEY, DEFAULT_OPACITY);
         keyBoardView.setAlpha(savedOpacity / 100f);
+        // Restore TouchPad opacity too
+        if (activity != null) {
+            activity.restoreTouchPadOpacity();
+        }
     }
 }

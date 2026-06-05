@@ -6,17 +6,21 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.openterface.AOS.activity.MainActivity"
-    android:id="@+id/thisFrameLayout">
+    android:id="@+id/thisFrameLayout"
+    android:background="@android:color/black"
+    android:clipChildren="true"
+    android:clipToPadding="true">
 
     <androidx.drawerlayout.widget.DrawerLayout
         android:id="@+id/drawer_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:background="@android:color/black">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/white"
+            android:background="@color/black"
             android:orientation="vertical">
 
             <RelativeLayout
@@ -89,6 +93,37 @@
         android:background="@color/white"
         android:visibility="gone">
 
+        <!-- TouchPad settings and help buttons (above keyboard toolbar) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:padding="8dp"
+            android:background="#F5F5F5">
+
+            <ImageButton
+                android:id="@+id/touchPadSettingsButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="16dp"
+                android:background="@drawable/touchpad_button_background"
+                android:src="@drawable/baseline_settings_24"
+                android:scaleType="centerInside"
+                android:contentDescription="@string/touchpad_settings_title"
+                tools:ignore="TouchTargetSizeCheck" />
+
+            <ImageButton
+                android:id="@+id/touchPadHelpButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/touchpad_button_background"
+                android:src="@drawable/baseline_help_24"
+                android:scaleType="centerInside"
+                android:contentDescription="@string/touchpad_help_title"
+                tools:ignore="TouchTargetSizeCheck" />
+        </LinearLayout>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -158,6 +193,19 @@
                         android:theme="@style/ButtonTheme"
                         android:layout_marginHorizontal="1dp"
                         android:src="@drawable/ic_opacity"
+                        android:scaleType="centerInside"
+                        android:padding="4dp"
+                        tools:ignore="ContentDescription"/>
+
+                    <ImageButton
+                        android:id="@+id/KeyBoard_TouchPad"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@drawable/button_background"
+                        android:theme="@style/ButtonTheme"
+                        android:layout_marginHorizontal="1dp"
+                        android:src="@drawable/baseline_mouse_24"
                         android:scaleType="centerInside"
                         android:padding="4dp"
                         tools:ignore="ContentDescription"/>
@@ -296,6 +344,9 @@
         android:visibility="gone"
         style="@style/CameraViewDragButton"
         android:src="@drawable/three_dots"/>
+
+    <!-- TouchPad overlay for mouse control -->
+    <include layout="@layout/touchpad_overlay"/>
 
     <!-- VNC encoding popup notification -->
     <TextView

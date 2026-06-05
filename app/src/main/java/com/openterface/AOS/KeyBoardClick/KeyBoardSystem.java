@@ -291,7 +291,8 @@ public class KeyBoardSystem {
      */
     private boolean isModifierView(View v) {
         int id = v.getId();
-        return id == R.id.Key_Ctrl || id == R.id.Key_Win || id == R.id.Key_Alt ||
+        return id == R.id.Key_Ctrl || id == R.id.Key_CtrlGr || id == R.id.Key_Win ||
+               id == R.id.Key_Alt || id == R.id.Key_AltGr ||
                id == R.id.Key_LeftShift || id == R.id.Key_RightShift;
     }
 
@@ -355,28 +356,44 @@ public class KeyBoardSystem {
     private static final int SWIPE_DISTANCE = 40;
 
     /**
-     * Activate a modifier key.
+     * Activate a modifier key — send modifier byte to USB HID and update internal state.
      */
     private void activateModifier(View v, boolean[] isLocked) {
         int id = v.getId();
 
-        if (id == R.id.Key_Ctrl || id == R.id.Key_CtrlGr) {
+        if (id == R.id.Key_Ctrl) {
             KeyBoard_Ctrl_Press(true);
             KeyBoardFunction.KeyBoard_Ctrl_Press(true);
-        } else if (id == R.id.Key_Alt || id == R.id.Key_AltGr) {
+            KeyBoardManager.sendModifierPress("Ctrl");
+        } else if (id == R.id.Key_CtrlGr) {
+            KeyBoard_Ctrl_Press(true);
+            KeyBoardFunction.KeyBoard_Ctrl_Press(true);
+            KeyBoardManager.sendModifierPress("CtrlR");
+        } else if (id == R.id.Key_Alt) {
             KeyBoard_Alt_Press(true);
             KeyBoardFunction.KeyBoard_Alt_Press(true);
+            KeyBoardManager.sendModifierPress("Alt");
+        } else if (id == R.id.Key_AltGr) {
+            KeyBoard_Alt_Press(true);
+            KeyBoardFunction.KeyBoard_Alt_Press(true);
+            KeyBoardManager.sendModifierPress("AltR");
         } else if (id == R.id.Key_Win) {
             KeyBoard_Win_Press(true);
             KeyBoardFunction.KeyBoard_Win_Press(true);
-        } else if (id == R.id.Key_LeftShift || id == R.id.Key_RightShift) {
+            KeyBoardManager.sendModifierPress("Win");
+        } else if (id == R.id.Key_LeftShift) {
             KeyBoard_ShIft_Press(true);
             KeyBoardFunction.KeyBoard_ShIft_Press(true);
+            KeyBoardManager.sendModifierPress("Shift");
+        } else if (id == R.id.Key_RightShift) {
+            KeyBoard_ShIft_Press(true);
+            KeyBoardFunction.KeyBoard_ShIft_Press(true);
+            KeyBoardManager.sendModifierPress("ShiftR");
         }
     }
 
     /**
-     * Deactivate a modifier key.
+     * Deactivate a modifier key — release all modifiers on USB HID and update internal state.
      */
     private void deactivateModifier(View v, boolean[] isLocked) {
         int id = v.getId();
@@ -384,15 +401,19 @@ public class KeyBoardSystem {
         if (id == R.id.Key_Ctrl || id == R.id.Key_CtrlGr) {
             KeyBoard_Ctrl_Press(false);
             KeyBoardFunction.KeyBoard_Ctrl_Press(false);
+            KeyBoardManager.sendModifierRelease();
         } else if (id == R.id.Key_Alt || id == R.id.Key_AltGr) {
             KeyBoard_Alt_Press(false);
             KeyBoardFunction.KeyBoard_Alt_Press(false);
+            KeyBoardManager.sendModifierRelease();
         } else if (id == R.id.Key_Win) {
             KeyBoard_Win_Press(false);
             KeyBoardFunction.KeyBoard_Win_Press(false);
+            KeyBoardManager.sendModifierRelease();
         } else if (id == R.id.Key_LeftShift || id == R.id.Key_RightShift) {
             KeyBoard_ShIft_Press(false);
             KeyBoardFunction.KeyBoard_ShIft_Press(false);
+            KeyBoardManager.sendModifierRelease();
         }
     }
 

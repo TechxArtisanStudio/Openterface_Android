@@ -423,6 +423,67 @@ public class KeyBoardManager {
         }).start();
     }
 
+    /**
+     * Send modifier key press (Ctrl, Alt, Shift, Win) — uses modifier byte, not key byte.
+     * @param modifierKey one of "Ctrl", "Shift", "Alt", "Win" (from KBShortCutKey mapping)
+     */
+    public static void sendModifierPress(String modifierKey) {
+        if (modifierKey == null) {
+            Log.w(TAG, "sendModifierPress: modifierKey is null");
+            return;
+        }
+
+        Log.d(TAG, "Modifier press: " + modifierKey);
+
+        new Thread(() -> {
+            try {
+                // Use usbDeviceManager.writeData() like other keyboard methods
+                if (usbDeviceManager == null || !usbDeviceManager.isConnected()) {
+                    Log.e(TAG, "sendModifierPress USB device not connected");
+                    return;
+                }
+
+                String modifierValue = CH9329MSKBMap.KBShortCutKey().get(modifierKey);
+                if (modifierValue == null) {
+                    Log.e(TAG, "sendModifierPress: unknown modifier " + modifierKey);
+                    return;
+                }
+
+                String sendKBData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
+                        CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
+                        CH9329MSKBMap.getKeyCodeMap().get("address") +
+                        CH9329MSKBMap.CmdData().get("CmdKB_HID") +
+                        CH9329MSKBMap.DataLen().get("DataLenKB") +
+                        modifierValue +
+                        CH9329MSKBMap.DataNull().get("DataNull") +
+                        CH9329MSKBMap.DataNull().get("DataNull") +
+                        CH9329MSKBMap.DataNull().get("DataNull") +
+                        CH9329MSKBMap.DataNull().get("DataNull") +
+                        CH9329MSKBMap.DataNull().get("DataNull") +
+                        CH9329MSKBMap.DataNull().get("DataNull") +
+                        CH9329MSKBMap.DataNull().get("DataNull");
+
+                sendKBData = sendKBData + CH9329Function.makeChecksum(sendKBData);
+                Log.d(TAG, "Modifier press command: " + sendKBData);
+                CH9329Function.checkSendLogData(sendKBData);
+
+                byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendKBData);
+                boolean result = usbDeviceManager.writeData(sendKBDataBytes);
+                Log.d(TAG, "Modifier press sent: " + modifierKey + " result=" + result);
+            } catch (Exception e) {
+                Log.e(TAG, "Error sending modifier press: " + e.getMessage(), e);
+            }
+        }).start();
+    }
+
+    /**
+     * Send modifier key release — sends release command to clear all modifiers.
+     */
+    public static void sendModifierRelease() {
+        Log.d(TAG, "Modifier release");
+        sendKeyBoardRelease();
+    }
+
     public static void sendKeyBoardShortCut(String modifier, String key) {
         new Thread(new Runnable() {
             @Override
