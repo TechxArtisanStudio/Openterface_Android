@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.res.AssetManager;
 import android.util.Log;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -12,6 +13,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 import fi.iki.elonen.NanoHTTPD;
 
@@ -35,7 +38,7 @@ public class WebRtcSignalingServer extends NanoHTTPD {
 
     private SignalingCallback callback;
     private String pendingAnswer;
-    private String pendingIceCandidates;
+    private final JSONArray iceCandidates = new JSONArray();
     private String connectionState = "idle";
 
     public WebRtcSignalingServer(int port, SignalingCallback callback) {
@@ -233,6 +236,12 @@ public class WebRtcSignalingServer extends NanoHTTPD {
                 response.put("sdp", pendingAnswer);
                 response.put("type", "answer");
                 response.put("status", "ready");
+                // Include any ICE candidates from Android side
+                synchronized (iceCandidates) {
+                    if (iceCandidates.length() > 0) {
+                        response.put("candidates", iceCandidates);
+                    }
+                }
             } else {
                 response.put("status", "waiting");
                 response.put("message", "No SDP answer available yet");
@@ -307,6 +316,33 @@ public class WebRtcSignalingServer extends NanoHTTPD {
 
     public String getConnectionState() {
         return connectionState;
+    }
+
+    /**
+     * Add ICE candidate from Android side.
+     */
+    public void addIceCandidate(org.webrtc.IceCandidate candidate) {
+        try {
+            JSONObject json = new JSONObject();
+            json.put("candidate", candidate.sdp);
+            json.put("sdpMid", candidate.sdpMid);
+            json.put("sdpMLineIndex", candidate.sdpMLineIndex);
+            synchronized (iceCandidates) {
+                iceCandidates.put(json);
+            }
+            Log.d(TAG, "ICE candidate added for client: " + candidate.sdpMid);
+        } catch (JSONException e) {
+            Log.e(TAG, "Error creating ICE candidate JSON", e);
+        }
+    }
+
+    public void clearIceCandidates() {
+        // JSONArray doesn't have a clear() method, create new one
+        synchronized (iceCandidates) {
+            while (iceCandidates.length() > 0) {
+                iceCandidates.remove(0);
+            }
+        }
     }
 
     private String readBody(IHTTPSession session) {

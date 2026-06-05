@@ -1626,6 +1626,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onKeyboardEvent(int keysym, boolean down) {
+            Log.i(TAG, "MainActivity.onKeyboardEvent: keysym=" + keysym + ", down=" + down + ", router=" + (webRtcInputRouter != null));
             if (webRtcInputRouter != null) {
                 webRtcInputRouter.onKeyboardEvent(keysym, down);
             }

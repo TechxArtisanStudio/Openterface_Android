@@ -84,3 +84,4 @@ lint/tmp/
 
 # Claude Code
 .claude/
+app/src/main/assets/webrtc/

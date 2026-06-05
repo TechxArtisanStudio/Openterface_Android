@@ -1,7 +1,10 @@
 package com.openterface.AOS.webrtc;
 
+import com.openterface.AOS.serial.UsbDeviceManager;
 import com.openterface.AOS.target.KeyBoardManager;
 import com.openterface.AOS.target.MouseManager;
+
+import android.util.Log;
 
 /**
  * Android implementation of HidInputSender.
@@ -9,6 +12,7 @@ import com.openterface.AOS.target.MouseManager;
  * to the CH9329 USB serial HID path.
  */
 public class AndroidHidInputSender implements HidInputSender {
+    private static final String TAG = "AndroidHidInputSender";
 
     @Override
     public void setMouseDimensions(int width, int height) {
@@ -27,12 +31,15 @@ public class AndroidHidInputSender implements HidInputSender {
 
     @Override
     public void sendKeyboardPress(String functionKey, String keyName) {
+        // Use KeyBoardManager's press method for modifiers
         KeyBoardManager.sendKeyBoardPress(functionKey, keyName);
     }
 
     @Override
     public void sendKeyboardKey(String keyName) {
-        KeyBoardManager.sendKeyBoardData("00", keyName);
+        Log.i(TAG, "sendKeyboardKey: " + keyName);
+        // Use synchronized press+release for reliable key input over WebRTC
+        KeyBoardManager.sendKeyBoardPressAndRelease("00", keyName);
     }
 
     @Override

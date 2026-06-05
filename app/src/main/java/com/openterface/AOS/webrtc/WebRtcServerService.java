@@ -224,11 +224,8 @@ public class WebRtcServerService extends Service {
 
             peerConnection = peerConnectionFactory.createPeerConnection(rtcConfig, peerObserver);
 
-            // Create data channel for input events from client
-            DataChannel.Init dataChannelInit = new DataChannel.Init();
-            dataChannelInit.ordered = true;
-            dataChannelInit.negotiated = false;
-            peerConnection.createDataChannel("input", dataChannelInit);
+            // Note: DataChannel is created by browser client and received via onDataChannel
+            // We don't create one here - we wait for the browser to create it
 
             // Create video source and track
             videoSource = peerConnectionFactory.createVideoSource(false);
@@ -270,12 +267,20 @@ public class WebRtcServerService extends Service {
         @Override
         public void onIceGatheringChange(PeerConnection.IceGatheringState state) {
             Log.d(TAG, "ICE gathering state: " + state);
+            // When gathering is complete, signal that the answer is ready with all candidates
+            if (state == PeerConnection.IceGatheringState.COMPLETE && signalingServer != null) {
+                Log.i(TAG, "ICE gathering complete, answer ready with all candidates");
+                // The answer is already set via pendingAnswer, browser will poll for it with candidates
+            }
         }
 
         @Override
         public void onIceCandidate(IceCandidate candidate) {
             Log.d(TAG, "New ICE candidate: " + candidate.sdp);
-            // ICE candidates would be sent to client via signaling
+            // Send to browser via signaling server
+            if (signalingServer != null) {
+                signalingServer.addIceCandidate(candidate);
+            }
         }
 
         @Override
@@ -461,8 +466,12 @@ public class WebRtcServerService extends Service {
                 case "keyboard":
                     int keysym = message.optInt("keysym", 0);
                     boolean down = message.optBoolean("down", false);
+                    Log.i(TAG, "Keyboard event received: keysym=" + keysym + ", down=" + down);
                     if (callback != null) {
+                        Log.i(TAG, "Dispatching to callback");
                         mainHandler.post(() -> callback.onKeyboardEvent(keysym, down));
+                    } else {
+                        Log.w(TAG, "No callback registered for keyboard event");
                     }
                     break;
 
