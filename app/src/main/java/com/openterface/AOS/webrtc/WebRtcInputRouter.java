@@ -1,6 +1,5 @@
 package com.openterface.AOS.webrtc;
 
-import com.openterface.AOS.target.KeyBoardManager;
 import com.openterface.AOS.vnc.VncKeyMap;
 
 /**
@@ -8,7 +7,7 @@ import com.openterface.AOS.vnc.VncKeyMap;
  * via the existing CH9329 HID path.
  *
  * Reuses VncKeyMap for keysym → CH9329 key name mapping,
- * and delegates HID operations to HidInputSender for testability.
+ * and delegates HID operations to HidInputSender and KeyboardSender for testability.
  *
  * Note: This class has no Android dependencies (no Log, no Context) so it
  * can be unit-tested with pure JVM tests.
@@ -16,6 +15,7 @@ import com.openterface.AOS.vnc.VncKeyMap;
 public class WebRtcInputRouter {
 
     private final HidInputSender hidSender;
+    private final KeyboardSender keyboardSender;
 
     private int framebufferWidth = 1920;
     private int framebufferHeight = 1080;
@@ -24,17 +24,18 @@ public class WebRtcInputRouter {
     private int lastButtonMask = 0;
 
     /**
-     * Create router with the Android HID sender (production use).
+     * Create router with Android implementations (production use).
      */
     public WebRtcInputRouter() {
-        this(new AndroidHidInputSender());
+        this(new AndroidHidInputSender(), new AndroidKeyboardSender());
     }
 
     /**
-     * Create router with a custom HID sender (for testing).
+     * Create router with custom senders (for testing).
      */
-    public WebRtcInputRouter(HidInputSender hidSender) {
+    public WebRtcInputRouter(HidInputSender hidSender, KeyboardSender keyboardSender) {
         this.hidSender = hidSender;
+        this.keyboardSender = keyboardSender;
     }
 
     /**
@@ -52,6 +53,7 @@ public class WebRtcInputRouter {
      * @param buttonMask RFB button mask (1=left, 2=middle, 4=right)
      * @param x          X coordinate
      * @param y          Y coordinate
+     * @param pressed    true if button is pressed
      */
     public void onMouseEvent(int buttonMask, int x, int y, boolean pressed) {
         // Set mouse dimensions for proper normalization
@@ -100,19 +102,19 @@ public class WebRtcInputRouter {
             // Modifier key - use separate press/release on single-threaded executor
             String functionKey = getModifierFunctionKey(keysym);
             if (down) {
-                KeyBoardManager.sendKeyBoardPressQueued(functionKey, keyName);
+                keyboardSender.sendKeyBoardPressQueued(functionKey, keyName);
             } else {
-                KeyBoardManager.sendKeyBoardReleaseQueued();
+                keyboardSender.sendKeyBoardReleaseQueued();
             }
         } else {
             // Regular key - use atomic press+release to avoid double characters
             // Browser sends both keydown and keyup, but we handle the full cycle on keydown
             if (down) {
-                KeyBoardManager.sendKeyBoardPressAndRelease("00", keyName);
+                keyboardSender.sendKeyBoardPressAndRelease("00", keyName);
             } else {
                 // Release is handled by sendKeyBoardPressAndRelease, ignore keyup for regular keys
                 // But clear any pending pressed keys state
-                KeyBoardManager.sendKeyBoardReleaseQueued();
+                keyboardSender.sendKeyBoardReleaseQueued();
             }
         }
     }

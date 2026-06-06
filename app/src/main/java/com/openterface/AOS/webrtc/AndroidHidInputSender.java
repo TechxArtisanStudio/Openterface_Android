@@ -1,49 +1,45 @@
 package com.openterface.AOS.webrtc;
 
-import com.openterface.AOS.serial.UsbDeviceManager;
-import com.openterface.AOS.target.KeyBoardManager;
-import com.openterface.AOS.target.MouseManager;
+import com.openterface.AOS.target.HidManager;
 
 import android.util.Log;
 
 /**
  * Android implementation of HidInputSender.
- * Routes input events through the existing MouseManager and KeyBoardManager
- * to the CH9329 USB serial HID path.
+ * Routes input events through HidManager which can use either
+ * Core JNI or Java implementation based on configuration.
  */
 public class AndroidHidInputSender implements HidInputSender {
     private static final String TAG = "AndroidHidInputSender";
 
     @Override
     public void setMouseDimensions(int width, int height) {
-        MouseManager.width_height(width, height);
+        HidManager.width_height(width, height);
     }
 
     @Override
     public void sendAbsMove(int x, int y) {
-        MouseManager.sendHexAbsData(x, y);
+        HidManager.sendHexAbsData(x, y);
     }
 
     @Override
     public void sendAbsButtonClick(String clickType, int x, int y) {
-        MouseManager.sendHexAbsButtonClickData(clickType, x, y);
+        HidManager.sendHexAbsButtonClickData(clickType, x, y);
     }
 
     @Override
     public void sendKeyboardPress(String functionKey, String keyName) {
-        // Use KeyBoardManager's press method for modifiers
-        KeyBoardManager.sendKeyBoardPress(functionKey, keyName);
+        HidManager.sendKeyBoardPress(functionKey, keyName);
     }
 
     @Override
     public void sendKeyboardKey(String keyName) {
         Log.i(TAG, "sendKeyboardKey: " + keyName);
-        // Use synchronized press+release for reliable key input over WebRTC
-        KeyBoardManager.sendKeyBoardPressAndRelease("00", keyName);
+        HidManager.sendKeyBoardPressAndRelease("00", keyName);
     }
 
     @Override
     public void sendKeyboardRelease() {
-        KeyBoardManager.sendKeyBoardRelease();
+        HidManager.sendKeyBoardRelease();
     }
 }

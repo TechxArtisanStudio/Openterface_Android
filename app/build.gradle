@@ -84,6 +84,13 @@ android {
             assets.srcDirs += ['src/main/assets', '../Openterface_WebUI/packages/webrtc/dist/webrtc-android']
         }
     }
+
+    // Package native libraries (will be built manually or pre-built)
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['src/main/jniLibs']
+        }
+    }
 }
 
 // Task to build WebRTC client from WebUI submodule
