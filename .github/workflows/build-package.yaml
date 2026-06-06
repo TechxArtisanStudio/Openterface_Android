@@ -39,10 +39,11 @@ jobs:
       with:
         node-version: '22'
 
-    - name: Install WebUI dependencies
+    - name: Build WebUI WebRTC client
       run: |
         cd Openterface_WebUI
         npm ci
+        npm run build:webrtc:android
         cd ..
 
     - name: Set up JDK 17
