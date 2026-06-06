@@ -14,12 +14,32 @@
 
 # Gson
 -keep class com.google.gson.** { *; }
--keepattributes Signature
--keepattributes *Annotation*
+
+# USB Serial
+-keep class com.hoho.android.usbserial.** { *; }
+
+# Permission library
+-keep class com.hjq.permissions.** { *; }
+
+# Keep all classes in the app
+-keep class com.openterface.AOS.** { *; }
+
+# Keep native methods
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
+
+# Keep all exception classes
+-keep public class * extends java.lang.Exception
+
+# General R8 fix
+-dontoptimize
+-dontpreverify
+-keepattributes *
 
 # Uncomment this to preserve the line number information for
 # debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+-keepattributes SourceFile,LineNumberTable
 
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
