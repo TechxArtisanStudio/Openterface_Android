@@ -5,12 +5,17 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# WebRTC
+-keep class org.webrtc.** { *; }
+-keep class io.getstream.webrtc.** { *; }
+
+# NanoHTTPD
+-keep class fi.iki.elonen.** { *; }
+
+# Gson
+-keep class com.google.gson.** { *; }
+-keepattributes Signature
+-keepattributes *Annotation*
 
 # Uncomment this to preserve the line number information for
 # debugging stack traces.
