@@ -52,6 +52,11 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
+    - name: Set up CMake
+      uses: jwlawson/actions-setup-cmake@v2
+      with:
+        cmake-version: '3.18.1'
+
     - name: Bump Version
       if: github.event.inputs.version_bump != 'none' && github.event.inputs.version_bump != ''
       id: bump_version

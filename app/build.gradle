@@ -85,7 +85,14 @@ android {
         }
     }
 
-    // Package native libraries (will be built manually or pre-built)
+    // Build Openterface_Core native library
+    externalNativeBuild {
+        cmake {
+            path "src/main/jni/CMakeLists.txt"
+        }
+    }
+
+    // Package native libraries
     sourceSets {
         main {
             jniLibs.srcDirs = ['src/main/jniLibs']
