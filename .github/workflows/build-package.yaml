@@ -34,6 +34,12 @@ jobs:
         submodules: recursive
         token: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Initialize submodules
+      run: |
+        git submodule update --init --recursive
+        ls -la app/src/main/jni/Openterface_Core/
+        ls -la app/src/main/jni/Openterface_Core/include/
+
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
