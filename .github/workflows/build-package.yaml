@@ -58,10 +58,17 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Set up CMake
-      uses: jwlawson/actions-setup-cmake@v2
+    - name: Set up Android NDK
+      uses: nttld/setup-ndk@v1
       with:
-        cmake-version: '3.18.1'
+        ndk-version: r23b
+        local-cache: true
+
+    - name: Clean Gradle cache
+      run: |
+        rm -rf ~/.gradle/caches/
+        rm -rf ~/.gradle/native/
+        rm -rf app/.cxx/ 2>/dev/null || true
 
     - name: Bump Version
       if: github.event.inputs.version_bump != 'none' && github.event.inputs.version_bump != ''
