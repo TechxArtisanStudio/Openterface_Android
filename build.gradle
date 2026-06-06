@@ -1,11 +1,12 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 buildscript {
     repositories {
-		maven { url 'https://maven.aliyun.com/repository/google' }
-		maven { url 'https://maven.aliyun.com/repository/central' }
-
+		// Use standard repositories first
 		google()
 		mavenCentral()
+		// Aliyun mirrors as fallback
+		maven { url 'https://maven.aliyun.com/repository/google' }
+		maven { url 'https://maven.aliyun.com/repository/central' }
     }
     dependencies {
         // AGP 8.2.2 supports SDK 35, works with Gradle 8.5, requires Java 17+
@@ -17,14 +18,16 @@ allprojects {
     apply plugin: 'signing'
 
     repositories {
-		maven { url 'https://maven.aliyun.com/repository/google' }
-		maven { url 'https://maven.aliyun.com/repository/central' }
-
-		maven { url 'https://jitpack.io' }
-
+		// Standard repositories first
 		google()
 		mavenCentral()
+
+		maven { url 'https://jitpack.io' }
 		maven { url 'https://maven.getstream.io/artifactory/maven/' }
+
+		// Aliyun mirrors as fallback
+		maven { url 'https://maven.aliyun.com/repository/google' }
+		maven { url 'https://maven.aliyun.com/repository/central' }
     }
 }
 
