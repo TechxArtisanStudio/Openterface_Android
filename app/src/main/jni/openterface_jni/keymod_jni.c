@@ -5,7 +5,7 @@
 
 #include <jni.h>
 #include <string.h>
-#include "Openterface_Core/include/keymod.h"
+#include "../Openterface_Core/include/keymod.h"
 
 #define TAG "KeymodJNI"
 
