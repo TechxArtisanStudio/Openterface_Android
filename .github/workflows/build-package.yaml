@@ -34,6 +34,12 @@ jobs:
         submodules: recursive
         token: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Initialize submodules
+      run: |
+        git submodule update --init --recursive
+        ls -la app/src/main/jni/Openterface_Core/
+        ls -la app/src/main/jni/Openterface_Core/include/
+
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
@@ -51,6 +57,29 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
+
+    - name: Set up Android NDK
+      uses: nttld/setup-ndk@v1
+      with:
+        ndk-version: r23b
+        local-cache: true
+
+    - name: Set up CMake
+      uses: jwlawson/actions-setup-cmake@v2
+      with:
+        cmake-version: '3.22.1'
+
+    - name: Verify tools
+      run: |
+        echo "NDK: $ANDROID_NDK_HOME"
+        echo "CMake: $(cmake --version)"
+        ls -la $ANDROID_NDK_HOME/cmake/ 2>/dev/null || echo "No cmake in NDK"
+
+    - name: Clean Gradle cache
+      run: |
+        rm -rf ~/.gradle/caches/
+        rm -rf ~/.gradle/native/
+        rm -rf app/.cxx/ 2>/dev/null || true
 
     - name: Bump Version
       if: github.event.inputs.version_bump != 'none' && github.event.inputs.version_bump != ''

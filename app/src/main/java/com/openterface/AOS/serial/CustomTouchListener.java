@@ -35,7 +35,8 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import com.openterface.AOS.R;
 import com.openterface.AOS.activity.MainActivity;
 import com.openterface.AOS.drawerLayout.ZoomLayoutDeal;
-import com.openterface.AOS.target.MouseManager;
+import com.openterface.AOS.target.HidManager;
+// import com.openterface.AOS.target.MouseManager;
 
 /**
  * CustomTouchListener — handles touch events on the full screen (pointer mode).
@@ -163,7 +164,7 @@ public class CustomTouchListener implements View.OnTouchListener {
             float scrollAmount = event.getAxisValue(MotionEvent.AXIS_VSCROLL);
             if (scrollAmount != 0) {
                 Log.d("MouseEvent", "Scroll amount: " + scrollAmount);
-                MouseManager.handleTwoFingerPanSlideUpDown(scrollAmount);
+                HidManager.handleTwoFingerPanSlideUpDown(scrollAmount);
             }
             return true;
         }
@@ -178,12 +179,12 @@ public class CustomTouchListener implements View.OnTouchListener {
                     case MotionEvent.TOOL_TYPE_MOUSE:
                         if(KeyMouse_state){
                             if(keyMouseAbsCtrl){
-                                MouseManager.sendHexAbsDragData(cursorX, cursorY);
+                                HidManager.sendHexAbsDragData(cursorX, cursorY);
                             }else {
-                                MouseManager.sendHexAbsData(cursorX, cursorY);
+                                HidManager.sendHexAbsData(cursorX, cursorY);
                             }
                         }else {
-                            MouseManager.sendHexRelData("SecNullData", cursorX, cursorY, lastMoveMSX, lastMoveMSY);
+                            HidManager.sendHexRelData("SecNullData", cursorX, cursorY, lastMoveMSX, lastMoveMSY);
                             lastMoveMSX = cursorX;
                             lastMoveMSY = cursorY;
                         }
@@ -361,7 +362,7 @@ public class CustomTouchListener implements View.OnTouchListener {
                 if (!tapCancelled) {
                     handActionUpMouse(event);
                 } else {
-                    MouseManager.releaseMSRelData();
+                    HidManager.releaseMSRelData();
                     lastMoveMSX = 0;
                     lastMoveMSY = 0;
                 }
@@ -382,7 +383,7 @@ public class CustomTouchListener implements View.OnTouchListener {
                     releaseMouseAndReset();
                     isDragMode = false;
                 } else {
-                    MouseManager.releaseMSRelData();
+                    HidManager.releaseMSRelData();
                 }
                 lastMoveMSX = 0;
                 lastMoveMSY = 0;
@@ -398,9 +399,9 @@ public class CustomTouchListener implements View.OnTouchListener {
      */
     private void handleNormalMove(float x, float y) {
         if (KeyMouse_state) {
-            MouseManager.sendHexAbsData(x, y);
+            HidManager.sendHexAbsData(x, y);
         } else {
-            MouseManager.sendHexRelData("SecNullData", x, y, lastMoveMSX, lastMoveMSY);
+            HidManager.sendHexRelData("SecNullData", x, y, lastMoveMSX, lastMoveMSY);
             lastMoveMSX = x;
             lastMoveMSY = y;
         }
@@ -412,10 +413,10 @@ public class CustomTouchListener implements View.OnTouchListener {
     private void handleDragMove(float x, float y) {
         if (KeyMouse_state) {
             // In drag mode with absolute: send with left button pressed
-            MouseManager.sendHexAbsButtonClickData("SecLeftData", x, y);
+            HidManager.sendHexAbsButtonClickData("SecLeftData", x, y);
         } else {
             // In drag mode with relative: send with left button pressed
-            MouseManager.sendHexRelData("SecLeftData", x, y, lastMoveMSX, lastMoveMSY);
+            HidManager.sendHexRelData("SecLeftData", x, y, lastMoveMSX, lastMoveMSY);
             lastMoveMSX = x;
             lastMoveMSY = y;
         }
@@ -521,7 +522,7 @@ public class CustomTouchListener implements View.OnTouchListener {
                         if (scrollY != 0) twoFingerScrollAccumY -= scrollY;
 
                         if (scrollX != 0 || scrollY != 0) {
-                            MouseManager.handleTwoFingerPanSlideUpDown(scrollY);
+                            HidManager.handleTwoFingerPanSlideUpDown(scrollY);
                         }
 
                         twoFingerPrevX = cx;
@@ -551,7 +552,7 @@ public class CustomTouchListener implements View.OnTouchListener {
                     if (scrollY != 0) twoFingerScrollAccumY -= scrollY;
 
                     if (scrollX != 0 || scrollY != 0) {
-                        MouseManager.handleTwoFingerPanSlideUpDown(scrollY);
+                        HidManager.handleTwoFingerPanSlideUpDown(scrollY);
                     }
 
                     twoFingerPrevX = cx;
@@ -567,12 +568,12 @@ public class CustomTouchListener implements View.OnTouchListener {
                 } else if (isTwoFingerClick) {
                     // Still in tap mode — send RIGHT CLICK
                     if (KeyMouse_state) {
-                        MouseManager.sendHexAbsButtonClickData("SecRightData", twoFingerDownCenterX, twoFingerDownCenterY);
-                        MouseManager.sendHexAbsData(twoFingerDownCenterX, twoFingerDownCenterY);
+                        HidManager.sendHexAbsButtonClickData("SecRightData", twoFingerDownCenterX, twoFingerDownCenterY);
+                        HidManager.sendHexAbsData(twoFingerDownCenterX, twoFingerDownCenterY);
                     } else {
-                        MouseManager.sendHexRelData("SecRightData",
+                        HidManager.sendHexRelData("SecRightData",
                                 twoFingerDownCenterX, twoFingerDownCenterY, 0, 0);
-                        MouseManager.releaseMSRelData();
+                        HidManager.releaseMSRelData();
                     }
                     Log.d(TAG, "Two-finger tap confirmed on POINTER_UP → RIGHT CLICK");
                 }
@@ -598,12 +599,12 @@ public class CustomTouchListener implements View.OnTouchListener {
                 if (!twoFingerDragConfirmed) {
                     // Confirmed tap — send RIGHT CLICK
                     if (KeyMouse_state) {
-                        MouseManager.sendHexAbsButtonClickData("SecRightData", twoFingerDownCenterX, twoFingerDownCenterY);
-                        MouseManager.sendHexAbsData(twoFingerDownCenterX, twoFingerDownCenterY);
+                        HidManager.sendHexAbsButtonClickData("SecRightData", twoFingerDownCenterX, twoFingerDownCenterY);
+                        HidManager.sendHexAbsData(twoFingerDownCenterX, twoFingerDownCenterY);
                     } else {
-                        MouseManager.sendHexRelData("SecRightData",
+                        HidManager.sendHexRelData("SecRightData",
                                 twoFingerDownCenterX, twoFingerDownCenterY, 0, 0);
-                        MouseManager.releaseMSRelData();
+                        HidManager.releaseMSRelData();
                     }
                     Log.d(TAG, "Two-finger final lift → RIGHT CLICK");
                 } else {
@@ -629,20 +630,20 @@ public class CustomTouchListener implements View.OnTouchListener {
      */
     private void releaseRightButton() {
         if (KeyMouse_state) {
-            MouseManager.sendHexAbsData(lastMoveMSX, lastMoveMSY);
+            HidManager.sendHexAbsData(lastMoveMSX, lastMoveMSY);
         } else {
-            MouseManager.releaseMSRelData();
+            HidManager.releaseMSRelData();
         }
     }
 
     private void handleSingleClick(float x, float y) {
         Log.d(TAG, "Single click at (" + x + "," + y + ")");
         if (KeyMouse_state) {
-            MouseManager.sendHexAbsButtonClickData("SecLeftData", x, y);
-            handler.postDelayed(() -> MouseManager.sendHexAbsData(x, y), 50);
+            HidManager.sendHexAbsButtonClickData("SecLeftData", x, y);
+            handler.postDelayed(() -> HidManager.sendHexAbsData(x, y), 50);
         } else {
-            MouseManager.sendHexRelData("SecLeftData", x, y, lastMoveMSX, lastMoveMSY);
-            handler.postDelayed(() -> MouseManager.releaseMSRelData(), 50);
+            HidManager.sendHexRelData("SecLeftData", x, y, lastMoveMSX, lastMoveMSY);
+            handler.postDelayed(() -> HidManager.releaseMSRelData(), 50);
         }
     }
 
@@ -651,9 +652,9 @@ public class CustomTouchListener implements View.OnTouchListener {
         // KeyCmd-style: suppress single-tap after double-tap
         suppressSingleTapFromDoubleTap = true;
         if (KeyMouse_state) {
-            MouseManager.handleDoubleClickAbs(startMoveMSX, startMoveMSY);
+            HidManager.handleDoubleClickAbs(startMoveMSX, startMoveMSY);
         } else {
-            MouseManager.handleDoubleClickRel();
+            HidManager.handleDoubleClickRel();
         }
     }
 
@@ -677,10 +678,10 @@ public class CustomTouchListener implements View.OnTouchListener {
         if (KeyMouse_state) {
             // In absolute mode: send a move to current position with no buttons pressed
             // We use the last known position to avoid cursor jump
-            MouseManager.sendHexAbsData(lastMoveMSX, lastMoveMSY);
+            HidManager.sendHexAbsData(lastMoveMSX, lastMoveMSY);
         } else {
             // In relative mode: just release buttons, no movement
-            MouseManager.releaseMSRelData();
+            HidManager.releaseMSRelData();
         }
     }
 
@@ -707,7 +708,7 @@ public class CustomTouchListener implements View.OnTouchListener {
 
         if (KeyMouse_state){
             Log.d("handActionDownMouse", "KeyMouse_state");
-            MouseManager.sendHexAbsData(startMoveMSX, startMoveMSY);
+            HidManager.sendHexAbsData(startMoveMSX, startMoveMSY);
         }
     }
 
@@ -767,9 +768,9 @@ public class CustomTouchListener implements View.OnTouchListener {
             startMoveMSY = event.getY();
 
             if (KeyMouse_state) {
-                MouseManager.sendHexAbsDragData(startMoveMSX, startMoveMSY);
+                HidManager.sendHexAbsDragData(startMoveMSX, startMoveMSY);
             } else {
-                MouseManager.sendHexRelData("SecLeftData", startMoveMSX, startMoveMSY, lastMoveMSX, lastMoveMSY);
+                HidManager.sendHexRelData("SecLeftData", startMoveMSX, startMoveMSY, lastMoveMSX, lastMoveMSY);
                 lastMoveMSX = startMoveMSX;
                 lastMoveMSY = startMoveMSY;
             }
@@ -829,41 +830,41 @@ public class CustomTouchListener implements View.OnTouchListener {
 
             if (KeyMouse_state) {
                 if (keyMouseAbsCtrl){
-                    MouseManager.sendHexAbsDragData(startMoveMSX, startMoveMSY);
+                    HidManager.sendHexAbsDragData(startMoveMSX, startMoveMSY);
                     floatingLabel.setVisibility(View.VISIBLE);
                 }else {
                     if (DrawMode && currentTime - longPressStartTime >= 2000 && distance < 30){
-                        MouseManager.handleTwoPress();
+                        HidManager.handleTwoPress();
                         floatingLabel.setVisibility(View.GONE);
                         return;
                     } else if (DrawMode) {
-                        MouseManager.sendHexAbsDragData(startMoveMSX, startMoveMSY);
+                        HidManager.sendHexAbsDragData(startMoveMSX, startMoveMSY);
                         return;
                     }
 
                     if (distance < 30) {
                         if (currentTime - longPressStartTime >= 1000){
-                            MouseManager.sendHexAbsDragData(startMoveMSX, startMoveMSY);
+                            HidManager.sendHexAbsDragData(startMoveMSX, startMoveMSY);
                             DrawMode = true;
                         }
                     } else {
                         if (mouseLeftClick){
                             Log.d("mouse", "mouse left click");
-                            MouseManager.sendHexAbsButtonClickData("SecLeftData", startMoveMSX, startMoveMSY);
+                            HidManager.sendHexAbsButtonClickData("SecLeftData", startMoveMSX, startMoveMSY);
                         }else if (mouseRightClick){
                             Log.d("mouse", "mouse right click");
-                            MouseManager.sendHexAbsButtonClickData("SecRightData", startMoveMSX, startMoveMSY);
+                            HidManager.sendHexAbsButtonClickData("SecRightData", startMoveMSX, startMoveMSY);
                         } else if (mouseScrollClick) {
                             Log.d("mouse", "mouse scroll click");
-                            MouseManager.sendHexAbsButtonClickData("SecMiddleData", startMoveMSX, startMoveMSY);
+                            HidManager.sendHexAbsButtonClickData("SecMiddleData", startMoveMSX, startMoveMSY);
                         }else {
-                            MouseManager.sendHexAbsData(startMoveMSX, startMoveMSY);
+                            HidManager.sendHexAbsData(startMoveMSX, startMoveMSY);
                         }
                         longPressStartTime = currentTime;
                     }
                 }
             } else {
-                MouseManager.sendHexRelData("SecNullData", startMoveMSX, startMoveMSY, lastMoveMSX, lastMoveMSY);
+                HidManager.sendHexRelData("SecNullData", startMoveMSX, startMoveMSY, lastMoveMSX, lastMoveMSY);
                 lastMoveMSX = startMoveMSX;
                 lastMoveMSY = startMoveMSY;
             }
@@ -921,7 +922,7 @@ public class CustomTouchListener implements View.OnTouchListener {
     private void handActionPointerUpMouse(MotionEvent event){
         if (event.getPointerCount() == 2) {
             if ((rightReleaseCurrentTime - rightClickCurrentTime < 500) && !hasHandledMove) {
-                MouseManager.handleTwoPress();//deal right click
+                HidManager.handleTwoPress();//deal right click
                 Log.d(TAG, "this release the right click");
             }
             isPanning = false;
@@ -938,9 +939,9 @@ public class CustomTouchListener implements View.OnTouchListener {
         dragModeEndTime = System.currentTimeMillis();
         if (isDoubleClickPhase && ( dragModeEndTime - dragModeStartTime) > 500) {
             if (KeyMouse_state){
-                MouseManager.sendHexAbsData(startMoveMSX, startMoveMSY);//release abs state
+                HidManager.sendHexAbsData(startMoveMSX, startMoveMSY);//release abs state
             }else {
-                MouseManager.sendHexRelData("SecNullData", startMoveMSX, startMoveMSY, lastMoveMSX, lastMoveMSY);
+                HidManager.sendHexRelData("SecNullData", startMoveMSX, startMoveMSY, lastMoveMSX, lastMoveMSY);
             }
             isDoubleClickPhase = false;
             if (floatingLabel != null) {
@@ -957,17 +958,17 @@ public class CustomTouchListener implements View.OnTouchListener {
             Log.d(TAG, "Double click at the same position");
 
             if (KeyMouse_state) {
-                MouseManager.handleDoubleClickAbs(startMoveMSX, startMoveMSY);
+                HidManager.handleDoubleClickAbs(startMoveMSX, startMoveMSY);
             } else {
-                MouseManager.handleDoubleClickRel();
+                HidManager.handleDoubleClickRel();
             }
 
         }
 
         if (KeyMouse_state) {
-            MouseManager.sendHexAbsData(startMoveMSX, startMoveMSY);
+            HidManager.sendHexAbsData(startMoveMSX, startMoveMSY);
         }else{
-            MouseManager.sendHexRelData("SecNullData", startMoveMSX, startMoveMSY, lastMoveMSX, lastMoveMSY);
+            HidManager.sendHexRelData("SecNullData", startMoveMSX, startMoveMSY, lastMoveMSX, lastMoveMSY);
         }
         DrawMode = false;
         floatingLabel.setVisibility(View.GONE);

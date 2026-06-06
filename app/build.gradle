@@ -84,6 +84,20 @@ android {
             assets.srcDirs += ['src/main/assets', '../Openterface_WebUI/packages/webrtc/dist/webrtc-android']
         }
     }
+
+    // Build Openterface_Core native library
+    externalNativeBuild {
+        cmake {
+            path "src/main/jni/CMakeLists.txt"
+        }
+    }
+
+    // Package native libraries
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['src/main/jniLibs']
+        }
+    }
 }
 
 // Task to build WebRTC client from WebUI submodule

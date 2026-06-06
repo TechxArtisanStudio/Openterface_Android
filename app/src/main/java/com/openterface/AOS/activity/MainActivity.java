@@ -72,6 +72,7 @@ import com.openterface.AOS.serial.CustomTouchListener;
 import com.openterface.AOS.serial.CH9329Function;
 import com.openterface.AOS.serial.UsbDeviceManager;
 import com.openterface.AOS.target.CH9329MSKBMap;
+import com.openterface.AOS.target.HidManager;
 import com.openterface.AOS.target.KeyBoardManager;
 import com.openterface.AOS.target.MouseManager;
 import com.google.gson.Gson;
@@ -291,13 +292,13 @@ public class MainActivity extends AppCompatActivity {
         usbDeviceManager.init();
         
         // Set UsbDeviceManager instance in KeyBoardManager for enhanced FE0C support
-        KeyBoardManager.setUsbDeviceManager(usbDeviceManager);
+        HidManager.setUsbDeviceManager(usbDeviceManager);
         
         // Set UsbDeviceManager instance in MouseManager for enhanced FE0C support
-        MouseManager.setUsbDeviceManager(usbDeviceManager);
+        HidManager.setUsbDeviceManager(usbDeviceManager);
 
         // Initialize the mouse event worker thread
-        MouseManager.init();
+        HidManager.initMouse();
 
         // Initialize VNC server components
         vncConfig = new VncServerConfig(this);
@@ -391,7 +392,7 @@ public class MainActivity extends AppCompatActivity {
         setCameraViewSecond();
         ZoomLayoutDeal ZoomLayoutDeal = new ZoomLayoutDeal(this, mCameraHelper, mBinding);
 
-        KeyBoardManager.setKeyBoardLanguage();
+        HidManager.setKeyBoardLanguage();
 
         setLanguage();
 
@@ -450,7 +451,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onKeyMultiple(int keyCode, int count, KeyEvent event) {
-        String functionKey = KeyBoardManager.getFunctionKey(event, keyCode);
+        String functionKey = HidManager.getFunctionKey(event, keyCode);
         if (event.getAction() == KeyEvent.ACTION_MULTIPLE && event.getCharacters() != null) {
             String characters = event.getCharacters();
             System.out.println("in this keycode: " + keyCode);
@@ -474,9 +475,9 @@ public class MainActivity extends AppCompatActivity {
         if (!characterQueue.isEmpty() && currentFunctionKey != null) {
             char nextChar = characterQueue.poll();
             String keyName = String.valueOf(nextChar);
-            KeyBoardManager.sendKeyboardMultiple(keyName);
+            HidManager.sendKeyboardMultiple(keyName);
 
-            KeyBoardManager.EmptyKeyboard();
+            HidManager.EmptyKeyboard();
 
         }
     }
@@ -528,8 +529,8 @@ public class MainActivity extends AppCompatActivity {
         }
         
         // Fallback to enhanced method first, then original method
-        String functionKey = KeyBoardManager.getFunctionKey(event, keyCode);
-        String keyName = KeyBoardManager.getKeyName(keyCode);
+        String functionKey = HidManager.getFunctionKey(event, keyCode);
+        String keyName = HidManager.getKeyName(keyCode);
         
         Log.d(TAG, "=== FALLBACK METHODS DEBUG ===");
         Log.d(TAG, "FunctionKey: '" + functionKey + "', KeyName: '" + keyName + "'");
@@ -538,8 +539,8 @@ public class MainActivity extends AppCompatActivity {
         
         // Try enhanced method first (for proper FE0C support)
         if (usbDeviceManager != null) {
-            Log.d(TAG, ">>> Trying KeyBoardManager.sendKeyBoardDataEnhanced()");
-            boolean success = KeyBoardManager.sendKeyBoardDataEnhanced(usbDeviceManager, functionKey, keyName);
+            Log.d(TAG, ">>> Trying HidManager.sendKeyBoardDataEnhanced()");
+            boolean success = HidManager.sendKeyBoardDataEnhanced(usbDeviceManager, functionKey, keyName);
             Log.d(TAG, "Enhanced method result: " + (success ? "SUCCESS" : "FAILED"));
             if (success) {
                 mKeyboardRequestSent = true;
@@ -550,8 +551,8 @@ public class MainActivity extends AppCompatActivity {
         }
         
         // Original method as final fallback
-        Log.d(TAG, "Using original KeyBoardManager.sendKeyBoardData()");
-        KeyBoardManager.sendKeyBoardData(functionKey, keyName);
+        Log.d(TAG, "Using original HidManager.sendKeyBoardData()");
+        HidManager.sendKeyBoardData(functionKey, keyName);
 
         return super.onKeyDown(keyCode, event);
     }
@@ -582,7 +583,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void run() {
                 if (mKeyboardRequestSent) {
-                    KeyBoardManager.EmptyKeyboard();
+                    HidManager.EmptyKeyboard();
                     mKeyboardRequestSent = false;
                 } else {
                     new Handler().postDelayed(this, 50);
@@ -646,7 +647,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // Release the mouse event worker thread
-        MouseManager.release();
+        HidManager.releaseMouse();
 
         // Cleanup debug broadcast receiver
         if (debugReceiver != null) {
@@ -841,7 +842,7 @@ public class MainActivity extends AppCompatActivity {
         mBinding.viewMainPreview.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
             @Override
             public void onSurfaceTextureAvailable(@NonNull SurfaceTexture surface, int width, int height) {
-                MouseManager.width_height(width, height);
+                HidManager.width_height(width, height);
                 Log.d(TAG, "1width: " + width + " height: " + height);
                 if (mCameraHelper != null) {
                     mCameraHelper.addSurface(surface, false);
@@ -1484,7 +1485,7 @@ public class MainActivity extends AppCompatActivity {
         vncServerWidth = width;
         vncServerHeight = height;
         Log.e(TAG, "VNC resolution set to: " + width + "x" + height);
-        MouseManager.width_height(width, height);
+        HidManager.width_height(width, height);
 
         boolean started = vncService.startServer(vncConfig.getPassword(), vncConfig.getPort(), width, height, vncConfig.getEncoding(), vncConfig.getQualityLevel(), vncConfig.getCompressLevel());
         if (started && mCameraHelper != null) {
@@ -1549,7 +1550,7 @@ public class MainActivity extends AppCompatActivity {
     private void handleVncMouseEvent(int buttonMask, int x, int y) {
         // Set MouseManager dimensions to VNC resolution for proper normalization
         if (vncServerWidth > 0 && vncServerHeight > 0) {
-            MouseManager.width_height(vncServerWidth, vncServerHeight);
+            HidManager.width_height(vncServerWidth, vncServerHeight);
         }
 
         Log.e(TAG, "VNC mouse: button=" + buttonMask + " pos=" + x + "," + y);
@@ -1564,16 +1565,16 @@ public class MainActivity extends AppCompatActivity {
                 else if ((buttonMask & 0x02) != 0) mouseClick = "SecMiddleData";
                 else if ((buttonMask & 0x04) != 0) mouseClick = "SecRightData";
                 Log.e(TAG, "VNC mouse click: " + mouseClick);
-                MouseManager.sendHexAbsButtonClickData(mouseClick, x, y);
+                HidManager.sendHexAbsButtonClickData(mouseClick, x, y);
             } else {
                 // Button release - send release (null click at position)
                 Log.e(TAG, "VNC mouse release");
-                MouseManager.sendHexAbsData(x, y);
+                HidManager.sendHexAbsData(x, y);
             }
             lastVncButtonMask = buttonMask;
         } else if (buttonMask == 0) {
             // Pure movement - just move cursor
-            MouseManager.sendHexAbsData(x, y);
+            HidManager.sendHexAbsData(x, y);
         }
     }
 
@@ -1590,16 +1591,16 @@ public class MainActivity extends AppCompatActivity {
             // Modifier key
             String functionKey = getModifierFunctionKey(keysym);
             if (down) {
-                KeyBoardManager.sendKeyBoardPress(functionKey, keyName);
+                HidManager.sendKeyBoardPress(functionKey, keyName);
             } else {
-                KeyBoardManager.sendKeyBoardRelease();
+                HidManager.sendKeyBoardRelease();
             }
         } else {
             // Regular key - check if it exists in keycode map
             if (down) {
-                KeyBoardManager.sendKeyBoardData("00", keyName);
+                HidManager.sendKeyBoardData("00", keyName);
             } else {
-                KeyBoardManager.sendKeyBoardRelease();
+                HidManager.sendKeyBoardRelease();
             }
         }
     }
@@ -1712,7 +1713,7 @@ public class MainActivity extends AppCompatActivity {
         webRtcServerWidth = width;
         webRtcServerHeight = height;
         Log.i(TAG, "WebRTC resolution set to: " + width + "x" + height);
-        MouseManager.width_height(width, height);
+        HidManager.width_height(width, height);
 
         boolean started = webRtcService.startServer(
                 config.getSignallingPort(),
@@ -1849,10 +1850,10 @@ public class MainActivity extends AppCompatActivity {
                 public void onTouchMove(float startX, float startY, float lastX, float lastY) {
                     if (lastX == 0 && lastY == 0) {
                         // Scroll mode (two-finger pan)
-                        MouseManager.handleTwoFingerPanSlideUpDown(startY);
+                        HidManager.handleTwoFingerPanSlideUpDown(startY);
                     } else {
                         // Mouse move (relative)
-                        MouseManager.sendHexRelData("SecNullData", startX, startY, lastX, lastY);
+                        HidManager.sendHexRelData("SecNullData", startX, startY, lastX, lastY);
                     }
                 }
 
@@ -1983,7 +1984,7 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onTouchRelease() {
-                    MouseManager.releaseMSRelData();
+                    HidManager.releaseMSRelData();
                 }
             });
         }
@@ -2053,7 +2054,7 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onScrollClick() {
-                    MouseManager.handleTwoPress();
+                    HidManager.handleTwoPress();
                 }
             });
         }
