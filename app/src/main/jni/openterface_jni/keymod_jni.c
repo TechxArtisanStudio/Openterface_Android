@@ -71,7 +71,7 @@ Java_com_openterface_AOS_jni_KeymodJNI_buildKeyboardRelease(
     packet[1] = 0xAB;
     packet[2] = 0x00;
     packet[3] = KM_CMD_KB;
-    packet[4] = DATA_LEN_KB;
+    packet[4] = KM_PKT_KEYBOARD_SIZE - 5 - 1; // data length = total - header - checksum
     packet[KM_PKT_KEYBOARD_SIZE - 1] = km_checksum(packet, KM_PKT_KEYBOARD_SIZE);
 
     jbyteArray result = (*env)->NewByteArray(env, KM_PKT_KEYBOARD_SIZE);
