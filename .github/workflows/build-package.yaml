@@ -52,6 +52,12 @@ jobs:
         npm run build:webrtc:android
         cd ..
 
+    - name: Copy WebRTC assets to app
+      run: |
+        mkdir -p app/src/main/assets
+        cp -r Openterface_WebUI/packages/webrtc/dist/webrtc-android app/src/main/assets/
+        ls -la app/src/main/assets/webrtc/
+
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
