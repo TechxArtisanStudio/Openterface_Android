@@ -64,6 +64,17 @@ jobs:
         ndk-version: r23b
         local-cache: true
 
+    - name: Set up CMake
+      uses: jwlawson/actions-setup-cmake@v2
+      with:
+        cmake-version: '3.22.1'
+
+    - name: Verify tools
+      run: |
+        echo "NDK: $ANDROID_NDK_HOME"
+        echo "CMake: $(cmake --version)"
+        ls -la $ANDROID_NDK_HOME/cmake/ 2>/dev/null || echo "No cmake in NDK"
+
     - name: Clean Gradle cache
       run: |
         rm -rf ~/.gradle/caches/
