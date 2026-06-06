@@ -226,6 +226,30 @@
                         android:textColor="@color/white"
                         android:theme="@style/FontStyle" />
 
+                    <android.widget.Button
+                        android:id="@+id/action_vnc_server"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="5dp"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:drawableTop="@drawable/baseline_cast_24"
+                        android:text="@string/vnc_server_menu_item"
+                        android:textColor="@color/white"
+                        android:theme="@style/FontStyle" />
+
+                    <android.widget.Button
+                        android:id="@+id/action_webrtc_server"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="5dp"
+                        android:layout_weight="1"
+                        android:background="@android:color/transparent"
+                        android:drawableTop="@drawable/baseline_cast_connected_24"
+                        android:text="@string/webrtc_server_menu_item"
+                        android:textColor="@color/white"
+                        android:theme="@style/FontStyle" />
+
                 </LinearLayout>
 
             </LinearLayout>

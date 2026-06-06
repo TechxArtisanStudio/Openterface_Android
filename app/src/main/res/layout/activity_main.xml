@@ -348,4 +348,17 @@
     <!-- TouchPad overlay for mouse control -->
     <include layout="@layout/touchpad_overlay"/>
 
+    <!-- VNC encoding popup notification -->
+    <TextView
+        android:id="@+id/vnc_encoding_popup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal|top"
+        android:layout_marginTop="16dp"
+        android:background="#CC000000"
+        android:textColor="#FFFFFF"
+        android:textSize="12sp"
+        android:padding="8dp"
+        android:visibility="gone" />
+
 </FrameLayout>

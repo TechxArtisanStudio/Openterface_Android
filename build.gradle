@@ -15,7 +15,7 @@ buildscript {
 
 allprojects {
     apply plugin: 'signing'
-    
+
     repositories {
 		maven { url 'https://maven.aliyun.com/repository/google' }
 		maven { url 'https://maven.aliyun.com/repository/central' }
@@ -24,6 +24,7 @@ allprojects {
 
 		google()
 		mavenCentral()
+		maven { url 'https://maven.getstream.io/artifactory/maven/' }
     }
 }
 

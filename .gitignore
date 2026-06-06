@@ -75,3 +75,13 @@ lint/generated/
 lint/outputs/
 lint/tmp/
 # lint/reports/
+
+# macOS
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Claude Code
+.claude/
+app/src/main/assets/webrtc/

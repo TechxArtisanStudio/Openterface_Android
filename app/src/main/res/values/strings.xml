@@ -272,4 +272,33 @@
 
     <!-- Common -->
     <string name="ok_button">确定</string>
+
+    <!-- VNC Server -->
+    <string name="vnc_server_title">VNC Server</string>
+    <string name="vnc_server_close">Close</string>
+    <string name="vnc_server_menu_item">VNC Server</string>
+    <string name="vnc_server_status_running">Running</string>
+    <string name="vnc_server_status_stopped">Stopped</string>
+    <string name="vnc_server_client_connected">Client: %s</string>
+    <string name="vnc_server_no_network">No network connection</string>
+    <string name="vnc_encoding_auto">Auto (let client decide)</string>
+    <string name="vnc_encoding_tight">Tight (best compression)</string>
+    <string name="vnc_encoding_zlib">Zlib (balanced)</string>
+    <string name="vnc_encoding_zrle">ZRLE (low CPU)</string>
+    <string name="vnc_encoding_hextile">Hextile (compatible)</string>
+    <string name="vnc_encoding_label">Encoding:</string>
+    <string name="vnc_quality_label">Quality (JPEG):</string>
+    <string name="vnc_compress_label">Compression:</string>
+    <string name="vnc_quality_auto">Auto</string>
+    <string name="vnc_quality_low">Low (best compression)</string>
+    <string name="vnc_quality_medium">Medium (balanced)</string>
+    <string name="vnc_quality_high">High (best quality)</string>
+    <string name="vnc_compress_auto">Auto</string>
+    <string name="vnc_compress_fast">Fast</string>
+    <string name="vnc_compress_medium">Medium</string>
+    <string name="vnc_compress_max">Maximum</string>
+
+    <!-- WebRTC Server -->
+    <string name="webrtc_server_title">WebRTC Server</string>
+    <string name="webrtc_server_menu_item">WebRTC</string>
 </resources>

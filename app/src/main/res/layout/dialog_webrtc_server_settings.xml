@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Title -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="WebRTC Server"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Description -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Stream video directly to web browsers without installing a client app."
+            android:textSize="12sp"
+            android:textColor="@color/gray_600"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Status -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Status: "
+                android:textSize="14sp" />
+            <TextView
+                android:id="@+id/webrtc_status_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Stopped"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/purple_500" />
+        </LinearLayout>
+
+        <!-- IP Address display (read-only) -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Device IP:"
+            android:textSize="12sp"
+            android:textColor="@color/gray_600" />
+        <TextView
+            android:id="@+id/webrtc_ip_address"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Loading..."
+            android:textSize="14sp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Connection URL -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Browser URL:"
+            android:textSize="12sp"
+            android:textColor="@color/gray_600" />
+        <TextView
+            android:id="@+id/webrtc_connection_url"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="http://..."
+            android:textSize="12sp"
+            android:textColor="#2196F3"
+            android:autoLink="web"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Signaling Port -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Signaling Port:"
+            android:textSize="12sp"
+            android:textColor="@color/gray_600" />
+        <EditText
+            android:id="@+id/webrtc_signaling_port"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:text="8080"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Video FPS -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Frame Rate (FPS):"
+            android:textSize="12sp"
+            android:textColor="@color/gray_600" />
+        <EditText
+            android:id="@+id/webrtc_fps"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:text="30"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Video Bitrate -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Bitrate (kbps):"
+            android:textSize="12sp"
+            android:textColor="@color/gray_600" />
+        <EditText
+            android:id="@+id/webrtc_bitrate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:text="2000"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <Button
+                android:id="@+id/webrtc_start_button"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Start Server"
+                android:backgroundTint="@color/green"
+                android:textColor="@color/white" />
+            <Button
+                android:id="@+id/webrtc_stop_button"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Stop Server"
+                android:backgroundTint="@color/purple_500"
+                android:textColor="@color/white"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <!-- Help text -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Open the URL in a modern browser. The browser will negotiate a WebRTC connection and show the video stream."
+            android:textSize="12sp"
+            android:textColor="@color/gray_600"
+            android:layout_marginTop="16dp"
+            android:gravity="center" />
+
+    </LinearLayout>
+</ScrollView>
