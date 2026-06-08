@@ -36,7 +36,7 @@ public class WebRtcConfigTest {
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        when(mockContext.getSharedPreferences("webrtc_config", Context.MODE_PRIVATE)).thenReturn(mockPrefs);
+        when(mockContext.getSharedPreferences("webrtc_server_config", Context.MODE_PRIVATE)).thenReturn(mockPrefs);
         when(mockPrefs.edit()).thenReturn(mockEditor);
         when(mockEditor.putBoolean("webrtc_auto_start", false)).thenReturn(mockEditor);
         when(mockEditor.putBoolean("webrtc_auto_start", true)).thenReturn(mockEditor);
@@ -112,14 +112,14 @@ public class WebRtcConfigTest {
 
     @Test
     public void autoStart_isIndependentFromOtherSettings() {
-        // Given: other settings exist
-        when(mockPrefs.getInt("webrtc_signaling_port", 8080)).thenReturn(8080);
-        when(mockPrefs.getInt("webrtc_video_bitrate", 4000000)).thenReturn(4000000);
+        // Given: other settings exist (use actual default values from WebRtcConfig)
+        when(mockPrefs.getInt("webrtc_signalling_port", 8080)).thenReturn(8080);
+        when(mockPrefs.getInt("webrtc_video_bitrate", 2_000_000)).thenReturn(4000000);
         when(mockPrefs.getInt("webrtc_video_fps", 30)).thenReturn(30);
         when(mockPrefs.getBoolean("webrtc_auto_start", false)).thenReturn(true);
 
         // When: read multiple settings
-        int port = config.getSignalingPort();
+        int port = config.getSignallingPort();
         int bitrate = config.getVideoBitrate();
         int fps = config.getVideoFps();
         boolean autoStart = config.isAutoStart();

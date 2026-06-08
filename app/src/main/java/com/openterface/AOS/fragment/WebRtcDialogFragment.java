@@ -155,7 +155,7 @@ public class WebRtcDialogFragment extends DialogFragment {
         if (config != null) {
             etPort.setText(String.valueOf(config.getSignallingPort()));
             etFps.setText(String.valueOf(config.getVideoFps()));
-            etBitrate.setText(String.valueOf(config.getVideoBitrate() / 1000)); // Display as kbps
+            etBitrate.setText(String.valueOf(config.getVideoBitrate() / 1000));
             swAutoStart.setChecked(config.isAutoStart());
         }
     }
@@ -184,7 +184,7 @@ public class WebRtcDialogFragment extends DialogFragment {
         try {
             int bitrate = Integer.parseInt(etBitrate.getText().toString());
             if (bitrate > 0) {
-                config.setVideoBitrate(bitrate * 1000); // Convert kbps to bps
+                config.setVideoBitrate(bitrate * 1000);
             }
         } catch (NumberFormatException e) {
             Log.w(TAG, "Invalid bitrate");

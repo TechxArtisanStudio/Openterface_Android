@@ -36,7 +36,7 @@ public class VncServerConfigTest {
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        when(mockContext.getSharedPreferences("vnc_config", Context.MODE_PRIVATE)).thenReturn(mockPrefs);
+        when(mockContext.getSharedPreferences("vnc_server_config", Context.MODE_PRIVATE)).thenReturn(mockPrefs);
         when(mockPrefs.edit()).thenReturn(mockEditor);
         when(mockEditor.putBoolean("vnc_auto_start", false)).thenReturn(mockEditor);
         when(mockEditor.putBoolean("vnc_auto_start", true)).thenReturn(mockEditor);

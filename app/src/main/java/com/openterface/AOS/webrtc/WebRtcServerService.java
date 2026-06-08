@@ -58,6 +58,16 @@ public class WebRtcServerService extends Service {
     private final AtomicBoolean isConnected = new AtomicBoolean(false);
     private final AtomicReference<String> connectedClient = new AtomicReference<>("");
 
+    // Video parameters
+    private int targetFps;
+    private int videoWidth;
+    private int videoHeight;
+    private static final int STARTUP_FPS = 15;
+
+    // Diagnostics
+    private boolean enableDiagnostics = true;
+    private Runnable diagnosticRunnable;
+
     // Callback
     private WebRtcCallback callback;
 
@@ -121,6 +131,9 @@ public class WebRtcServerService extends Service {
         }
 
         this.signalingPort = signalingPort;
+        this.targetFps = fps;
+        this.videoWidth = width;
+        this.videoHeight = height;
         Log.i(TAG, "Starting WebRTC server: port=" + signalingPort +
                 ", video=" + width + "x" + height + "@" + fps + "fps");
 
@@ -186,7 +199,6 @@ public class WebRtcServerService extends Service {
             PeerConnectionFactory.InitializationOptions options =
                     PeerConnectionFactory.InitializationOptions.builder(getApplicationContext())
                             .setEnableInternalTracer(false)
-                            .setFieldTrials("")
                             .createInitializationOptions();
             PeerConnectionFactory.initialize(options);
 
@@ -206,6 +218,45 @@ public class WebRtcServerService extends Service {
             Log.e(TAG, "Error initializing WebRTC", e);
             return false;
         }
+    }
+
+    /**
+     * Diagnostic: Poll RTCP stats every 500ms for first 10s to verify encoder behavior.
+     */
+    private void startDiagnosticLogger() {
+        if (!enableDiagnostics || peerConnection == null) return;
+
+        diagnosticRunnable = new Runnable() {
+            private int count = 0;
+
+            @Override
+            public void run() {
+                if (count >= 20 || peerConnection == null) {
+                    Log.i(TAG, "[DIAG] Diagnostic logging complete");
+                    return;
+                }
+                peerConnection.getStats(report -> {
+                    try {
+                        for (RTCStats stats : report.getStatsMap().values()) {
+                            if ("outbound-rtp".equals(stats.getType()) && stats.getMembers() != null) {
+                                Object bytesSentObj = stats.getMembers().get("bytesSent");
+                                Object framesObj = stats.getMembers().get("framesEncoded");
+                                long bytesSent = bytesSentObj instanceof Number ? ((Number) bytesSentObj).longValue() : 0;
+                                long framesEncoded = framesObj instanceof Number ? ((Number) framesObj).longValue() : 0;
+                                Log.i(TAG, "[DIAG] T=" + (count * 500) + "ms bytesSent=" + bytesSent +
+                                        " framesEncoded=" + framesEncoded);
+                                break;
+                            }
+                        }
+                    } catch (Exception e) {
+                        Log.w(TAG, "[DIAG] Stats extraction error", e);
+                    }
+                });
+                count++;
+                mainHandler.postDelayed(this, 500);
+            }
+        };
+        mainHandler.postDelayed(diagnosticRunnable, 500);
     }
 
     private boolean createPeerConnection(String stunServer) {
@@ -334,19 +385,57 @@ public class WebRtcServerService extends Service {
     }
 
     /**
-     * Start video capture with the given dimensions.
+     * Start video capture with FPS ramp-up for faster initial connection.
+     * Full resolution is used throughout (e.g., 1920x1080).
+     * FPS: 15 → 20 → 30 over 3 seconds.
      */
     public void startVideoCapture(int width, int height, int fps) {
-        if (videoCapturer == null) {
-            videoCapturer = new WebRtcFrameCapturer(width, height, fps);
-        }
+        int initialFps = Math.min(STARTUP_FPS, fps);
+
+        videoCapturer = new WebRtcFrameCapturer(width, height, initialFps);
 
         // Initialize capturer with WebRTC internals
         videoCapturer.initialize(null, getApplicationContext(),
                 videoSource.getCapturerObserver());
-        videoCapturer.startCapture(width, height, fps);
+        videoCapturer.startCapture(width, height, initialFps);
 
-        Log.i(TAG, "Video capture started: " + width + "x" + height + " @ " + fps + "fps");
+        Log.i(TAG, "Video capture started: " + width + "x" + height + " @ " + initialFps + "fps" +
+                " (ramping to " + fps + "fps in 3s)");
+
+        // Start FPS ramp-up schedule
+        startFpsRampUp();
+    }
+
+    /**
+     * Gradually ramp up FPS (full resolution throughout):
+     * T+1s: 20fps
+     * T+2s: 25fps
+     * T+3s: target fps (30)
+     */
+    private void startFpsRampUp() {
+        // T+1s: 20fps
+        mainHandler.postDelayed(() -> {
+            if (videoCapturer != null && isRunning.get()) {
+                videoCapturer.changeCaptureFormat(videoWidth, videoHeight, 20);
+                Log.i(TAG, "FPS ramped to 20 at T+1s");
+            }
+        }, 1000);
+
+        // T+2s: 25fps
+        mainHandler.postDelayed(() -> {
+            if (videoCapturer != null && isRunning.get()) {
+                videoCapturer.changeCaptureFormat(videoWidth, videoHeight, 25);
+                Log.i(TAG, "FPS ramped to 25 at T+2s");
+            }
+        }, 2000);
+
+        // T+3s: target fps
+        mainHandler.postDelayed(() -> {
+            if (videoCapturer != null && isRunning.get()) {
+                videoCapturer.changeCaptureFormat(videoWidth, videoHeight, targetFps);
+                Log.i(TAG, "FPS ramped to " + targetFps + " at T+3s (full quality)");
+            }
+        }, 3000);
     }
 
     /**
@@ -415,6 +504,9 @@ public class WebRtcServerService extends Service {
                         if (signalingServer != null) {
                             signalingServer.setPendingAnswer(sdp.description);
                         }
+
+                        // Diagnostic: Log stats for first 10s
+                        startDiagnosticLogger();
                     }
 
                     @Override
