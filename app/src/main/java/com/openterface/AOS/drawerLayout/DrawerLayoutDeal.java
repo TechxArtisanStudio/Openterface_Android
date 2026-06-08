@@ -254,6 +254,8 @@ public class DrawerLayoutDeal extends Fragment {
 //                    if (drawer_layout.isDrawerOpen(GravityCompat.END)) {
 //                        drawer_layout.closeDrawer(GravityCompat.END);
 //                    }
+            } else if (id == R.id.action_screen_orientation) {
+                activity.toggleScreenOrientation();
             }
         };
 
@@ -269,6 +271,12 @@ public class DrawerLayoutDeal extends Fragment {
         ScreenHost_Picture.setOnClickListener(buttonClickListener);
         Recording_Video.setOnClickListener(buttonClickListener);
         Close_DrawLayout.setOnClickListener(buttonClickListener);
+
+        // Wire up screen orientation toggle button
+        Button actionScreenOrientation = activity.findViewById(R.id.action_screen_orientation);
+        if (actionScreenOrientation != null) {
+            actionScreenOrientation.setOnClickListener(buttonClickListener);
+        }
     }
 
     /**

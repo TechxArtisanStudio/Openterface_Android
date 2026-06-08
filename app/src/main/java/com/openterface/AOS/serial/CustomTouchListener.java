@@ -95,6 +95,7 @@ public class CustomTouchListener implements View.OnTouchListener {
 
     //zoom set
     private final DrawerLayout drawerLayout;
+    private final boolean isPortraitMode;
 
     private long rightClickCurrentTime;
     private long rightReleaseCurrentTime;
@@ -156,6 +157,9 @@ public class CustomTouchListener implements View.OnTouchListener {
         floatingLabel = activity.findViewById(R.id.floating_label);
         drawerLayout = activity.findViewById(R.id.drawer_layout);
         this.activity = activity;
+        // Detect portrait mode: portrait layout has module_selector_bar, landscape doesn't
+        isPortraitMode = (activity.findViewById(R.id.module_selector_bar) != null);
+        Log.d(TAG, "CustomTouchListener: isPortraitMode=" + isPortraitMode);
     }
 
     public static boolean handleGenericMotionEvent(MotionEvent event){
@@ -393,10 +397,23 @@ public class CustomTouchListener implements View.OnTouchListener {
         return true;
     }
 
+    // Portrait zoom tracking
+    private float mPortraitZoomScale = 1.0f;
+    private float mPortraitTranslateX = 0f;
+    private float mPortraitTranslateY = 0f;
+
     /**
      * Normal mouse move (no button pressed)
+     * In portrait zoom mode: auto-pan view to keep mouse centered
      */
     private void handleNormalMove(float x, float y) {
+        // In portrait mode with zoom, auto-pan view to keep mouse centered
+        // Also check dynamically in case layout changed
+        boolean isPortrait = activity != null && activity.findViewById(R.id.module_selector_bar) != null;
+        if (isPortrait && mPortraitZoomScale > 1.0f && activity.mBinding != null) {
+            autoPanToKeepMouseCentered(x, y);
+        }
+
         if (KeyMouse_state) {
             MouseManager.sendHexAbsData(x, y);
         } else {
@@ -408,8 +425,15 @@ public class CustomTouchListener implements View.OnTouchListener {
 
     /**
      * Drag mode mouse move (left button held)
+     * In portrait zoom mode: auto-pan view to keep mouse centered
      */
     private void handleDragMove(float x, float y) {
+        // In portrait mode with zoom, auto-pan view to keep mouse centered
+        boolean isPortrait = activity != null && activity.findViewById(R.id.module_selector_bar) != null;
+        if (isPortrait && mPortraitZoomScale > 1.0f && activity.mBinding != null) {
+            autoPanToKeepMouseCentered(x, y);
+        }
+
         if (KeyMouse_state) {
             // In drag mode with absolute: send with left button pressed
             MouseManager.sendHexAbsButtonClickData("SecLeftData", x, y);
@@ -418,6 +442,61 @@ public class CustomTouchListener implements View.OnTouchListener {
             MouseManager.sendHexRelData("SecLeftData", x, y, lastMoveMSX, lastMoveMSY);
             lastMoveMSX = x;
             lastMoveMSY = y;
+        }
+    }
+
+    /**
+     * Auto-pan the video view horizontally to keep mouse cursor at screen center.
+     * Only pans horizontally (left/right), vertical panning is disabled.
+     *
+     * Key insight: event.getX() returns coordinates in the view's own system,
+     * but when scaled > 1, the visible content on screen is a different region.
+     * We must convert touch coordinates to the visible content coordinate system.
+     */
+    private void autoPanToKeepMouseCentered(float mouseX, float mouseY) {
+        if (activity == null || activity.mBinding == null || activity.mBinding.viewMainPreview == null) {
+            return;
+        }
+
+        View videoView = activity.mBinding.viewMainPreview;
+        int viewWidth = videoView.getWidth();
+        int containerWidth = viewWidth; // container is match_parent
+        float maxTranslate = (viewWidth * mPortraitZoomScale - containerWidth) / 2f;
+
+        if (maxTranslate <= 0) return;
+
+        // Convert touch X from view coordinates to visible content coordinates.
+        // When scaled, the view's left edge is at (center - scaledWidth/2 + translateX)
+        // in container coordinates. The offset between view origin and visible origin:
+        //   offset = maxTranslate - mPortraitTranslateX
+        // So a touch at view coordinate mouseX corresponds to content coordinate:
+        //   viewCoord = mouseX + offset
+        float offset = maxTranslate - mPortraitTranslateX;
+        float viewCoord = mouseX + offset;
+
+        // Target: move the view so this content point ends up at screen center.
+        float target = maxTranslate - viewCoord;
+        target = Math.max(-maxTranslate, Math.min(maxTranslate, target));
+
+        if (Math.abs(target - mPortraitTranslateX) > 1f) {
+            mPortraitTranslateX = target;
+            videoView.setTranslationX(mPortraitTranslateX);
+            videoView.setTranslationY(0f);
+        }
+    }
+
+    /**
+     * Reset portrait zoom and pan state
+     */
+    private void resetPortraitZoom() {
+        mPortraitZoomScale = 1.0f;
+        mPortraitTranslateX = 0f;
+        mPortraitTranslateY = 0f;
+        if (activity != null && activity.mBinding != null && activity.mBinding.viewMainPreview != null) {
+            activity.mBinding.viewMainPreview.setScaleX(1.0f);
+            activity.mBinding.viewMainPreview.setScaleY(1.0f);
+            activity.mBinding.viewMainPreview.setTranslationX(0f);
+            activity.mBinding.viewMainPreview.setTranslationY(0f);  // Always reset Y to 0
         }
     }
 
@@ -879,6 +958,56 @@ public class CustomTouchListener implements View.OnTouchListener {
 
     // Method to apply zoom to your view
     private void adjustZoom(float zoomFactor) {
+        // In portrait mode, scale the viewMainPreview directly
+        if (isPortraitMode) {
+            if (activity == null || activity.mBinding == null || activity.mBinding.viewMainPreview == null) {
+                return;
+            }
+
+            // Define scale limits
+            float MIN_SCALE = 1f;
+            float MAX_SCALE = 3.0f;
+
+            // Get current scale
+            View zoomView = activity.mBinding.viewMainPreview;
+            float currentScale = mPortraitZoomScale;
+            float newScale = currentScale * zoomFactor;
+
+            // Clamp within bounds
+            if (newScale < MIN_SCALE) newScale = MIN_SCALE;
+            if (newScale > MAX_SCALE) newScale = MAX_SCALE;
+
+            // Store scale for auto-pan calculation
+            mPortraitZoomScale = newScale;
+
+            // Apply scale with centered pivot
+            zoomView.setScaleX(newScale);
+            zoomView.setScaleY(newScale);
+            zoomView.setPivotX(zoomView.getWidth() / 2f);
+            zoomView.setPivotY(zoomView.getHeight() / 2f);
+
+            // If zooming out, reset translation
+            if (newScale <= MIN_SCALE) {
+                mPortraitTranslateX = 0f;
+                mPortraitTranslateY = 0f;
+                zoomView.setTranslationX(0f);
+                zoomView.setTranslationY(0f);  // Always keep Y at 0
+            } else {
+                // Re-apply current translation after zoom (horizontal only)
+                zoomView.setTranslationX(mPortraitTranslateX);
+                zoomView.setTranslationY(0f);  // Always keep Y at 0
+            }
+
+            Log.d(TAG, "Portrait zoom adjusted: newScale=" + newScale + " translateX=" + mPortraitTranslateX);
+            return;
+        }
+
+        // Landscape mode - use existing drawerLayout zoom logic
+        if (drawerLayout == null) {
+            Log.d(TAG, "adjustZoom: drawerLayout not available, skipping zoom");
+            return;
+        }
+
         // Define scale limits
         float MIN_SCALE = 1f; // Minimum zoom level
         float MAX_SCALE = 2.0f; // Maximum zoom level

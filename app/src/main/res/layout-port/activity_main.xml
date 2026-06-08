@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Portrait Mode Layout: 4-zone design -->
+<!-- Zone 1: Shortcut Strip (top)
+     Zone 2: Video Stream (center, fills remaining space)
+     Zone 3: Module Drawer (hidden by default, overlays bottom of video area)
+     Zone 4: Module Selector Bar (bottom) -->
+<LinearLayout
+    android:id="@+id/thisFrameLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.openterface.AOS.activity.MainActivity"
+    android:background="@android:color/black">
+
+    <!-- Zone 1: Shortcut Strip -->
+    <LinearLayout
+        android:id="@+id/shortcut_strip"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:background="#1A1A1A"
+        android:paddingHorizontal="4dp"
+        android:gravity="center_vertical">
+
+        <Spinner
+            android:id="@+id/shortcut_profile_spinner"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="4dp"
+            android:backgroundTint="#FFFFFF"
+            android:theme="@style/Theme.AppCompat" />
+
+        <HorizontalScrollView
+            android:id="@+id/shortcut_scroll"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/shortcut_buttons_container"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ImageButton
+                    android:id="@+id/shortcut_esc"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginHorizontal="2dp"
+                    android:background="@drawable/button_background"
+                    android:src="@drawable/baseline_keyboard_24"
+                    android:scaleType="centerInside"
+                    android:contentDescription="Esc"
+                    android:padding="8dp" />
+
+                <android.widget.Button
+                    android:id="@+id/shortcut_ctrl_c"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:layout_marginHorizontal="2dp"
+                    android:text="Ctrl+C"
+                    android:textColor="@color/black"
+                    android:background="@drawable/button_background"
+                    android:theme="@style/ButtonTheme"
+                    android:autoSizeTextType="uniform"
+                    android:autoSizeMinTextSize="8sp"
+                    android:autoSizeMaxTextSize="12sp"
+                    android:autoSizeStepGranularity="1sp" />
+
+                <android.widget.Button
+                    android:id="@+id/shortcut_ctrl_v"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:layout_marginHorizontal="2dp"
+                    android:text="Ctrl+V"
+                    android:textColor="@color/black"
+                    android:background="@drawable/button_background"
+                    android:theme="@style/ButtonTheme"
+                    android:autoSizeTextType="uniform"
+                    android:autoSizeMinTextSize="8sp"
+                    android:autoSizeMaxTextSize="12sp"
+                    android:autoSizeStepGranularity="1sp" />
+
+                <android.widget.Button
+                    android:id="@+id/shortcut_ctrl_a"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:layout_marginHorizontal="2dp"
+                    android:text="Ctrl+A"
+                    android:textColor="@color/black"
+                    android:background="@drawable/button_background"
+                    android:theme="@style/ButtonTheme"
+                    android:autoSizeTextType="uniform"
+                    android:autoSizeMinTextSize="8sp"
+                    android:autoSizeMaxTextSize="12sp"
+                    android:autoSizeStepGranularity="1sp" />
+
+                <android.widget.Button
+                    android:id="@+id/shortcut_ctrl_z"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:layout_marginHorizontal="2dp"
+                    android:text="Ctrl+Z"
+                    android:textColor="@color/black"
+                    android:background="@drawable/button_background"
+                    android:theme="@style/ButtonTheme"
+                    android:autoSizeTextType="uniform"
+                    android:autoSizeMinTextSize="8sp"
+                    android:autoSizeMaxTextSize="12sp"
+                    android:autoSizeStepGranularity="1sp" />
+
+                <android.widget.Button
+                    android:id="@+id/shortcut_ctrl_s"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:layout_marginHorizontal="2dp"
+                    android:text="Ctrl+S"
+                    android:textColor="@color/black"
+                    android:background="@drawable/button_background"
+                    android:theme="@style/ButtonTheme"
+                    android:autoSizeTextType="uniform"
+                    android:autoSizeMinTextSize="8sp"
+                    android:autoSizeMaxTextSize="12sp"
+                    android:autoSizeStepGranularity="1sp" />
+
+            </LinearLayout>
+        </HorizontalScrollView>
+    </LinearLayout>
+
+    <!-- Dynamic area: Zone 2 (video) + Zone 3 (module overlay) -->
+    <FrameLayout
+        android:id="@+id/dynamic_area"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <!-- Zone 2: Video Stream Display (centered with aspect ratio preserved) -->
+        <RelativeLayout
+            android:id="@+id/video_area_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/black">
+
+            <!-- Video preview - centered and preserving aspect ratio -->
+            <com.serenegiant.widget.AspectRatioTextureView
+                android:id="@+id/viewMainPreview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_centerInParent="true"
+                android:visibility="invisible" />
+
+            <ImageView
+                android:id="@+id/tvConnectUSBCameraTip"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                app:srcCompat="@drawable/content_dark_eng"
+                tools:ignore="ContentDescription" />
+        </RelativeLayout>
+
+        <!-- Zone 3: Module Drawer (hidden by default, overlays bottom of video, above Zone 4) -->
+        <LinearLayout
+            android:id="@+id/module_drawer"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_gravity="bottom"
+            android:orientation="vertical"
+            android:background="#F5F5F5"
+            android:visibility="gone">
+
+            <!-- Collapse Handle -->
+            <LinearLayout
+                android:id="@+id/module_collapse_handle"
+                android:layout_width="match_parent"
+                android:layout_height="32dp"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:background="#E0E0E0"
+                android:clickable="true"
+                android:focusable="true">
+
+                <View
+                    android:layout_width="32dp"
+                    android:layout_height="4dp"
+                    android:background="@drawable/handle_bar_background" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Pull down to hide"
+                    android:textSize="10sp"
+                    android:textColor="#888888"
+                    android:layout_marginStart="8dp" />
+            </LinearLayout>
+
+            <!-- Module Content Container -->
+            <FrameLayout
+                android:id="@+id/module_content_container"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1">
+            </FrameLayout>
+        </LinearLayout>
+    </FrameLayout>
+
+    <!-- Zone 4: Module Selector Bar -->
+    <LinearLayout
+        android:id="@+id/module_selector_bar"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:orientation="horizontal"
+        android:background="#1A1A1A"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="4dp">
+
+        <LinearLayout
+            android:id="@+id/tab_keyboard"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:id="@+id/tab_keyboard_icon"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@drawable/baseline_keyboard_24"
+                android:contentDescription="Keyboard" />
+
+            <TextView
+                android:id="@+id/tab_keyboard_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Keyboard"
+                android:textColor="#888888"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/tab_mouse"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:id="@+id/tab_mouse_icon"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@drawable/baseline_mouse_24"
+                android:contentDescription="Mouse" />
+
+            <TextView
+                android:id="@+id/tab_mouse_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Mouse"
+                android:textColor="#888888"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/tab_ime"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:id="@+id/tab_ime_icon"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@drawable/baseline_keyboard_24"
+                android:contentDescription="Input" />
+
+            <TextView
+                android:id="@+id/tab_ime_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Input"
+                android:textColor="#888888"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/tab_settings"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:id="@+id/tab_settings_icon"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:src="@drawable/baseline_settings_24"
+                android:contentDescription="Settings" />
+
+            <TextView
+                android:id="@+id/tab_settings_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Settings"
+                android:textColor="#888888"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <android.widget.Button
+            android:id="@+id/action_screen_orientation"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="4dp"
+            android:background="?android:attr/selectableItemBackground"
+            android:drawableTop="@drawable/ic_screen_rotation_24"
+            android:scaleType="centerInside"
+            android:contentDescription="Switch Orientation"
+            android:text="" />
+    </LinearLayout>
+
+</LinearLayout>

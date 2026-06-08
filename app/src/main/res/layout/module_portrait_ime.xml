@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- IME/Input module for portrait mode -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/ime_module_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/white"
+    android:padding="8dp"
+    tools:context="com.openterface.AOS.activity.MainActivity">
+
+    <!-- Text Input Area -->
+    <EditText
+        android:id="@+id/ime_text_input"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="top|start"
+        android:hint="Enter text to send to host..."
+        android:inputType="textMultiLine"
+        android:padding="12dp"
+        android:background="@drawable/button_background"
+        android:textColor="@color/black"
+        android:textSize="14sp"
+        android:autofillHints=""
+        tools:ignore="LabelFor" />
+
+    <!-- Quick Insert Special Keys -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <android.widget.Button
+                android:id="@+id/ime_ctrl"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ctrl"
+                android:textColor="@color/black"
+                android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme"
+                android:layout_marginHorizontal="2dp" />
+
+            <android.widget.Button
+                android:id="@+id/ime_alt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Alt"
+                android:textColor="@color/black"
+                android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme"
+                android:layout_marginHorizontal="2dp" />
+
+            <android.widget.Button
+                android:id="@+id/ime_shift"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Shift"
+                android:textColor="@color/black"
+                android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme"
+                android:layout_marginHorizontal="2dp" />
+
+            <android.widget.Button
+                android:id="@+id/ime_enter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Enter"
+                android:textColor="@color/black"
+                android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme"
+                android:layout_marginHorizontal="2dp" />
+
+            <android.widget.Button
+                android:id="@+id/ime_tab"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Tab"
+                android:textColor="@color/black"
+                android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme"
+                android:layout_marginHorizontal="2dp" />
+
+            <android.widget.Button
+                android:id="@+id/ime_esc"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Esc"
+                android:textColor="@color/black"
+                android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme"
+                android:layout_marginHorizontal="2dp" />
+
+            <android.widget.Button
+                android:id="@+id/ime_up"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="↑"
+                android:textColor="@color/black"
+                android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme"
+                android:layout_marginHorizontal="2dp" />
+
+            <android.widget.Button
+                android:id="@+id/ime_down"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="↓"
+                android:textColor="@color/black"
+                android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme"
+                android:layout_marginHorizontal="2dp" />
+
+            <android.widget.Button
+                android:id="@+id/ime_left"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="←"
+                android:textColor="@color/black"
+                android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme"
+                android:layout_marginHorizontal="2dp" />
+
+            <android.widget.Button
+                android:id="@+id/ime_right"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="→"
+                android:textColor="@color/black"
+                android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme"
+                android:layout_marginHorizontal="2dp" />
+
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <!-- Send Button -->
+    <android.widget.Button
+        android:id="@+id/ime_send_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="SEND AS KEYSTROKES"
+        android:textColor="@color/black"
+        android:background="@drawable/button_background"
+        android:theme="@style/ButtonTheme"
+        android:textSize="16sp" />
+
+</LinearLayout>

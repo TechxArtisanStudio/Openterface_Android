@@ -94,6 +94,12 @@ public class ZoomLayoutDeal {
         keyBoardView = activity.findViewById(R.id.KeyBoard_View); // Initialize
         dragHandle = activity.findViewById(R.id.drag_handle);
 
+        // Skip initialization if essential views are missing (e.g. portrait mode layout)
+        if (cameraViewSecond == null || thumbnailContainer == null || dragButton == null) {
+            Log.d("ZoomLayoutDeal", "Essential views not found (portrait mode?), skipping zoom setup");
+            return;
+        }
+
         DisplayMetrics displayMetrics = new DisplayMetrics();
         activity.getWindowManager().getDefaultDisplay().getRealMetrics(displayMetrics);
         screenWidth = displayMetrics.widthPixels;
@@ -110,7 +116,7 @@ public class ZoomLayoutDeal {
         indicatorView.getLayoutParams().height = screenHeight / 8;
         indicatorView.requestLayout();
         setupDragButton();
-        
+
         setupKeyboardZoomButton(); // New setup method
         setupDragHandle();
     }
@@ -163,6 +169,20 @@ public class ZoomLayoutDeal {
     }
 
     public static void enlargeView(){
+        // Guard against portrait mode where landscape views don't exist
+        if (thumbnailContainer == null || dragButton == null || activity == null) {
+            Log.d("ZoomLayoutDeal", "enlargeView: views not initialized (portrait mode), skipping");
+            return;
+        }
+        if (activity.mBinding == null || activity.mBinding.cameraViewSecond == null) {
+            Log.d("ZoomLayoutDeal", "enlargeView: cameraViewSecond not available, skipping");
+            return;
+        }
+        if (activity.mBinding.cameraViewSecond.getHolder() == null ||
+            activity.mBinding.cameraViewSecond.getHolder().getSurface() == null) {
+            Log.d("ZoomLayoutDeal", "enlargeView: surface not ready, skipping");
+            return;
+        }
         activity.mCameraHelper.addSurface(activity.mBinding.cameraViewSecond.getHolder().getSurface(), false);
         thumbnailContainer.setVisibility(View.VISIBLE);
         dragButton.setVisibility(View.VISIBLE);
@@ -192,15 +212,22 @@ public class ZoomLayoutDeal {
 
 
     public static void zoomOut(){
-        drawerLayout.setScaleX(1f);
-        drawerLayout.setScaleY(1f);
-        mCameraHelper.removeSurface(activity.cameraViewSecond.getHolder().getSurface());
+        // Guard against portrait mode where landscape views don't exist
+        if (thumbnailContainer == null || dragButton == null || activity == null) {
+            Log.d("ZoomLayoutDeal", "zoomOut: views not initialized (portrait mode), skipping");
+            return;
+        }
+        if (drawerLayout != null) {
+            drawerLayout.setScaleX(1f);
+            drawerLayout.setScaleY(1f);
+            drawerLayout.scrollTo(0, 0);
+        }
+        if (activity.cameraViewSecond != null && activity.cameraViewSecond.getHolder() != null
+                && activity.cameraViewSecond.getHolder().getSurface() != null && mCameraHelper != null) {
+            mCameraHelper.removeSurface(activity.cameraViewSecond.getHolder().getSurface());
+        }
         thumbnailContainer.setVisibility(View.GONE);
         dragButton.setVisibility(View.GONE);
-        drawerLayout.scrollTo(
-                (0),
-                (0)
-        );
     }
 
     @SuppressLint("ClickableViewAccessibility")

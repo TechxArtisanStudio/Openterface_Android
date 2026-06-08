@@ -37,6 +37,8 @@ import android.graphics.SurfaceTexture;
 import android.graphics.drawable.Drawable;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -96,6 +98,7 @@ import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
+import android.view.LayoutInflater;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -109,11 +112,13 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -189,6 +194,36 @@ public class MainActivity extends AppCompatActivity {
     private final Queue<Character> characterQueue = new LinkedList<>();
     private String currentFunctionKey;
 
+    // Screen orientation state
+    private boolean isPortraitMode = false;
+    private static final String KEY_PORTRAIT_MODE = "is_portrait_mode";
+
+    // Portrait 4-zone module state
+    public enum ModuleType { NONE, KEYBOARD, MOUSE, IME }
+    private ModuleType currentModule = ModuleType.NONE;
+    private static final String KEY_CURRENT_MODULE = "current_module";
+
+    // Portrait zone views (use View to avoid ClassCastException across orientation changes)
+    private View portraitRootLayout;
+    private View portraitVideoContainer;
+    private View portraitModuleDrawer;
+    private View portraitCollapseHandle;
+    private FrameLayout portraitModuleContent;
+    private View portraitKeyboardTab;
+    private View portraitMouseTab;
+    private View portraitImeTab;
+    private View portraitSettingsTab;
+    private View portraitRotationButton;
+    private View portraitShortcutStrip;
+
+    // Portrait module views (for reuse)
+    private View keyboardModuleView;
+    private View mouseModuleView;
+    private View imeModuleView;
+
+    // Gesture detector for collapse
+    private GestureDetector collapseGestureDetector;
+
     private Button action_device, action_safely_eject;
     private Drawable action_device_drawable, action_safely_eject_drawable;
 
@@ -247,26 +282,43 @@ public class MainActivity extends AppCompatActivity {
 
         KeyBoardManager keyBoardManager = new KeyBoardManager(this);
 
-        //Short Cut Button
-        KeyBoardShortCut KeyBoardShortCut = new KeyBoardShortCut(this);
-        //Ctrl Button
-        KeyBoardCtrl KeyBoardCtrlButton = new KeyBoardCtrl(this);
-        //Shift Button
-        KeyBoardShift KeyBoardShiftButton = new KeyBoardShift(this);
-        //Alt Button
-        KeyBoardAlt KeyBoardAltButton = new KeyBoardAlt(this);
-        //Win Button
-        KeyBoardWin KeyBoardWinButton = new KeyBoardWin(this);
-        //FunctionKey Button
-        KeyBoardFunction KeyBoardFunction = new KeyBoardFunction(this);
-        //System Button
-        KeyBoardSystem KeyBoardSystem = new KeyBoardSystem(this);
-        //KeyBoard Close Button
-        KeyBoardClose KeyBoardClose = new KeyBoardClose(this);
+        // Check if we're in portrait mode (layout-port has no keyboard overlay buttons)
+        boolean isPortraitLayout = (findViewById(R.id.module_selector_bar) != null);
+        isPortraitMode = isPortraitLayout;
 
-        //Drawer Layout
-        DrawerLayoutDeal DrawerLayoutDeal = new DrawerLayoutDeal(this, savedInstanceState, mIsRecording);
+        // Only initialize landscape keyboard buttons in landscape layout
+        // Portrait uses the 4-zone module system instead
+        KeyBoardShortCut KeyBoardShortCut = null;
+        KeyBoardCtrl KeyBoardCtrlButton = null;
+        KeyBoardShift KeyBoardShiftButton = null;
+        KeyBoardAlt KeyBoardAltButton = null;
+        KeyBoardWin KeyBoardWinButton = null;
+        KeyBoardFunction KeyBoardFunction = null;
+        KeyBoardSystem KeyBoardSystem = null;
+        KeyBoardClose KeyBoardClose = null;
+        DrawerLayoutDeal DrawerLayoutDeal = null;
 
+        if (!isPortraitLayout) {
+            //Short Cut Button
+            KeyBoardShortCut = new KeyBoardShortCut(this);
+            //Ctrl Button
+            KeyBoardCtrlButton = new KeyBoardCtrl(this);
+            //Shift Button
+            KeyBoardShiftButton = new KeyBoardShift(this);
+            //Alt Button
+            KeyBoardAltButton = new KeyBoardAlt(this);
+            //Win Button
+            KeyBoardWinButton = new KeyBoardWin(this);
+            //FunctionKey Button
+            KeyBoardFunction = new KeyBoardFunction(this);
+            //System Button
+            KeyBoardSystem = new KeyBoardSystem(this);
+            //KeyBoard Close Button
+            KeyBoardClose = new KeyBoardClose(this);
+
+            //Drawer Layout
+            DrawerLayoutDeal = new DrawerLayoutDeal(this, savedInstanceState, mIsRecording);
+        }
 
         usbDeviceManager.setOnDataReadListener(new UsbDeviceManager.OnDataReadListener() {
             @Override
@@ -274,43 +326,54 @@ public class MainActivity extends AppCompatActivity {
                 sendNextCharacter();
             }
         });
-        
+
         // Enable debugging for FE0C keyboard testing
         // enableKeyboardDebugging(); // Commented out - was auto-typing 'B' key on startup
-        
+
         // Register debug broadcast receiver
         registerDebugReceiver();
         // Modifier keys (Ctrl, Shift, Alt, Win) are now initialized in their constructors
         // with long-press toggle and press visual feedback
 
-        KeyBoardShortCut.setShortCutButtonsClickColor();//deal short cut button click color
-
-        KeyBoardFunction.setFunctionButtonsClickColor();//deal function button click color
-
-        KeyBoardSystem.setSystemButtonsClickColor();//deal system button click color
-
-        KeyBoardClose.setCloseButtonClickColor();//deal close button click color
+        if (!isPortraitLayout && KeyBoardShortCut != null) {
+            KeyBoardShortCut.setShortCutButtonsClickColor();//deal short cut button click color
+        }
+        if (!isPortraitLayout && KeyBoardFunction != null) {
+            KeyBoardFunction.setFunctionButtonsClickColor();//deal function button click color
+        }
+        if (!isPortraitLayout && KeyBoardSystem != null) {
+            KeyBoardSystem.setSystemButtonsClickColor();//deal system button click color
+        }
+        if (!isPortraitLayout && KeyBoardClose != null) {
+            KeyBoardClose.setCloseButtonClickColor();//deal close button click color
+        }
 
         //Keyboard Opacity
-        mKeyBoardOpacity = new KeyBoardOpacity(this);
-        mKeyBoardOpacity.setOpacityButtonClick();
+        if (!isPortraitLayout) {
+            mKeyBoardOpacity = new KeyBoardOpacity(this);
+            mKeyBoardOpacity.setOpacityButtonClick();
+        }
 
         // Initialize TouchPad
         initTouchPad();
 
-        // TouchPad toggle button
-        ImageButton KeyBoard_TouchPad = findViewById(R.id.KeyBoard_TouchPad);
-        if (KeyBoard_TouchPad != null) {
-            KeyBoard_TouchPad.setOnClickListener(v -> toggleTouchPadMode());
-        }
+        // TouchPad toggle button (landscape only)
+        if (!isPortraitLayout) {
+            ImageButton KeyBoard_TouchPad = findViewById(R.id.KeyBoard_TouchPad);
+            if (KeyBoard_TouchPad != null) {
+                KeyBoard_TouchPad.setOnClickListener(v -> toggleTouchPadMode());
+            }
 
-        DrawerLayoutDeal.setDrawerLayoutButtonClickColor();//deal drawer layout button click color
+            if (DrawerLayoutDeal != null) {
+                DrawerLayoutDeal.setDrawerLayoutButtonClickColor();//deal drawer layout button click color
+            }
+        }
 
         action_device = findViewById(R.id.action_device);
         action_safely_eject = findViewById(R.id.action_safely_eject);
 
-        action_device_drawable = action_device.getCompoundDrawables()[1];
-        action_safely_eject_drawable = action_safely_eject.getCompoundDrawables()[1];
+        if (action_device != null) action_device_drawable = action_device.getCompoundDrawables()[1];
+        if (action_safely_eject != null) action_safely_eject_drawable = action_safely_eject.getCompoundDrawables()[1];
 
         //Zoom layout deal
         setCameraViewSecond();
@@ -320,13 +383,16 @@ public class MainActivity extends AppCompatActivity {
 
         setLanguage();
 
+        // Initialize portrait 4-zone layout
+        initPortraitZones();
+
     }
 
     private void setLanguage(){
         Button Left_Than_Button = findViewById(R.id.Left_Than_Button);
         String currentLang = Locale.getDefault().getLanguage();
         if (currentLang.equals("us")) {
-            Left_Than_Button.setText("");
+            if (Left_Than_Button != null) Left_Than_Button.setText("");
             KeyBoardSystem.setKeyboardLanguage("us");
             KeyBoardFunction.setKeyboardLanguage("us");
         } else if (currentLang.equals("de")) {
@@ -335,7 +401,7 @@ public class MainActivity extends AppCompatActivity {
             KeyBoardSystem.setKeyboardLanguage("de");
             KeyBoardFunction.setKeyboardLanguage("de");
         }else {
-            Left_Than_Button.setText("");
+            if (Left_Than_Button != null) Left_Than_Button.setText("");
             KeyBoardSystem.setKeyboardLanguage("us");
             KeyBoardFunction.setKeyboardLanguage("us");
         }
@@ -343,6 +409,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void setCameraViewSecond() {
         cameraViewSecond = findViewById(R.id.cameraViewSecond);
+        if (cameraViewSecond == null) {
+            Log.d(TAG, "cameraViewSecond not found (possibly portrait mode layout)");
+            return;
+        }
         cameraViewSecond.setAspectRatio(DEFAULT_WIDTH, DEFAULT_HEIGHT);
 
         cameraViewSecond.getHolder().addCallback(new SurfaceHolder.Callback() {
@@ -529,13 +599,18 @@ public class MainActivity extends AppCompatActivity {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
-        usbDeviceManager.handleUsbDevice(intent);
-        if (intent.getAction().equals(UsbManager.ACTION_USB_DEVICE_ATTACHED)) {
+        String action = intent.getAction();
+        Log.d(TAG, "onNewIntent: action=" + action + " isPortrait=" + isPortraitMode);
+        if (action != null && action.equals(UsbManager.ACTION_USB_DEVICE_ATTACHED)) {
             if (!mIsCameraConnected) {
                 mUsbDevice = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                Log.d(TAG, "onNewIntent: USB device attached, device=" + (mUsbDevice != null ? mUsbDevice.getDeviceName() : "null"));
                 selectDevice(mUsbDevice);
+            } else {
+                Log.d(TAG, "onNewIntent: camera already connected, ignoring");
             }
         }
+        usbDeviceManager.handleUsbDevice(intent);
     }
 
     @Override
@@ -560,7 +635,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Release the mouse event worker thread
         MouseManager.release();
-        
+
         // Cleanup debug broadcast receiver
         if (debugReceiver != null) {
             unregisterReceiver(debugReceiver);
@@ -569,47 +644,214 @@ public class MainActivity extends AppCompatActivity {
 //        usbDeviceManager.release();
     }
 
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        // Save current state
+        boolean wasPortrait = isPortraitMode;
+        ModuleType savedModule = currentModule;
+
+        // Update orientation state
+        isPortraitMode = (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT);
+
+        Log.d(TAG, "Configuration changed: " + (isPortraitMode ? "PORTRAIT" : "LANDSCAPE"));
+
+        // Reload layout for new orientation (this already calls initPreviewView)
+        reloadLayoutForOrientation();
+
+        // Restore module state if was expanded
+        if (savedModule != ModuleType.NONE && savedModule != null) {
+            setModuleState(savedModule, false);
+        }
+
+        // Adjust video preview size based on orientation
+        if (mCameraHelper != null && mIsCameraConnected) {
+            resizePreviewView(mCameraHelper.getPreviewSize());
+        }
+
+        Log.d(TAG, "Layout reloaded, module state: " + currentModule);
+    }
+
+    /**
+     * Reload the layout based on current orientation.
+     * Portrait uses the 4-zone layout, landscape uses the original layout.
+     */
+    private void reloadLayoutForOrientation() {
+        Log.d(TAG, "reloadLayoutForOrientation: START");
+        // Re-inflate view binding for the new orientation
+        mBinding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(mBinding.getRoot());
+        Log.d(TAG, "reloadLayoutForOrientation: layout inflated");
+
+        // Re-check orientation after setting content view
+        boolean nowPortrait = (findViewById(R.id.module_selector_bar) != null);
+        isPortraitMode = nowPortrait;
+        Log.d(TAG, "reloadLayoutForOrientation: nowPortrait=" + nowPortrait);
+
+        // Re-setup all views after layout reload
+        setListeners();
+        initTouchPad();
+        initPortraitZones();
+        initPreviewView();
+        Log.d(TAG, "reloadLayoutForOrientation: views initialized");
+
+        // Re-attach CustomTouchListener to the new preview view after layout re-inflation
+        CustomTouchListener customTouchListener = new CustomTouchListener(this, usbDeviceManager);
+        mBinding.viewMainPreview.setOnTouchListener(customTouchListener);
+
+        // Re-setup DrawerLayoutDeal for new layout (only in landscape)
+        if (!nowPortrait) {
+            try {
+                new com.openterface.AOS.drawerLayout.DrawerLayoutDeal(this, null, mIsRecording);
+                Log.d(TAG, "reloadLayoutForOrientation: DrawerLayoutDeal created");
+            } catch (Exception e) {
+                Log.w(TAG, "reloadLayoutForOrientation: DrawerLayoutDeal failed (expected in portrait): " + e.getMessage());
+            }
+        }
+        try {
+            com.openterface.AOS.drawerLayout.ZoomLayoutDeal zoomLayoutDeal =
+                    new com.openterface.AOS.drawerLayout.ZoomLayoutDeal(this, mCameraHelper, mBinding);
+            Log.d(TAG, "reloadLayoutForOrientation: ZoomLayoutDeal created");
+        } catch (Exception e) {
+            Log.w(TAG, "reloadLayoutForOrientation: ZoomLayoutDeal failed: " + e.getMessage());
+        }
+
+        // Restore keyboard button states (only in landscape)
+        if (!nowPortrait) {
+            try {
+                KeyBoardShortCut KeyBoardShortCut = new KeyBoardShortCut(this);
+                KeyBoardCtrl KeyBoardCtrlButton = new KeyBoardCtrl(this);
+                KeyBoardShift KeyBoardShiftButton = new KeyBoardShift(this);
+                KeyBoardAlt KeyBoardAltButton = new KeyBoardAlt(this);
+                KeyBoardWin KeyBoardWinButton = new KeyBoardWin(this);
+                KeyBoardFunction KeyBoardFunction = new KeyBoardFunction(this);
+                KeyBoardSystem KeyBoardSystem = new KeyBoardSystem(this);
+                KeyBoardClose KeyBoardClose = new KeyBoardClose(this);
+
+                KeyBoardShortCut.setShortCutButtonsClickColor();
+                KeyBoardFunction.setFunctionButtonsClickColor();
+                KeyBoardSystem.setSystemButtonsClickColor();
+                KeyBoardClose.setCloseButtonClickColor();
+
+                mKeyBoardOpacity = new KeyBoardOpacity(this);
+                mKeyBoardOpacity.setOpacityButtonClick();
+                Log.d(TAG, "reloadLayoutForOrientation: keyboard buttons restored");
+            } catch (Exception e) {
+                Log.e(TAG, "reloadLayoutForOrientation: keyboard init failed", e);
+            }
+        }
+
+        action_device = findViewById(R.id.action_device);
+        action_safely_eject = findViewById(R.id.action_safely_eject);
+        if (action_device != null) {
+            Drawable[] drawables = action_device.getCompoundDrawables();
+            if (drawables.length > 1 && drawables[1] != null) {
+                action_device_drawable = drawables[1];
+            }
+        }
+        if (action_safely_eject != null) {
+            Drawable[] drawables = action_safely_eject.getCompoundDrawables();
+            if (drawables.length > 1 && drawables[1] != null) {
+                action_safely_eject_drawable = drawables[1];
+            }
+        }
+        Log.d(TAG, "reloadLayoutForOrientation: action buttons restored");
+
+        setCameraViewSecond();
+        setLanguage();
+        Log.d(TAG, "reloadLayoutForOrientation: camera view and language set");
+
+        // Reconnect camera surfaces after layout reload if camera is connected
+        if (mCameraHelper != null && mIsCameraConnected) {
+            Log.d(TAG, "Reconnecting camera surfaces after orientation change");
+            // Wait for surface to be available before reconnecting
+            if (mBinding.viewMainPreview != null && mBinding.viewMainPreview.getSurfaceTexture() != null) {
+                mCameraHelper.addSurface(mBinding.viewMainPreview.getSurfaceTexture(), false);
+                Log.d(TAG, "reloadLayoutForOrientation: main preview surface reconnected");
+            }
+            // Add secondary camera surface (landscape only)
+            if (mBinding.cameraViewSecond != null && mBinding.cameraViewSecond.getHolder() != null
+                    && mBinding.cameraViewSecond.getHolder().getSurface() != null) {
+                mCameraHelper.addSurface(mBinding.cameraViewSecond.getHolder().getSurface(), false);
+                Log.d(TAG, "reloadLayoutForOrientation: secondary camera surface reconnected");
+            }
+        }
+
+        // Update UI controls to reflect current state
+        updateUIControls();
+        Log.d(TAG, "reloadLayoutForOrientation: COMPLETE");
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean(KEY_PORTRAIT_MODE, isPortraitMode);
+        outState.putString(KEY_CURRENT_MODULE, currentModule != null ? currentModule.name() : "NONE");
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        isPortraitMode = savedInstanceState.getBoolean(KEY_PORTRAIT_MODE, false);
+        String moduleName = savedInstanceState.getString(KEY_CURRENT_MODULE, "NONE");
+        try {
+            currentModule = ModuleType.valueOf(moduleName);
+        } catch (IllegalArgumentException e) {
+            currentModule = ModuleType.NONE;
+        }
+        if (savedInstanceState != null) {
+            isPortraitMode = savedInstanceState.getBoolean(KEY_PORTRAIT_MODE, false);
+        }
+    }
+
     private void setListeners() {
+        // Only setup floating button listeners for landscape layout
+        // Portrait mode uses the Zone 4 tab bar instead
+        if (mBinding.keyBoard != null) {
+            mBinding.keyBoard.setOnClickListener(v -> {
+                // Removed InputMethodManager to prevent Android soft keyboard from appearing
+                // InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                // imm.toggleSoftInput(InputMethodManager.SHOW_FORCED,0);
+                LinearLayout Fragment_KeyBoard_ShortCut = findViewById(R.id.Fragment_KeyBoard_ShortCut);
+                LinearLayout Fragment_KeyBoard_Function = findViewById(R.id.Fragment_KeyBoard_Function);
+                LinearLayout Fragment_KeyBoard_System = findViewById(R.id.Fragment_KeyBoard_System);
+                LinearLayout keyBoardView = findViewById(R.id.KeyBoard_View);
+                Button KeyBoard_ShortCut = findViewById(R.id.KeyBoard_ShortCut);
+                Button KeyBoard_Function = findViewById(R.id.KeyBoard_Function);
+                ImageButton KeyBoard_System = findViewById(R.id.KeyBoard_System);
 
-        mBinding.keyBoard.setOnClickListener(v -> {
-            // Removed InputMethodManager to prevent Android soft keyboard from appearing
-            // InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            // imm.toggleSoftInput(InputMethodManager.SHOW_FORCED,0);
-            LinearLayout Fragment_KeyBoard_ShortCut = findViewById(R.id.Fragment_KeyBoard_ShortCut);
-            LinearLayout Fragment_KeyBoard_Function = findViewById(R.id.Fragment_KeyBoard_Function);
-            LinearLayout Fragment_KeyBoard_System = findViewById(R.id.Fragment_KeyBoard_System);
-            LinearLayout keyBoardView = findViewById(R.id.KeyBoard_View);
-            Button KeyBoard_ShortCut = findViewById(R.id.KeyBoard_ShortCut);
-            Button KeyBoard_Function = findViewById(R.id.KeyBoard_Function);
-            ImageButton KeyBoard_System = findViewById(R.id.KeyBoard_System);
-
-            keyBoardView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-                @Override
-                public void onGlobalLayout() {
-                    Log.d("keyBoardView","keyBoardView.getWidth():"+keyBoardView.getWidth() + "keyBoardView.getHeight():"+keyBoardView.getHeight());
-                    ZoomLayoutDeal.getViewWidthHeight(keyBoardView.getWidth(), keyBoardView.getHeight());
+                if (keyBoardView != null) {
+                    keyBoardView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                        @Override
+                        public void onGlobalLayout() {
+                            Log.d("keyBoardView","keyBoardView.getWidth():"+keyBoardView.getWidth() + "keyBoardView.getHeight():"+keyBoardView.getHeight());
+                            ZoomLayoutDeal.getViewWidthHeight(keyBoardView.getWidth(), keyBoardView.getHeight());
+                        }
+                    });
+                    keyBoardView.setVisibility(View.VISIBLE);
                 }
+                if (mKeyBoardOpacity != null) {
+                    mKeyBoardOpacity.restoreOpacity();
+                }
+                //hide floating button keyboard and set_up_button
+                FloatingActionButton keyBoard = findViewById(R.id.keyBoard);
+                if (keyBoard != null) keyBoard.setVisibility(View.GONE);
+                FloatingActionButton set_up_button = findViewById(R.id.set_up_button);
+                if (set_up_button != null) set_up_button.setVisibility(View.GONE);
+
+                if (Fragment_KeyBoard_Function != null) Fragment_KeyBoard_Function.setVisibility(View.GONE);
+                if (Fragment_KeyBoard_ShortCut != null) Fragment_KeyBoard_ShortCut.setVisibility(View.GONE);
+                if (Fragment_KeyBoard_System != null) Fragment_KeyBoard_System.setVisibility(View.GONE);
+
+                if (KeyBoard_Function != null) KeyBoard_Function.setBackgroundResource(R.drawable.nopress_button_background);
+                if (KeyBoard_ShortCut != null) KeyBoard_ShortCut.setBackgroundResource(R.drawable.nopress_button_background);
+                if (KeyBoard_System != null) KeyBoard_System.setBackgroundResource(R.drawable.nopress_button_background);
+
+                // Initialize TouchPad settings and help buttons
+                initTouchPadButtons();
             });
-            keyBoardView.setVisibility(View.VISIBLE);
-            mKeyBoardOpacity.restoreOpacity();
-            //hide floating button keyboard and set_up_button
-            FloatingActionButton keyBoard = findViewById(R.id.keyBoard);
-            keyBoard.setVisibility(View.GONE);
-            FloatingActionButton set_up_button = findViewById(R.id.set_up_button);
-            set_up_button.setVisibility(View.GONE);
-
-            Fragment_KeyBoard_Function.setVisibility(View.GONE);
-            Fragment_KeyBoard_ShortCut.setVisibility(View.GONE);
-            Fragment_KeyBoard_System.setVisibility(View.GONE);
-
-            KeyBoard_Function.setBackgroundResource(R.drawable.nopress_button_background);
-            KeyBoard_ShortCut.setBackgroundResource(R.drawable.nopress_button_background);
-            KeyBoard_System.setBackgroundResource(R.drawable.nopress_button_background);
-
-            // Initialize TouchPad settings and help buttons
-            initTouchPadButtons();
-
-        });
+        }
     }
 
     public void showCameraControlsDialog() {
@@ -680,11 +922,15 @@ public class MainActivity extends AppCompatActivity {
         if (mCameraHelper != null) {
             mCameraHelper.closeCamera();
 
-            action_safely_eject_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
-            action_safely_eject.setTextColor(getResources().getColor(android.R.color.holo_red_light));
-
-            action_device_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
-            action_device.setTextColor(getResources().getColor(android.R.color.white));
+            // Guard against landscape-only views in portrait mode
+            if (action_safely_eject_drawable != null && action_safely_eject != null) {
+                action_safely_eject_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+                action_safely_eject.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+            }
+            if (action_device_drawable != null && action_device != null) {
+                action_device_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                action_device.setTextColor(getResources().getColor(android.R.color.white));
+            }
         }
     }
 
@@ -749,15 +995,34 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initPreviewView() {
+        if (mBinding == null || mBinding.viewMainPreview == null) {
+            Log.w(TAG, "initPreviewView: mBinding or viewMainPreview is null, skipping");
+            return;
+        }
         mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
-        Log.d(TAG, "1mPreviewWidth: " + mPreviewWidth + " mPreviewHeight: " + mPreviewHeight);
+        Log.d(TAG, "initPreviewView: mPreviewWidth=" + mPreviewWidth + " mPreviewHeight=" + mPreviewHeight);
         mBinding.viewMainPreview.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
             @Override
             public void onSurfaceTextureAvailable(@NonNull SurfaceTexture surface, int width, int height) {
                 MouseManager.width_height(width, height);
-                Log.d(TAG, "1width: " + width + " height: " + height);
+                Log.d(TAG, "onSurfaceTextureAvailable: width=" + width + " height=" + height + " mIsCameraConnected=" + mIsCameraConnected);
                 if (mCameraHelper != null) {
+                    // Add the new surface to camera pipeline
                     mCameraHelper.addSurface(surface, false);
+
+                    // If camera already connected & previewing, reconnect the new surface
+                    if (mIsCameraConnected) {
+                        Log.d(TAG, "Camera already connected, reconnecting surface after orientation/creation change");
+                        // Make view visible after surface is ready
+                        runOnUiThread(() -> {
+                            if (mBinding != null && mBinding.viewMainPreview != null) {
+                                mBinding.viewMainPreview.setVisibility(View.VISIBLE);
+                                mBinding.viewMainPreview.setKeepScreenOn(true);
+                                // Re-apply aspect ratio for the new surface dimensions
+                                mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
+                            }
+                        });
+                    }
                 }
             }
 
@@ -803,18 +1068,24 @@ public class MainActivity extends AppCompatActivity {
         XXPermissions.with(this)
                 .permission(Manifest.permission.CAMERA)
                 .request((permissions, all) -> {
+                    Log.d(TAG, "selectDevice: CAMERA permission granted, connecting camera");
                     mIsCameraConnected = false;
                     updateUIControls();
 
                     if (mCameraHelper != null) {
                         // get usb device
+                        Log.d(TAG, "selectDevice: calling mCameraHelper.selectDevice()");
                         mCameraHelper.selectDevice(device);
 
-                        action_device_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
-                        action_device.setTextColor(getResources().getColor(android.R.color.holo_red_light));
-
-                        action_safely_eject_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
-                        action_safely_eject.setTextColor(getResources().getColor(android.R.color.white));
+                        // Guard against landscape-only views in portrait mode
+                        if (action_device_drawable != null && action_device != null) {
+                            action_device_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+                            action_device.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+                        }
+                        if (action_safely_eject_drawable != null && action_safely_eject != null) {
+                            action_safely_eject_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                            action_safely_eject.setTextColor(getResources().getColor(android.R.color.white));
+                        }
                     }
                 });
     }
@@ -849,19 +1120,38 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onCameraOpen(UsbDevice device) {
-            if (DEBUG) Log.v(TAG, "onCameraOpen:device=" + device.getDeviceName());
+            Log.d(TAG, "onCameraOpen:device=" + device.getDeviceName() + " isPortrait=" + isPortraitMode);
+            // Guard against null mBinding after orientation change
+            if (mBinding == null || mBinding.viewMainPreview == null) {
+                Log.w(TAG, "onCameraOpen: mBinding or viewMainPreview is null, deferring camera setup");
+                mIsCameraConnected = true; // Still mark as connected
+                Log.d(TAG, "onCameraOpen: deferred - updateUIControls will be called when surface becomes available");
+                // Preview will be set up when surface becomes available
+                return;
+            }
             mCameraHelper.startPreview();
+            Log.d(TAG, "onCameraOpen: startPreview called");
             // After connecting to the camera, you can get preview size of the camera
             Size size = mCameraHelper.getPreviewSize();
             if (size != null) {
+                Log.d(TAG, "onCameraOpen: preview size=" + size.width + "x" + size.height);
                 resizePreviewView(size);
 //                cameraViewSecond.setAspectRatio(640, 480);
 
+            } else {
+                Log.w(TAG, "onCameraOpen: preview size is null");
             }
 
-            if (mBinding.viewMainPreview.getSurfaceTexture() != null) {
+            boolean hasSurfaceTexture = (mBinding.viewMainPreview.getSurfaceTexture() != null);
+            Log.d(TAG, "onCameraOpen: hasSurfaceTexture=" + hasSurfaceTexture);
+            if (hasSurfaceTexture) {
                 mCameraHelper.addSurface(mBinding.viewMainPreview.getSurfaceTexture(), false);
-                mCameraHelper.addSurface(mBinding.cameraViewSecond.getHolder().getSurface(), false);
+                // Guard against landscape-only cameraViewSecond in portrait mode
+                if (mBinding.cameraViewSecond != null && mBinding.cameraViewSecond.getHolder() != null
+                        && mBinding.cameraViewSecond.getHolder().getSurface() != null
+                        && mBinding.cameraViewSecond.getHolder().getSurface().isValid()) {
+                    mCameraHelper.addSurface(mBinding.cameraViewSecond.getHolder().getSurface(), false);
+                }
             }
 
             mIsCameraConnected = true;
@@ -881,7 +1171,11 @@ public class MainActivity extends AppCompatActivity {
 
             if (mCameraHelper != null && mBinding.viewMainPreview.getSurfaceTexture() != null) {
                 mCameraHelper.removeSurface(mBinding.viewMainPreview.getSurfaceTexture());
-                mCameraHelper.removeSurface(cameraViewSecond.getHolder().getSurface());
+                // Guard against landscape-only cameraViewSecond in portrait mode
+                if (cameraViewSecond != null && cameraViewSecond.getHolder() != null
+                        && cameraViewSecond.getHolder().getSurface() != null) {
+                    mCameraHelper.removeSurface(cameraViewSecond.getHolder().getSurface());
+                }
             }
 
             mIsCameraConnected = false;
@@ -895,11 +1189,15 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onDeviceClose(UsbDevice device) {
             if (DEBUG) Log.v(TAG, "onDeviceClose:device=" + device.getDeviceName());
-            action_safely_eject_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
-            action_safely_eject.setTextColor(getResources().getColor(android.R.color.holo_red_light));
-
-            action_device_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
-            action_device.setTextColor(getResources().getColor(android.R.color.white));
+            // Guard against landscape-only views in portrait mode
+            if (action_safely_eject_drawable != null && action_safely_eject != null) {
+                action_safely_eject_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+                action_safely_eject.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+            }
+            if (action_device_drawable != null && action_device != null) {
+                action_device_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                action_device.setTextColor(getResources().getColor(android.R.color.white));
+            }
         }
 
         @Override
@@ -922,55 +1220,80 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void resizePreviewView(Size size) {
-        // Update the preview size
-//        mPreviewWidth = size.width;
-//        mPreviewHeight = size.height;
-        WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
-        DisplayMetrics metrics = new DisplayMetrics();
-        if (wm != null) {
-            Display display = wm.getDefaultDisplay();
-            display.getRealMetrics(metrics);
-            mPreviewWidth = metrics.widthPixels;
-            mPreviewHeight = metrics.heightPixels;
-
+        // Use actual video dimensions, not screen dimensions, to preserve aspect ratio
+        if (size != null && size.width > 0 && size.height > 0) {
+            mPreviewWidth = size.width;
+            mPreviewHeight = size.height;
+        } else {
+            // Fallback to screen dimensions if size not available
+            WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
+            DisplayMetrics metrics = new DisplayMetrics();
+            if (wm != null) {
+                Display display = wm.getDefaultDisplay();
+                display.getRealMetrics(metrics);
+                mPreviewWidth = metrics.widthPixels;
+                mPreviewHeight = metrics.heightPixels;
+            }
         }
-        Log.d(TAG, "22mPreviewWidth: " + mPreviewWidth + " mPreviewHeight: " + mPreviewHeight);
+        Log.d(TAG, "resizePreviewView: " + mPreviewWidth + "x" + mPreviewHeight);
         // Set the aspect ratio of TextureView to match the aspect ratio of the camera
         mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
     }
 
     private void updateUIControls() {
         runOnUiThread(() -> {
+            Log.d(TAG, "updateUIControls: mIsCameraConnected=" + mIsCameraConnected);
             if (mIsCameraConnected) {
-                mBinding.viewMainPreview.setVisibility(View.VISIBLE);
-                mBinding.tvConnectUSBCameraTip.setVisibility(View.GONE);
+                if (mBinding.viewMainPreview != null) {
+                    mBinding.viewMainPreview.setVisibility(View.VISIBLE);
+                    Log.d(TAG, "updateUIControls: viewMainPreview set VISIBLE");
+                }
+                if (mBinding.tvConnectUSBCameraTip != null) {
+                    mBinding.tvConnectUSBCameraTip.setVisibility(View.GONE);
+                }
 
-                mBinding.keyBoard.setVisibility(View.VISIBLE);
+                if (mBinding.keyBoard != null) {
+                    mBinding.keyBoard.setVisibility(View.VISIBLE);
+                }
 
                 Button Recording_Video = findViewById(R.id.Recording_Video);
-                Drawable Recording_Video_drawable = Recording_Video.getCompoundDrawables()[1];
-                // Update record button
-                if (mIsRecording) {
-                    Recording_Video_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
-                    Recording_Video.setTextColor(getResources().getColor(android.R.color.holo_red_light));
-                }else{
-                    Recording_Video_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
-                    Recording_Video.setTextColor(getResources().getColor(android.R.color.white));
+                if (Recording_Video != null) {
+                    Drawable Recording_Video_drawable = Recording_Video.getCompoundDrawables()[1];
+                    // Update record button
+                    if (mIsRecording) {
+                        Recording_Video_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+                        Recording_Video.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+                    }else{
+                        Recording_Video_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                        Recording_Video.setTextColor(getResources().getColor(android.R.color.white));
+                    }
                 }
 
             } else {
-                mBinding.viewMainPreview.setVisibility(View.GONE);
-                mBinding.tvConnectUSBCameraTip.setVisibility(View.VISIBLE);
+                if (mBinding.viewMainPreview != null) {
+                    mBinding.viewMainPreview.setVisibility(View.GONE);
+                }
+                if (mBinding.tvConnectUSBCameraTip != null) {
+                    mBinding.tvConnectUSBCameraTip.setVisibility(View.VISIBLE);
+                }
 
-                mBinding.keyBoard.setVisibility(View.GONE);
+                if (mBinding.keyBoard != null) {
+                    mBinding.keyBoard.setVisibility(View.GONE);
+                }
 
-                mBinding.tvVideoRecordTime.setVisibility(View.GONE);
+                if (mBinding.tvVideoRecordTime != null) {
+                    mBinding.tvVideoRecordTime.setVisibility(View.GONE);
+                }
             }
             invalidateOptionsMenu();
         });
     }
 
     private Size getSavedPreviewSize() {
+        if (mUsbDevice == null) {
+            Log.w(TAG, "getSavedPreviewSize: mUsbDevice is null, returning null");
+            return null;
+        }
         String key = getString(R.string.saved_preview_size) + USBMonitor.getProductKey(mUsbDevice);
         String sizeStr = getPreferences(MODE_PRIVATE).getString(key, null);
         if (TextUtils.isEmpty(sizeStr)) {
@@ -1173,7 +1496,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startRecordTimer() {
-        runOnUiThread(() -> mBinding.tvVideoRecordTime.setVisibility(View.VISIBLE));
+        runOnUiThread(() -> {
+            if (mBinding.tvVideoRecordTime != null) {
+                mBinding.tvVideoRecordTime.setVisibility(View.VISIBLE);
+            }
+        });
 
         // Set "00:00:00" to record time TextView
         setVideoRecordTimeText(formatTime(0));
@@ -1194,7 +1521,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void stopRecordTimer() {
-        runOnUiThread(() -> mBinding.tvVideoRecordTime.setVisibility(View.GONE));
+        runOnUiThread(() -> {
+            if (mBinding.tvVideoRecordTime != null) {
+                mBinding.tvVideoRecordTime.setVisibility(View.GONE);
+            }
+        });
 
         // Stop Record Timer
         mRecordStartTime = 0;
@@ -1208,7 +1539,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void setVideoRecordTimeText(String timeText) {
         runOnUiThread(() -> {
-            mBinding.tvVideoRecordTime.setText(timeText);
+            if (mBinding.tvVideoRecordTime != null) {
+                mBinding.tvVideoRecordTime.setText(timeText);
+            }
         });
     }
 
@@ -1334,6 +1667,502 @@ public class MainActivity extends AppCompatActivity {
         
         registerReceiver(debugReceiver, filter, RECEIVER_NOT_EXPORTED);
         Log.d(TAG, "Debug broadcast receiver registered");
+    }
+
+    // ============================================================
+    // Portrait 4-Zone Layout Management
+    // ============================================================
+
+    /**
+     * Initialize portrait mode zone views and set up listeners.
+     * Zone 1: Shortcut Strip (top)
+     * Zone 2: Video Stream (center)
+     * Zone 3: Module Drawer (hidden by default)
+     * Zone 4: Module Selector Bar (bottom)
+     */
+    private void initPortraitZones() {
+        // Try to find portrait-specific views (only exist in portrait layout)
+        portraitRootLayout = findViewById(R.id.thisFrameLayout);
+        portraitVideoContainer = findViewById(R.id.video_area_container);
+        portraitModuleDrawer = findViewById(R.id.module_drawer);
+        portraitCollapseHandle = findViewById(R.id.module_collapse_handle);
+        portraitModuleContent = findViewById(R.id.module_content_container);
+        portraitShortcutStrip = findViewById(R.id.shortcut_strip);
+
+        // Zone 4: Module Selector tabs
+        portraitKeyboardTab = findViewById(R.id.tab_keyboard);
+        portraitMouseTab = findViewById(R.id.tab_mouse);
+        portraitImeTab = findViewById(R.id.tab_ime);
+        portraitSettingsTab = findViewById(R.id.tab_settings);
+        portraitRotationButton = findViewById(R.id.action_screen_orientation);
+
+        // Check if we're in portrait mode by checking if root layout exists
+        boolean isPortrait = (portraitRootLayout != null);
+        isPortraitMode = isPortrait;
+
+        if (!isPortrait) {
+            // In landscape mode, portrait zone views won't exist
+            Log.d(TAG, "initPortraitZones: not in portrait, skipping");
+            return;
+        }
+
+        Log.d(TAG, "initPortraitZones: setting up portrait zone listeners");
+
+        // Set up module tab click listeners
+        if (portraitKeyboardTab != null) {
+            portraitKeyboardTab.setOnClickListener(v -> toggleModule(ModuleType.KEYBOARD));
+        }
+        if (portraitMouseTab != null) {
+            portraitMouseTab.setOnClickListener(v -> toggleModule(ModuleType.MOUSE));
+        }
+        if (portraitImeTab != null) {
+            portraitImeTab.setOnClickListener(v -> toggleModule(ModuleType.IME));
+        }
+        if (portraitSettingsTab != null) {
+            portraitSettingsTab.setOnClickListener(v -> openSettingsDrawer());
+        }
+        if (portraitRotationButton != null) {
+            portraitRotationButton.setOnClickListener(v -> toggleScreenOrientation());
+        }
+
+        // Collapse handle click listener
+        if (portraitCollapseHandle != null) {
+            portraitCollapseHandle.setOnClickListener(v -> {
+                if (currentModule != ModuleType.NONE) {
+                    setModuleState(ModuleType.NONE, true);
+                }
+            });
+        }
+
+        // Setup collapse gesture detector
+        collapseGestureDetector = new GestureDetector(this,
+            new GestureDetector.SimpleOnGestureListener() {
+                @Override
+                public boolean onFling(MotionEvent e1, MotionEvent e2,
+                                       float velocityX, float velocityY) {
+                    // Swipe DOWN to collapse
+                    if (velocityY > 500 && Math.abs(velocityY) > Math.abs(velocityX)) {
+                        if (currentModule != ModuleType.NONE) {
+                            setModuleState(ModuleType.NONE, true);
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+            }
+        );
+
+        // Set touch listener on module drawer for swipe collapse
+        if (portraitModuleDrawer != null) {
+            portraitModuleDrawer.setOnTouchListener((v, event) -> {
+                if (collapseGestureDetector != null) {
+                    collapseGestureDetector.onTouchEvent(event);
+                }
+                return false;
+            });
+        }
+
+        // Update tab visuals for current module state
+        updateTabVisuals();
+
+        // Set default module state (hidden)
+        setModuleState(currentModule != null ? currentModule : ModuleType.NONE, false);
+    }
+
+    /**
+     * Toggle module visibility.
+     * If the same module is active, collapse it.
+     * If a different module, switch to that module.
+     */
+    private void toggleModule(ModuleType type) {
+        if (currentModule == type) {
+            // Same module: collapse
+            setModuleState(ModuleType.NONE, true);
+        } else {
+            // Different module: expand
+            setModuleState(type, true);
+        }
+    }
+
+    /**
+     * Set the active module and update layout accordingly.
+     * Module overlays the bottom of the video stream (fixed 200dp height).
+     * Video is NOT pushed up - it stays filling the full dynamic area.
+     * Zone 3 is positioned ABOVE Zone 4 (bottom bar).
+     * @param type Module to show, or NONE to hide
+     * @param animate Whether to animate the transition
+     */
+    private void setModuleState(ModuleType type, boolean animate) {
+        currentModule = type;
+
+        if (type == ModuleType.NONE) {
+            // COLLAPSE: Hide module drawer
+            if (portraitModuleDrawer != null) {
+                portraitModuleDrawer.setVisibility(View.GONE);
+            }
+        } else {
+            // EXPAND: Show module drawer at bottom, overlaying video, above bottom bar
+            if (portraitModuleDrawer != null) {
+                portraitModuleDrawer.setVisibility(View.VISIBLE);
+                // Fixed 200dp height, positioned at bottom (above Zone 4)
+                FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                    FrameLayout.LayoutParams.MATCH_PARENT,
+                    200
+                );
+                params.gravity = android.view.Gravity.BOTTOM;
+                portraitModuleDrawer.setLayoutParams(params);
+
+                // Inflate or show the appropriate module
+                inflateModuleView(type);
+            }
+        }
+
+        updateTabVisuals();
+
+        // Animate transition
+        if (animate && portraitVideoContainer != null) {
+            androidx.transition.TransitionManager.beginDelayedTransition(
+                (ViewGroup) portraitVideoContainer.getParent(),
+                new androidx.transition.ChangeBounds().setDuration(300)
+            );
+        }
+    }
+
+    /**
+     * Inflate the appropriate module view into the module content container.
+     */
+    private void inflateModuleView(ModuleType type) {
+        if (portraitModuleContent == null) return;
+
+        // Remove existing module views
+        portraitModuleContent.removeAllViews();
+
+        View moduleView = null;
+        LayoutInflater inflater = LayoutInflater.from(this);
+
+        switch (type) {
+            case KEYBOARD:
+                if (keyboardModuleView == null) {
+                    keyboardModuleView = inflater.inflate(
+                        R.layout.module_portrait_keyboard, portraitModuleContent, false);
+                    // Setup keyboard module buttons
+                    setupKeyboardModule(keyboardModuleView);
+                }
+                moduleView = keyboardModuleView;
+                break;
+
+            case MOUSE:
+                if (mouseModuleView == null) {
+                    mouseModuleView = inflater.inflate(
+                        R.layout.module_portrait_mouse, portraitModuleContent, false);
+                    setupMouseModule(mouseModuleView);
+                }
+                moduleView = mouseModuleView;
+                break;
+
+            case IME:
+                if (imeModuleView == null) {
+                    imeModuleView = inflater.inflate(
+                        R.layout.module_portrait_ime, portraitModuleContent, false);
+                    setupImeModule(imeModuleView);
+                }
+                moduleView = imeModuleView;
+                break;
+        }
+
+        if (moduleView != null && moduleView.getParent() == null) {
+            portraitModuleContent.addView(moduleView);
+        }
+    }
+
+    /**
+     * Setup keyboard module button listeners.
+     * NOTE: The existing keyboard classes (KeyBoardShortCut, KeyBoardCtrl, etc.)
+     * use activity.findViewById() which expects views in the main activity layout.
+     * In portrait module, these views are in the inflated module view.
+     * For now, use a try-catch to prevent crashes while we wire up properly.
+     */
+    private void setupKeyboardModule(View view) {
+        try {
+            // Re-setup all existing keyboard button handlers
+            KeyBoardShortCut keyBoardShortCut = new KeyBoardShortCut(this);
+            KeyBoardCtrl keyBoardCtrl = new KeyBoardCtrl(this);
+            KeyBoardShift keyBoardShift = new KeyBoardShift(this);
+            KeyBoardAlt keyBoardAlt = new KeyBoardAlt(this);
+            KeyBoardWin keyBoardWin = new KeyBoardWin(this);
+            KeyBoardFunction keyBoardFunction = new KeyBoardFunction(this);
+            KeyBoardSystem keyBoardSystem = new KeyBoardSystem(this);
+            KeyBoardClose keyBoardClose = new KeyBoardClose(this);
+
+            keyBoardShortCut.setShortCutButtonsClickColor();
+            keyBoardFunction.setFunctionButtonsClickColor();
+            keyBoardSystem.setSystemButtonsClickColor();
+            keyBoardClose.setCloseButtonClickColor();
+
+            mKeyBoardOpacity = new KeyBoardOpacity(this);
+            mKeyBoardOpacity.setOpacityButtonClick();
+        } catch (Exception e) {
+            Log.w(TAG, "setupKeyboardModule: keyboard init failed (expected for portrait module): " + e.getMessage());
+        }
+    }
+
+    /**
+     * Setup mouse module (reuse existing TouchPad)
+     */
+    private void setupMouseModule(View view) {
+        com.openterface.AOS.view.TouchPadView portraitTouchPad =
+            view.findViewById(R.id.portrait_touchPadArea);
+        com.openterface.AOS.view.MouseControlStripView portraitMouseStrip =
+            view.findViewById(R.id.portrait_mouseButtonStrip);
+
+        if (portraitTouchPad != null) {
+            portraitTouchPad.setOnTouchPadListener(new com.openterface.AOS.view.TouchPadView.OnTouchPadListener() {
+                @Override
+                public void onTouchMove(float startX, float startY, float lastX, float lastY) {
+                    if (lastX == 0 && lastY == 0) {
+                        com.openterface.AOS.target.MouseManager.handleTwoFingerPanSlideUpDown(startY);
+                    } else {
+                        com.openterface.AOS.target.MouseManager.sendHexRelData(
+                            "SecNullData", startX, startY, lastX, lastY);
+                    }
+                }
+
+                @Override
+                public void onTouchClick() {
+                    sendMouseClick("SecLeftData");
+                }
+
+                @Override
+                public void onTouchDoubleClick() {
+                    // Double left click
+                    sendMouseClick("SecLeftData");
+                    new Handler().postDelayed(() -> sendMouseClick("SecLeftData"), 50);
+                }
+
+                @Override
+                public void onTouchRightClick() {
+                    sendMouseClick("SecRightData");
+                }
+
+                @Override
+                public void onTouchLongPress() {
+                    Log.d(TAG, "Portrait TouchPad long press -> drag mode");
+                }
+
+                @Override
+                public void onTouchRelease() {
+                    com.openterface.AOS.target.MouseManager.releaseMSRelData();
+                }
+            });
+        }
+
+        if (portraitMouseStrip != null) {
+            portraitMouseStrip.setOnMouseClickListener(
+                new com.openterface.AOS.view.MouseControlStripView.OnMouseClickListener() {
+                    @Override
+                    public void onMouseClick(int buttonMask) {
+                        String clickType;
+                        switch (buttonMask) {
+                            case com.openterface.AOS.view.MouseControlStripView.BTN_LEFT:
+                                clickType = "SecLeftData"; break;
+                            case com.openterface.AOS.view.MouseControlStripView.BTN_RIGHT:
+                                clickType = "SecRightData"; break;
+                            case com.openterface.AOS.view.MouseControlStripView.BTN_MIDDLE:
+                                clickType = "SecMiddleData"; break;
+                            default:
+                                clickType = "SecNullData";
+                        }
+                        sendMouseClick(clickType);
+                    }
+
+                    @Override
+                    public void onMouseRelease() {
+                        String releaseData = com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
+                            com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
+                            com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("address") +
+                            com.openterface.AOS.target.CH9329MSKBMap.CmdData().get("CmdMS_REL") +
+                            com.openterface.AOS.target.CH9329MSKBMap.DataLen().get("DataLenRelMS") +
+                            com.openterface.AOS.target.CH9329MSKBMap.MSRelData().get("FirstData") +
+                            com.openterface.AOS.target.CH9329MSKBMap.MSRelData().get("SecNullData") +
+                            "00" + "00" + "00";
+                        releaseData += com.openterface.AOS.serial.CH9329Function.makeChecksum(releaseData);
+                        byte[] bytes = com.openterface.AOS.serial.CH9329Function.hexStringToByteArray(releaseData);
+                        if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                            usbDeviceManager.writeData(bytes);
+                        }
+                    }
+
+                    @Override
+                    public void onScrollClick() {
+                        com.openterface.AOS.target.MouseManager.handleTwoPress();
+                    }
+                });
+        }
+    }
+
+    /**
+     * Send a mouse click via CH9329 HID protocol
+     */
+    private void sendMouseClick(String clickType) {
+        new Thread(() -> {
+            try {
+                String clickData = com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
+                    com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
+                    com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("address") +
+                    com.openterface.AOS.target.CH9329MSKBMap.CmdData().get("CmdMS_REL") +
+                    com.openterface.AOS.target.CH9329MSKBMap.DataLen().get("DataLenRelMS") +
+                    com.openterface.AOS.target.CH9329MSKBMap.MSRelData().get("FirstData") +
+                    clickType + "00" + "00" + "00";
+                clickData += com.openterface.AOS.serial.CH9329Function.makeChecksum(clickData);
+                byte[] bytes = com.openterface.AOS.serial.CH9329Function.hexStringToByteArray(clickData);
+                if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                    usbDeviceManager.writeData(bytes);
+                }
+                // Auto release after 30ms
+                Thread.sleep(30);
+                String releaseData = com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
+                    com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
+                    com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("address") +
+                    com.openterface.AOS.target.CH9329MSKBMap.CmdData().get("CmdMS_REL") +
+                    com.openterface.AOS.target.CH9329MSKBMap.DataLen().get("DataLenRelMS") +
+                    com.openterface.AOS.target.CH9329MSKBMap.MSRelData().get("FirstData") +
+                    com.openterface.AOS.target.CH9329MSKBMap.MSRelData().get("SecNullData") +
+                    "00" + "00" + "00";
+                releaseData += com.openterface.AOS.serial.CH9329Function.makeChecksum(releaseData);
+                bytes = com.openterface.AOS.serial.CH9329Function.hexStringToByteArray(releaseData);
+                if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                    usbDeviceManager.writeData(bytes);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error sending mouse click: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    /**
+     * Setup IME module button listeners
+     */
+    private void setupImeModule(View view) {
+        android.widget.Button sendButton = view.findViewById(R.id.ime_send_button);
+        EditText textInput = view.findViewById(R.id.ime_text_input);
+
+        if (sendButton != null) {
+            sendButton.setOnClickListener(v -> {
+                if (textInput != null && textInput.getText().length() > 0) {
+                    String text = textInput.getText().toString();
+                    // Send each character as HID keystroke
+                    for (int i = 0; i < text.length(); i++) {
+                        final char c = text.charAt(i);
+                        new Handler().postDelayed(() -> {
+                            if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                                // Send character via keyboard
+                                KeyBoardManager.sendKeyBoardData(null, String.valueOf(c));
+                            }
+                        }, i * 50L);
+                    }
+                    textInput.setText("");
+                    Toast.makeText(this, "Text sent", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+    }
+
+    /**
+     * Update tab visual states (active/inactive)
+     */
+    private void updateTabVisuals() {
+        // Keyboard tab
+        if (portraitKeyboardTab != null) {
+            boolean active = (currentModule == ModuleType.KEYBOARD);
+            portraitKeyboardTab.setBackgroundColor(
+                active ? 0xFF3700B3 : 0xFF1A1A1A);
+            ImageView icon = portraitKeyboardTab.findViewById(R.id.tab_keyboard_icon);
+            if (icon != null) {
+                icon.setColorFilter(active ? 0xFFFFFFFF : 0xFF888888);
+            }
+            TextView label = portraitKeyboardTab.findViewById(R.id.tab_keyboard_label);
+            if (label != null) label.setTextColor(active ? 0xFFFFFFFF : 0xFF888888);
+        }
+
+        // Mouse tab
+        if (portraitMouseTab != null) {
+            boolean active = (currentModule == ModuleType.MOUSE);
+            portraitMouseTab.setBackgroundColor(
+                active ? 0xFF3700B3 : 0xFF1A1A1A);
+            ImageView icon = portraitMouseTab.findViewById(R.id.tab_mouse_icon);
+            if (icon != null) {
+                icon.setColorFilter(active ? 0xFFFFFFFF : 0xFF888888);
+            }
+            TextView label = portraitMouseTab.findViewById(R.id.tab_mouse_label);
+            if (label != null) label.setTextColor(active ? 0xFFFFFFFF : 0xFF888888);
+        }
+
+        // IME tab
+        if (portraitImeTab != null) {
+            boolean active = (currentModule == ModuleType.IME);
+            portraitImeTab.setBackgroundColor(
+                active ? 0xFF3700B3 : 0xFF1A1A1A);
+            ImageView icon = portraitImeTab.findViewById(R.id.tab_ime_icon);
+            if (icon != null) {
+                icon.setColorFilter(active ? 0xFFFFFFFF : 0xFF888888);
+            }
+            TextView label = portraitImeTab.findViewById(R.id.tab_ime_label);
+            if (label != null) label.setTextColor(active ? 0xFFFFFFFF : 0xFF888888);
+        }
+
+        // Settings tab (never "active" in the module sense)
+        if (portraitSettingsTab != null) {
+            portraitSettingsTab.setBackgroundColor(0xFF1A1A1A);
+            ImageView icon = portraitSettingsTab.findViewById(R.id.tab_settings_icon);
+            if (icon != null) icon.setColorFilter(0xFF888888);
+            TextView label = portraitSettingsTab.findViewById(R.id.tab_settings_label);
+            if (label != null) label.setTextColor(0xFF888888);
+        }
+    }
+
+    /**
+     * Open the settings drawer (same as existing settings menu)
+     */
+    private void openSettingsDrawer() {
+        // Collapse any active module first
+        if (currentModule != ModuleType.NONE) {
+            setModuleState(ModuleType.NONE, true);
+        }
+
+        // Open the existing settings drawer
+        LinearLayout drawerSetup = findViewById(R.id.drawer_layout_setup);
+        if (drawerSetup != null) {
+            drawerSetup.setVisibility(View.VISIBLE);
+        }
+
+        DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
+        if (drawerLayout != null) {
+            drawerLayout.openDrawer(androidx.core.view.GravityCompat.END);
+            drawerSetup.setVisibility(View.VISIBLE);
+        }
+    }
+
+    /**
+     * Toggle screen orientation between portrait and landscape modes.
+     * The orientation is set programmatically and the device will stay in that mode
+     * until the user toggles it again.
+     */
+    public void toggleScreenOrientation() {
+        int newOrientation;
+        if (isPortraitMode) {
+            // Currently portrait, switch to landscape
+            newOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
+            isPortraitMode = false;
+            Toast.makeText(this, R.string.orientation_toast_landscape, Toast.LENGTH_SHORT).show();
+        } else {
+            // Currently landscape, switch to portrait
+            newOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT;
+            isPortraitMode = true;
+            Toast.makeText(this, R.string.orientation_toast_portrait, Toast.LENGTH_SHORT).show();
+        }
+
+        Log.d(TAG, "toggleScreenOrientation: " + (isPortraitMode ? "PORTRAIT" : "LANDSCAPE"));
+        setRequestedOrientation(newOrientation);
     }
 
     /**

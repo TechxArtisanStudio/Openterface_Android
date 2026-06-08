@@ -270,6 +270,13 @@
     <string name="touchpad_help_btn_middle_desc">中键/滚轮点击</string>
     <string name="touchpad_help_btn_right_desc">右键</string>
 
+    <!-- Portrait/Landscape Orientation Toggle -->
+    <string name="orientation_toggle">Screen Orientation</string>
+    <string name="switch_to_landscape">Landscape</string>
+    <string name="switch_to_portrait">Portrait</string>
+    <string name="orientation_toast_portrait">Switched to Portrait mode</string>
+    <string name="orientation_toast_landscape">Switched to Landscape mode</string>
+
     <!-- Common -->
     <string name="ok_button">确定</string>
 </resources>

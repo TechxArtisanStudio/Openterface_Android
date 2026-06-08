@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Mouse module for portrait mode -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mouse_module_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/white"
+    tools:context="com.openterface.AOS.activity.MainActivity">
+
+    <!-- TouchPad area -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@color/black"
+        android:padding="8dp">
+
+        <com.openterface.AOS.view.TouchPadView
+            android:id="@+id/portrait_touchPadArea"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <!-- Brand logo at bottom center -->
+        <TextView
+            android:id="@+id/portrait_touchPadBrand"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|center_horizontal"
+            android:layout_marginBottom="8dp"
+            android:text="Openterface"
+            android:textColor="#888888"
+            android:textSize="10sp"
+            android:alpha="0.6" />
+    </FrameLayout>
+
+    <!-- Mouse button strip -->
+    <com.openterface.AOS.view.MouseControlStripView
+        android:id="@+id/portrait_mouseButtonStrip"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp"
+        android:visibility="visible" />
+
+</LinearLayout>
