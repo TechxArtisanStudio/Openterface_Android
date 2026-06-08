@@ -186,6 +186,7 @@ public class HidManager {
     public static void setUsbDeviceManager(UsbDeviceManager manager) {
         MouseManagerCore.setUsbDeviceManager(manager);
         MouseManager.setUsbDeviceManager(manager);
+        KeyBoardManager.setUsbDeviceManager(manager);
     }
 
     public static void width_height(int width, int height) {
