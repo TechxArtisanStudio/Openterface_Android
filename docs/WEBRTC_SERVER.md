@@ -232,6 +232,110 @@ Android-side ICE candidates are collected and returned with the answer:
 }
 ```
 
+## Auto-Start on USB Connect
+
+### Overview
+
+The WebRTC server can automatically start when a USB camera is connected, similar to the VNC server feature. This eliminates the need to manually start the server each time the device is connected.
+
+### Configuration
+
+The auto-start setting is stored in SharedPreferences under the key `webrtc_auto_start` in the `webrtc_server_config` preferences file.
+
+**WebRtcConfig.java** - Auto-start methods:
+```java
+public boolean isAutoStart() {
+    return prefs.getBoolean(KEY_AUTO_START, false);
+}
+
+public void setAutoStart(boolean autoStart) {
+    prefs.edit().putBoolean(KEY_AUTO_START, autoStart).apply();
+}
+```
+
+### UI Toggle
+
+The auto-start toggle is available in the WebRTC settings dialog (`dialog_webrtc_server_settings.xml`):
+
+```xml
+<androidx.appcompat.widget.SwitchCompat
+    android:id="@+id/webrtc_auto_start"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="Auto-start on USB connect"
+    android:textSize="14sp" />
+```
+
+### Auto-Start Logic
+
+When a camera is opened (`MainActivity.java` `onCameraOpen()` callback), the system checks if auto-start is enabled:
+
+```java
+// Auto-start VNC server if configured (camera is now ready)
+if (vncConfig.isAutoStart() && vncService != null && !vncService.isRunning()) {
+    startVncServer();
+}
+
+// Auto-start WebRTC server if configured (camera is now ready)
+if (webRtcConfig.isAutoStart() && webRtcService != null && !webRtcService.isRunning()) {
+    startWebRtcServer();
+}
+```
+
+The auto-start only triggers when:
+1. The camera is successfully opened
+2. Auto-start is enabled in settings
+3. The service is not already running
+
+### Mutual Exclusion
+
+**Important**: VNC and WebRTC cannot both auto-start simultaneously because they both require exclusive access to the camera frame callbacks.
+
+**Validation Logic:**
+
+1. **Dialog-level validation**: When enabling auto-start for either service, the dialog checks if the other service already has auto-start enabled or is currently running. If so, it shows an error dialog and prevents the toggle.
+
+2. **WebRtcDialogFragment.java**:
+```java
+swAutoStart.setOnCheckedChangeListener((buttonView, isChecked) -> {
+    if (isChecked && (vncConfig.isAutoStart() || (vncService != null && vncService.isRunning()))) {
+        buttonView.setChecked(false);
+        new AlertDialog.Builder(requireContext())
+            .setTitle("Cannot Enable Auto-Start")
+            .setMessage("VNC server is already configured to auto-start or is currently running. Only one server (VNC or WebRTC) can run at a time.")
+            .setPositiveButton("OK", null)
+            .show();
+    }
+});
+```
+
+3. **VncServerSettingsDialogFragment.java** - Similar validation for VNC toggle.
+
+4. **MainActivity.java** - Passes the state of both services to the dialogs:
+```java
+public void showWebRtcDialog() {
+    WebRtcDialogFragment dialog = new WebRtcDialogFragment();
+    dialog.setWebRtcService(webRtcService);
+    dialog.setWebRtcConfig(webRtcConfig);
+    dialog.setVncAutoStartEnabled(vncConfig.isAutoStart());
+    dialog.setVncServerRunning(vncService != null && vncService.isRunning());
+    // ...
+}
+```
+
+### Configuration Persistence
+
+The auto-start setting persists across app restarts. When the user enables auto-start in the WebRTC dialog, the setting is saved via `WebRtcConfig.setAutoStart(true)` and will remain enabled until explicitly disabled.
+
+### Testing the Feature
+
+1. Open the app on your Android device
+2. Navigate to the WebRTC settings dialog from the drawer menu
+3. Toggle the "Auto-start on USB connect" switch
+4. If VNC auto-start is enabled, you'll see an error message
+5. Disconnect and reconnect the USB camera
+6. The WebRTC server should automatically start if the toggle is enabled and VNC is not running
+
 ---
 
 ## Keyboard Message Format

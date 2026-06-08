@@ -14,6 +14,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 
+import androidx.appcompat.widget.SwitchCompat;
+
 import com.openterface.AOS.R;
 import com.openterface.AOS.webrtc.WebRtcConfig;
 import com.openterface.AOS.webrtc.WebRtcServerService;
@@ -38,6 +40,7 @@ public class WebRtcDialogFragment extends DialogFragment {
     private EditText etPort;
     private EditText etFps;
     private EditText etBitrate;
+    private SwitchCompat swAutoStart;
     private Button btnStart;
     private Button btnStop;
 
@@ -46,6 +49,10 @@ public class WebRtcDialogFragment extends DialogFragment {
 
     private int previewWidth = 1920;
     private int previewHeight = 1080;
+
+    // VNC state for mutual exclusion validation
+    private boolean vncAutoStartEnabled;
+    private boolean vncServerRunning;
 
     public interface OnWebRtcSettingsListener {
         void onServerStarted();
@@ -68,6 +75,14 @@ public class WebRtcDialogFragment extends DialogFragment {
     public void setPreviewSize(int width, int height) {
         this.previewWidth = width;
         this.previewHeight = height;
+    }
+
+    public void setVncAutoStartEnabled(boolean enabled) {
+        this.vncAutoStartEnabled = enabled;
+    }
+
+    public void setVncServerRunning(boolean running) {
+        this.vncServerRunning = running;
     }
 
     @NonNull
@@ -101,8 +116,21 @@ public class WebRtcDialogFragment extends DialogFragment {
         etPort = view.findViewById(R.id.webrtc_signaling_port);
         etFps = view.findViewById(R.id.webrtc_fps);
         etBitrate = view.findViewById(R.id.webrtc_bitrate);
+        swAutoStart = view.findViewById(R.id.webrtc_auto_start);
         btnStart = view.findViewById(R.id.webrtc_start_button);
         btnStop = view.findViewById(R.id.webrtc_stop_button);
+
+        swAutoStart.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked && (vncAutoStartEnabled || vncServerRunning)) {
+                // VNC auto-start or VNC running, show conflict warning
+                buttonView.setChecked(false);
+                new AlertDialog.Builder(requireContext())
+                    .setTitle("Cannot Enable Auto-Start")
+                    .setMessage("VNC server is already configured to auto-start or is currently running. Only one server (VNC or WebRTC) can run at a time.\n\nPlease stop the VNC server and disable its auto-start first.")
+                    .setPositiveButton("OK", null)
+                    .show();
+            }
+        });
 
         btnStart.setOnClickListener(v -> startServer());
         btnStop.setOnClickListener(v -> stopServer());
@@ -128,6 +156,7 @@ public class WebRtcDialogFragment extends DialogFragment {
             etPort.setText(String.valueOf(config.getSignallingPort()));
             etFps.setText(String.valueOf(config.getVideoFps()));
             etBitrate.setText(String.valueOf(config.getVideoBitrate() / 1000)); // Display as kbps
+            swAutoStart.setChecked(config.isAutoStart());
         }
     }
 
@@ -160,6 +189,8 @@ public class WebRtcDialogFragment extends DialogFragment {
         } catch (NumberFormatException e) {
             Log.w(TAG, "Invalid bitrate");
         }
+
+        config.setAutoStart(swAutoStart.isChecked());
 
         if (listener != null) {
             listener.onSettingsChanged();

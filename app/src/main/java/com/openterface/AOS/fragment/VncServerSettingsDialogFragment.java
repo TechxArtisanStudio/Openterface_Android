@@ -56,6 +56,10 @@ public class VncServerSettingsDialogFragment extends DialogFragment {
     // Callback listener
     private OnVncSettingsListener listener;
 
+    // WebRTC state for mutual exclusion validation
+    private boolean webrtcAutoStartEnabled;
+    private boolean webrtcServerRunning;
+
     public interface OnVncSettingsListener {
         void onServerStarted(int port, String password);
         void onServerStopped();
@@ -68,6 +72,14 @@ public class VncServerSettingsDialogFragment extends DialogFragment {
 
     public void setListener(OnVncSettingsListener listener) {
         this.listener = listener;
+    }
+
+    public void setWebrtcAutoStartEnabled(boolean enabled) {
+        this.webrtcAutoStartEnabled = enabled;
+    }
+
+    public void setWebrtcServerRunning(boolean running) {
+        this.webrtcServerRunning = running;
     }
 
     @NonNull
@@ -103,6 +115,16 @@ public class VncServerSettingsDialogFragment extends DialogFragment {
         spinnerQuality = view.findViewById(R.id.vnc_quality_spinner);
         spinnerCompress = view.findViewById(R.id.vnc_compress_spinner);
         swAutoStart = view.findViewById(R.id.vnc_auto_start);
+        swAutoStart.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked && (webrtcAutoStartEnabled || webrtcServerRunning)) {
+                buttonView.setChecked(false);
+                new AlertDialog.Builder(requireContext())
+                    .setTitle("Cannot Enable Auto-Start")
+                    .setMessage("WebRTC server is already configured to auto-start or is currently running. Only one server (VNC or WebRTC) can run at a time.\n\nPlease stop the WebRTC server and disable its auto-start first.")
+                    .setPositiveButton("OK", null)
+                    .show();
+            }
+        });
         btnStart = view.findViewById(R.id.vnc_start_button);
         btnStop = view.findViewById(R.id.vnc_stop_button);
 

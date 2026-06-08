@@ -967,6 +967,11 @@ public class MainActivity extends AppCompatActivity {
             if (vncConfig.isAutoStart() && vncService != null && !vncService.isRunning()) {
                 startVncServer();
             }
+
+            // Auto-start WebRTC server if configured (camera is now ready)
+            if (webRtcConfig.isAutoStart() && webRtcService != null && !webRtcService.isRunning() && (vncService == null || !vncService.isRunning())) {
+                startWebRtcServer();
+            }
         }
 
         @Override
@@ -1496,6 +1501,8 @@ public class MainActivity extends AppCompatActivity {
     public void showVncServerDialog() {
         VncServerSettingsDialogFragment dialog = new VncServerSettingsDialogFragment();
         dialog.setVncService(vncService);
+        dialog.setWebrtcAutoStartEnabled(webRtcConfig.isAutoStart());
+        dialog.setWebrtcServerRunning(webRtcService != null && webRtcService.isRunning());
 
         // Pass current camera resolution to dialog
         final int cameraWidth;
@@ -1759,6 +1766,8 @@ public class MainActivity extends AppCompatActivity {
         WebRtcDialogFragment dialog = new WebRtcDialogFragment();
         dialog.setWebRtcService(webRtcService);
         dialog.setWebRtcConfig(webRtcConfig);
+        dialog.setVncAutoStartEnabled(vncConfig.isAutoStart());
+        dialog.setVncServerRunning(vncService != null && vncService.isRunning());
 
         // Pass current camera resolution
         final int cameraWidth;

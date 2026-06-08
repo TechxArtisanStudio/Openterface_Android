@@ -18,6 +18,7 @@ public class WebRtcConfig {
     private static final String KEY_TURN_SERVER = "webrtc_turn_server";
     private static final String KEY_TURN_USERNAME = "webrtc_turn_username";
     private static final String KEY_TURN_PASSWORD = "webrtc_turn_password";
+    private static final String KEY_AUTO_START = "webrtc_auto_start";
 
     // Default values
     public static final int DEFAULT_SIGNALLING_PORT = 8080;
@@ -111,6 +112,14 @@ public class WebRtcConfig {
 
     public void setTurnPassword(String password) {
         prefs.edit().putString(KEY_TURN_PASSWORD, password).apply();
+    }
+
+    public boolean isAutoStart() {
+        return prefs.getBoolean(KEY_AUTO_START, false);
+    }
+
+    public void setAutoStart(boolean autoStart) {
+        prefs.edit().putBoolean(KEY_AUTO_START, autoStart).apply();
     }
 
     /**
