@@ -46,7 +46,8 @@ import com.openterface.AOS.ICameraHelper;
 import com.openterface.AOS.R;
 import com.openterface.AOS.activity.MainActivity;
 import com.openterface.AOS.databinding.ActivityMainBinding;
-import com.openterface.AOS.target.MouseManager;
+import com.openterface.AOS.target.HidManager;
+// import com.openterface.AOS.target.MouseManager;
 import com.serenegiant.widget.AspectRatioSurfaceView;
 
 public class ZoomLayoutDeal {
@@ -345,7 +346,7 @@ public class ZoomLayoutDeal {
     private static void setMouseLocation(int setMaxViewX, int setMaxViewY) {
         float mouseLocationX = (float)setMaxViewX + screenWidth/2.0f;
         float mouseLocationY = (float)setMaxViewY + screenHeight/2.0f;
-        MouseManager.sendHexAbsData(mouseLocationX, mouseLocationY);
+        HidManager.sendHexAbsData(mouseLocationX, mouseLocationY);
         Log.d("setMouseLocation", "mouseLocationX: " + mouseLocationX + " mouseLocationY: " + mouseLocationY);
     }
 

@@ -34,7 +34,8 @@ import android.widget.LinearLayout;
 
 import com.openterface.AOS.R;
 import com.openterface.AOS.activity.MainActivity;
-import com.openterface.AOS.target.KeyBoardManager;
+import com.openterface.AOS.target.HidManager;
+// import com.openterface.AOS.target.KeyBoardManager;
 import com.openterface.AOS.target.KeyBoardMapping;
 
 import java.util.HashMap;
@@ -211,10 +212,10 @@ public class KeyBoardFunction {
 //        String FunctionKeyCtrlPress;
 //        if (KeyBoard_ShIft_Press_state){
 //            FunctionKeyCtrlPress = "Shift";
-//            KeyBoardManager.sendKeyBoardFunction(FunctionKeyCtrlPress, Function_buttonId);
+//            HidManager.sendKeyBoardFunction(FunctionKeyCtrlPress, Function_buttonId);
 //        }else{
 //            FunctionKeyCtrlPress = "ShortCutKeyNull";
-//            KeyBoardManager.sendKeyBoardFunction(FunctionKeyCtrlPress, Function_buttonId);
+//            HidManager.sendKeyBoardFunction(FunctionKeyCtrlPress, Function_buttonId);
 //        }
 //        System.out.println("Shift State: " + KeyBoard_ShIft_Press_state);
 
@@ -245,7 +246,7 @@ public class KeyBoardFunction {
         }else{
             FunctionKeyWinPress = "ShortCutKeyWinNull";
         }
-        KeyBoardManager.sendKeyBoardFunction(FunctionKeyCtrlPress, FunctionKeyShiftPress, FunctionKeyAltPress, FunctionKeyWinPress, Function_buttonId);
+        HidManager.sendKeyBoardFunction(FunctionKeyCtrlPress, FunctionKeyShiftPress, FunctionKeyAltPress, FunctionKeyWinPress, Function_buttonId);
         System.out.println("Shift State: " + KeyBoard_ShIft_Press_state);
 
     }
@@ -284,7 +285,7 @@ public class KeyBoardFunction {
         }
         
         // Send key press without automatic release
-        KeyBoardManager.sendKeyBoardFunctionPress(FunctionKeyCtrlPress, FunctionKeyShiftPress, FunctionKeyAltPress, FunctionKeyWinPress, Function_buttonId);
+        HidManager.sendKeyBoardFunctionPress(FunctionKeyCtrlPress, FunctionKeyShiftPress, FunctionKeyAltPress, FunctionKeyWinPress, Function_buttonId);
         Log.d("KeyBoardFunction", "Key press sent - Shift State: " + KeyBoard_ShIft_Press_state);
     }
 
@@ -292,7 +293,7 @@ public class KeyBoardFunction {
      * Handle key release event - send key release command
      */
     private void handleKeyRelease() {
-        KeyBoardManager.sendKeyBoardRelease();
+        HidManager.sendKeyBoardRelease();
         Log.d("KeyBoardFunction", "Key released");
     }
 

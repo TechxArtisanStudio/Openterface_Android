@@ -77,3 +77,13 @@ lint/tmp/
 # lint/reports/
 
 .codegraph/*
+
+# macOS
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Claude Code
+.claude/
+app/src/main/assets/webrtc/

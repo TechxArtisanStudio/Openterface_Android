@@ -269,6 +269,200 @@ public class KeyBoardManager {
         }).start();
     }
 
+    // Static executor for sequential keyboard operations - ensures press completes before release
+    private static final java.util.concurrent.ExecutorService keyboardExecutor =
+        java.util.concurrent.Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, "Keyboard-Executor");
+            t.setDaemon(true);
+            return t;
+        });
+
+    // Track currently pressed keys to avoid duplicate presses from browser duplicate events
+    private static final java.util.Set<String> currentlyPressedKeys = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    /**
+     * Send a complete key press and release sequence for simple key events.
+     * Used by WebRTC sendKeyboardKey() for single key events where browser sends
+     * both keydown and keyup - this handles the full cycle atomically.
+     */
+    public static void sendKeyBoardPressAndRelease(String functionKey, String keyName) {
+        if (keyName == null) {
+            Log.w(TAG, "❌ sendKeyBoardPressAndRelease: keyName is null");
+            return;
+        }
+
+        // Skip if key is already pressed (prevents duplicate from browser double-firing)
+        if (!currentlyPressedKeys.add(keyName)) {
+            Log.w(TAG, "🟣 Key '" + keyName + "' already pressed, ignoring duplicate");
+            return;
+        }
+
+        Log.e(TAG, "🟣 ========== KEY PRESS+RELEASE START ==========");
+        Log.e(TAG, "🟣 functionKey: '" + functionKey + "', keyName: '" + keyName + "'");
+
+        keyboardExecutor.execute(() -> {
+            try {
+                long startTime = System.currentTimeMillis();
+
+                // Step 1: Send press
+                Log.e(TAG, "🟣 Step 1: Sending PRESS...");
+                boolean pressSent = sendKeyBoardPressSync(functionKey, keyName);
+                if (!pressSent) {
+                    Log.e(TAG, "❌ Press failed, aborting release");
+                    currentlyPressedKeys.remove(keyName);
+                    return;
+                }
+
+                // Step 2: Small delay to ensure target registers the press
+                Log.e(TAG, "🟣 Step 2: Waiting 50ms for target to register...");
+                Thread.sleep(50);
+
+                // Step 3: Send release
+                Log.e(TAG, "🟣 Step 3: Sending RELEASE...");
+                sendKeyBoardReleaseSync();
+
+                currentlyPressedKeys.remove(keyName);
+
+                long endTime = System.currentTimeMillis();
+                Log.e(TAG, "✅ Key press+release completed in " + (endTime - startTime) + "ms");
+
+            } catch (Exception e) {
+                Log.e(TAG, "❌ Exception in sendKeyBoardPressAndRelease: " + e.getMessage(), e);
+                currentlyPressedKeys.remove(keyName);
+            }
+            Log.e(TAG, "🟣 ========== KEY PRESS+RELEASE END ==========");
+        });
+    }
+
+    /**
+     * Queue a key press on the executor thread.
+     * Used by WebRTC when browser sends keydown separately from keyup.
+     */
+    public static void sendKeyBoardPressQueued(String functionKey, String keyName) {
+        if (keyName == null) {
+            Log.w(TAG, "❌ sendKeyBoardPressQueued: keyName is null");
+            return;
+        }
+
+        // Skip if key is already pressed (prevents duplicate from browser double-firing)
+        if (!currentlyPressedKeys.add(keyName)) {
+            Log.w(TAG, "🟣 Key '" + keyName + "' already pressed, ignoring duplicate");
+            return;
+        }
+
+        Log.e(TAG, "🔵 ========== QUEUED KEY PRESS START ==========");
+        Log.e(TAG, "🔵 functionKey: '" + functionKey + "', keyName: '" + keyName + "'");
+
+        keyboardExecutor.execute(() -> {
+            try {
+                Log.e(TAG, "🔵 Sending PRESS...");
+                boolean result = sendKeyBoardPressSync(functionKey, keyName);
+                Log.e(TAG, "🔵 Press result: " + (result ? "SUCCESS" : "FAILED"));
+            } catch (Exception e) {
+                Log.e(TAG, "❌ Exception in sendKeyBoardPressQueued: " + e.getMessage(), e);
+                currentlyPressedKeys.remove(keyName);
+            }
+            Log.e(TAG, "🔵 ========== QUEUED KEY PRESS END ==========");
+        });
+    }
+
+    /**
+     * Queue a key release on the executor thread.
+     * Used by WebRTC when browser sends keyup separately from keydown.
+     * This ensures release always happens AFTER all queued press operations.
+     */
+    public static void sendKeyBoardReleaseQueued() {
+        Log.e(TAG, "🔴 ========== QUEUED KEY RELEASE START ==========");
+
+        keyboardExecutor.execute(() -> {
+            try {
+                Log.e(TAG, "🔴 Sending RELEASE...");
+                sendKeyBoardReleaseSync();
+                currentlyPressedKeys.clear();
+                Log.e(TAG, "✅ Release sent, cleared all pressed keys");
+            } catch (Exception e) {
+                Log.e(TAG, "❌ Exception in sendKeyBoardReleaseQueued: " + e.getMessage(), e);
+            }
+            Log.e(TAG, "🔴 ========== QUEUED KEY RELEASE END ==========");
+        });
+    }
+
+    /**
+     * Synchronous key press - must be called from executor thread
+     */
+    private static boolean sendKeyBoardPressSync(String functionKey, String keyName) {
+        try {
+            if (UsbDeviceManager.port == null){
+                Log.e(TAG, "❌ sendKeyBoardPressSync: port is null");
+                return false;
+            }
+
+            if (!UsbDeviceManager.port.isOpen()) {
+                Log.e(TAG, "❌ sendKeyBoardPressSync: port is not open");
+                return false;
+            }
+
+            String sendKBData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
+                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
+                    CH9329MSKBMap.getKeyCodeMap().get("address") +
+                    CH9329MSKBMap.CmdData().get("CmdKB_HID") +
+                    CH9329MSKBMap.DataLen().get("DataLenKB") +
+                    functionKey +
+                    CH9329MSKBMap.DataNull().get("DataNull") +
+                    currentKeyCodeMap.get(keyName) +
+                    CH9329MSKBMap.DataNull().get("DataNull") +
+                    CH9329MSKBMap.DataNull().get("DataNull") +
+                    CH9329MSKBMap.DataNull().get("DataNull") +
+                    CH9329MSKBMap.DataNull().get("DataNull") +
+                    CH9329MSKBMap.DataNull().get("DataNull");
+
+            sendKBData = sendKBData + CH9329Function.makeChecksum(sendKBData);
+
+            Log.e(TAG, "🟣 Sync press command: " + sendKBData);
+
+            byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendKBData);
+
+            long writeStart = System.currentTimeMillis();
+            UsbDeviceManager.port.write(sendKBDataBytes, 200);
+            long writeEnd = System.currentTimeMillis();
+            Log.e(TAG, "✅ Sync press sent in " + (writeEnd - writeStart) + "ms");
+            return true;
+
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Exception in sendKeyBoardPressSync: " + e.getMessage(), e);
+            return false;
+        }
+    }
+
+    /**
+     * Synchronous key release - must be called from executor thread
+     */
+    private static void sendKeyBoardReleaseSync() {
+        try {
+            String releaseKBData = CH9329MSKBMap.getKeyCodeMap().get("release");
+            if (releaseKBData == null) {
+                Log.e(TAG, "❌ sendKeyBoardReleaseSync: releaseKBData is null");
+                return;
+            }
+
+            Log.e(TAG, "🟣 Sync release command: " + releaseKBData);
+
+            byte[] releaseKBDataBytes = CH9329Function.hexStringToByteArray(releaseKBData);
+
+            // Use direct port write for consistency with press
+            if (UsbDeviceManager.port != null && UsbDeviceManager.port.isOpen()) {
+                long writeStart = System.currentTimeMillis();
+                UsbDeviceManager.port.write(releaseKBDataBytes, 200);
+                long writeEnd = System.currentTimeMillis();
+                Log.e(TAG, "✅ Sync release sent in " + (writeEnd - writeStart) + "ms");
+            } else {
+                Log.e(TAG, "❌ sendKeyBoardReleaseSync: port not available");
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Exception in sendKeyBoardReleaseSync: " + e.getMessage(), e);
+        }
+    }
+
     /**
      * Send keyboard release event (key up) - releases all keys
      */
@@ -276,7 +470,7 @@ public class KeyBoardManager {
         Log.e(TAG, "🔴 ========== KEY RELEASE START ==========");
         Log.e(TAG, "🔴 Thread: " + Thread.currentThread().getName());
         Log.e(TAG, "🔴 Time: " + System.currentTimeMillis());
-        
+
         new Thread(() -> {
             // Small delay to ensure press was sent before release
             // This prevents release from overtaking press in the serial queue
@@ -288,7 +482,7 @@ public class KeyBoardManager {
                 Thread.currentThread().interrupt();
                 Log.e(TAG, "🔴 Release delay interrupted: " + e.getMessage());
             }
-            
+
             EmptyKeyboard();
             Log.e(TAG, "🔴 ========== KEY RELEASE END ==========");
         }).start();
@@ -609,6 +803,10 @@ public class KeyBoardManager {
                     }
 
                     System.out.println("keyName: " + keyName);
+                    System.out.println("currentKeyCodeMap class: " + currentKeyCodeMap.getClass().getName());
+                    System.out.println("currentKeyCodeMap size: " + currentKeyCodeMap.size());
+                    String lookedUpCode = currentKeyCodeMap.get(keyName);
+                    System.out.println("lookedUpCode for '" + keyName + "': " + lookedUpCode);
 
                     String sendKBData = "";
                     sendKBData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +

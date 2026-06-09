@@ -36,7 +36,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.openterface.AOS.R;
-import com.openterface.AOS.target.MouseManager;
+import com.openterface.AOS.target.HidManager;
+// import com.openterface.AOS.target.MouseManager;
 
 /**
  * A mouse control strip with left, middle (scroll), and right buttons.
@@ -196,10 +197,10 @@ public class MouseControlStripView extends LinearLayout {
         } else {
             // Default: send absolute mouse click
             // Use the center of the screen as default position
-            int x = MouseManager.screenWidth / 2;
-            int y = MouseManager.screenHeight / 2;
+            int x = HidManager.getScreenWidth() / 2;
+            int y = HidManager.getScreenHeight() / 2;
             String clickType = getClickTypeString(buttonMask);
-            MouseManager.sendHexAbsButtonClickData(clickType, x, y);
+            HidManager.sendHexAbsButtonClickData(clickType, x, y);
         }
     }
 
@@ -207,7 +208,7 @@ public class MouseControlStripView extends LinearLayout {
         if (mouseClickListener != null) {
             mouseClickListener.onMouseRelease();
         } else {
-            MouseManager.releaseMSRelData();
+            HidManager.releaseMSRelData();
         }
     }
 

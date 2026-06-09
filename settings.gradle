@@ -18,8 +18,19 @@
  *
  *  All files in the folder are under this Apache License, Version 2.0.
  *  Files in the libjpeg-turbo, libusb, libuvc, rapidjson folder
- *  may have a different license, see the respective files.
+ *   may have a different license, see the respective files.
  */
 
 include ':libuvccamera'
+include ':libvncserver'
 include ':app'
+
+dependencyResolutionManagement {
+	repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+	repositories {
+		google()
+		mavenCentral()
+		maven { url 'https://jitpack.io' }
+		maven { url 'https://maven.getstream.io/artifactory/maven/' }
+	}
+}

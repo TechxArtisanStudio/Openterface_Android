@@ -36,7 +36,8 @@ import android.widget.LinearLayout;
 
 import com.openterface.AOS.R;
 import com.openterface.AOS.activity.MainActivity;
-import com.openterface.AOS.target.KeyBoardManager;
+import com.openterface.AOS.target.HidManager;
+// import com.openterface.AOS.target.KeyBoardManager;
 import com.openterface.AOS.target.KeyBoardMapping;
 import com.openterface.AOS.view.KeyPreviewPopup;
 
@@ -452,31 +453,31 @@ public class KeyBoardSystem {
         if (id == R.id.Key_Ctrl) {
             KeyBoard_Ctrl_Press(true);
             KeyBoardFunction.KeyBoard_Ctrl_Press(true);
-            KeyBoardManager.sendModifierPress("Ctrl");
+            HidManager.sendModifierPress("Ctrl");
         } else if (id == R.id.Key_CtrlGr) {
             KeyBoard_Ctrl_Press(true);
             KeyBoardFunction.KeyBoard_Ctrl_Press(true);
-            KeyBoardManager.sendModifierPress("CtrlR");
+            HidManager.sendModifierPress("CtrlR");
         } else if (id == R.id.Key_Alt) {
             KeyBoard_Alt_Press(true);
             KeyBoardFunction.KeyBoard_Alt_Press(true);
-            KeyBoardManager.sendModifierPress("Alt");
+            HidManager.sendModifierPress("Alt");
         } else if (id == R.id.Key_AltGr) {
             KeyBoard_Alt_Press(true);
             KeyBoardFunction.KeyBoard_Alt_Press(true);
-            KeyBoardManager.sendModifierPress("AltR");
+            HidManager.sendModifierPress("AltR");
         } else if (id == R.id.Key_Win) {
             KeyBoard_Win_Press(true);
             KeyBoardFunction.KeyBoard_Win_Press(true);
-            KeyBoardManager.sendModifierPress("Win");
+            HidManager.sendModifierPress("Win");
         } else if (id == R.id.Key_LeftShift) {
             KeyBoard_ShIft_Press(true);
             KeyBoardFunction.KeyBoard_ShIft_Press(true);
-            KeyBoardManager.sendModifierPress("Shift");
+            HidManager.sendModifierPress("Shift");
         } else if (id == R.id.Key_RightShift) {
             KeyBoard_ShIft_Press(true);
             KeyBoardFunction.KeyBoard_ShIft_Press(true);
-            KeyBoardManager.sendModifierPress("ShiftR");
+            HidManager.sendModifierPress("ShiftR");
         }
     }
 
@@ -489,19 +490,19 @@ public class KeyBoardSystem {
         if (id == R.id.Key_Ctrl || id == R.id.Key_CtrlGr) {
             KeyBoard_Ctrl_Press(false);
             KeyBoardFunction.KeyBoard_Ctrl_Press(false);
-            KeyBoardManager.sendModifierRelease();
+            HidManager.sendModifierRelease();
         } else if (id == R.id.Key_Alt || id == R.id.Key_AltGr) {
             KeyBoard_Alt_Press(false);
             KeyBoardFunction.KeyBoard_Alt_Press(false);
-            KeyBoardManager.sendModifierRelease();
+            HidManager.sendModifierRelease();
         } else if (id == R.id.Key_Win) {
             KeyBoard_Win_Press(false);
             KeyBoardFunction.KeyBoard_Win_Press(false);
-            KeyBoardManager.sendModifierRelease();
+            HidManager.sendModifierRelease();
         } else if (id == R.id.Key_LeftShift || id == R.id.Key_RightShift) {
             KeyBoard_ShIft_Press(false);
             KeyBoardFunction.KeyBoard_ShIft_Press(false);
-            KeyBoardManager.sendModifierRelease();
+            HidManager.sendModifierRelease();
         }
     }
 
@@ -541,7 +542,7 @@ public class KeyBoardSystem {
         }else{
             SystemKeyWinPress = "ShortCutKeyWinNull";
         }
-        KeyBoardManager.sendKeyBoardFunction(SystemKeyCtrlPress, SystemKeyShiftPress, SystemKeyAltPress, SystemKeyWinPress, System_buttonId);
+        HidManager.sendKeyBoardFunction(SystemKeyCtrlPress, SystemKeyShiftPress, SystemKeyAltPress, SystemKeyWinPress, System_buttonId);
         System.out.println("Shift State: " + KeyBoard_ShIft_Press_state);
 
     }
@@ -587,7 +588,7 @@ public class KeyBoardSystem {
               ", Win:" + SystemKeyWinPress);
         
         // Send key press without automatic release
-        KeyBoardManager.sendKeyBoardFunctionPress(SystemKeyCtrlPress, SystemKeyShiftPress, SystemKeyAltPress, SystemKeyWinPress, System_buttonId);
+        HidManager.sendKeyBoardFunctionPress(SystemKeyCtrlPress, SystemKeyShiftPress, SystemKeyAltPress, SystemKeyWinPress, System_buttonId);
         Log.e("KeyBoardSystem", "🟢 Key press command sent - Shift State: " + KeyBoard_ShIft_Press_state);
     }
 
@@ -596,7 +597,7 @@ public class KeyBoardSystem {
      */
     private void handleKeyRelease() {
         Log.e("KeyBoardSystem", "🔴 handleKeyRelease called");
-        KeyBoardManager.sendKeyBoardRelease();
+        HidManager.sendKeyBoardRelease();
         Log.e("KeyBoardSystem", "🔴 Key release command sent");
     }
 

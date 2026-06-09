@@ -33,7 +33,8 @@ import android.widget.LinearLayout;
 
 import com.openterface.AOS.R;
 import com.openterface.AOS.activity.MainActivity;
-import com.openterface.AOS.target.KeyBoardManager;
+import com.openterface.AOS.target.HidManager;
+// import com.openterface.AOS.target.KeyBoardManager;
 
 public class KeyBoardShortCut {
     private final Button[] ShortCutButtons;
@@ -78,7 +79,7 @@ public class KeyBoardShortCut {
     private void ShortCutButtonListeners() {
         if (ShortCutButtons[ShortCutButtons.length - 1] != null) {
             ShortCutButtons[ShortCutButtons.length - 1].setOnClickListener(v -> {
-                KeyBoardManager.sendKeyBoardFunctionCtrlAltDel();
+                HidManager.sendKeyBoardFunctionCtrlAltDel();
             });
         }
 
@@ -139,7 +140,7 @@ public class KeyBoardShortCut {
     }
 
     private void handleShortcut(String modifier, String key) {
-        KeyBoardManager.sendKeyBoardShortCut(modifier, key);
+        HidManager.sendKeyBoardShortCut(modifier, key);
     }
 
     public void setShortCutButtonsClickColor(){
