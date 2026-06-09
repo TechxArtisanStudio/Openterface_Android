@@ -68,109 +68,109 @@ public class KeyBoardSystem {
     private static KeyBoardMapping currentMapping;
     private static String currentLanguage = "us";
 
-    public KeyBoardSystem(MainActivity activity) {
+    public KeyBoardSystem(View rootView) {
         instance = this;
-        Fragment_KeyBoard_ShortCut = activity.findViewById(R.id.Fragment_KeyBoard_ShortCut);
-        Fragment_KeyBoard_Function = activity.findViewById(R.id.Fragment_KeyBoard_Function);
-        Fragment_KeyBoard_System = activity.findViewById(R.id.Fragment_KeyBoard_System);
+        Fragment_KeyBoard_ShortCut = rootView.findViewById(R.id.Fragment_KeyBoard_ShortCut);
+        Fragment_KeyBoard_Function = rootView.findViewById(R.id.Fragment_KeyBoard_Function);
+        Fragment_KeyBoard_System = rootView.findViewById(R.id.Fragment_KeyBoard_System);
 
-        KeyBoard_ShortCut = activity.findViewById(R.id.KeyBoard_ShortCut);
-        KeyBoard_Function = activity.findViewById(R.id.KeyBoard_Function);
-        KeyBoard_System = activity.findViewById(R.id.KeyBoard_System);
-        this.context = activity;
+        KeyBoard_ShortCut = rootView.findViewById(R.id.KeyBoard_ShortCut);
+        KeyBoard_Function = rootView.findViewById(R.id.KeyBoard_Function);
+        KeyBoard_System = rootView.findViewById(R.id.KeyBoard_System);
+        this.context = rootView.getContext();
 
         // Letter buttons for case switching
         Button[] letters = new Button[]{
-                activity.findViewById(R.id.Q_Button), activity.findViewById(R.id.W_Button),
-                activity.findViewById(R.id.E_Button), activity.findViewById(R.id.R_Button),
-                activity.findViewById(R.id.T_Button), activity.findViewById(R.id.Y_Button),
-                activity.findViewById(R.id.U_Button), activity.findViewById(R.id.I_Button),
-                activity.findViewById(R.id.O_Button), activity.findViewById(R.id.P_Button),
-                activity.findViewById(R.id.A_Button), activity.findViewById(R.id.S_Button),
-                activity.findViewById(R.id.D_Button), activity.findViewById(R.id.F_Button),
-                activity.findViewById(R.id.G_Button), activity.findViewById(R.id.H_Button),
-                activity.findViewById(R.id.J_Button), activity.findViewById(R.id.K_Button),
-                activity.findViewById(R.id.L_Button),
-                activity.findViewById(R.id.Z_Button), activity.findViewById(R.id.X_Button),
-                activity.findViewById(R.id.C_Button), activity.findViewById(R.id.V_Button),
-                activity.findViewById(R.id.B_Button), activity.findViewById(R.id.N_Button),
-                activity.findViewById(R.id.M_Button),
+                rootView.findViewById(R.id.Q_Button), rootView.findViewById(R.id.W_Button),
+                rootView.findViewById(R.id.E_Button), rootView.findViewById(R.id.R_Button),
+                rootView.findViewById(R.id.T_Button), rootView.findViewById(R.id.Y_Button),
+                rootView.findViewById(R.id.U_Button), rootView.findViewById(R.id.I_Button),
+                rootView.findViewById(R.id.O_Button), rootView.findViewById(R.id.P_Button),
+                rootView.findViewById(R.id.A_Button), rootView.findViewById(R.id.S_Button),
+                rootView.findViewById(R.id.D_Button), rootView.findViewById(R.id.F_Button),
+                rootView.findViewById(R.id.G_Button), rootView.findViewById(R.id.H_Button),
+                rootView.findViewById(R.id.J_Button), rootView.findViewById(R.id.K_Button),
+                rootView.findViewById(R.id.L_Button),
+                rootView.findViewById(R.id.Z_Button), rootView.findViewById(R.id.X_Button),
+                rootView.findViewById(R.id.C_Button), rootView.findViewById(R.id.V_Button),
+                rootView.findViewById(R.id.B_Button), rootView.findViewById(R.id.N_Button),
+                rootView.findViewById(R.id.M_Button),
         };
-        for (Button b : letters) letterButtons.add(b);
+        for (Button b : letters) { if (b != null) letterButtons.add(b); }
 
         SystemButtons = new View[]{
             // Row 1: Number row
-            activity.findViewById(R.id.Key_Tilde),
-            activity.findViewById(R.id.One_Sigh_Button),
-            activity.findViewById(R.id.Two_At_Button),
-            activity.findViewById(R.id.Three_Pound_Button),
-            activity.findViewById(R.id.Four_Dollar_Button),
-            activity.findViewById(R.id.Five_Percent_Button),
-            activity.findViewById(R.id.Six_Caret_Button),
-            activity.findViewById(R.id.Seven_Ampersand_Button),
-            activity.findViewById(R.id.Eight_Asterisk_Button),
-            activity.findViewById(R.id.Nine_Left_Parenthesis_Button),
-            activity.findViewById(R.id.Zero_Right_Parenthesis_Button),
-            activity.findViewById(R.id.Key_Minus),
-            activity.findViewById(R.id.Key_Equals),
-            activity.findViewById(R.id.Key_Backspace),
+            rootView.findViewById(R.id.Key_Tilde),
+            rootView.findViewById(R.id.One_Sigh_Button),
+            rootView.findViewById(R.id.Two_At_Button),
+            rootView.findViewById(R.id.Three_Pound_Button),
+            rootView.findViewById(R.id.Four_Dollar_Button),
+            rootView.findViewById(R.id.Five_Percent_Button),
+            rootView.findViewById(R.id.Six_Caret_Button),
+            rootView.findViewById(R.id.Seven_Ampersand_Button),
+            rootView.findViewById(R.id.Eight_Asterisk_Button),
+            rootView.findViewById(R.id.Nine_Left_Parenthesis_Button),
+            rootView.findViewById(R.id.Zero_Right_Parenthesis_Button),
+            rootView.findViewById(R.id.Key_Minus),
+            rootView.findViewById(R.id.Key_Equals),
+            rootView.findViewById(R.id.Key_Backspace),
 
             // Row 2: Q row
-            activity.findViewById(R.id.Key_Tab),
-            activity.findViewById(R.id.Q_Button),
-            activity.findViewById(R.id.W_Button),
-            activity.findViewById(R.id.E_Button),
-            activity.findViewById(R.id.R_Button),
-            activity.findViewById(R.id.T_Button),
-            activity.findViewById(R.id.Y_Button),
-            activity.findViewById(R.id.U_Button),
-            activity.findViewById(R.id.I_Button),
-            activity.findViewById(R.id.O_Button),
-            activity.findViewById(R.id.P_Button),
-            activity.findViewById(R.id.Key_LeftBracket),
-            activity.findViewById(R.id.Key_RightBracket),
-            activity.findViewById(R.id.Key_Backslash),
+            rootView.findViewById(R.id.Key_Tab),
+            rootView.findViewById(R.id.Q_Button),
+            rootView.findViewById(R.id.W_Button),
+            rootView.findViewById(R.id.E_Button),
+            rootView.findViewById(R.id.R_Button),
+            rootView.findViewById(R.id.T_Button),
+            rootView.findViewById(R.id.Y_Button),
+            rootView.findViewById(R.id.U_Button),
+            rootView.findViewById(R.id.I_Button),
+            rootView.findViewById(R.id.O_Button),
+            rootView.findViewById(R.id.P_Button),
+            rootView.findViewById(R.id.Key_LeftBracket),
+            rootView.findViewById(R.id.Key_RightBracket),
+            rootView.findViewById(R.id.Key_Backslash),
 
             // Row 3: A row
-            activity.findViewById(R.id.Key_Caps),
-            activity.findViewById(R.id.A_Button),
-            activity.findViewById(R.id.S_Button),
-            activity.findViewById(R.id.D_Button),
-            activity.findViewById(R.id.F_Button),
-            activity.findViewById(R.id.G_Button),
-            activity.findViewById(R.id.H_Button),
-            activity.findViewById(R.id.J_Button),
-            activity.findViewById(R.id.K_Button),
-            activity.findViewById(R.id.L_Button),
-            activity.findViewById(R.id.Key_Semicolon),
-            activity.findViewById(R.id.Key_Apostrophe),
-            activity.findViewById(R.id.Enter_Button),
+            rootView.findViewById(R.id.Key_Caps),
+            rootView.findViewById(R.id.A_Button),
+            rootView.findViewById(R.id.S_Button),
+            rootView.findViewById(R.id.D_Button),
+            rootView.findViewById(R.id.F_Button),
+            rootView.findViewById(R.id.G_Button),
+            rootView.findViewById(R.id.H_Button),
+            rootView.findViewById(R.id.J_Button),
+            rootView.findViewById(R.id.K_Button),
+            rootView.findViewById(R.id.L_Button),
+            rootView.findViewById(R.id.Key_Semicolon),
+            rootView.findViewById(R.id.Key_Apostrophe),
+            rootView.findViewById(R.id.Enter_Button),
 
             // Row 4: Z row
-            activity.findViewById(R.id.Key_LeftShift),
-            activity.findViewById(R.id.Z_Button),
-            activity.findViewById(R.id.X_Button),
-            activity.findViewById(R.id.C_Button),
-            activity.findViewById(R.id.V_Button),
-            activity.findViewById(R.id.B_Button),
-            activity.findViewById(R.id.N_Button),
-            activity.findViewById(R.id.M_Button),
-            activity.findViewById(R.id.Key_Comma),
-            activity.findViewById(R.id.Key_Period),
-            activity.findViewById(R.id.Key_Slash),
-            activity.findViewById(R.id.Key_RightShift),
+            rootView.findViewById(R.id.Key_LeftShift),
+            rootView.findViewById(R.id.Z_Button),
+            rootView.findViewById(R.id.X_Button),
+            rootView.findViewById(R.id.C_Button),
+            rootView.findViewById(R.id.V_Button),
+            rootView.findViewById(R.id.B_Button),
+            rootView.findViewById(R.id.N_Button),
+            rootView.findViewById(R.id.M_Button),
+            rootView.findViewById(R.id.Key_Comma),
+            rootView.findViewById(R.id.Key_Period),
+            rootView.findViewById(R.id.Key_Slash),
+            rootView.findViewById(R.id.Key_RightShift),
 
             // Row 5: Bottom row
-            activity.findViewById(R.id.Key_Ctrl),
-            activity.findViewById(R.id.Key_Win),
-            activity.findViewById(R.id.Key_Alt),
-            activity.findViewById(R.id.Space_Button),
-            activity.findViewById(R.id.Key_Up),
-            activity.findViewById(R.id.Key_AltGr),
-            activity.findViewById(R.id.Key_CtrlGr),
-            activity.findViewById(R.id.Key_Left),
-            activity.findViewById(R.id.Key_Down),
-            activity.findViewById(R.id.Key_Right),
+            rootView.findViewById(R.id.Key_Ctrl),
+            rootView.findViewById(R.id.Key_Win),
+            rootView.findViewById(R.id.Key_Alt),
+            rootView.findViewById(R.id.Space_Button),
+            rootView.findViewById(R.id.Key_Up),
+            rootView.findViewById(R.id.Key_AltGr),
+            rootView.findViewById(R.id.Key_CtrlGr),
+            rootView.findViewById(R.id.Key_Left),
+            rootView.findViewById(R.id.Key_Down),
+            rootView.findViewById(R.id.Key_Right),
         };
 
         languageMappings.put("us", new KeyMapConfig_Us());
@@ -237,6 +237,7 @@ public class KeyBoardSystem {
 
     private void SystemButtonListeners() {
         for (View view : SystemButtons) {
+            if (view == null) continue;
             final boolean[] isKeyPressed = {false};
 
             // Check if this is a modifier key in the keyboard layout
@@ -513,28 +514,29 @@ public class KeyBoardSystem {
     }
 
     public void setSystemButtonsClickColor(){
+        if (KeyBoard_System == null) return;
         KeyBoard_System.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
                 InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
                 imm.hideSoftInputFromWindow(v.getWindowToken(), 0);//close keyboard
 
-                if (Fragment_KeyBoard_System.getVisibility() == View.VISIBLE){
+                if (Fragment_KeyBoard_System != null && Fragment_KeyBoard_System.getVisibility() == View.VISIBLE){
                     Fragment_KeyBoard_System.setVisibility(View.GONE);
                     KeyBoard_System.setBackgroundResource(R.drawable.nopress_button_background);
-                }else {
+                }else if (Fragment_KeyBoard_System != null) {
                     Fragment_KeyBoard_System.setVisibility(View.VISIBLE);
                     KeyBoard_System.setBackgroundResource(R.drawable.press_button_background);
                 }
 
-                if (Fragment_KeyBoard_ShortCut.getVisibility() == View.VISIBLE) {
+                if (Fragment_KeyBoard_ShortCut != null && Fragment_KeyBoard_ShortCut.getVisibility() == View.VISIBLE) {
                     Fragment_KeyBoard_ShortCut.setVisibility(View.GONE);
-                    KeyBoard_ShortCut.setBackgroundResource(R.drawable.nopress_button_background);
+                    if (KeyBoard_ShortCut != null) KeyBoard_ShortCut.setBackgroundResource(R.drawable.nopress_button_background);
                 }
 
-                if (Fragment_KeyBoard_Function.getVisibility() == View.VISIBLE) {
+                if (Fragment_KeyBoard_Function != null && Fragment_KeyBoard_Function.getVisibility() == View.VISIBLE) {
                     Fragment_KeyBoard_Function.setVisibility(View.GONE);
-                    KeyBoard_Function.setBackgroundResource(R.drawable.nopress_button_background);
+                    if (KeyBoard_Function != null) KeyBoard_Function.setBackgroundResource(R.drawable.nopress_button_background);
                 }
             }
         });

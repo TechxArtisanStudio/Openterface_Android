@@ -45,42 +45,45 @@ public class KeyBoardShortCut {
     private final LinearLayout Fragment_KeyBoard_System;
     private final Context context;
 
-    public KeyBoardShortCut(MainActivity activity) {
-        Fragment_KeyBoard_ShortCut = activity.findViewById(R.id.Fragment_KeyBoard_ShortCut);
-        Fragment_KeyBoard_Function = activity.findViewById(R.id.Fragment_KeyBoard_Function);
-        Fragment_KeyBoard_System = activity.findViewById(R.id.Fragment_KeyBoard_System);
+    public KeyBoardShortCut(View rootView) {
+        Fragment_KeyBoard_ShortCut = rootView.findViewById(R.id.Fragment_KeyBoard_ShortCut);
+        Fragment_KeyBoard_Function = rootView.findViewById(R.id.Fragment_KeyBoard_Function);
+        Fragment_KeyBoard_System = rootView.findViewById(R.id.Fragment_KeyBoard_System);
 
-        KeyBoard_ShortCut = activity.findViewById(R.id.KeyBoard_ShortCut);
-        KeyBoard_Function = activity.findViewById(R.id.KeyBoard_Function);
-        KeyBoard_System = activity.findViewById(R.id.KeyBoard_System);
-        this.context = activity;
+        KeyBoard_ShortCut = rootView.findViewById(R.id.KeyBoard_ShortCut);
+        KeyBoard_Function = rootView.findViewById(R.id.KeyBoard_Function);
+        KeyBoard_System = rootView.findViewById(R.id.KeyBoard_System);
+        this.context = rootView.getContext();
         ShortCutButtons = new Button[]{
-                activity.findViewById(R.id.Ctrl_C),
-                activity.findViewById(R.id.Ctrl_V),
-                activity.findViewById(R.id.Ctrl_Z),
-                activity.findViewById(R.id.Ctrl_X),
-                activity.findViewById(R.id.Ctrl_A),
-                activity.findViewById(R.id.Ctrl_S),
-                activity.findViewById(R.id.Win_Tab),
-                activity.findViewById(R.id.Win_S),
-                activity.findViewById(R.id.Win_E),
-                activity.findViewById(R.id.Win_R),
-                activity.findViewById(R.id.Win_D),
-                activity.findViewById(R.id.Win_L),
-                activity.findViewById(R.id.Alt_F4),
-                activity.findViewById(R.id.Alt_PrtScr),
-                activity.findViewById(R.id.CtrlAltDel)
+                rootView.findViewById(R.id.Ctrl_C),
+                rootView.findViewById(R.id.Ctrl_V),
+                rootView.findViewById(R.id.Ctrl_Z),
+                rootView.findViewById(R.id.Ctrl_X),
+                rootView.findViewById(R.id.Ctrl_A),
+                rootView.findViewById(R.id.Ctrl_S),
+                rootView.findViewById(R.id.Win_Tab),
+                rootView.findViewById(R.id.Win_S),
+                rootView.findViewById(R.id.Win_E),
+                rootView.findViewById(R.id.Win_R),
+                rootView.findViewById(R.id.Win_D),
+                rootView.findViewById(R.id.Win_L),
+                rootView.findViewById(R.id.Alt_F4),
+                rootView.findViewById(R.id.Alt_PrtScr),
+                rootView.findViewById(R.id.CtrlAltDel)
         };
 
         ShortCutButtonListeners();
     }
 
     private void ShortCutButtonListeners() {
-        ShortCutButtons[ShortCutButtons.length - 1].setOnClickListener(v -> {
-            KeyBoardManager.sendKeyBoardFunctionCtrlAltDel();
-        });
+        if (ShortCutButtons[ShortCutButtons.length - 1] != null) {
+            ShortCutButtons[ShortCutButtons.length - 1].setOnClickListener(v -> {
+                KeyBoardManager.sendKeyBoardFunctionCtrlAltDel();
+            });
+        }
 
         for (Button button : ShortCutButtons) {
+            if (button == null) continue;
             if (button.getId() != R.id.CtrlAltDel) {
                 String modifier = getModifier(button.getId());
                 String key = getKey(button.getId());
@@ -140,28 +143,29 @@ public class KeyBoardShortCut {
     }
 
     public void setShortCutButtonsClickColor(){
+        if (KeyBoard_ShortCut == null) return;
         KeyBoard_ShortCut.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
                 InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
                 imm.hideSoftInputFromWindow(v.getWindowToken(), 0);//close keyboard
 
-                if (Fragment_KeyBoard_ShortCut.getVisibility() == View.VISIBLE){
+                if (Fragment_KeyBoard_ShortCut != null && Fragment_KeyBoard_ShortCut.getVisibility() == View.VISIBLE){
                     KeyBoard_ShortCut.setBackgroundResource(R.drawable.nopress_button_background);
                     Fragment_KeyBoard_ShortCut.setVisibility(View.GONE);
-                }else {
+                }else if (Fragment_KeyBoard_ShortCut != null) {
                     Fragment_KeyBoard_ShortCut.setVisibility(View.VISIBLE);
                     KeyBoard_ShortCut.setBackgroundResource(R.drawable.press_button_background);
                 }
 
-                if (Fragment_KeyBoard_Function.getVisibility() == View.VISIBLE) {
+                if (Fragment_KeyBoard_Function != null && Fragment_KeyBoard_Function.getVisibility() == View.VISIBLE) {
                     Fragment_KeyBoard_Function.setVisibility(View.GONE);
-                    KeyBoard_Function.setBackgroundResource(R.drawable.nopress_button_background);
+                    if (KeyBoard_Function != null) KeyBoard_Function.setBackgroundResource(R.drawable.nopress_button_background);
                 }
 
-                if (Fragment_KeyBoard_System.getVisibility() == View.VISIBLE) {
+                if (Fragment_KeyBoard_System != null && Fragment_KeyBoard_System.getVisibility() == View.VISIBLE) {
                     Fragment_KeyBoard_System.setVisibility(View.GONE);
-                    KeyBoard_System.setBackgroundResource(R.drawable.nopress_button_background);
+                    if (KeyBoard_System != null) KeyBoard_System.setBackgroundResource(R.drawable.nopress_button_background);
                 }
             }
         });

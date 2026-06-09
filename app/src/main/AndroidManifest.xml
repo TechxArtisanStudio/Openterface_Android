@@ -52,6 +52,19 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+
+        <!-- Test Activity for Keyboard Module -->
+        <activity
+            android:name="com.openterface.AOS.activity.KeyboardTestActivity"
+            android:label="Keyboard Test"
+            android:exported="true"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Usbvideo">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>

@@ -300,21 +300,21 @@ public class MainActivity extends AppCompatActivity {
 
         if (!isPortraitLayout) {
             //Short Cut Button
-            KeyBoardShortCut = new KeyBoardShortCut(this);
+            KeyBoardShortCut = new KeyBoardShortCut(mBinding.getRoot());
             //Ctrl Button
-            KeyBoardCtrlButton = new KeyBoardCtrl(this);
+            KeyBoardCtrlButton = new KeyBoardCtrl(mBinding.getRoot());
             //Shift Button
-            KeyBoardShiftButton = new KeyBoardShift(this);
+            KeyBoardShiftButton = new KeyBoardShift(mBinding.getRoot());
             //Alt Button
-            KeyBoardAltButton = new KeyBoardAlt(this);
+            KeyBoardAltButton = new KeyBoardAlt(mBinding.getRoot());
             //Win Button
-            KeyBoardWinButton = new KeyBoardWin(this);
+            KeyBoardWinButton = new KeyBoardWin(mBinding.getRoot());
             //FunctionKey Button
-            KeyBoardFunction = new KeyBoardFunction(this);
+            KeyBoardFunction = new KeyBoardFunction(mBinding.getRoot());
             //System Button
-            KeyBoardSystem = new KeyBoardSystem(this);
+            KeyBoardSystem = new KeyBoardSystem(mBinding.getRoot());
             //KeyBoard Close Button
-            KeyBoardClose = new KeyBoardClose(this);
+            KeyBoardClose = new KeyBoardClose(mBinding.getRoot());
 
             //Drawer Layout
             DrawerLayoutDeal = new DrawerLayoutDeal(this, savedInstanceState, mIsRecording);
@@ -682,7 +682,12 @@ public class MainActivity extends AppCompatActivity {
         // Re-inflate view binding for the new orientation
         mBinding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(mBinding.getRoot());
-        Log.d(TAG, "reloadLayoutForOrientation: layout inflated");
+
+        // 清空缓存的模块视图，确保它们在新方向下重新加载
+        keyboardModuleView = null;
+        mouseModuleView = null;
+        imeModuleView = null;
+        Log.d(TAG, "reloadLayoutForOrientation: layout inflated, module views cleared");
 
         // Re-check orientation after setting content view
         boolean nowPortrait = (findViewById(R.id.module_selector_bar) != null);
@@ -703,8 +708,10 @@ public class MainActivity extends AppCompatActivity {
         // Re-setup DrawerLayoutDeal for new layout (only in landscape)
         if (!nowPortrait) {
             try {
-                new com.openterface.AOS.drawerLayout.DrawerLayoutDeal(this, null, mIsRecording);
-                Log.d(TAG, "reloadLayoutForOrientation: DrawerLayoutDeal created");
+                com.openterface.AOS.drawerLayout.DrawerLayoutDeal drawerLayoutDeal =
+                        new com.openterface.AOS.drawerLayout.DrawerLayoutDeal(this, null, mIsRecording);
+                drawerLayoutDeal.setDrawerLayoutButtonClickColor();
+                Log.d(TAG, "reloadLayoutForOrientation: DrawerLayoutDeal created and buttons wired");
             } catch (Exception e) {
                 Log.w(TAG, "reloadLayoutForOrientation: DrawerLayoutDeal failed (expected in portrait): " + e.getMessage());
             }
@@ -720,14 +727,14 @@ public class MainActivity extends AppCompatActivity {
         // Restore keyboard button states (only in landscape)
         if (!nowPortrait) {
             try {
-                KeyBoardShortCut KeyBoardShortCut = new KeyBoardShortCut(this);
-                KeyBoardCtrl KeyBoardCtrlButton = new KeyBoardCtrl(this);
-                KeyBoardShift KeyBoardShiftButton = new KeyBoardShift(this);
-                KeyBoardAlt KeyBoardAltButton = new KeyBoardAlt(this);
-                KeyBoardWin KeyBoardWinButton = new KeyBoardWin(this);
-                KeyBoardFunction KeyBoardFunction = new KeyBoardFunction(this);
-                KeyBoardSystem KeyBoardSystem = new KeyBoardSystem(this);
-                KeyBoardClose KeyBoardClose = new KeyBoardClose(this);
+                KeyBoardShortCut KeyBoardShortCut = new KeyBoardShortCut(mBinding.getRoot());
+                KeyBoardCtrl KeyBoardCtrlButton = new KeyBoardCtrl(mBinding.getRoot());
+                KeyBoardShift KeyBoardShiftButton = new KeyBoardShift(mBinding.getRoot());
+                KeyBoardAlt KeyBoardAltButton = new KeyBoardAlt(mBinding.getRoot());
+                KeyBoardWin KeyBoardWinButton = new KeyBoardWin(mBinding.getRoot());
+                KeyBoardFunction KeyBoardFunction = new KeyBoardFunction(mBinding.getRoot());
+                KeyBoardSystem KeyBoardSystem = new KeyBoardSystem(mBinding.getRoot());
+                KeyBoardClose KeyBoardClose = new KeyBoardClose(mBinding.getRoot());
 
                 KeyBoardShortCut.setShortCutButtonsClickColor();
                 KeyBoardFunction.setFunctionButtonsClickColor();
@@ -1801,16 +1808,10 @@ public class MainActivity extends AppCompatActivity {
                 portraitModuleDrawer.setVisibility(View.GONE);
             }
         } else {
-            // EXPAND: Show module drawer at bottom, overlaying video, above bottom bar
+            // EXPAND: Show module drawer at bottom
             if (portraitModuleDrawer != null) {
                 portraitModuleDrawer.setVisibility(View.VISIBLE);
-                // Fixed 200dp height, positioned at bottom (above Zone 4)
-                FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
-                    FrameLayout.LayoutParams.MATCH_PARENT,
-                    200
-                );
-                params.gravity = android.view.Gravity.BOTTOM;
-                portraitModuleDrawer.setLayoutParams(params);
+                // Let the height be determined by content (wrap_content from XML)
 
                 // Inflate or show the appropriate module
                 inflateModuleView(type);
@@ -1884,25 +1885,25 @@ public class MainActivity extends AppCompatActivity {
      */
     private void setupKeyboardModule(View view) {
         try {
-            // Re-setup all existing keyboard button handlers
-            KeyBoardShortCut keyBoardShortCut = new KeyBoardShortCut(this);
-            KeyBoardCtrl keyBoardCtrl = new KeyBoardCtrl(this);
-            KeyBoardShift keyBoardShift = new KeyBoardShift(this);
-            KeyBoardAlt keyBoardAlt = new KeyBoardAlt(this);
-            KeyBoardWin keyBoardWin = new KeyBoardWin(this);
-            KeyBoardFunction keyBoardFunction = new KeyBoardFunction(this);
-            KeyBoardSystem keyBoardSystem = new KeyBoardSystem(this);
-            KeyBoardClose keyBoardClose = new KeyBoardClose(this);
+            KeyBoardShortCut keyBoardShortCut = new KeyBoardShortCut(view);
+            KeyBoardCtrl keyBoardCtrl = new KeyBoardCtrl(view);
+            KeyBoardShift keyBoardShift = new KeyBoardShift(view);
+            KeyBoardAlt keyBoardAlt = new KeyBoardAlt(view);
+            KeyBoardWin keyBoardWin = new KeyBoardWin(view);
+            KeyBoardFunction keyBoardFunction = new KeyBoardFunction(view);
+            KeyBoardSystem keyBoardSystem = new KeyBoardSystem(view);
+            KeyBoardClose keyBoardClose = new KeyBoardClose(view);
 
             keyBoardShortCut.setShortCutButtonsClickColor();
             keyBoardFunction.setFunctionButtonsClickColor();
             keyBoardSystem.setSystemButtonsClickColor();
             keyBoardClose.setCloseButtonClickColor();
 
-            mKeyBoardOpacity = new KeyBoardOpacity(this);
+            // Use the constructor that accepts rootView for portrait mode
+            mKeyBoardOpacity = new KeyBoardOpacity(this, view);
             mKeyBoardOpacity.setOpacityButtonClick();
         } catch (Exception e) {
-            Log.w(TAG, "setupKeyboardModule: keyboard init failed (expected for portrait module): " + e.getMessage());
+            Log.w(TAG, "setupKeyboardModule: keyboard init failed: " + e.getMessage());
         }
     }
 
@@ -2080,8 +2081,6 @@ public class MainActivity extends AppCompatActivity {
             if (icon != null) {
                 icon.setColorFilter(active ? 0xFFFFFFFF : 0xFF888888);
             }
-            TextView label = portraitKeyboardTab.findViewById(R.id.tab_keyboard_label);
-            if (label != null) label.setTextColor(active ? 0xFFFFFFFF : 0xFF888888);
         }
 
         // Mouse tab
@@ -2093,8 +2092,6 @@ public class MainActivity extends AppCompatActivity {
             if (icon != null) {
                 icon.setColorFilter(active ? 0xFFFFFFFF : 0xFF888888);
             }
-            TextView label = portraitMouseTab.findViewById(R.id.tab_mouse_label);
-            if (label != null) label.setTextColor(active ? 0xFFFFFFFF : 0xFF888888);
         }
 
         // IME tab
@@ -2106,8 +2103,6 @@ public class MainActivity extends AppCompatActivity {
             if (icon != null) {
                 icon.setColorFilter(active ? 0xFFFFFFFF : 0xFF888888);
             }
-            TextView label = portraitImeTab.findViewById(R.id.tab_ime_label);
-            if (label != null) label.setTextColor(active ? 0xFFFFFFFF : 0xFF888888);
         }
 
         // Settings tab (never "active" in the module sense)
@@ -2115,8 +2110,6 @@ public class MainActivity extends AppCompatActivity {
             portraitSettingsTab.setBackgroundColor(0xFF1A1A1A);
             ImageView icon = portraitSettingsTab.findViewById(R.id.tab_settings_icon);
             if (icon != null) icon.setColorFilter(0xFF888888);
-            TextView label = portraitSettingsTab.findViewById(R.id.tab_settings_label);
-            if (label != null) label.setTextColor(0xFF888888);
         }
     }
 

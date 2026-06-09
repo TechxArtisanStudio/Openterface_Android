@@ -76,59 +76,59 @@ public class KeyBoardFunction {
     private static final Map<String, KeyBoardMapping> languageMappings = new HashMap<>();
     private static String currentLanguage = "us";
 
-    public KeyBoardFunction(MainActivity activity) {
-        Fragment_KeyBoard_ShortCut = activity.findViewById(R.id.Fragment_KeyBoard_ShortCut);
-        Fragment_KeyBoard_Function = activity.findViewById(R.id.Fragment_KeyBoard_Function);
-        Fragment_KeyBoard_System = activity.findViewById(R.id.Fragment_KeyBoard_System);
+    public KeyBoardFunction(View rootView) {
+        Fragment_KeyBoard_ShortCut = rootView.findViewById(R.id.Fragment_KeyBoard_ShortCut);
+        Fragment_KeyBoard_Function = rootView.findViewById(R.id.Fragment_KeyBoard_Function);
+        Fragment_KeyBoard_System = rootView.findViewById(R.id.Fragment_KeyBoard_System);
 
-        KeyBoard_ShortCut = activity.findViewById(R.id.KeyBoard_ShortCut);
-        KeyBoard_Function = activity.findViewById(R.id.KeyBoard_Function);
-        KeyBoard_System = activity.findViewById(R.id.KeyBoard_System);
+        KeyBoard_ShortCut = rootView.findViewById(R.id.KeyBoard_ShortCut);
+        KeyBoard_Function = rootView.findViewById(R.id.KeyBoard_Function);
+        KeyBoard_System = rootView.findViewById(R.id.KeyBoard_System);
 
-        this.context = activity;
+        this.context = rootView.getContext();
         FunctionButtons = new View[]{
-                activity.findViewById(R.id.Function1),
-                activity.findViewById(R.id.Function2),
-                activity.findViewById(R.id.Function3),
-                activity.findViewById(R.id.Function4),
-                activity.findViewById(R.id.Function5),
-                activity.findViewById(R.id.Function6),
-                activity.findViewById(R.id.Function7),
-                activity.findViewById(R.id.Function8),
-                activity.findViewById(R.id.Function9),
-                activity.findViewById(R.id.Function10),
-                activity.findViewById(R.id.Function11),
-                activity.findViewById(R.id.Function12),
+                rootView.findViewById(R.id.Function1),
+                rootView.findViewById(R.id.Function2),
+                rootView.findViewById(R.id.Function3),
+                rootView.findViewById(R.id.Function4),
+                rootView.findViewById(R.id.Function5),
+                rootView.findViewById(R.id.Function6),
+                rootView.findViewById(R.id.Function7),
+                rootView.findViewById(R.id.Function8),
+                rootView.findViewById(R.id.Function9),
+                rootView.findViewById(R.id.Function10),
+                rootView.findViewById(R.id.Function11),
+                rootView.findViewById(R.id.Function12),
 
-                activity.findViewById(R.id.PrtSc),
-                activity.findViewById(R.id.ScrLk),
-                activity.findViewById(R.id.Pause),
-                activity.findViewById(R.id.Ins),
-                activity.findViewById(R.id.Home),
-                activity.findViewById(R.id.PgUp),
-                activity.findViewById(R.id.Delete),
-                activity.findViewById(R.id.End),
-                activity.findViewById(R.id.PgDn),
+                rootView.findViewById(R.id.PrtSc),
+                rootView.findViewById(R.id.ScrLk),
+                rootView.findViewById(R.id.Pause),
+                rootView.findViewById(R.id.Ins),
+                rootView.findViewById(R.id.Home),
+                rootView.findViewById(R.id.PgUp),
+                rootView.findViewById(R.id.Delete),
+                rootView.findViewById(R.id.End),
+                rootView.findViewById(R.id.PgDn),
 
-                activity.findViewById(R.id.Esc),
-                activity.findViewById(R.id.TAB),
+                rootView.findViewById(R.id.Esc),
+                rootView.findViewById(R.id.TAB),
 
-                activity.findViewById(R.id.dropLeft),
-                activity.findViewById(R.id.dropRight),
-                activity.findViewById(R.id.dropUp),
-                activity.findViewById(R.id.dropDown),
+                rootView.findViewById(R.id.dropLeft),
+                rootView.findViewById(R.id.dropRight),
+                rootView.findViewById(R.id.dropUp),
+                rootView.findViewById(R.id.dropDown),
 
-                activity.findViewById(R.id.Minus_Sign_Button),
-                activity.findViewById(R.id.Plus_Sign_Button),
-                activity.findViewById(R.id.Left_Bracket_Button),
-                activity.findViewById(R.id.Right_Bracket_Button),
-                activity.findViewById(R.id.Colon_Button),
-                activity.findViewById(R.id.Quotation_Button),
-                activity.findViewById(R.id.Bitwise_OR_Button),
-                activity.findViewById(R.id.Less_Sign_Button),
-                activity.findViewById(R.id.Greater_Sign_Button),
-                activity.findViewById(R.id.Question_Mark),
-                activity.findViewById(R.id.Tilde),
+                rootView.findViewById(R.id.Minus_Sign_Button),
+                rootView.findViewById(R.id.Plus_Sign_Button),
+                rootView.findViewById(R.id.Left_Bracket_Button),
+                rootView.findViewById(R.id.Right_Bracket_Button),
+                rootView.findViewById(R.id.Colon_Button),
+                rootView.findViewById(R.id.Quotation_Button),
+                rootView.findViewById(R.id.Bitwise_OR_Button),
+                rootView.findViewById(R.id.Less_Sign_Button),
+                rootView.findViewById(R.id.Greater_Sign_Button),
+                rootView.findViewById(R.id.Question_Mark),
+                rootView.findViewById(R.id.Tilde),
         };
 
         languageMappings.put("us", new KeyMapConfig_Us());
@@ -137,18 +137,20 @@ public class KeyBoardFunction {
 
         FunctionButtonListeners();
 
-        Button Left_Than_Button = activity.findViewById(R.id.Left_Than_Button);
-        Left_Than_Button.setOnClickListener(v -> {
-            String currentLang = Locale.getDefault().getLanguage();
-            if (currentLang.equals("de")) {
+        Button Left_Than_Button = rootView.findViewById(R.id.Left_Than_Button);
+        if (Left_Than_Button != null) {
+            Left_Than_Button.setOnClickListener(v -> {
+                String currentLang = Locale.getDefault().getLanguage();
+                if (currentLang.equals("de")) {
 
-                String key = getKey(R.id.Left_Than_Button);
-                Log.d("KeyBoardSystem", "German Button Pressed: " + key);
-                handleShortcut(key);
-            } else if (currentLang.equals("us")) {
+                    String key = getKey(R.id.Left_Than_Button);
+                    Log.d("KeyBoardSystem", "German Button Pressed: " + key);
+                    handleShortcut(key);
+                } else if (currentLang.equals("us")) {
 
-            }
-        });
+                }
+            });
+        }
     }
 
     public static void setKeyboardLanguage(String language) {
@@ -162,11 +164,12 @@ public class KeyBoardFunction {
 
     private void FunctionButtonListeners() {
         for (View view : FunctionButtons) {
+            if (view == null) continue;
             final boolean[] isKeyPressed = {false}; // Track if key is already pressed
-            
+
             view.setOnTouchListener((v, event) -> {
                 String functionButtonId = getKey(view.getId());
-                
+
                 switch (event.getAction()) {
                     case android.view.MotionEvent.ACTION_DOWN:
                         // Only send key press if not already pressed (prevent repeat ACTION_DOWN)
@@ -176,7 +179,7 @@ public class KeyBoardFunction {
                             isKeyPressed[0] = true;
                         }
                         return true;
-                        
+
                     case android.view.MotionEvent.ACTION_UP:
                     case android.view.MotionEvent.ACTION_CANCEL:
                         // Only send release if key was pressed
@@ -186,7 +189,7 @@ public class KeyBoardFunction {
                             isKeyPressed[0] = false;
                         }
                         return true;
-                        
+
                     case android.view.MotionEvent.ACTION_MOVE:
                         // Key hold - do nothing
                         return true;
@@ -294,28 +297,29 @@ public class KeyBoardFunction {
     }
 
     public void setFunctionButtonsClickColor(){
+        if (KeyBoard_Function == null) return;
         KeyBoard_Function.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
                 InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
                 imm.hideSoftInputFromWindow(v.getWindowToken(), 0);//close keyboard
 
-                if (Fragment_KeyBoard_Function.getVisibility() == View.VISIBLE){
+                if (Fragment_KeyBoard_Function != null && Fragment_KeyBoard_Function.getVisibility() == View.VISIBLE){
                     Fragment_KeyBoard_Function.setVisibility(View.GONE);
                     KeyBoard_Function.setBackgroundResource(R.drawable.nopress_button_background);
-                }else {
+                }else if (Fragment_KeyBoard_Function != null) {
                     Fragment_KeyBoard_Function.setVisibility(View.VISIBLE);
                     KeyBoard_Function.setBackgroundResource(R.drawable.press_button_background);
                 }
 
-                if (Fragment_KeyBoard_ShortCut.getVisibility() == View.VISIBLE) {
+                if (Fragment_KeyBoard_ShortCut != null && Fragment_KeyBoard_ShortCut.getVisibility() == View.VISIBLE) {
                     Fragment_KeyBoard_ShortCut.setVisibility(View.GONE);
-                    KeyBoard_ShortCut.setBackgroundResource(R.drawable.nopress_button_background);
+                    if (KeyBoard_ShortCut != null) KeyBoard_ShortCut.setBackgroundResource(R.drawable.nopress_button_background);
                 }
 
-                if (Fragment_KeyBoard_System.getVisibility() == View.VISIBLE) {
+                if (Fragment_KeyBoard_System != null && Fragment_KeyBoard_System.getVisibility() == View.VISIBLE) {
                     Fragment_KeyBoard_System.setVisibility(View.GONE);
-                    KeyBoard_System.setBackgroundResource(R.drawable.nopress_button_background);
+                    if (KeyBoard_System != null) KeyBoard_System.setBackgroundResource(R.drawable.nopress_button_background);
                 }
             }
         });

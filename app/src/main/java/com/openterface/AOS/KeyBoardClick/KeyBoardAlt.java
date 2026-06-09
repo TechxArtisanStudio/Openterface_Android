@@ -1,17 +1,18 @@
 package com.openterface.AOS.KeyBoardClick;
 
+import android.view.View;
 import android.widget.Button;
 
 import com.openterface.AOS.R;
-import com.openterface.AOS.activity.MainActivity;
 
 public class KeyBoardAlt {
     private final Button KeyBoard_Alt;
     private boolean KeyBoard_Alt_Press = false;
     private boolean isLocked = false;
 
-    public KeyBoardAlt(MainActivity activity) {
-        KeyBoard_Alt = activity.findViewById(R.id.KeyBoard_Alt);
+    public KeyBoardAlt(View rootView) {
+        KeyBoard_Alt = rootView.findViewById(R.id.KeyBoard_Alt);
+        if (KeyBoard_Alt == null) return;
         new ModifierKeyHelper(KeyBoard_Alt, new ModifierKeyHelper.ModifierCallback() {
             @Override public void onPress() {
                 KeyBoard_Alt.setBackgroundResource(R.drawable.press_button_background);

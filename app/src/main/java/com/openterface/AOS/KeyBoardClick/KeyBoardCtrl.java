@@ -1,17 +1,18 @@
 package com.openterface.AOS.KeyBoardClick;
 
+import android.view.View;
 import android.widget.Button;
 
 import com.openterface.AOS.R;
-import com.openterface.AOS.activity.MainActivity;
 
 public class KeyBoardCtrl {
     private final Button KeyBoard_Ctrl;
     private boolean KeyBoard_Ctrl_Press = false;
     private boolean isLocked = false;
 
-    public KeyBoardCtrl(MainActivity activity) {
-        KeyBoard_Ctrl = activity.findViewById(R.id.KeyBoard_Ctrl);
+    public KeyBoardCtrl(View rootView) {
+        KeyBoard_Ctrl = rootView.findViewById(R.id.KeyBoard_Ctrl);
+        if (KeyBoard_Ctrl == null) return;
         new ModifierKeyHelper(KeyBoard_Ctrl, new ModifierKeyHelper.ModifierCallback() {
             @Override public void onPress() {
                 KeyBoard_Ctrl.setBackgroundResource(R.drawable.press_button_background);

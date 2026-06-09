@@ -40,6 +40,8 @@ public class ModifierKeyHelper {
         this.view = view;
         this.callback = callback;
 
+        if (view == null) return;
+
         view.setOnTouchListener((v, event) -> {
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:

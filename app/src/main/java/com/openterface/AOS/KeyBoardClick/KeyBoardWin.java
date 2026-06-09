@@ -1,17 +1,18 @@
 package com.openterface.AOS.KeyBoardClick;
 
+import android.view.View;
 import android.widget.Button;
 
 import com.openterface.AOS.R;
-import com.openterface.AOS.activity.MainActivity;
 
 public class KeyBoardWin {
     private final Button KeyBoard_Win;
     private boolean KeyBoard_Win_Press = false;
     private boolean isLocked = false;
 
-    public KeyBoardWin(MainActivity activity) {
-        KeyBoard_Win = activity.findViewById(R.id.KeyBoard_Win);
+    public KeyBoardWin(View rootView) {
+        KeyBoard_Win = rootView.findViewById(R.id.KeyBoard_Win);
+        if (KeyBoard_Win == null) return;
         new ModifierKeyHelper(KeyBoard_Win, new ModifierKeyHelper.ModifierCallback() {
             @Override public void onPress() {
                 KeyBoard_Win.setBackgroundResource(R.drawable.press_button_background);

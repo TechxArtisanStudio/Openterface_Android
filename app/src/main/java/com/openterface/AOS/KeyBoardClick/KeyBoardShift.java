@@ -12,18 +12,19 @@
 */
 package com.openterface.AOS.KeyBoardClick;
 
+import android.view.View;
 import android.widget.Button;
 
 import com.openterface.AOS.R;
-import com.openterface.AOS.activity.MainActivity;
 
 public class KeyBoardShift {
     private final Button KeyBoard_Shift;
     private boolean KeyBoard_ShIft_Press = false;
     private boolean isLocked = false;
 
-    public KeyBoardShift(MainActivity activity) {
-        KeyBoard_Shift = activity.findViewById(R.id.KeyBoard_Shift);
+    public KeyBoardShift(View rootView) {
+        KeyBoard_Shift = rootView.findViewById(R.id.KeyBoard_Shift);
+        if (KeyBoard_Shift == null) return;
         new ModifierKeyHelper(KeyBoard_Shift, new ModifierKeyHelper.ModifierCallback() {
             @Override public void onPress() {
                 KeyBoard_Shift.setBackgroundResource(R.drawable.press_button_background);
