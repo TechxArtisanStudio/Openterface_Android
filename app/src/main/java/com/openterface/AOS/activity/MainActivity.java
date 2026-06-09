@@ -61,6 +61,8 @@ import com.openterface.AOS.KeyBoardClick.KeyBoardShift;
 import com.openterface.AOS.KeyBoardClick.KeyBoardShortCut;
 import com.openterface.AOS.KeyBoardClick.KeyBoardSystem;
 import com.openterface.AOS.KeyBoardClick.KeyBoardWin;
+import com.openterface.AOS.KeyBoardClick.KeyboardSettingsManager;
+import com.openterface.AOS.view.KeyPreviewPopup;
 import com.openterface.AOS.view.TouchPadView;
 import com.openterface.AOS.view.TouchPadHelpDialog;
 import com.openterface.AOS.view.MouseControlStripView;
@@ -118,6 +120,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -221,6 +224,10 @@ public class MainActivity extends AppCompatActivity {
     private View mouseModuleView;
     private View imeModuleView;
 
+    // Keyboard settings and popup manager
+    private KeyboardSettingsManager keyboardSettingsManager;
+    private KeyPreviewPopup keyPreviewPopup;
+
     // Gesture detector for collapse
     private GestureDetector collapseGestureDetector;
 
@@ -298,23 +305,33 @@ public class MainActivity extends AppCompatActivity {
         KeyBoardClose KeyBoardClose = null;
         DrawerLayoutDeal DrawerLayoutDeal = null;
 
+        // Initialize keyboard settings manager
+        keyboardSettingsManager = new KeyboardSettingsManager(this);
+
         if (!isPortraitLayout) {
+            // Create KeyPreviewPopup for bubble hint
+            KeyPreviewPopup keyPreviewPopup = new KeyPreviewPopup(this);
+
             //Short Cut Button
             KeyBoardShortCut = new KeyBoardShortCut(mBinding.getRoot());
             //Ctrl Button
-            KeyBoardCtrlButton = new KeyBoardCtrl(mBinding.getRoot());
+            KeyBoardCtrlButton = new KeyBoardCtrl(mBinding.getRoot(), keyPreviewPopup);
             //Shift Button
-            KeyBoardShiftButton = new KeyBoardShift(mBinding.getRoot());
+            KeyBoardShiftButton = new KeyBoardShift(mBinding.getRoot(), keyPreviewPopup);
             //Alt Button
-            KeyBoardAltButton = new KeyBoardAlt(mBinding.getRoot());
+            KeyBoardAltButton = new KeyBoardAlt(mBinding.getRoot(), keyPreviewPopup);
             //Win Button
-            KeyBoardWinButton = new KeyBoardWin(mBinding.getRoot());
+            KeyBoardWinButton = new KeyBoardWin(mBinding.getRoot(), keyPreviewPopup);
             //FunctionKey Button
             KeyBoardFunction = new KeyBoardFunction(mBinding.getRoot());
             //System Button
             KeyBoardSystem = new KeyBoardSystem(mBinding.getRoot());
             //KeyBoard Close Button
             KeyBoardClose = new KeyBoardClose(mBinding.getRoot());
+
+            // Pass popup and settings to KeyBoardSystem for all-key bubble + sound/vibration
+            KeyBoardSystem.setKeyPreviewPopup(keyPreviewPopup);
+            KeyBoardSystem.setSettingsManager(keyboardSettingsManager);
 
             //Drawer Layout
             DrawerLayoutDeal = new DrawerLayoutDeal(this, savedInstanceState, mIsRecording);
@@ -386,6 +403,71 @@ public class MainActivity extends AppCompatActivity {
         // Initialize portrait 4-zone layout
         initPortraitZones();
 
+    }
+
+    /**
+     * Show the keyboard settings dialog (sound and vibration preferences)
+     */
+    @SuppressLint("ClickableViewAccessibility")
+    private void showKeyboardSettingsDialog() {
+        if (keyboardSettingsManager == null) {
+            keyboardSettingsManager = new KeyboardSettingsManager(this);
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("键盘设置");
+
+        View view = getLayoutInflater().inflate(R.layout.dialog_keyboard_settings, null);
+        builder.setView(view);
+
+        // Sound settings
+        final androidx.appcompat.widget.SwitchCompat switchKeySound = view.findViewById(R.id.switch_key_sound);
+        final SeekBar seekbarVolume = view.findViewById(R.id.seekbar_volume);
+        final LinearLayout layoutVolume = view.findViewById(R.id.layout_volume);
+
+        // Vibration settings
+        final androidx.appcompat.widget.SwitchCompat switchKeyVibrate = view.findViewById(R.id.switch_key_vibrate);
+        final SeekBar seekbarVibrate = view.findViewById(R.id.seekbar_vibrate);
+        final LinearLayout layoutVibrate = view.findViewById(R.id.layout_vibrate);
+
+        // Initialize
+        switchKeySound.setChecked(keyboardSettingsManager.isSoundEnabled());
+        seekbarVolume.setProgress(keyboardSettingsManager.getSoundVolume());
+        switchKeyVibrate.setChecked(keyboardSettingsManager.isVibrateEnabled());
+        seekbarVibrate.setProgress(keyboardSettingsManager.getVibrateStrength());
+
+        layoutVolume.setVisibility(switchKeySound.isChecked() ? View.VISIBLE : View.GONE);
+        layoutVibrate.setVisibility(switchKeyVibrate.isChecked() ? View.VISIBLE : View.GONE);
+
+        switchKeySound.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            keyboardSettingsManager.setSoundEnabled(isChecked);
+            layoutVolume.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+        });
+
+        seekbarVolume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) keyboardSettingsManager.setSoundVolume(progress);
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+
+        switchKeyVibrate.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            keyboardSettingsManager.setVibrateEnabled(isChecked);
+            layoutVibrate.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+        });
+
+        seekbarVibrate.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) keyboardSettingsManager.setVibrateStrength(progress);
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+
+        builder.setPositiveButton("确定", (dialog, which) -> dialog.dismiss());
+        builder.setNegativeButton("取消", (dialog, which) -> dialog.dismiss());
+        builder.show();
     }
 
     private void setLanguage(){
@@ -727,14 +809,21 @@ public class MainActivity extends AppCompatActivity {
         // Restore keyboard button states (only in landscape)
         if (!nowPortrait) {
             try {
+                // Create KeyPreviewPopup for bubble hint
+                KeyPreviewPopup restorePreviewPopup = new KeyPreviewPopup(this);
+
                 KeyBoardShortCut KeyBoardShortCut = new KeyBoardShortCut(mBinding.getRoot());
-                KeyBoardCtrl KeyBoardCtrlButton = new KeyBoardCtrl(mBinding.getRoot());
-                KeyBoardShift KeyBoardShiftButton = new KeyBoardShift(mBinding.getRoot());
-                KeyBoardAlt KeyBoardAltButton = new KeyBoardAlt(mBinding.getRoot());
-                KeyBoardWin KeyBoardWinButton = new KeyBoardWin(mBinding.getRoot());
+                KeyBoardCtrl KeyBoardCtrlButton = new KeyBoardCtrl(mBinding.getRoot(), restorePreviewPopup);
+                KeyBoardShift KeyBoardShiftButton = new KeyBoardShift(mBinding.getRoot(), restorePreviewPopup);
+                KeyBoardAlt KeyBoardAltButton = new KeyBoardAlt(mBinding.getRoot(), restorePreviewPopup);
+                KeyBoardWin KeyBoardWinButton = new KeyBoardWin(mBinding.getRoot(), restorePreviewPopup);
                 KeyBoardFunction KeyBoardFunction = new KeyBoardFunction(mBinding.getRoot());
                 KeyBoardSystem KeyBoardSystem = new KeyBoardSystem(mBinding.getRoot());
                 KeyBoardClose KeyBoardClose = new KeyBoardClose(mBinding.getRoot());
+
+                // Pass popup and settings to KeyBoardSystem for all-key bubble + sound/vibration
+                com.openterface.AOS.KeyBoardClick.KeyBoardSystem.setKeyPreviewPopup(restorePreviewPopup);
+                com.openterface.AOS.KeyBoardClick.KeyBoardSystem.setSettingsManager(keyboardSettingsManager);
 
                 KeyBoardShortCut.setShortCutButtonsClickColor();
                 KeyBoardFunction.setFunctionButtonsClickColor();
@@ -1774,6 +1863,71 @@ public class MainActivity extends AppCompatActivity {
 
         // Set default module state (hidden)
         setModuleState(currentModule != null ? currentModule : ModuleType.NONE, false);
+
+        // Setup portrait shortcut strip buttons
+        setupPortraitShortcutStrip();
+    }
+
+    /**
+     * Setup portrait mode shortcut strip buttons (Esc, Ctrl+C/V/A/Z/S)
+     * These buttons are in the Zone 1 shortcut strip at the top
+     */
+    private void setupPortraitShortcutStrip() {
+        // Esc button
+        ImageButton escButton = findViewById(R.id.shortcut_esc);
+        if (escButton != null) {
+            escButton.setOnClickListener(v -> {
+                KeyBoardManager.sendKeyBoardShortCut("", "Esc");
+            });
+        }
+
+        // Ctrl+C button
+        Button ctrlCButton = findViewById(R.id.shortcut_ctrl_c);
+        if (ctrlCButton != null) {
+            ctrlCButton.setOnClickListener(v -> {
+                KeyBoardManager.sendKeyBoardShortCut("Ctrl", "C");
+            });
+        }
+
+        // Ctrl+V button
+        Button ctrlVButton = findViewById(R.id.shortcut_ctrl_v);
+        if (ctrlVButton != null) {
+            ctrlVButton.setOnClickListener(v -> {
+                KeyBoardManager.sendKeyBoardShortCut("Ctrl", "V");
+            });
+        }
+
+        // Ctrl+A button
+        Button ctrlAButton = findViewById(R.id.shortcut_ctrl_a);
+        if (ctrlAButton != null) {
+            ctrlAButton.setOnClickListener(v -> {
+                KeyBoardManager.sendKeyBoardShortCut("Ctrl", "A");
+            });
+        }
+
+        // Ctrl+Z button
+        Button ctrlZButton = findViewById(R.id.shortcut_ctrl_z);
+        if (ctrlZButton != null) {
+            ctrlZButton.setOnClickListener(v -> {
+                KeyBoardManager.sendKeyBoardShortCut("Ctrl", "Z");
+            });
+        }
+
+        // Ctrl+S button
+        Button ctrlSButton = findViewById(R.id.shortcut_ctrl_s);
+        if (ctrlSButton != null) {
+            ctrlSButton.setOnClickListener(v -> {
+                KeyBoardManager.sendKeyBoardShortCut("Ctrl", "S");
+            });
+        }
+
+        // Keyboard settings button
+        ImageButton keyboardSettingsButton = findViewById(R.id.shortcut_keyboard_settings);
+        if (keyboardSettingsButton != null) {
+            keyboardSettingsButton.setOnClickListener(v -> {
+                showKeyboardSettingsDialog();
+            });
+        }
     }
 
     /**
@@ -1885,14 +2039,23 @@ public class MainActivity extends AppCompatActivity {
      */
     private void setupKeyboardModule(View view) {
         try {
+            // Create KeyPreviewPopup for bubble hint if not already created
+            if (keyPreviewPopup == null) {
+                keyPreviewPopup = new KeyPreviewPopup(this);
+            }
+
             KeyBoardShortCut keyBoardShortCut = new KeyBoardShortCut(view);
-            KeyBoardCtrl keyBoardCtrl = new KeyBoardCtrl(view);
-            KeyBoardShift keyBoardShift = new KeyBoardShift(view);
-            KeyBoardAlt keyBoardAlt = new KeyBoardAlt(view);
-            KeyBoardWin keyBoardWin = new KeyBoardWin(view);
+            KeyBoardCtrl keyBoardCtrl = new KeyBoardCtrl(view, keyPreviewPopup);
+            KeyBoardShift keyBoardShift = new KeyBoardShift(view, keyPreviewPopup);
+            KeyBoardAlt keyBoardAlt = new KeyBoardAlt(view, keyPreviewPopup);
+            KeyBoardWin keyBoardWin = new KeyBoardWin(view, keyPreviewPopup);
             KeyBoardFunction keyBoardFunction = new KeyBoardFunction(view);
             KeyBoardSystem keyBoardSystem = new KeyBoardSystem(view);
             KeyBoardClose keyBoardClose = new KeyBoardClose(view);
+
+            // Pass popup and settings to KeyBoardSystem for all-key bubble + sound/vibration
+            KeyBoardSystem.setKeyPreviewPopup(keyPreviewPopup);
+            KeyBoardSystem.setSettingsManager(keyboardSettingsManager);
 
             keyBoardShortCut.setShortCutButtonsClickColor();
             keyBoardFunction.setFunctionButtonsClickColor();

@@ -128,6 +128,17 @@
                     android:autoSizeMaxTextSize="12sp"
                     android:autoSizeStepGranularity="1sp" />
 
+                <ImageButton
+                    android:id="@+id/shortcut_keyboard_settings"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginHorizontal="2dp"
+                    android:background="@drawable/button_background"
+                    android:src="@drawable/baseline_settings_24"
+                    android:scaleType="centerInside"
+                    android:contentDescription="键盘设置"
+                    android:padding="8dp" />
+
             </LinearLayout>
         </HorizontalScrollView>
     </LinearLayout>

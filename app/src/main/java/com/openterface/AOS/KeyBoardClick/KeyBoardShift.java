@@ -16,13 +16,16 @@ import android.view.View;
 import android.widget.Button;
 
 import com.openterface.AOS.R;
+import com.openterface.AOS.view.KeyPreviewPopup;
 
 public class KeyBoardShift {
     private final Button KeyBoard_Shift;
     private boolean KeyBoard_ShIft_Press = false;
     private boolean isLocked = false;
+    private final KeyPreviewPopup popup;
 
-    public KeyBoardShift(View rootView) {
+    public KeyBoardShift(View rootView, KeyPreviewPopup popup) {
+        this.popup = popup;
         KeyBoard_Shift = rootView.findViewById(R.id.KeyBoard_Shift);
         if (KeyBoard_Shift == null) return;
         new ModifierKeyHelper(KeyBoard_Shift, new ModifierKeyHelper.ModifierCallback() {
@@ -31,6 +34,7 @@ public class KeyBoardShift {
                 KeyBoard_ShIft_Press = true;
                 KeyBoardFunction.KeyBoard_ShIft_Press(true);
                 KeyBoardSystem.KeyBoard_ShIft_Press(true);
+                if (popup != null) popup.show(KeyBoard_Shift, "Shift");
             }
             @Override public void onRelease() {
                 if (!isLocked) {

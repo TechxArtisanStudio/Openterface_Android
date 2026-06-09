@@ -38,6 +38,7 @@ import com.openterface.AOS.R;
 import com.openterface.AOS.activity.MainActivity;
 import com.openterface.AOS.target.KeyBoardManager;
 import com.openterface.AOS.target.KeyBoardMapping;
+import com.openterface.AOS.view.KeyPreviewPopup;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -63,6 +64,9 @@ public class KeyBoardSystem {
     // Letter buttons that need case updates when Shift is toggled
     private static final List<Button> letterButtons = new ArrayList<>();
     private static KeyBoardSystem instance;
+
+    private static KeyboardSettingsManager settingsManager;
+    private static KeyPreviewPopup keyPreviewPopup;
 
     private static final Map<String, KeyBoardMapping> languageMappings = new HashMap<>();
     private static KeyBoardMapping currentMapping;
@@ -235,10 +239,44 @@ public class KeyBoardSystem {
         }
     }
 
+    /**
+     * Set the KeyPreviewPopup for bubble hints on all key presses.
+     */
+    public static void setKeyPreviewPopup(KeyPreviewPopup popup) {
+        keyPreviewPopup = popup;
+    }
+
+    /**
+     * Set the KeyboardSettingsManager for sound/vibration feedback.
+     */
+    public static void setSettingsManager(KeyboardSettingsManager manager) {
+        settingsManager = manager;
+    }
+
+    /**
+     * Play key feedback sound and vibration if enabled.
+     */
+    private static void playKeyFeedback(View v) {
+        if (settingsManager != null) {
+            settingsManager.playKeySound();
+            settingsManager.vibrate(v);
+        }
+    }
+
+    /**
+     * Show key preview bubble hint for the given key label.
+     */
+    private static void showKeyPreview(View anchor, String label) {
+        if (keyPreviewPopup != null && anchor != null && label != null && !label.isEmpty()) {
+            keyPreviewPopup.show(anchor, label);
+        }
+    }
+
     private void SystemButtonListeners() {
         for (View view : SystemButtons) {
             if (view == null) continue;
             final boolean[] isKeyPressed = {false};
+            final String keyLabel = getViewLabel(view);
 
             // Check if this is a modifier key in the keyboard layout
             boolean isModifier = isModifierView(view);
@@ -258,6 +296,10 @@ public class KeyBoardSystem {
                             if (!isKeyPressed[0]) {
                                 handleKeyPress(systemButtonId);
                                 isKeyPressed[0] = true;
+                                // Sound and vibration feedback
+                                playKeyFeedback(v);
+                                // Bubble hint
+                                showKeyPreview(v, keyLabel);
                             }
                             return true;
 
@@ -278,6 +320,10 @@ public class KeyBoardSystem {
                             if (isKeyPressed[0]) {
                                 handleKeyRelease();
                                 isKeyPressed[0] = false;
+                                // Dismiss the key preview bubble immediately
+                                if (keyPreviewPopup != null) {
+                                    keyPreviewPopup.dismiss();
+                                }
                             }
                             return true;
                     }
@@ -285,6 +331,27 @@ public class KeyBoardSystem {
                 });
             }
         }
+    }
+
+    /**
+     * Get the display label for a keyboard key view.
+     */
+    private String getViewLabel(View v) {
+        if (v instanceof Button) {
+            CharSequence text = ((Button) v).getText();
+            return text != null ? text.toString() : "";
+        }
+        if (v instanceof ImageButton) {
+            int id = v.getId();
+            if (id == R.id.Key_Backspace) return "⌫";
+            if (id == R.id.Enter_Button) return "↵";
+            if (id == R.id.Key_Up) return "↑";
+            if (id == R.id.Key_Down) return "↓";
+            if (id == R.id.Key_Left) return "←";
+            if (id == R.id.Key_Right) return "→";
+            return "";
+        }
+        return "";
     }
 
     /**
@@ -298,6 +365,17 @@ public class KeyBoardSystem {
     }
 
     /**
+     * Get display label for a modifier key by its view ID.
+     */
+    private String getModifierLabel(int id) {
+        if (id == R.id.Key_Ctrl || id == R.id.Key_CtrlGr) return "Ctrl";
+        if (id == R.id.Key_Win) return "Win";
+        if (id == R.id.Key_Alt || id == R.id.Key_AltGr) return "Alt";
+        if (id == R.id.Key_LeftShift || id == R.id.Key_RightShift) return "Shift";
+        return "";
+    }
+
+    /**
      * Set up a modifier key button with press/hold and long-press swipe-up to lock.
      * Press = activate, Release = deactivate, Long-press+swipe-up = toggle lock.
      */
@@ -306,6 +384,7 @@ public class KeyBoardSystem {
         final float[] startY = {0};
         final Handler lockHandler = new Handler();
         final boolean[] longPressFired = {false};
+        final String modLabel = getModifierLabel(v.getId());
 
         v.setOnTouchListener((view, event) -> {
             switch (event.getAction()) {
@@ -318,6 +397,10 @@ public class KeyBoardSystem {
                     if (!isLocked[0]) {
                         activateModifier(view, isLocked);
                     }
+                    // Sound and vibration feedback
+                    playKeyFeedback(view);
+                    // Bubble hint
+                    showKeyPreview(view, modLabel);
                     // Schedule long press
                     lockHandler.postDelayed(() -> longPressFired[0] = true, LONG_PRESS_MS);
                     return true;
@@ -341,6 +424,10 @@ public class KeyBoardSystem {
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
                     lockHandler.removeCallbacksAndMessages(null);
+                    // Dismiss the key preview bubble for modifier keys
+                    if (keyPreviewPopup != null) {
+                        keyPreviewPopup.dismiss();
+                    }
                     // Only release if not locked
                     if (!isLocked[0]) {
                         view.setBackgroundResource(R.drawable.nopress_button_background);
