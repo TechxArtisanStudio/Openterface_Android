@@ -269,7 +269,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String KEY_PORTRAIT_MODE = "is_portrait_mode";
 
     // Portrait 4-zone module state
-    public enum ModuleType { NONE, KEYBOARD, MOUSE, IME }
+    public enum ModuleType { NONE, KEYBOARD, MOUSE, IME, SETTINGS }
     private ModuleType currentModule = ModuleType.NONE;
     private static final String KEY_CURRENT_MODULE = "current_module";
 
@@ -290,6 +290,7 @@ public class MainActivity extends AppCompatActivity {
     private View keyboardModuleView;
     private View mouseModuleView;
     private View imeModuleView;
+    private View settingsModuleView;
 
     // Keyboard settings and popup manager
     private KeyboardSettingsManager keyboardSettingsManager;
@@ -858,6 +859,7 @@ public class MainActivity extends AppCompatActivity {
         keyboardModuleView = null;
         mouseModuleView = null;
         imeModuleView = null;
+        settingsModuleView = null;
         Log.d(TAG, "reloadLayoutForOrientation: layout inflated, module views cleared");
 
         // Re-check orientation after setting content view
@@ -2322,7 +2324,7 @@ public class MainActivity extends AppCompatActivity {
             portraitImeTab.setOnClickListener(v -> toggleModule(ModuleType.IME));
         }
         if (portraitSettingsTab != null) {
-            portraitSettingsTab.setOnClickListener(v -> openSettingsDrawer());
+            portraitSettingsTab.setOnClickListener(v -> toggleModule(ModuleType.SETTINGS));
         }
         if (portraitRotationButton != null) {
             portraitRotationButton.setOnClickListener(v -> toggleScreenOrientation());
@@ -2525,6 +2527,15 @@ public class MainActivity extends AppCompatActivity {
                     setupImeModule(imeModuleView);
                 }
                 moduleView = imeModuleView;
+                break;
+
+            case SETTINGS:
+                if (settingsModuleView == null) {
+                    settingsModuleView = inflater.inflate(
+                        R.layout.module_portrait_settings, portraitModuleContent, false);
+                    setupSettingsModule(settingsModuleView);
+                }
+                moduleView = settingsModuleView;
                 break;
         }
 
@@ -2905,11 +2916,15 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        // Settings tab (never "active" in the module sense)
+        // Settings tab
         if (portraitSettingsTab != null) {
-            portraitSettingsTab.setBackgroundColor(0xFF1A1A1A);
+            boolean active = (currentModule == ModuleType.SETTINGS);
+            portraitSettingsTab.setBackgroundColor(
+                active ? 0xFF3700B3 : 0xFF1A1A1A);
             ImageView icon = portraitSettingsTab.findViewById(R.id.tab_settings_icon);
-            if (icon != null) icon.setColorFilter(0xFF888888);
+            if (icon != null) {
+                icon.setColorFilter(active ? 0xFFFFFFFF : 0xFF888888);
+            }
         }
     }
 
@@ -3063,12 +3078,15 @@ public class MainActivity extends AppCompatActivity {
 
         if (settingsButton != null) {
             settingsButton.setOnClickListener(v -> {
-                if (touchPadSettings == null) {
-                    touchPadSettings = new TouchPadSettings(MainActivity.this);
+                // 打开设置模块
+                if (isPortraitMode) {
+                    toggleModule(ModuleType.SETTINGS);
+                } else {
+                    if (touchPadSettings == null) {
+                        touchPadSettings = new TouchPadSettings(MainActivity.this);
+                    }
+                    touchPadSettings.showSettingsDialog();
                 }
-                // Create a temporary TouchPadView reference for settings if needed
-                touchPadSettings.setTouchPadView(touchPadView);
-                touchPadSettings.showSettingsDialog();
             });
         }
 
@@ -3122,5 +3140,151 @@ public class MainActivity extends AppCompatActivity {
      */
     public int getTouchPadOpacity() {
         return getPreferences(Context.MODE_PRIVATE).getInt("touchpad_opacity", 100);
+    }
+
+    // ===== Settings Module =====
+
+    private final String PREF_SETTINGS = "AppSettings";
+    private final String KEY_SOUND_ENABLED = "key_sound_enabled";
+    private final String KEY_SOUND_VOLUME = "key_sound_volume";
+    private final String KEY_VIBRATE_ENABLED = "key_vibrate_enabled";
+    private final String KEY_VIBRATE_INTENSITY = "key_vibrate_intensity";
+    private final String KEY_SCROLL_SPEED = "scroll_speed";
+    private final String KEY_PRE_VALIDATE = "pre_validate_enabled";
+    private final String KEY_AUTO_SAVE = "auto_save_enabled";
+
+    private void setupSettingsModule(View view) {
+        android.content.SharedPreferences prefs = getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE);
+
+        // === Keyboard Settings ===
+        androidx.appcompat.widget.SwitchCompat soundSwitch = view.findViewById(R.id.settings_key_sound_switch);
+        LinearLayout volumeLayout = view.findViewById(R.id.settings_volume_layout);
+        SeekBar volumeSeekbar = view.findViewById(R.id.settings_volume_seekbar);
+
+        androidx.appcompat.widget.SwitchCompat vibrateSwitch = view.findViewById(R.id.settings_vibrate_switch);
+        LinearLayout vibrateIntensityLayout = view.findViewById(R.id.settings_vibrate_intensity_layout);
+        SeekBar vibrateSeekbar = view.findViewById(R.id.settings_vibrate_intensity_seekbar);
+
+        // === Mouse Settings ===
+        SeekBar scrollSpeedSeekbar = view.findViewById(R.id.settings_scroll_speed_seekbar);
+        TextView scrollSpeedValue = view.findViewById(R.id.settings_scroll_speed_value);
+
+        // === IME Settings ===
+        androidx.appcompat.widget.SwitchCompat preValidateSwitch = view.findViewById(R.id.settings_pre_validate_switch);
+        androidx.appcompat.widget.SwitchCompat autoSaveSwitch = view.findViewById(R.id.settings_auto_save_switch);
+
+        // Load saved values
+        boolean soundEnabled = prefs.getBoolean(KEY_SOUND_ENABLED, true);
+        int soundVolume = prefs.getInt(KEY_SOUND_VOLUME, 80);
+        boolean vibrateEnabled = prefs.getBoolean(KEY_VIBRATE_ENABLED, true);
+        int vibrateIntensity = prefs.getInt(KEY_VIBRATE_INTENSITY, 60);
+        int scrollSpeed = prefs.getInt(KEY_SCROLL_SPEED, 50);
+        boolean preValidate = prefs.getBoolean(KEY_PRE_VALIDATE, true);
+        boolean autoSave = prefs.getBoolean(KEY_AUTO_SAVE, false);
+
+        // Apply saved values
+        if (soundSwitch != null) soundSwitch.setChecked(soundEnabled);
+        if (volumeSeekbar != null) volumeSeekbar.setProgress(soundVolume);
+        if (volumeLayout != null) volumeLayout.setVisibility(soundEnabled ? View.VISIBLE : View.GONE);
+        if (vibrateSwitch != null) vibrateSwitch.setChecked(vibrateEnabled);
+        if (vibrateSeekbar != null) vibrateSeekbar.setProgress(vibrateIntensity);
+        if (vibrateIntensityLayout != null) vibrateIntensityLayout.setVisibility(vibrateEnabled ? View.VISIBLE : View.GONE);
+        if (scrollSpeedSeekbar != null) scrollSpeedSeekbar.setProgress(scrollSpeed);
+        if (scrollSpeedValue != null) scrollSpeedValue.setText(getScrollSpeedLabel(scrollSpeed));
+        if (preValidateSwitch != null) preValidateSwitch.setChecked(preValidate);
+        if (autoSaveSwitch != null) autoSaveSwitch.setChecked(autoSave);
+
+        // === Keyboard Sound Switch ===
+        if (soundSwitch != null) {
+            soundSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                prefs.edit().putBoolean(KEY_SOUND_ENABLED, isChecked).apply();
+                if (volumeLayout != null) volumeLayout.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+            });
+        }
+
+        // === Volume SeekBar ===
+        if (volumeSeekbar != null) {
+            volumeSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    if (fromUser) prefs.edit().putInt(KEY_SOUND_VOLUME, progress).apply();
+                }
+                @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+            });
+        }
+
+        // === Vibrate Switch ===
+        if (vibrateSwitch != null) {
+            vibrateSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                prefs.edit().putBoolean(KEY_VIBRATE_ENABLED, isChecked).apply();
+                if (vibrateIntensityLayout != null) vibrateIntensityLayout.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+            });
+        }
+
+        // === Vibrate Intensity ===
+        if (vibrateSeekbar != null) {
+            vibrateSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    if (fromUser) prefs.edit().putInt(KEY_VIBRATE_INTENSITY, progress).apply();
+                }
+                @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+            });
+        }
+
+        // === Scroll Speed ===
+        if (scrollSpeedSeekbar != null) {
+            scrollSpeedSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    if (fromUser) {
+                        prefs.edit().putInt(KEY_SCROLL_SPEED, progress).apply();
+                        if (scrollSpeedValue != null) scrollSpeedValue.setText(getScrollSpeedLabel(progress));
+                    }
+                }
+                @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+            });
+        }
+
+        // === Pre-validate Switch ===
+        if (preValidateSwitch != null) {
+            preValidateSwitch.setOnCheckedChangeListener((buttonView, isChecked) ->
+                prefs.edit().putBoolean(KEY_PRE_VALIDATE, isChecked).apply());
+        }
+
+        // === Auto Save Switch ===
+        if (autoSaveSwitch != null) {
+            autoSaveSwitch.setOnCheckedChangeListener((buttonView, isChecked) ->
+                prefs.edit().putBoolean(KEY_AUTO_SAVE, isChecked).apply());
+        }
+    }
+
+    private String getScrollSpeedLabel(int progress) {
+        if (progress <= 20) return "很慢";
+        if (progress <= 40) return "慢";
+        if (progress <= 60) return "中等";
+        if (progress <= 80) return "快";
+        return "很快";
+    }
+
+    public boolean isSoundEnabled() {
+        return getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).getBoolean(KEY_SOUND_ENABLED, true);
+    }
+
+    public int getSoundVolume() {
+        return getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).getInt(KEY_SOUND_VOLUME, 80);
+    }
+
+    public boolean isVibrateEnabled() {
+        return getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).getBoolean(KEY_VIBRATE_ENABLED, true);
+    }
+
+    public int getVibrateIntensity() {
+        return getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).getInt(KEY_VIBRATE_INTENSITY, 60);
+    }
+
+    public int getScrollSpeed() {
+        return getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).getInt(KEY_SCROLL_SPEED, 50);
     }
 }
