@@ -16,7 +16,7 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         
-        ndkVersion '23.1.7779620'
+        ndkVersion '26.3.11579264'
         
         // Enable 16KB page size support for native libraries
         ndk {

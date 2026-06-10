@@ -32,17 +32,18 @@ import android.os.Looper;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.openterface.AOS.R;
 import com.openterface.AOS.target.HidManager;
-// import com.openterface.AOS.target.MouseManager;
 
 /**
- * A mouse control strip with left, middle (scroll), and right buttons.
- * Each button can be pressed and held to send mouse button events.
- * Supports adjustable opacity.
+ * Enhanced mouse control strip with 5 zones:
+ * [ScrollUp] [L] [M] [R] [ScrollDown]
+ * - L/M/R: mouse button press/release
+ * - ScrollUp/Down: scroll wheel with long-press acceleration
  */
 public class MouseControlStripView extends LinearLayout {
 
@@ -53,13 +54,24 @@ public class MouseControlStripView extends LinearLayout {
     public static final int BTN_RIGHT = 0x02;
     public static final int BTN_MIDDLE = 0x04;
 
+    // Scroll acceleration constants
+    private static final long INITIAL_SCROLL_DELAY = 120;  // ms
+    private static final long MIN_SCROLL_DELAY = 30;       // ms
+    private static final long ACCELERATION_STEP = 10;      // ms reduction per step
+
     private TextView btnLeft;
     private TextView btnMiddle;
     private TextView btnRight;
+    private ImageView btnScrollUp;
+    private ImageView btnScrollDown;
 
     private int currentOpacity = 100;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private Runnable releaseRunnable;
+    private Runnable scrollRunnable;
+    private boolean isScrolling = false;
+    private long scrollDelay = INITIAL_SCROLL_DELAY;
+    private int scrollDirection = 0;  // 1 = up, -1 = down
 
     // Track which buttons are currently pressed
     private boolean isLeftPressed = false;
@@ -70,6 +82,8 @@ public class MouseControlStripView extends LinearLayout {
         void onMouseClick(int buttonMask);
         void onMouseRelease();
         void onScrollClick();
+        void onScrollUp();
+        void onScrollDown();
     }
 
     private OnMouseClickListener mouseClickListener;
@@ -93,20 +107,26 @@ public class MouseControlStripView extends LinearLayout {
         setOrientation(HORIZONTAL);
         setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT));
 
-        // Create the three buttons programmatically
+        // Create the five buttons programmatically
         createButtonLayout(context);
     }
 
     private void createButtonLayout(Context context) {
         removeAllViews();
 
-        int buttonHeight = dpToPx(context, 48);
-        int gap = dpToPx(context, 8);
+        int buttonHeight = dpToPx(context, 52);
+        int gap = dpToPx(context, 6);
+
+        // Scroll Up button (weight 1)
+        btnScrollUp = createScrollButton(context, R.drawable.baseline_keyboard_arrow_up_24, 1);
+        LayoutParams scrollUpLp = new LayoutParams(0, buttonHeight, 0.8f);
+        addView(btnScrollUp, scrollUpLp);
 
         // Left button (weight 2)
         btnLeft = createButton(context, "L", buttonHeight);
         btnLeft.setTag(BTN_LEFT);
         LayoutParams leftLp = new LayoutParams(0, buttonHeight, 2f);
+        leftLp.setMarginStart(gap);
         addView(btnLeft, leftLp);
 
         // Middle button (weight 1)
@@ -123,6 +143,12 @@ public class MouseControlStripView extends LinearLayout {
         rightLp.setMarginStart(gap);
         addView(btnRight, rightLp);
 
+        // Scroll Down button (weight 1)
+        btnScrollDown = createScrollButton(context, R.drawable.baseline_keyboard_arrow_down_24, -1);
+        LayoutParams scrollDownLp = new LayoutParams(0, buttonHeight, 0.8f);
+        scrollDownLp.setMarginStart(gap);
+        addView(btnScrollDown, scrollDownLp);
+
         applyOpacity();
     }
 
@@ -130,7 +156,7 @@ public class MouseControlStripView extends LinearLayout {
         TextView button = new TextView(context);
         button.setText(label);
         button.setTextColor(Color.WHITE);
-        button.setTextSize(16);
+        button.setTextSize(18);
         button.setGravity(android.view.Gravity.CENTER);
 
         GradientDrawable drawable = new GradientDrawable();
@@ -164,6 +190,88 @@ public class MouseControlStripView extends LinearLayout {
         });
 
         return button;
+    }
+
+    private ImageView createScrollButton(Context context, int iconRes, int direction) {
+        ImageView button = new ImageView(context);
+        button.setImageResource(iconRes);
+        button.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        button.setPadding(dpToPx(context, 4), dpToPx(context, 4), dpToPx(context, 4), dpToPx(context, 4));
+
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setShape(GradientDrawable.RECTANGLE);
+        drawable.setColor(Color.parseColor("#2A2A2A"));
+        drawable.setCornerRadius(dpToPx(context, 8));
+        button.setBackground(drawable);
+        button.setElevation(2f);
+
+        button.setOnTouchListener(new OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                switch (event.getActionMasked()) {
+                    case MotionEvent.ACTION_DOWN:
+                        v.setAlpha(0.7f);
+                        scrollDirection = direction;
+                        scrollDelay = INITIAL_SCROLL_DELAY;
+                        isScrolling = true;
+                        // Send first scroll immediately
+                        sendScrollEvent(direction);
+                        // Start continuous scrolling
+                        startContinuousScroll();
+                        return true;
+
+                    case MotionEvent.ACTION_UP:
+                    case MotionEvent.ACTION_CANCEL:
+                        v.setAlpha(1.0f);
+                        stopContinuousScroll();
+                        return true;
+                }
+                return false;
+            }
+        });
+
+        return button;
+    }
+
+    private void startContinuousScroll() {
+        if (scrollRunnable != null) {
+            handler.removeCallbacks(scrollRunnable);
+        }
+
+        scrollRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (isScrolling) {
+                    sendScrollEvent(scrollDirection);
+                    // Accelerate: reduce delay over time
+                    scrollDelay = Math.max(MIN_SCROLL_DELAY, scrollDelay - ACCELERATION_STEP);
+                    handler.postDelayed(this, scrollDelay);
+                }
+            }
+        };
+
+        handler.postDelayed(scrollRunnable, INITIAL_SCROLL_DELAY);
+    }
+
+    private void stopContinuousScroll() {
+        isScrolling = false;
+        if (scrollRunnable != null) {
+            handler.removeCallbacks(scrollRunnable);
+            scrollRunnable = null;
+        }
+    }
+
+    private void sendScrollEvent(int direction) {
+        if (mouseClickListener != null) {
+            if (direction > 0) {
+                mouseClickListener.onScrollUp();
+            } else {
+                mouseClickListener.onScrollDown();
+            }
+        } else {
+            float scrollValue = direction > 0 ? 1.0f : -1.0f;
+            HidManager.handleTwoFingerPanSlideUpDown(scrollValue);
+        }
     }
 
     private void setButtonPressed(int mask, boolean pressed) {
@@ -251,4 +359,12 @@ public class MouseControlStripView extends LinearLayout {
     public TextView getBtnLeft() { return btnLeft; }
     public TextView getBtnMiddle() { return btnMiddle; }
     public TextView getBtnRight() { return btnRight; }
+    public ImageView getBtnScrollUp() { return btnScrollUp; }
+    public ImageView getBtnScrollDown() { return btnScrollDown; }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        stopContinuousScroll();
+    }
 }
