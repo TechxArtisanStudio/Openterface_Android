@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- IME/Input module for portrait mode -->
+<!-- IME/Input module for portrait mode - Simplified: text input + clear/save/saved/send buttons -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/ime_module_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/white"
-    android:padding="8dp"
+    android:background="#F5F5F5"
+    android:padding="12dp"
     tools:context="com.openterface.AOS.activity.MainActivity">
 
     <!-- Text Input Area -->
@@ -24,133 +24,99 @@
         android:textColor="@color/black"
         android:textSize="14sp"
         android:autofillHints=""
+        android:minLines="3"
+        android:scrollbars="vertical"
         tools:ignore="LabelFor" />
 
-    <!-- Quick Insert Special Keys -->
-    <HorizontalScrollView
+    <!-- Send Progress Bar (hidden by default) -->
+    <LinearLayout
+        android:id="@+id/ime_send_progress_wrap"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:scrollbars="none">
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="4dp"
+        android:visibility="gone">
 
-        <LinearLayout
+        <ProgressBar
+            android:id="@+id/ime_send_progress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:max="1000" />
+
+        <TextView
+            android:id="@+id/ime_send_progress_label"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:layout_marginStart="10dp"
+            android:textSize="12sp"
+            android:textColor="#666666"
+            android:fontFamily="monospace" />
+    </LinearLayout>
 
-            <android.widget.Button
-                android:id="@+id/ime_ctrl"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Ctrl"
-                android:textColor="@color/black"
-                android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
-                android:layout_marginHorizontal="2dp" />
-
-            <android.widget.Button
-                android:id="@+id/ime_alt"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Alt"
-                android:textColor="@color/black"
-                android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
-                android:layout_marginHorizontal="2dp" />
-
-            <android.widget.Button
-                android:id="@+id/ime_shift"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Shift"
-                android:textColor="@color/black"
-                android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
-                android:layout_marginHorizontal="2dp" />
-
-            <android.widget.Button
-                android:id="@+id/ime_enter"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Enter"
-                android:textColor="@color/black"
-                android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
-                android:layout_marginHorizontal="2dp" />
-
-            <android.widget.Button
-                android:id="@+id/ime_tab"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Tab"
-                android:textColor="@color/black"
-                android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
-                android:layout_marginHorizontal="2dp" />
-
-            <android.widget.Button
-                android:id="@+id/ime_esc"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Esc"
-                android:textColor="@color/black"
-                android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
-                android:layout_marginHorizontal="2dp" />
-
-            <android.widget.Button
-                android:id="@+id/ime_up"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="↑"
-                android:textColor="@color/black"
-                android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
-                android:layout_marginHorizontal="2dp" />
-
-            <android.widget.Button
-                android:id="@+id/ime_down"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="↓"
-                android:textColor="@color/black"
-                android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
-                android:layout_marginHorizontal="2dp" />
-
-            <android.widget.Button
-                android:id="@+id/ime_left"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="←"
-                android:textColor="@color/black"
-                android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
-                android:layout_marginHorizontal="2dp" />
-
-            <android.widget.Button
-                android:id="@+id/ime_right"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="→"
-                android:textColor="@color/black"
-                android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
-                android:layout_marginHorizontal="2dp" />
-
-        </LinearLayout>
-    </HorizontalScrollView>
-
-    <!-- Send Button -->
-    <android.widget.Button
-        android:id="@+id/ime_send_button"
+    <!-- Action Buttons: Clear | Save | Saved | Send -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="horizontal"
         android:layout_marginTop="8dp"
-        android:text="SEND AS KEYSTROKES"
-        android:textColor="@color/black"
-        android:background="@drawable/button_background"
-        android:theme="@style/ButtonTheme"
-        android:textSize="16sp" />
+        android:gravity="center_vertical">
+
+        <!-- Clear button -->
+        <android.widget.Button
+            android:id="@+id/ime_clear_button"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="Clear"
+            android:textColor="@color/black"
+            android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme"
+            android:textSize="12sp"
+            android:layout_marginEnd="4dp" />
+
+        <!-- Save button -->
+        <android.widget.Button
+            android:id="@+id/ime_save_button"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="Save"
+            android:textColor="@color/black"
+            android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme"
+            android:textSize="12sp"
+            android:layout_marginHorizontal="4dp" />
+
+        <!-- Saved Texts button -->
+        <android.widget.Button
+            android:id="@+id/ime_saved_texts_button"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="Saved"
+            android:textColor="@color/black"
+            android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme"
+            android:textSize="12sp"
+            android:layout_marginHorizontal="4dp" />
+
+        <!-- Send button -->
+        <android.widget.Button
+            android:id="@+id/ime_send_button"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="2"
+            android:text="Send"
+            android:textColor="#FFFFFF"
+            android:background="#3700B3"
+            android:theme="@style/ButtonTheme"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:layout_marginStart="4dp" />
+
+    </LinearLayout>
 
 </LinearLayout>

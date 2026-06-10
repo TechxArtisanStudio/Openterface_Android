@@ -137,6 +137,7 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.Spinner;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -2573,54 +2574,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Setup mouse module (reuse existing TouchPad)
+     * Setup mouse module for portrait mode.
+     * No TouchPadView - just the MouseControlStripView with gesture guide.
      */
     private void setupMouseModule(View view) {
-        com.openterface.AOS.view.TouchPadView portraitTouchPad =
-            view.findViewById(R.id.portrait_touchPadArea);
         com.openterface.AOS.view.MouseControlStripView portraitMouseStrip =
             view.findViewById(R.id.portrait_mouseButtonStrip);
-
-        if (portraitTouchPad != null) {
-            portraitTouchPad.setOnTouchPadListener(new com.openterface.AOS.view.TouchPadView.OnTouchPadListener() {
-                @Override
-                public void onTouchMove(float startX, float startY, float lastX, float lastY) {
-                    if (lastX == 0 && lastY == 0) {
-                        com.openterface.AOS.target.MouseManager.handleTwoFingerPanSlideUpDown(startY);
-                    } else {
-                        com.openterface.AOS.target.MouseManager.sendHexRelData(
-                            "SecNullData", startX, startY, lastX, lastY);
-                    }
-                }
-
-                @Override
-                public void onTouchClick() {
-                    sendMouseClick("SecLeftData");
-                }
-
-                @Override
-                public void onTouchDoubleClick() {
-                    // Double left click
-                    sendMouseClick("SecLeftData");
-                    new Handler().postDelayed(() -> sendMouseClick("SecLeftData"), 50);
-                }
-
-                @Override
-                public void onTouchRightClick() {
-                    sendMouseClick("SecRightData");
-                }
-
-                @Override
-                public void onTouchLongPress() {
-                    Log.d(TAG, "Portrait TouchPad long press -> drag mode");
-                }
-
-                @Override
-                public void onTouchRelease() {
-                    com.openterface.AOS.target.MouseManager.releaseMSRelData();
-                }
-            });
-        }
 
         if (portraitMouseStrip != null) {
             portraitMouseStrip.setOnMouseClickListener(
@@ -2661,6 +2620,16 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onScrollClick() {
                         com.openterface.AOS.target.MouseManager.handleTwoPress();
+                    }
+
+                    @Override
+                    public void onScrollUp() {
+                        com.openterface.AOS.target.MouseManager.handleTwoFingerPanSlideUpDown(1.0f);
+                    }
+
+                    @Override
+                    public void onScrollDown() {
+                        com.openterface.AOS.target.MouseManager.handleTwoFingerPanSlideUpDown(-1.0f);
                     }
                 });
         }
@@ -2708,29 +2677,195 @@ public class MainActivity extends AppCompatActivity {
     /**
      * Setup IME module button listeners
      */
+    private boolean isSendingText = false;
+    private int sendProgress = 0;
+    private int sendTotal = 0;
+    private ProgressBar imeProgressBar;
+    private TextView imeProgressLabel;
+
     private void setupImeModule(View view) {
         android.widget.Button sendButton = view.findViewById(R.id.ime_send_button);
+        android.widget.Button clearButton = view.findViewById(R.id.ime_clear_button);
+        android.widget.Button saveButton = view.findViewById(R.id.ime_save_button);
+        android.widget.Button savedTextsButton = view.findViewById(R.id.ime_saved_texts_button);
         EditText textInput = view.findViewById(R.id.ime_text_input);
+        imeProgressBar = view.findViewById(R.id.ime_send_progress);
+        imeProgressLabel = view.findViewById(R.id.ime_send_progress_label);
 
-        if (sendButton != null) {
+        if (sendButton != null && textInput != null) {
             sendButton.setOnClickListener(v -> {
-                if (textInput != null && textInput.getText().length() > 0) {
-                    String text = textInput.getText().toString();
-                    // Send each character as HID keystroke
-                    for (int i = 0; i < text.length(); i++) {
-                        final char c = text.charAt(i);
-                        new Handler().postDelayed(() -> {
-                            if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
-                                // Send character via keyboard
-                                KeyBoardManager.sendKeyBoardData(null, String.valueOf(c));
-                            }
-                        }, i * 50L);
-                    }
-                    textInput.setText("");
-                    Toast.makeText(this, "Text sent", Toast.LENGTH_SHORT).show();
+                String text = textInput.getText().toString();
+                if (text.isEmpty()) {
+                    Toast.makeText(this, "请输入要发送的文本", Toast.LENGTH_SHORT).show();
+                    return;
                 }
+                if (isSendingText) {
+                    // 取消发送
+                    isSendingText = false;
+                    hideSendProgress();
+                    Toast.makeText(this, "已取消发送", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                sendTextViaHID(text, textInput);
             });
         }
+
+        if (clearButton != null && textInput != null) {
+            clearButton.setOnClickListener(v -> {
+                textInput.setText("");
+                Toast.makeText(this, "已清空文本", Toast.LENGTH_SHORT).show();
+            });
+        }
+
+        if (saveButton != null && textInput != null) {
+            saveButton.setOnClickListener(v -> {
+                String text = textInput.getText().toString();
+                if (text.isEmpty()) {
+                    Toast.makeText(this, "文本为空，无法保存", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                // 保存到 SharedPreferences
+                android.content.SharedPreferences prefs = getSharedPreferences("SavedTexts", MODE_PRIVATE);
+                String saved = prefs.getString("saved_text", "");
+                saved += (saved.isEmpty() ? "" : "\n") + text;
+                prefs.edit().putString("saved_text", saved).apply();
+                Toast.makeText(this, "文本已保存", Toast.LENGTH_SHORT).show();
+            });
+        }
+
+        if (savedTextsButton != null && textInput != null) {
+            savedTextsButton.setOnClickListener(v -> {
+                android.content.SharedPreferences prefs = getSharedPreferences("SavedTexts", MODE_PRIVATE);
+                String saved = prefs.getString("saved_text", "");
+                if (saved.isEmpty()) {
+                    Toast.makeText(this, "暂无已保存的文本", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                // 显示已保存的文本列表
+                new android.app.AlertDialog.Builder(this)
+                    .setTitle("已保存的文本")
+                    .setMessage(saved)
+                    .setPositiveButton("关闭", null)
+                    .setNeutralButton("清空所有", (dialog, which) -> {
+                        prefs.edit().remove("saved_text").apply();
+                        Toast.makeText(this, "已清空所有保存的文本", Toast.LENGTH_SHORT).show();
+                    })
+                    .show();
+            });
+        }
+    }
+
+    private void sendTextViaHID(String text, EditText textInput) {
+        isSendingText = true;
+        sendProgress = 0;
+        sendTotal = text.length();
+        showSendProgress();
+
+        new Thread(() -> {
+            for (int i = 0; i < sendTotal; i++) {
+                if (!isSendingText) {
+                    // 被取消
+                    break;
+                }
+                char c = text.charAt(i);
+                final int index = i;
+
+                // 在主线程发送 HID 数据和更新进度
+                runOnUiThread(() -> {
+                    if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                        // 将字符转换为键盘扫描码并发送
+                        String scanCode = charToScanCode(c);
+                        if (scanCode != null) {
+                            KeyBoardManager.sendKeyBoardData(null, scanCode);
+                            // 发送释放事件
+                            try {
+                                Thread.sleep(50);
+                            } catch (InterruptedException ignored) {}
+                            KeyBoardManager.sendKeyBoardData(null, "00");
+                        }
+                    }
+                    sendProgress = index + 1;
+                    updateSendProgress();
+                });
+
+                try {
+                    // 控制发送速度，每个字符间隔 100ms
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    break;
+                }
+            }
+
+            // 发送完成
+            runOnUiThread(() -> {
+                if (isSendingText) {
+                    Toast.makeText(MainActivity.this, "文本发送完成", Toast.LENGTH_SHORT).show();
+                    textInput.setText("");
+                    hideSendProgress();
+                }
+                isSendingText = false;
+            });
+        }).start();
+    }
+
+    private void showSendProgress() {
+        if (imeProgressBar != null) {
+            imeProgressBar.setVisibility(android.view.View.VISIBLE);
+            imeProgressBar.setMax(sendTotal);
+            imeProgressBar.setProgress(0);
+        }
+        if (imeProgressLabel != null) {
+            imeProgressLabel.setVisibility(android.view.View.VISIBLE);
+            imeProgressLabel.setText("0/" + sendTotal);
+        }
+    }
+
+    private void updateSendProgress() {
+        if (imeProgressBar != null) {
+            imeProgressBar.setProgress(sendProgress);
+        }
+        if (imeProgressLabel != null) {
+            imeProgressLabel.setText(sendProgress + "/" + sendTotal);
+        }
+    }
+
+    private void hideSendProgress() {
+        if (imeProgressBar != null) {
+            imeProgressBar.setVisibility(android.view.View.GONE);
+        }
+        if (imeProgressLabel != null) {
+            imeProgressLabel.setVisibility(android.view.View.GONE);
+        }
+    }
+
+    private String charToScanCode(char c) {
+        // 简化的字符到 HID 扫描码映射
+        // 实际实现需要根据 CH9329MSKBMap 来完成
+        if (c >= 'a' && c <= 'z') {
+            return String.format("%02X", 0x04 + (c - 'a'));
+        } else if (c >= 'A' && c <= 'Z') {
+            // 需要 Shift + 字母
+            return String.format("%02X", 0x04 + (c - 'A'));
+        } else if (c >= '1' && c <= '9') {
+            return String.format("%02X", 0x1E + (c - '1'));
+        } else if (c == '0') {
+            return "27";
+        } else if (c == ' ') {
+            return "2C";
+        } else if (c == '\n') {
+            return "28"; // Enter
+        } else if (c == '.') {
+            return "37";
+        } else if (c == ',') {
+            return "36";
+        } else if (c == '!') {
+            return "1E"; // Shift + 1
+        } else if (c == '?') {
+            return "38"; // Shift + /
+        }
+        // 更多字符映射...
+        Log.w(TAG, "不支持的字符: " + c);
+        return null;
     }
 
     /**
@@ -2824,159 +2959,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Initialize TouchPad.
+     * Initialize TouchPad / Mouse strip for landscape mode.
+     * TouchPadView has been removed from the layout — only MouseControlStripView remains.
      */
     private void initTouchPad() {
-        touchPadView = findViewById(R.id.touchPadArea);
         mouseControlStripView = findViewById(R.id.mouseButtonStrip);
         touchPadContainer = findViewById(R.id.TouchPad_View);
 
-        if (touchPadView != null) {
-            restoreTouchPadOpacity();
-
-            touchPadView.setOnTouchPadListener(new TouchPadView.OnTouchPadListener() {
-                @Override
-                public void onTouchMove(float startX, float startY, float lastX, float lastY) {
-                    if (lastX == 0 && lastY == 0) {
-                        // Scroll mode (two-finger pan)
-                        HidManager.handleTwoFingerPanSlideUpDown(startY);
-                    } else {
-                        // Mouse move (relative)
-                        HidManager.sendHexRelData("SecNullData", startX, startY, lastX, lastY);
-                    }
-                }
-
-                @Override
-                public void onTouchClick() {
-                    Log.d(TAG, "TouchPad single tap -> left click");
-                    new Thread(() -> {
-                        try {
-                            String clickData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
-                                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
-                                    CH9329MSKBMap.getKeyCodeMap().get("address") +
-                                    CH9329MSKBMap.CmdData().get("CmdMS_REL") +
-                                    CH9329MSKBMap.DataLen().get("DataLenRelMS") +
-                                    CH9329MSKBMap.MSRelData().get("FirstData") +
-                                    CH9329MSKBMap.MSRelData().get("SecLeftData") +
-                                    "00" + "00" + "00";
-                            clickData += CH9329Function.makeChecksum(clickData);
-                            byte[] bytes = CH9329Function.hexStringToByteArray(clickData);
-                            if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
-                                usbDeviceManager.writeData(bytes);
-                            }
-                            Thread.sleep(30);
-                            // Release
-                            String releaseData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
-                                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
-                                    CH9329MSKBMap.getKeyCodeMap().get("address") +
-                                    CH9329MSKBMap.CmdData().get("CmdMS_REL") +
-                                    CH9329MSKBMap.DataLen().get("DataLenRelMS") +
-                                    CH9329MSKBMap.MSRelData().get("FirstData") +
-                                    CH9329MSKBMap.MSRelData().get("SecNullData") +
-                                    "00" + "00" + "00";
-                            releaseData += CH9329Function.makeChecksum(releaseData);
-                            bytes = CH9329Function.hexStringToByteArray(releaseData);
-                            if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
-                                usbDeviceManager.writeData(bytes);
-                            }
-                        } catch (Exception e) {
-                            Log.e(TAG, "Error sending left click: " + e.getMessage());
-                        }
-                    }).start();
-                }
-
-                @Override
-                public void onTouchDoubleClick() {
-                    Log.d(TAG, "TouchPad double tap -> double click");
-                    new Thread(() -> {
-                        try {
-                            String clickData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
-                                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
-                                    CH9329MSKBMap.getKeyCodeMap().get("address") +
-                                    CH9329MSKBMap.CmdData().get("CmdMS_REL") +
-                                    CH9329MSKBMap.DataLen().get("DataLenRelMS") +
-                                    CH9329MSKBMap.MSRelData().get("FirstData") +
-                                    CH9329MSKBMap.MSRelData().get("SecLeftData") +
-                                    "00" + "00" + "00";
-                            clickData += CH9329Function.makeChecksum(clickData);
-                            byte[] bytes = CH9329Function.hexStringToByteArray(clickData);
-                            for (int i = 0; i < 2; i++) {
-                                if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
-                                    usbDeviceManager.writeData(bytes);
-                                }
-                                Thread.sleep(30);
-                                // Release
-                                String releaseData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
-                                        CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
-                                        CH9329MSKBMap.getKeyCodeMap().get("address") +
-                                        CH9329MSKBMap.CmdData().get("CmdMS_REL") +
-                                        CH9329MSKBMap.DataLen().get("DataLenRelMS") +
-                                        CH9329MSKBMap.MSRelData().get("FirstData") +
-                                        CH9329MSKBMap.MSRelData().get("SecNullData") +
-                                        "00" + "00" + "00";
-                                releaseData += CH9329Function.makeChecksum(releaseData);
-                                bytes = CH9329Function.hexStringToByteArray(releaseData);
-                                if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
-                                    usbDeviceManager.writeData(bytes);
-                                }
-                                Thread.sleep(30);
-                            }
-                        } catch (Exception e) {
-                            Log.e(TAG, "Error sending double click: " + e.getMessage());
-                        }
-                    }).start();
-                }
-
-                @Override
-                public void onTouchRightClick() {
-                    Log.d(TAG, "TouchPad two-finger tap -> right click");
-                    new Thread(() -> {
-                        try {
-                            String clickData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
-                                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
-                                    CH9329MSKBMap.getKeyCodeMap().get("address") +
-                                    CH9329MSKBMap.CmdData().get("CmdMS_REL") +
-                                    CH9329MSKBMap.DataLen().get("DataLenRelMS") +
-                                    CH9329MSKBMap.MSRelData().get("FirstData") +
-                                    CH9329MSKBMap.MSRelData().get("SecRightData") +
-                                    "00" + "00" + "00";
-                            clickData += CH9329Function.makeChecksum(clickData);
-                            byte[] bytes = CH9329Function.hexStringToByteArray(clickData);
-                            if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
-                                usbDeviceManager.writeData(bytes);
-                            }
-                            Thread.sleep(30);
-                            // Release
-                            String releaseData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
-                                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
-                                    CH9329MSKBMap.getKeyCodeMap().get("address") +
-                                    CH9329MSKBMap.CmdData().get("CmdMS_REL") +
-                                    CH9329MSKBMap.DataLen().get("DataLenRelMS") +
-                                    CH9329MSKBMap.MSRelData().get("FirstData") +
-                                    CH9329MSKBMap.MSRelData().get("SecNullData") +
-                                    "00" + "00" + "00";
-                            releaseData += CH9329Function.makeChecksum(releaseData);
-                            bytes = CH9329Function.hexStringToByteArray(releaseData);
-                            if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
-                                usbDeviceManager.writeData(bytes);
-                            }
-                        } catch (Exception e) {
-                            Log.e(TAG, "Error sending right click: " + e.getMessage());
-                        }
-                    }).start();
-                }
-
-                @Override
-                public void onTouchLongPress() {
-                    Log.d(TAG, "TouchPad long press -> drag mode");
-                }
-
-                @Override
-                public void onTouchRelease() {
-                    HidManager.releaseMSRelData();
-                }
-            });
-        }
+        restoreTouchPadOpacity();
 
         if (mouseControlStripView != null) {
             mouseControlStripView.setOnMouseClickListener(new MouseControlStripView.OnMouseClickListener() {
@@ -3044,6 +3034,16 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onScrollClick() {
                     HidManager.handleTwoPress();
+                }
+
+                @Override
+                public void onScrollUp() {
+                    HidManager.handleTwoFingerPanSlideUpDown(1.0f);
+                }
+
+                @Override
+                public void onScrollDown() {
+                    HidManager.handleTwoFingerPanSlideUpDown(-1.0f);
                 }
             });
         }
