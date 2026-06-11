@@ -2,6 +2,7 @@
 <resources>
     <!-- Dark mode colors -->
     <color name="background_light">#FF1C1C1E</color>
+    <color name="background_dark">#FF121212</color>
     <color name="text_primary">#FFFFFFFF</color>
     <color name="text_secondary">#FF8E8E93</color>
     <color name="header_background">#FF1C1C1E</color>

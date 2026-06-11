@@ -15,6 +15,85 @@
         android:orientation="vertical"
         android:padding="12dp">
 
+        <!-- 主题设置分区 -->
+        <LinearLayout
+            android:id="@+id/settings_theme_section"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@android:color/white"
+            android:padding="12dp"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="主题设置"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#333333"
+                android:layout_marginBottom="8dp" />
+
+            <!-- 主题颜色选择 -->
+            <LinearLayout
+                android:id="@+id/settings_theme_color_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingVertical="8dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?android:attr/selectableItemBackground">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="主题颜色"
+                    android:textSize="14sp"
+                    android:textColor="#333333" />
+
+                <TextView
+                    android:id="@+id/settings_theme_color_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="橙色"
+                    android:textSize="14sp"
+                    android:textColor="#1976D2" />
+            </LinearLayout>
+
+            <!-- 显示模式选择 -->
+            <LinearLayout
+                android:id="@+id/settings_theme_mode_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingVertical="8dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?android:attr/selectableItemBackground">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="显示模式"
+                    android:textSize="14sp"
+                    android:textColor="#333333" />
+
+                <TextView
+                    android:id="@+id/settings_theme_mode_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="跟随系统"
+                    android:textSize="14sp"
+                    android:textColor="#1976D2" />
+            </LinearLayout>
+
+        </LinearLayout>
+
         <!-- 键盘设置分区 -->
         <LinearLayout
             android:id="@+id/settings_keyboard_section"
@@ -33,6 +112,35 @@
                 android:textStyle="bold"
                 android:textColor="#333333"
                 android:layout_marginBottom="8dp" />
+
+            <!-- 目标操作系统 -->
+            <LinearLayout
+                android:id="@+id/settings_target_os_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingVertical="8dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?android:attr/selectableItemBackground">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="目标操作系统"
+                    android:textSize="14sp"
+                    android:textColor="#333333" />
+
+                <TextView
+                    android:id="@+id/settings_target_os_value"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Windows"
+                    android:textSize="14sp"
+                    android:textColor="#1976D2" />
+            </LinearLayout>
 
             <!-- 按键音效开关 -->
             <LinearLayout

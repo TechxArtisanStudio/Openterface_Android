@@ -40,6 +40,7 @@ import com.openterface.AOS.target.HidManager;
 // import com.openterface.AOS.target.KeyBoardManager;
 import com.openterface.AOS.target.KeyBoardMapping;
 import com.openterface.AOS.view.KeyPreviewPopup;
+import com.openterface.AOS.manager.TargetOsManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -55,6 +56,7 @@ public class KeyBoardSystem {
     private final LinearLayout Fragment_KeyBoard_Function;
     private final LinearLayout Fragment_KeyBoard_System;
     private final Context context;
+    private final Button winButton;  // Reference to Win key for dynamic label updates
 
     private static boolean KeyBoard_Ctrl_Press_state;
     private static boolean KeyBoard_ShIft_Press_state;
@@ -65,10 +67,12 @@ public class KeyBoardSystem {
 
     // Letter buttons that need case updates when Shift is toggled
     private static final List<Button> letterButtons = new ArrayList<>();
-    // Number buttons (Row 1) for FN layer switching
-    private static final List<Button> numberButtons = new ArrayList<>();
     // The 10 letter buttons in Row 1 (Q-P) for FN layer switching
     private static final List<Button> row1LetterButtons = new ArrayList<>();
+    // The 9 letter buttons in Row 2 (A-L) for FN layer hints
+    private static final List<Button> row2LetterButtons = new ArrayList<>();
+    // The 8 buttons in Row 3 (Z-/) for FN layer hints
+    private static final List<Button> row3LetterButtons = new ArrayList<>();
     private static KeyBoardSystem instance;
 
     private static KeyboardSettingsManager settingsManager;
@@ -117,6 +121,25 @@ public class KeyBoardSystem {
                 rootView.findViewById(R.id.O_Button), rootView.findViewById(R.id.P_Button),
         };
         for (Button b : row1Letters) { if (b != null) row1LetterButtons.add(b); }
+
+        // Row 2 letter buttons (A-L) for FN layer hints
+        Button[] row2Letters = new Button[]{
+                rootView.findViewById(R.id.A_Button), rootView.findViewById(R.id.S_Button),
+                rootView.findViewById(R.id.D_Button), rootView.findViewById(R.id.F_Button),
+                rootView.findViewById(R.id.G_Button), rootView.findViewById(R.id.H_Button),
+                rootView.findViewById(R.id.J_Button), rootView.findViewById(R.id.K_Button),
+                rootView.findViewById(R.id.L_Button),
+        };
+        for (Button b : row2Letters) { if (b != null) row2LetterButtons.add(b); }
+
+        // Row 3 letter buttons (Z-/) for FN layer hints
+        Button[] row3Letters = new Button[]{
+                rootView.findViewById(R.id.Z_Button), rootView.findViewById(R.id.X_Button),
+                rootView.findViewById(R.id.C_Button), rootView.findViewById(R.id.V_Button),
+                rootView.findViewById(R.id.B_Button), rootView.findViewById(R.id.N_Button),
+                rootView.findViewById(R.id.M_Button), rootView.findViewById(R.id.Key_Slash),
+        };
+        for (Button b : row3Letters) { if (b != null) row3LetterButtons.add(b); }
 
         SystemButtons = new View[]{
             // Row 1: 10 letters Q-P (or numbers when FN active)
@@ -167,6 +190,8 @@ public class KeyBoardSystem {
         languageMappings.put("us", new KeyMapConfig_Us());
         languageMappings.put("de", new KeyMapConfig_De());
         currentMapping = languageMappings.get("us");
+        winButton = rootView.findViewById(R.id.Key_Win);
+        applyTargetOsLabels();
         SystemButtonListeners();
     }
 
@@ -176,20 +201,37 @@ public class KeyBoardSystem {
     public static KeyBoardSystem getInstance() { return instance; }
 
     /**
+     * Get the Win button reference for external label updates.
+     */
+    public Button getWinButton() { return winButton; }
+
+    /**
+     * Update Win key label based on Target OS setting.
+     * macOS: "Cmd", Windows: "Win", Linux: "Super"
+     */
+    public void applyTargetOsLabels() {
+        if (winButton == null) return;
+        TargetOsManager manager = TargetOsManager.getInstance();
+        TargetOsManager.TargetOS os = manager.getCurrentOs();
+        winButton.setText(os.getKeyLabel());
+        Log.d("KeyBoardSystem", "Applied Target OS: " + os.getName() + ", Win label: " + os.getKeyLabel());
+    }
+
+    /**
      * Refresh Row 1 buttons based on FN state.
-     * When FN is active, show numbers 1-0; otherwise show letters Q-P.
+     * When FN is active, show F1-F10; otherwise show letters Q-P.
      */
     public static void refreshRow1Buttons() {
         if (instance == null) return;
 
-        String[] numberLabels = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0"};
+        String[] fnLabels = {"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10"};
         String[] letterLabels = {"Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"};
 
         for (int i = 0; i < row1LetterButtons.size() && i < 10; i++) {
             Button btn = row1LetterButtons.get(i);
             if (btn != null) {
                 if (KeyBoard_FN_Press_state) {
-                    btn.setText(numberLabels[i]);
+                    btn.setText(fnLabels[i]);
                 } else {
                     // Apply shift state for letters
                     btn.setText(KeyBoard_ShIft_Press_state ? letterLabels[i] : letterLabels[i].toLowerCase());
@@ -199,19 +241,32 @@ public class KeyBoardSystem {
     }
 
     /**
-     * Refresh all letter button labels based on current Shift state.
-     * Called when Shift is pressed/released/locked.
+     * Refresh all letter button labels based on current Shift and FN state.
+     * Called when Shift or FN is pressed/released/locked.
      */
     public static void refreshLetterButtons() {
         if (instance == null) return;
+
+        // FN layer mappings for display
+        Map<Integer, String> fnDisplayMap = new HashMap<>();
+        fnDisplayMap.putAll(fnRow1Map);
+        fnDisplayMap.putAll(fnRow2Map);
+        fnDisplayMap.putAll(fnRow3Map);
+
         for (Button btn : letterButtons) {
-            String[] mapping = currentMapping.getKeyMappings().get(btn.getId());
-            if (mapping != null) {
-                btn.setText(KeyBoard_ShIft_Press_state ? mapping[1] : mapping[0]);
+            int id = btn.getId();
+
+            if (KeyBoard_FN_Press_state && fnDisplayMap.containsKey(id)) {
+                // FN激活时显示功能键标签
+                btn.setText(fnDisplayMap.get(id));
+            } else {
+                // 正常模式显示字母（受Shift影响）
+                String[] mapping = currentMapping.getKeyMappings().get(id);
+                if (mapping != null) {
+                    btn.setText(KeyBoard_ShIft_Press_state ? mapping[1] : mapping[0]);
+                }
             }
         }
-        // Also refresh Row 1 buttons when Shift changes
-        refreshRow1Buttons();
     }
 
     /**
@@ -244,7 +299,7 @@ public class KeyBoardSystem {
 
     public static void KeyBoard_FN_Press(Boolean KeyBoard_FN_Press){
         KeyBoard_FN_Press_state = KeyBoard_FN_Press;
-        refreshRow1Buttons();
+        refreshLetterButtons();
     }
 
     public static boolean isFnActive() {
@@ -581,27 +636,77 @@ public class KeyBoardSystem {
     }
 
     /**
-     * Map a Row 1 letter button (Q-P) to its corresponding number when FN is active.
-     * Q→1, W→2, E→3, R→4, T→5, Y→6, U→7, I→8, O→9, P→0
+     * Map Row 1 letter buttons (Q-P) to F1-F10 when FN is active.
      */
-    private static final Map<Integer, String> fnNumberMap = new HashMap<>();
+    private static final Map<Integer, String> fnRow1Map = new HashMap<>();
     static {
-        fnNumberMap.put(R.id.Q_Button, "1");
-        fnNumberMap.put(R.id.W_Button, "2");
-        fnNumberMap.put(R.id.E_Button, "3");
-        fnNumberMap.put(R.id.R_Button, "4");
-        fnNumberMap.put(R.id.T_Button, "5");
-        fnNumberMap.put(R.id.Y_Button, "6");
-        fnNumberMap.put(R.id.U_Button, "7");
-        fnNumberMap.put(R.id.I_Button, "8");
-        fnNumberMap.put(R.id.O_Button, "9");
-        fnNumberMap.put(R.id.P_Button, "0");
+        fnRow1Map.put(R.id.Q_Button, "F1");
+        fnRow1Map.put(R.id.W_Button, "F2");
+        fnRow1Map.put(R.id.E_Button, "F3");
+        fnRow1Map.put(R.id.R_Button, "F4");
+        fnRow1Map.put(R.id.T_Button, "F5");
+        fnRow1Map.put(R.id.Y_Button, "F6");
+        fnRow1Map.put(R.id.U_Button, "F7");
+        fnRow1Map.put(R.id.I_Button, "F8");
+        fnRow1Map.put(R.id.O_Button, "F9");
+        fnRow1Map.put(R.id.P_Button, "F10");
+    }
+
+    /**
+     * Map Row 2 letter buttons (A-L) to special keys when FN is active.
+     * A=F11, S=F12, then remaining map to other navigation keys.
+     */
+    private static final Map<Integer, String> fnRow2Map = new HashMap<>();
+    static {
+        fnRow2Map.put(R.id.A_Button, "F11");
+        fnRow2Map.put(R.id.S_Button, "F12");
+        fnRow2Map.put(R.id.D_Button, "PrtSc");
+        fnRow2Map.put(R.id.F_Button, "ScrLk");
+        fnRow2Map.put(R.id.G_Button, "Pause");
+        fnRow2Map.put(R.id.H_Button, "Ins");
+        fnRow2Map.put(R.id.J_Button, "Home");
+        fnRow2Map.put(R.id.K_Button, "PgUp");
+        fnRow2Map.put(R.id.L_Button, "Delete");
+    }
+
+    /**
+     * Map Row 3 letter buttons (Z-M, /) to special keys when FN is active.
+     */
+    private static final Map<Integer, String> fnRow3Map = new HashMap<>();
+    static {
+        fnRow3Map.put(R.id.Z_Button, "End");
+        fnRow3Map.put(R.id.X_Button, "PgDn");
+        fnRow3Map.put(R.id.C_Button, "DPAD_UP");
+        fnRow3Map.put(R.id.V_Button, "DPAD_DOWN");
+        fnRow3Map.put(R.id.B_Button, "DPAD_LEFT");
+        fnRow3Map.put(R.id.N_Button, "DPAD_RIGHT");
+        fnRow3Map.put(R.id.M_Button, "TAB");
+        fnRow3Map.put(R.id.Key_Slash, "Esc");
+    }
+
+    /**
+     * Check if an id is an FN-layer mapped button.
+     */
+    private static boolean isFnLayerKey(int systemButtonId) {
+        return fnRow1Map.containsKey(systemButtonId)
+            || fnRow2Map.containsKey(systemButtonId)
+            || fnRow3Map.containsKey(systemButtonId);
+    }
+
+    /**
+     * Get FN layer mapping for a button.
+     */
+    private static String getFnLayerKey(int systemButtonId) {
+        if (fnRow1Map.containsKey(systemButtonId)) return fnRow1Map.get(systemButtonId);
+        if (fnRow2Map.containsKey(systemButtonId)) return fnRow2Map.get(systemButtonId);
+        if (fnRow3Map.containsKey(systemButtonId)) return fnRow3Map.get(systemButtonId);
+        return null;
     }
 
     private String getKey(int systemButtonId) {
-        // If FN is active and this is a Row 1 letter button, send number instead
-        if (KeyBoard_FN_Press_state && fnNumberMap.containsKey(systemButtonId)) {
-            return fnNumberMap.get(systemButtonId);
+        // If FN is active and this is an FN-layer key, send the FN mapping
+        if (KeyBoard_FN_Press_state && isFnLayerKey(systemButtonId)) {
+            return getFnLayerKey(systemButtonId);
         }
 
         String[] mapping = currentMapping.getKeyMappings().get(systemButtonId);

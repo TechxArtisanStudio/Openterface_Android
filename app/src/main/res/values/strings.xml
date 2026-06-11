@@ -309,4 +309,13 @@
     <!-- WebRTC Server -->
     <string name="webrtc_server_title">WebRTC Server</string>
     <string name="webrtc_server_menu_item">WebRTC</string>
+
+    <!-- Target OS Configuration -->
+    <string name="target_os_title">选择目标操作系统</string>
+    <string name="target_os_windows">Windows (Win键)</string>
+    <string name="target_os_macos">macOS (Cmd键)</string>
+    <string name="target_os_linux">Linux (Super键)</string>
+    <string name="target_os_current">当前: %s</string>
+    <string name="target_os_setting_title">目标操作系统</string>
+    <string name="target_os_setting_desc">切换Win/Cmd/Super键标签</string>
 </resources>

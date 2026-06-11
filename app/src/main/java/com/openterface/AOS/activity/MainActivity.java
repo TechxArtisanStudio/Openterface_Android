@@ -70,6 +70,10 @@ import com.openterface.AOS.view.TouchPadView;
 import com.openterface.AOS.view.TouchPadHelpDialog;
 import com.openterface.AOS.view.MouseControlStripView;
 import com.openterface.AOS.KeyBoardClick.TouchPadSettings;
+import com.openterface.AOS.dialog.TargetOsPickerDialog;
+import com.openterface.AOS.manager.TargetOsManager;
+import com.openterface.AOS.manager.ThemeManager;
+import com.openterface.AOS.adapter.ThemeColorAdapter;
 import com.openterface.AOS.drawerLayout.DrawerLayoutDeal;
 import com.openterface.AOS.drawerLayout.ZoomLayoutDeal;
 import com.openterface.AOS.serial.CustomTouchListener;
@@ -353,6 +357,13 @@ public class MainActivity extends AppCompatActivity {
         webRtcConfig = new WebRtcConfig(this);
         webRtcInputRouter = new WebRtcInputRouter();
         bindWebRtcService();
+
+        // Initialize Target OS Manager
+        TargetOsManager.getInstance().initialize(this);
+
+        // Initialize Theme Manager
+        ThemeManager.getInstance().initialize(this);
+        ThemeManager.getInstance().applyTheme(this);
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
@@ -3290,6 +3301,52 @@ public class MainActivity extends AppCompatActivity {
             autoSaveSwitch.setOnCheckedChangeListener((buttonView, isChecked) ->
                 prefs.edit().putBoolean(KEY_AUTO_SAVE, isChecked).apply());
         }
+
+        // === Target OS Configuration ===
+        LinearLayout targetOsLayout = view.findViewById(R.id.settings_target_os_layout);
+        TextView targetOsValue = view.findViewById(R.id.settings_target_os_value);
+        if (targetOsLayout != null && targetOsValue != null) {
+            // Display current OS
+            targetOsValue.setText(TargetOsManager.getInstance().getCurrentOs().getName());
+
+            targetOsLayout.setOnClickListener(v -> {
+                TargetOsPickerDialog dialog = new TargetOsPickerDialog(MainActivity.this);
+                dialog.setOnTargetOsSelectedListener(os -> {
+                    TargetOsManager.getInstance().setCurrentOs(MainActivity.this, os);
+                    targetOsValue.setText(os.getName());
+                    // Update Win key label if keyboard is initialized
+                    if (KeyBoardSystem.getInstance() != null) {
+                        KeyBoardSystem.getInstance().applyTargetOsLabels();
+                    }
+                });
+                dialog.show();
+            });
+        }
+
+        // === Theme Configuration ===
+        LinearLayout themeColorLayout = view.findViewById(R.id.settings_theme_color_layout);
+        TextView themeColorValue = view.findViewById(R.id.settings_theme_color_value);
+        if (themeColorLayout != null && themeColorValue != null) {
+            // Display current theme color
+            themeColorValue.setText(ThemeManager.getFamilyDisplayName(ThemeManager.getInstance().getThemeFamily()));
+
+            themeColorLayout.setOnClickListener(v -> {
+                showThemePickerDialog();
+            });
+        }
+
+        LinearLayout themeModeLayout = view.findViewById(R.id.settings_theme_mode_layout);
+        TextView themeModeValue = view.findViewById(R.id.settings_theme_mode_value);
+        if (themeModeLayout != null && themeModeValue != null) {
+            // Display current theme mode
+            String mode = ThemeManager.getInstance().getThemeMode();
+            String modeDisplay = getThemeModeDisplay(mode);
+            themeModeValue.setText(modeDisplay);
+
+            themeModeLayout.setOnClickListener(v -> {
+                showThemeModeDialog();
+            });
+        }
     }
 
     private String getScrollSpeedLabel(int progress) {
@@ -3318,5 +3375,102 @@ public class MainActivity extends AppCompatActivity {
 
     public int getScrollSpeed() {
         return getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).getInt(KEY_SCROLL_SPEED, 50);
+    }
+
+    private void showThemePickerDialog() {
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        builder.setTitle("选择主题颜色");
+
+        String[] families = ThemeManager.getAllFamilies();
+        String[] displayNames = new String[families.length];
+        for (int i = 0; i < families.length; i++) {
+            displayNames[i] = ThemeManager.getFamilyDisplayName(families[i]);
+        }
+
+        String currentFamily = ThemeManager.getInstance().getThemeFamily();
+        int selectedIndex = 0;
+        for (int i = 0; i < families.length; i++) {
+            if (families[i].equals(currentFamily)) {
+                selectedIndex = i;
+                break;
+            }
+        }
+
+        builder.setSingleChoiceItems(displayNames, selectedIndex, (dialog, which) -> {
+            String selectedFamily = families[which];
+            ThemeManager.getInstance().setThemeFamily(this, selectedFamily);
+            ThemeManager.getInstance().applyTheme(this);
+
+            // 更新设置界面的显示
+            android.view.View settingsView = findViewById(R.id.settings_module_root);
+            if (settingsView != null) {
+                TextView themeValue = settingsView.findViewById(R.id.settings_theme_value);
+                if (themeValue != null) {
+                    themeValue.setText(displayNames[which]);
+                }
+            }
+
+            dialog.dismiss();
+        });
+
+        builder.setNegativeButton("取消", (dialog, which) -> dialog.dismiss());
+
+        builder.show();
+    }
+
+    private void showThemeModeDialog() {
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        builder.setTitle("选择显示模式");
+
+        String[] modes = {ThemeManager.MODE_LIGHT, ThemeManager.MODE_DARK, ThemeManager.MODE_SYSTEM};
+        String[] displayNames = {"浅色模式", "深色模式", "跟随系统"};
+
+        String currentMode = ThemeManager.getInstance().getThemeMode();
+        int selectedIndex = 0;
+        for (int i = 0; i < modes.length; i++) {
+            if (modes[i].equals(currentMode)) {
+                selectedIndex = i;
+                break;
+            }
+        }
+
+        builder.setSingleChoiceItems(displayNames, selectedIndex, (dialog, which) -> {
+            String selectedMode = modes[which];
+            ThemeManager.getInstance().setThemeMode(this, selectedMode);
+
+            // 更新设置界面的显示
+            android.view.View settingsView = findViewById(R.id.settings_module_root);
+            if (settingsView != null) {
+                TextView themeValue = settingsView.findViewById(R.id.settings_theme_value);
+                if (themeValue != null) {
+                    themeValue.setText(displayNames[which]);
+                }
+            }
+
+            // 应用主题模式变化（需要重新创建Activity）
+            recreate();
+
+            dialog.dismiss();
+        });
+
+        builder.setNegativeButton("取消", (dialog, which) -> dialog.dismiss());
+
+        builder.show();
+    }
+
+    private String getThemeModeDisplay(String mode) {
+        if (mode == null) {
+            return "跟随系统";
+        }
+        switch (mode) {
+            case ThemeManager.MODE_LIGHT:
+                return "浅色模式";
+            case ThemeManager.MODE_DARK:
+                return "深色模式";
+            case ThemeManager.MODE_SYSTEM:
+                return "跟随系统";
+            default:
+                return "跟随系统";
+        }
     }
 }

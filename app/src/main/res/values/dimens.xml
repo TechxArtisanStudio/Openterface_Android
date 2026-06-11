@@ -5,6 +5,6 @@
     <!-- Portrait Keyboard Dimensions -->
     <dimen name="keyboard_outer_padding_top">4dp</dimen>
     <dimen name="keyboard_outer_padding_bottom">4dp</dimen>
-    <dimen name="keyboard_key_margin_horizontal">1dp</dimen>
+    <dimen name="keyboard_key_margin_horizontal">2dp</dimen>
     <dimen name="keyboard_key_margin_vertical">2dp</dimen>
 </resources>
