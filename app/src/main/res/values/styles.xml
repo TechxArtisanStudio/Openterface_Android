@@ -125,4 +125,33 @@
         <item name="android:paddingBottom">4dp</item>
     </style>
 
+    <!-- Keycap style for mouse buttons -->
+    <style name="KeycapStyle.MouseButton" parent="">
+        <item name="android:background">@drawable/key_background</item>
+        <item name="android:textColor">@color/key_text</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:layout_margin">2dp</item>
+    </style>
+
+    <!-- Keycap style for keyboard keys -->
+    <style name="KeycapStyle.KeyboardKey" parent="">
+        <item name="android:background">@drawable/key_background</item>
+        <item name="android:textColor">@color/key_text</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:layout_margin">1dp</item>
+    </style>
+
+    <!-- Keycap style for modifier keys (Ctrl, Alt, etc.) -->
+    <style name="KeycapStyle.ModifierKey" parent="KeycapStyle.KeyboardKey">
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <!-- Style for scroll strip chevron icons -->
+    <style name="ScrollStripChevron" parent="">
+        <item name="android:tint">@color/km_touchpad_scroll_strip_chevron</item>
+        <item name="android:scaleType">centerInside</item>
+    </style>
+
 </resources>

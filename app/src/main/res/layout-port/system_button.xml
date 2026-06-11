@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Portrait Mode Keyboard - System Panel (参考 KeyCMD 布局) -->
-<!-- 按键高度从 56dp 减少到 48dp，modifier 键使用更大权重 -->
+<!-- Portrait Mode Keyboard - System Panel (参照 KeyCMD 紧凑4行布局) -->
+<!-- Row 1: QWERTYUIOP (FN激活时切换为 1234567890) -->
+<!-- Row 2: Tab + ASDFGHJKL + Backspace -->
+<!-- Row 3: Shift + ZXCVBNM/ + Enter -->
+<!-- Row 4: FN + Ctrl + Space + Alt + Win -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/Fragment_KeyBoard_System"
@@ -11,139 +14,13 @@
     android:paddingVertical="@dimen/keyboard_outer_padding_bottom"
     android:visibility="visible">
 
-    <!-- Row 1: 数字行 (14个按键: ` 1 2 3 4 5 6 7 8 9 0 - = Backspace) -->
+    <!-- Row 1: 10个字母键 Q W E R T Y U I O P (FN激活时切换为数字) -->
     <LinearLayout
+        android:id="@+id/keyboard_row1"
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:orientation="horizontal"
         android:layout_marginBottom="@dimen/keyboard_key_margin_vertical">
-
-        <android.widget.Button android:id="@+id/Key_Tilde"
-            android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1" android:text="@string/Key_Tilde"
-            android:textColor="@color/black" android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
-
-        <android.widget.Button android:id="@+id/One_Sigh_Button"
-            android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1" android:text="@string/One_Sigh_Button"
-            android:textColor="@color/black" android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
-
-        <android.widget.Button android:id="@+id/Two_At_Button"
-            android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1" android:text="@string/Two_At_Button"
-            android:textColor="@color/black" android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
-
-        <android.widget.Button android:id="@+id/Three_Pound_Button"
-            android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1" android:text="@string/Three_Pound_Button"
-            android:textColor="@color/black" android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
-
-        <android.widget.Button android:id="@+id/Four_Dollar_Button"
-            android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1" android:text="@string/Four_Dollar_Button"
-            android:textColor="@color/black" android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
-
-        <android.widget.Button android:id="@+id/Five_Percent_Button"
-            android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1" android:text="@string/Five_Percent_Button"
-            android:textColor="@color/black" android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
-
-        <android.widget.Button android:id="@+id/Six_Caret_Button"
-            android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1" android:text="@string/Six_Caret_Button"
-            android:textColor="@color/black" android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
-
-        <android.widget.Button android:id="@+id/Seven_Ampersand_Button"
-            android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1" android:text="@string/Seven_Ampersand_Button"
-            android:textColor="@color/black" android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
-
-        <android.widget.Button android:id="@+id/Eight_Asterisk_Button"
-            android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1" android:text="@string/Eight_Asterisk_Button"
-            android:textColor="@color/black" android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
-
-        <android.widget.Button android:id="@+id/Nine_Left_Parenthesis_Button"
-            android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1" android:text="@string/Nine_Left_Parenthesis_Button"
-            android:textColor="@color/black" android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
-
-        <android.widget.Button android:id="@+id/Zero_Right_Parenthesis_Button"
-            android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1" android:text="@string/Zero_Right_Parenthesis_Button"
-            android:textColor="@color/black" android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
-
-        <android.widget.Button android:id="@+id/Key_Minus"
-            android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1" android:text="@string/Key_Minus"
-            android:textColor="@color/black" android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
-
-        <android.widget.Button android:id="@+id/Key_Equals"
-            android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1" android:text="@string/Key_Equals"
-            android:textColor="@color/black" android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
-
-        <ImageButton android:id="@+id/Key_Backspace"
-            android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1.3" android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-            android:src="@drawable/backspace" android:scaleType="centerInside"
-            android:padding="4dp" tools:ignore="ContentDescription"/>
-    </LinearLayout>
-
-    <!-- Row 2: QWERTY 第一行 (14个按键: Tab q w e r t y u i o p [ ] \) -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:orientation="horizontal"
-        android:layout_marginBottom="@dimen/keyboard_key_margin_vertical">
-
-        <android.widget.Button android:id="@+id/Key_Tab"
-            android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1.2" android:text="@string/Key_Tab"
-            android:textColor="@color/black" android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button android:id="@+id/Q_Button"
             android:layout_width="0dp" android:layout_height="match_parent"
@@ -224,42 +101,18 @@
             android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
             android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
             android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
-
-        <android.widget.Button android:id="@+id/Key_LeftBracket"
-            android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1" android:text="@string/Key_LeftBracket"
-            android:textColor="@color/black" android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
-
-        <android.widget.Button android:id="@+id/Key_RightBracket"
-            android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1" android:text="@string/Key_RightBracket"
-            android:textColor="@color/black" android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
-
-        <android.widget.Button android:id="@+id/Key_Backslash"
-            android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1.2" android:text="@string/Key_Backslash"
-            android:textColor="@color/black" android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
     </LinearLayout>
 
-    <!-- Row 3: QWERTY 第二行 (13个按键: Caps A S D F G H J K L ; ' Enter) -->
+    <!-- Row 2: Tab(weight=1.5) + A S D F G H J K L + Backspace(weight=1.5) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:orientation="horizontal"
         android:layout_marginBottom="@dimen/keyboard_key_margin_vertical">
 
-        <android.widget.Button android:id="@+id/Key_Caps"
+        <android.widget.Button android:id="@+id/Key_Tab"
             android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1.5" android:text="@string/Key_Caps"
+            android:layout_weight="1.5" android:text="@string/Key_Tab"
             android:textColor="@color/black" android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
             android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
@@ -337,31 +190,15 @@
             android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
             android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
 
-        <android.widget.Button android:id="@+id/Key_Semicolon"
+        <ImageButton android:id="@+id/Key_Backspace"
             android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1" android:text="@string/Key_Semicolon"
-            android:textColor="@color/black" android:background="@drawable/button_background"
+            android:layout_weight="1.5" android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
-
-        <android.widget.Button android:id="@+id/Key_Apostrophe"
-            android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1" android:text="@string/Key_Apostrophe"
-            android:textColor="@color/black" android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
-
-        <ImageButton android:id="@+id/Enter_Button"
-            android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="2" android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-            android:src="@drawable/arrow_return_left" android:scaleType="centerInside"
+            android:src="@drawable/backspace" android:scaleType="centerInside"
             android:padding="4dp" tools:ignore="ContentDescription"/>
     </LinearLayout>
 
-    <!-- Row 4: QWERTY 第三行 (12个按键: Shift z x c v b n m , . / Shift) -->
+    <!-- Row 3: Shift(weight=1.5) + Z X C V B N M / + Enter(weight=1.5) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="48dp"
@@ -370,7 +207,7 @@
 
         <android.widget.Button android:id="@+id/Key_LeftShift"
             android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="2" android:text="@string/Key_LeftShift"
+            android:layout_weight="1.5" android:text="@string/Key_LeftShift"
             android:textColor="@color/black" android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
             android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
@@ -432,22 +269,6 @@
             android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
             android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
 
-        <android.widget.Button android:id="@+id/Key_Comma"
-            android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1" android:text="@string/Key_Comma"
-            android:textColor="@color/black" android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
-
-        <android.widget.Button android:id="@+id/Key_Period"
-            android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1" android:text="@string/Key_Period"
-            android:textColor="@color/black" android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
-
         <android.widget.Button android:id="@+id/Key_Slash"
             android:layout_width="0dp" android:layout_height="match_parent"
             android:layout_weight="1" android:text="@string/Key_Slash"
@@ -456,40 +277,31 @@
             android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
             android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
 
-        <android.widget.Button android:id="@+id/Key_RightShift"
+        <ImageButton android:id="@+id/Enter_Button"
             android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="2" android:text="@string/Key_RightShift"
-            android:textColor="@color/black" android:background="@drawable/button_background"
+            android:layout_weight="1.5" android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+            android:src="@drawable/arrow_return_left" android:scaleType="centerInside"
+            android:padding="4dp" tools:ignore="ContentDescription"/>
     </LinearLayout>
 
-    <!-- Row 5: 底行 (modifier 键 + 空格 + 方向键) -->
+    <!-- Row 4: FN(weight=1) + Ctrl(weight=1) + Space(weight=4) + Alt(weight=1) + Win(weight=1) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:orientation="horizontal">
 
+        <android.widget.Button android:id="@+id/Key_FN"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/Key_FN"
+            android:textColor="@color/black" android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
         <android.widget.Button android:id="@+id/Key_Ctrl"
             android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1.3" android:text="@string/Key_Ctrl"
-            android:textColor="@color/black" android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
-
-        <android.widget.Button android:id="@+id/Key_Win"
-            android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1.3" android:text="@string/Key_Win"
-            android:textColor="@color/black" android:background="@drawable/button_background"
-            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
-
-        <android.widget.Button android:id="@+id/Key_Alt"
-            android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1.3" android:text="@string/Key_Alt"
+            android:layout_weight="1" android:text="@string/Key_Ctrl"
             android:textColor="@color/black" android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
             android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
@@ -503,75 +315,21 @@
             android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
             android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
 
-        <android.widget.Button android:id="@+id/Key_AltGr"
+        <android.widget.Button android:id="@+id/Key_Alt"
             android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1.3" android:text="@string/Key_AltGr"
+            android:layout_weight="1" android:text="@string/Key_Alt"
             android:textColor="@color/black" android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
             android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
             android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
 
-        <android.widget.Button android:id="@+id/Key_CtrlGr"
+        <android.widget.Button android:id="@+id/Key_Win"
             android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="1.3" android:text="@string/Key_CtrlGr"
+            android:layout_weight="1" android:text="@string/Key_Win"
             android:textColor="@color/black" android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
             android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
             android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
-
-        <!-- 方向键区域 -->
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="3"
-            android:orientation="vertical"
-            android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal">
-
-            <!-- 上行：↑ -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:orientation="horizontal">
-                <View android:layout_width="0dp" android:layout_height="match_parent"
-                    android:layout_weight="1" />
-                <ImageButton android:id="@+id/Key_Up"
-                    android:layout_width="0dp" android:layout_height="match_parent"
-                    android:layout_weight="1" android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-                    android:src="@drawable/arrow_up" android:scaleType="centerInside"
-                    android:padding="2dp" tools:ignore="ContentDescription"/>
-                <View android:layout_width="0dp" android:layout_height="match_parent"
-                    android:layout_weight="1" />
-            </LinearLayout>
-
-            <!-- 下行：← ↓ → -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:orientation="horizontal"
-                android:layout_marginTop="@dimen/keyboard_key_margin_vertical">
-                <ImageButton android:id="@+id/Key_Left"
-                    android:layout_width="0dp" android:layout_height="match_parent"
-                    android:layout_weight="1" android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-                    android:src="@drawable/arrow_left" android:scaleType="centerInside"
-                    android:padding="2dp" tools:ignore="ContentDescription"/>
-                <ImageButton android:id="@+id/Key_Down"
-                    android:layout_width="0dp" android:layout_height="match_parent"
-                    android:layout_weight="1" android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-                    android:src="@drawable/arrow_down" android:scaleType="centerInside"
-                    android:padding="2dp" tools:ignore="ContentDescription"/>
-                <ImageButton android:id="@+id/Key_Right"
-                    android:layout_width="0dp" android:layout_height="match_parent"
-                    android:layout_weight="1" android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-                    android:src="@drawable/arrow_right" android:scaleType="centerInside"
-                    android:padding="2dp" tools:ignore="ContentDescription"/>
-            </LinearLayout>
-        </LinearLayout>
     </LinearLayout>
 
 </LinearLayout>

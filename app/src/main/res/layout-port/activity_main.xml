@@ -15,22 +15,22 @@
     tools:context="com.openterface.AOS.activity.MainActivity"
     android:background="@android:color/black">
 
-    <!-- Zone 1: Shortcut Strip -->
+    <!-- Zone 1: Shortcut Strip (KeyCMD style) -->
     <LinearLayout
         android:id="@+id/shortcut_strip"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="52dp"
         android:orientation="horizontal"
         android:background="#1A1A1A"
-        android:paddingHorizontal="4dp"
+        android:paddingHorizontal="6dp"
         android:gravity="center_vertical">
 
         <Spinner
             android:id="@+id/shortcut_profile_spinner"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_marginEnd="4dp"
-            android:backgroundTint="#FFFFFF"
+            android:layout_height="36dp"
+            android:layout_marginEnd="6dp"
+            android:backgroundTint="#CCCCCC"
             android:theme="@style/Theme.AppCompat" />
 
         <HorizontalScrollView
@@ -49,95 +49,87 @@
 
                 <ImageButton
                     android:id="@+id/shortcut_esc"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginHorizontal="2dp"
-                    android:background="@drawable/button_background"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginHorizontal="3dp"
+                    android:background="@drawable/shortcut_button_background"
                     android:src="@drawable/baseline_keyboard_24"
                     android:scaleType="centerInside"
                     android:contentDescription="Esc"
-                    android:padding="8dp" />
+                    android:padding="10dp"
+                    android:tint="#FFFFFF" />
 
                 <android.widget.Button
                     android:id="@+id/shortcut_ctrl_c"
                     android:layout_width="wrap_content"
-                    android:layout_height="48dp"
-                    android:layout_marginHorizontal="2dp"
+                    android:layout_height="40dp"
+                    android:layout_marginHorizontal="3dp"
                     android:text="Ctrl+C"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:autoSizeTextType="uniform"
-                    android:autoSizeMinTextSize="8sp"
-                    android:autoSizeMaxTextSize="12sp"
-                    android:autoSizeStepGranularity="1sp" />
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/shortcut_button_background"
+                    android:paddingHorizontal="12dp" />
 
                 <android.widget.Button
                     android:id="@+id/shortcut_ctrl_v"
                     android:layout_width="wrap_content"
-                    android:layout_height="48dp"
-                    android:layout_marginHorizontal="2dp"
+                    android:layout_height="40dp"
+                    android:layout_marginHorizontal="3dp"
                     android:text="Ctrl+V"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:autoSizeTextType="uniform"
-                    android:autoSizeMinTextSize="8sp"
-                    android:autoSizeMaxTextSize="12sp"
-                    android:autoSizeStepGranularity="1sp" />
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/shortcut_button_background"
+                    android:paddingHorizontal="12dp" />
 
                 <android.widget.Button
                     android:id="@+id/shortcut_ctrl_a"
                     android:layout_width="wrap_content"
-                    android:layout_height="48dp"
-                    android:layout_marginHorizontal="2dp"
+                    android:layout_height="40dp"
+                    android:layout_marginHorizontal="3dp"
                     android:text="Ctrl+A"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:autoSizeTextType="uniform"
-                    android:autoSizeMinTextSize="8sp"
-                    android:autoSizeMaxTextSize="12sp"
-                    android:autoSizeStepGranularity="1sp" />
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/shortcut_button_background"
+                    android:paddingHorizontal="12dp" />
 
                 <android.widget.Button
                     android:id="@+id/shortcut_ctrl_z"
                     android:layout_width="wrap_content"
-                    android:layout_height="48dp"
-                    android:layout_marginHorizontal="2dp"
+                    android:layout_height="40dp"
+                    android:layout_marginHorizontal="3dp"
                     android:text="Ctrl+Z"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:autoSizeTextType="uniform"
-                    android:autoSizeMinTextSize="8sp"
-                    android:autoSizeMaxTextSize="12sp"
-                    android:autoSizeStepGranularity="1sp" />
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/shortcut_button_background"
+                    android:paddingHorizontal="12dp" />
 
                 <android.widget.Button
                     android:id="@+id/shortcut_ctrl_s"
                     android:layout_width="wrap_content"
-                    android:layout_height="48dp"
-                    android:layout_marginHorizontal="2dp"
+                    android:layout_height="40dp"
+                    android:layout_marginHorizontal="3dp"
                     android:text="Ctrl+S"
-                    android:textColor="@color/black"
-                    android:background="@drawable/button_background"
-                    android:theme="@style/ButtonTheme"
-                    android:autoSizeTextType="uniform"
-                    android:autoSizeMinTextSize="8sp"
-                    android:autoSizeMaxTextSize="12sp"
-                    android:autoSizeStepGranularity="1sp" />
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/shortcut_button_background"
+                    android:paddingHorizontal="12dp" />
 
                 <ImageButton
                     android:id="@+id/shortcut_keyboard_settings"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginHorizontal="2dp"
-                    android:background="@drawable/button_background"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginHorizontal="3dp"
+                    android:background="@drawable/shortcut_button_background"
                     android:src="@drawable/baseline_settings_24"
                     android:scaleType="centerInside"
                     android:contentDescription="键盘设置"
-                    android:padding="8dp" />
+                    android:padding="10dp"
+                    android:tint="#FFFFFF" />
 
             </LinearLayout>
         </HorizontalScrollView>

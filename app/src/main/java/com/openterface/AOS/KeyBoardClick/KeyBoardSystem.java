@@ -60,10 +60,15 @@ public class KeyBoardSystem {
     private static boolean KeyBoard_ShIft_Press_state;
     private static boolean KeyBoard_Alt_Press_state;
     private static boolean KeyBoard_Win_Press_state;
+    private static boolean KeyBoard_FN_Press_state;  // FN key toggle state
     private final View[] SystemButtons;
 
     // Letter buttons that need case updates when Shift is toggled
     private static final List<Button> letterButtons = new ArrayList<>();
+    // Number buttons (Row 1) for FN layer switching
+    private static final List<Button> numberButtons = new ArrayList<>();
+    // The 10 letter buttons in Row 1 (Q-P) for FN layer switching
+    private static final List<Button> row1LetterButtons = new ArrayList<>();
     private static KeyBoardSystem instance;
 
     private static KeyboardSettingsManager settingsManager;
@@ -103,25 +108,18 @@ public class KeyBoardSystem {
         };
         for (Button b : letters) { if (b != null) letterButtons.add(b); }
 
-        SystemButtons = new View[]{
-            // Row 1: Number row
-            rootView.findViewById(R.id.Key_Tilde),
-            rootView.findViewById(R.id.One_Sigh_Button),
-            rootView.findViewById(R.id.Two_At_Button),
-            rootView.findViewById(R.id.Three_Pound_Button),
-            rootView.findViewById(R.id.Four_Dollar_Button),
-            rootView.findViewById(R.id.Five_Percent_Button),
-            rootView.findViewById(R.id.Six_Caret_Button),
-            rootView.findViewById(R.id.Seven_Ampersand_Button),
-            rootView.findViewById(R.id.Eight_Asterisk_Button),
-            rootView.findViewById(R.id.Nine_Left_Parenthesis_Button),
-            rootView.findViewById(R.id.Zero_Right_Parenthesis_Button),
-            rootView.findViewById(R.id.Key_Minus),
-            rootView.findViewById(R.id.Key_Equals),
-            rootView.findViewById(R.id.Key_Backspace),
+        // Row 1 letter buttons (Q-P) for FN layer switching
+        Button[] row1Letters = new Button[]{
+                rootView.findViewById(R.id.Q_Button), rootView.findViewById(R.id.W_Button),
+                rootView.findViewById(R.id.E_Button), rootView.findViewById(R.id.R_Button),
+                rootView.findViewById(R.id.T_Button), rootView.findViewById(R.id.Y_Button),
+                rootView.findViewById(R.id.U_Button), rootView.findViewById(R.id.I_Button),
+                rootView.findViewById(R.id.O_Button), rootView.findViewById(R.id.P_Button),
+        };
+        for (Button b : row1Letters) { if (b != null) row1LetterButtons.add(b); }
 
-            // Row 2: Q row
-            rootView.findViewById(R.id.Key_Tab),
+        SystemButtons = new View[]{
+            // Row 1: 10 letters Q-P (or numbers when FN active)
             rootView.findViewById(R.id.Q_Button),
             rootView.findViewById(R.id.W_Button),
             rootView.findViewById(R.id.E_Button),
@@ -132,12 +130,9 @@ public class KeyBoardSystem {
             rootView.findViewById(R.id.I_Button),
             rootView.findViewById(R.id.O_Button),
             rootView.findViewById(R.id.P_Button),
-            rootView.findViewById(R.id.Key_LeftBracket),
-            rootView.findViewById(R.id.Key_RightBracket),
-            rootView.findViewById(R.id.Key_Backslash),
 
-            // Row 3: A row
-            rootView.findViewById(R.id.Key_Caps),
+            // Row 2: Tab + A-L + Backspace
+            rootView.findViewById(R.id.Key_Tab),
             rootView.findViewById(R.id.A_Button),
             rootView.findViewById(R.id.S_Button),
             rootView.findViewById(R.id.D_Button),
@@ -147,11 +142,9 @@ public class KeyBoardSystem {
             rootView.findViewById(R.id.J_Button),
             rootView.findViewById(R.id.K_Button),
             rootView.findViewById(R.id.L_Button),
-            rootView.findViewById(R.id.Key_Semicolon),
-            rootView.findViewById(R.id.Key_Apostrophe),
-            rootView.findViewById(R.id.Enter_Button),
+            rootView.findViewById(R.id.Key_Backspace),
 
-            // Row 4: Z row
+            // Row 3: Shift + Z-M / + Enter
             rootView.findViewById(R.id.Key_LeftShift),
             rootView.findViewById(R.id.Z_Button),
             rootView.findViewById(R.id.X_Button),
@@ -160,22 +153,15 @@ public class KeyBoardSystem {
             rootView.findViewById(R.id.B_Button),
             rootView.findViewById(R.id.N_Button),
             rootView.findViewById(R.id.M_Button),
-            rootView.findViewById(R.id.Key_Comma),
-            rootView.findViewById(R.id.Key_Period),
             rootView.findViewById(R.id.Key_Slash),
-            rootView.findViewById(R.id.Key_RightShift),
+            rootView.findViewById(R.id.Enter_Button),
 
-            // Row 5: Bottom row
+            // Row 4: FN + Ctrl + Space + Alt + Win
+            rootView.findViewById(R.id.Key_FN),
             rootView.findViewById(R.id.Key_Ctrl),
-            rootView.findViewById(R.id.Key_Win),
-            rootView.findViewById(R.id.Key_Alt),
             rootView.findViewById(R.id.Space_Button),
-            rootView.findViewById(R.id.Key_Up),
-            rootView.findViewById(R.id.Key_AltGr),
-            rootView.findViewById(R.id.Key_CtrlGr),
-            rootView.findViewById(R.id.Key_Left),
-            rootView.findViewById(R.id.Key_Down),
-            rootView.findViewById(R.id.Key_Right),
+            rootView.findViewById(R.id.Key_Alt),
+            rootView.findViewById(R.id.Key_Win),
         };
 
         languageMappings.put("us", new KeyMapConfig_Us());
@@ -190,6 +176,29 @@ public class KeyBoardSystem {
     public static KeyBoardSystem getInstance() { return instance; }
 
     /**
+     * Refresh Row 1 buttons based on FN state.
+     * When FN is active, show numbers 1-0; otherwise show letters Q-P.
+     */
+    public static void refreshRow1Buttons() {
+        if (instance == null) return;
+
+        String[] numberLabels = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0"};
+        String[] letterLabels = {"Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"};
+
+        for (int i = 0; i < row1LetterButtons.size() && i < 10; i++) {
+            Button btn = row1LetterButtons.get(i);
+            if (btn != null) {
+                if (KeyBoard_FN_Press_state) {
+                    btn.setText(numberLabels[i]);
+                } else {
+                    // Apply shift state for letters
+                    btn.setText(KeyBoard_ShIft_Press_state ? letterLabels[i] : letterLabels[i].toLowerCase());
+                }
+            }
+        }
+    }
+
+    /**
      * Refresh all letter button labels based on current Shift state.
      * Called when Shift is pressed/released/locked.
      */
@@ -201,6 +210,8 @@ public class KeyBoardSystem {
                 btn.setText(KeyBoard_ShIft_Press_state ? mapping[1] : mapping[0]);
             }
         }
+        // Also refresh Row 1 buttons when Shift changes
+        refreshRow1Buttons();
     }
 
     /**
@@ -229,6 +240,15 @@ public class KeyBoardSystem {
 
     public static void KeyBoard_Win_Press(Boolean KeyBoard_Win_Press){
         KeyBoard_Win_Press_state = KeyBoard_Win_Press;
+    }
+
+    public static void KeyBoard_FN_Press(Boolean KeyBoard_FN_Press){
+        KeyBoard_FN_Press_state = KeyBoard_FN_Press;
+        refreshRow1Buttons();
+    }
+
+    public static boolean isFnActive() {
+        return KeyBoard_FN_Press_state;
     }
 
     public static void setKeyboardLanguage(String language) {
@@ -279,10 +299,16 @@ public class KeyBoardSystem {
             final boolean[] isKeyPressed = {false};
             final String keyLabel = getViewLabel(view);
 
+            // Check if this is the FN toggle key
+            boolean isFn = isFnView(view);
+
             // Check if this is a modifier key in the keyboard layout
             boolean isModifier = isModifierView(view);
 
-            if (isModifier) {
+            if (isFn) {
+                // FN key: toggle behavior with visual feedback
+                setupFnButton(view);
+            } else if (isModifier) {
                 // Modifier key: use ModifierKeyHelper for press feedback + long-press toggle
                 setupModifierButton(view);
             } else {
@@ -366,6 +392,13 @@ public class KeyBoardSystem {
     }
 
     /**
+     * Check if a view is the FN toggle key.
+     */
+    private boolean isFnView(View v) {
+        return v.getId() == R.id.Key_FN;
+    }
+
+    /**
      * Get display label for a modifier key by its view ID.
      */
     private String getModifierLabel(int id) {
@@ -374,6 +407,47 @@ public class KeyBoardSystem {
         if (id == R.id.Key_Alt || id == R.id.Key_AltGr) return "Alt";
         if (id == R.id.Key_LeftShift || id == R.id.Key_RightShift) return "Shift";
         return "";
+    }
+
+    /**
+     * Set up the FN toggle key button.
+     * Tap to toggle FN mode on/off with visual highlight.
+     */
+    private void setupFnButton(View v) {
+        final boolean[] isFnActive = {KeyBoard_FN_Press_state};
+        final String fnLabel = "FN";
+
+        // Initial visual state if FN is already active
+        if (isFnActive[0]) {
+            v.setBackgroundResource(R.drawable.press_button_background);
+        }
+
+        v.setOnTouchListener((view, event) -> {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    playKeyFeedback(view);
+                    showKeyPreview(view, fnLabel);
+                    return true;
+
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    if (keyPreviewPopup != null) {
+                        keyPreviewPopup.dismiss();
+                    }
+                    // Toggle FN state
+                    isFnActive[0] = !isFnActive[0];
+                    KeyBoard_FN_Press(isFnActive[0]);
+
+                    // Update visual state
+                    if (isFnActive[0]) {
+                        view.setBackgroundResource(R.drawable.press_button_background);
+                    } else {
+                        view.setBackgroundResource(R.drawable.nopress_button_background);
+                    }
+                    return true;
+            }
+            return false;
+        });
     }
 
     /**
@@ -506,7 +580,30 @@ public class KeyBoardSystem {
         }
     }
 
+    /**
+     * Map a Row 1 letter button (Q-P) to its corresponding number when FN is active.
+     * Q→1, W→2, E→3, R→4, T→5, Y→6, U→7, I→8, O→9, P→0
+     */
+    private static final Map<Integer, String> fnNumberMap = new HashMap<>();
+    static {
+        fnNumberMap.put(R.id.Q_Button, "1");
+        fnNumberMap.put(R.id.W_Button, "2");
+        fnNumberMap.put(R.id.E_Button, "3");
+        fnNumberMap.put(R.id.R_Button, "4");
+        fnNumberMap.put(R.id.T_Button, "5");
+        fnNumberMap.put(R.id.Y_Button, "6");
+        fnNumberMap.put(R.id.U_Button, "7");
+        fnNumberMap.put(R.id.I_Button, "8");
+        fnNumberMap.put(R.id.O_Button, "9");
+        fnNumberMap.put(R.id.P_Button, "0");
+    }
+
     private String getKey(int systemButtonId) {
+        // If FN is active and this is a Row 1 letter button, send number instead
+        if (KeyBoard_FN_Press_state && fnNumberMap.containsKey(systemButtonId)) {
+            return fnNumberMap.get(systemButtonId);
+        }
+
         String[] mapping = currentMapping.getKeyMappings().get(systemButtonId);
         if (mapping != null) {
             return KeyBoard_ShIft_Press_state ? mapping[1] : mapping[0];

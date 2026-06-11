@@ -1,199 +1,250 @@
-/**
- * @Title: BasicPortraitScrollStripView
- * @Package com.openterface.AOS.view
- * @Description: Vertical scroll strip for touchpad with up/down buttons
- * ========================================================================== *
- *                                                                            *
- *    This file is part of the Openterface Mini KVM App Android version       *
- *                                                                            *
- *    Copyright (C) 2024   <info@openterface.com>                             *
- *                                                                            *
- *    This program is free software: you can redistribute it and/or modify    *
- *    it under the terms of the GNU General Public License as published by    *
- *    the Free Software Foundation version 3.                                 *
- *                                                                            *
- *    This program is distributed in the hope that it will be useful, but     *
- *    WITHOUT ANY WARRANTY; without even the implied warranty of              *
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU        *
- *    General Public License for more details.                                *
- *                                                                            *
- *    You should have received a copy of the GNU General Public License       *
- *    along with this program. If not, see <http://www.gnu.org/licenses/>.    *
- *                                                                            *
- * ========================================================================== *
- */
 package com.openterface.AOS.view;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.Color;
-import android.graphics.drawable.GradientDrawable;
-import android.os.Handler;
-import android.os.Looper;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
+import android.view.HapticFeedbackConstants;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
+
+import androidx.annotation.Nullable;
+import androidx.appcompat.content.res.AppCompatResources;
+import androidx.core.graphics.drawable.DrawableCompat;
 
 import com.openterface.AOS.R;
 import com.openterface.AOS.target.MouseManager;
 
 /**
- * A vertical scroll strip with up/down buttons for mouse wheel control.
- * Supports long-press for continuous scrolling with acceleration.
+ * Vertical drag strip for continuous scroll wheel control.
+ * Drag up/down to accumulate scroll events based on finger movement distance.
  */
-public class BasicPortraitScrollStripView extends LinearLayout {
+public class BasicPortraitScrollStripView extends View {
 
     private static final String TAG = "BasicPortraitScrollStripView";
 
-    // Scroll acceleration constants
-    private static final long INITIAL_SCROLL_DELAY = 100;  // ms
-    private static final long MIN_SCROLL_DELAY = 30;       // ms
-    private static final long ACCELERATION_STEP = 10;      // ms reduction per step
+    // Pixels of finger travel per one wheel unit accumulated
+    private static final float STRIP_PIXELS_PER_WHEEL_UNIT = 5f;
 
-    private ImageView btnScrollUp;
-    private ImageView btnScrollDown;
-    private final Handler handler = new Handler(Looper.getMainLooper());
-    private Runnable scrollRunnable;
-    private boolean isScrolling = false;
-    private long scrollDelay = INITIAL_SCROLL_DELAY;
-    private int scrollDirection = 0;  // 1 = up, -1 = down
+    // Chevron sizing constants
+    private static final float CHEVRON_MAX_DP = 24f;
+    private static final float CHEVRON_EDGE_PAD_DP = 6f;
+    private static final float CHEVRON_MAX_WIDTH_FRACTION = 0.85f;
+    private static final int CHEVRON_MIN_SHRUNK_PX = 8;
 
-    public interface OnScrollListener {
-        void onScrollUp();
-        void onScrollDown();
+    // Chevron tint pulse constants
+    private static final long CHEVRON_PULSE_MS = 100L;
+    private static final float PULSE_BLEND_STRONG = 0.55f;
+    private static final float FINGER_DOWN_CHEVRON_BLEND = 0.12f;
+
+    // Chevron pulse direction: 0=idle, 1=wheel up, -1=wheel down
+    private int chevronPulseDir;
+    private final android.os.Handler pulseHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable clearChevronPulse = () -> {
+        chevronPulseDir = 0;
+        invalidate();
+    };
+
+    private boolean fingerDown;
+
+    public interface OnStripScrollListener {
+        void onStripScroll(int deltaX, int deltaY);
     }
 
-    private OnScrollListener scrollListener;
+    private OnStripScrollListener listener;
+
+    private final Paint dividerPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    @Nullable private Drawable chevronUp;
+    @Nullable private Drawable chevronDown;
+
+    private float lastY;
+    private float accumY;
 
     public BasicPortraitScrollStripView(Context context) {
         super(context);
-        init(context);
+        init();
     }
 
     public BasicPortraitScrollStripView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init(context);
+        init();
     }
 
     public BasicPortraitScrollStripView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init(context);
+        init();
     }
 
-    private void init(Context context) {
-        setOrientation(VERTICAL);
-        setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+    private void init() {
+        setClickable(true);
+        setFocusable(true);
 
-        // Create scroll up button
-        btnScrollUp = createScrollButton(context, R.drawable.baseline_keyboard_arrow_up_24, 1);
-        addView(btnScrollUp, new LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f));
+        // Setup divider paint
+        dividerPaint.setColor(getContext().getResources().getColor(R.color.divider));
+        dividerPaint.setStrokeWidth(Math.max(1f, getResources().getDisplayMetrics().density));
 
-        // Create scroll down button
-        btnScrollDown = createScrollButton(context, R.drawable.baseline_keyboard_arrow_down_24, -1);
-        addView(btnScrollDown, new LayoutParams(LayoutParams.MATCH_PARENT, 0, 1f));
-
-        applyBackgroundColor();
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
-    private ImageView createScrollButton(Context context, int iconRes, int direction) {
-        ImageView button = new ImageView(context);
-        button.setImageResource(iconRes);
-        button.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        button.setPadding(dpToPx(context, 8), dpToPx(context, 8), dpToPx(context, 8), dpToPx(context, 8));
-
-        button.setOnTouchListener(new OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                switch (event.getActionMasked()) {
-                    case MotionEvent.ACTION_DOWN:
-                        v.setAlpha(0.7f);
-                        scrollDirection = direction;
-                        scrollDelay = INITIAL_SCROLL_DELAY;
-                        isScrolling = true;
-                        // Send first scroll immediately
-                        sendScrollEvent(direction);
-                        // Start continuous scrolling
-                        startContinuousScroll();
-                        return true;
-
-                    case MotionEvent.ACTION_UP:
-                    case MotionEvent.ACTION_CANCEL:
-                        v.setAlpha(1.0f);
-                        stopContinuousScroll();
-                        return true;
-                }
-                return false;
-            }
-        });
-
-        return button;
-    }
-
-    private void startContinuousScroll() {
-        if (scrollRunnable != null) {
-            handler.removeCallbacks(scrollRunnable);
+        // Load chevron drawables
+        Drawable up = AppCompatResources.getDrawable(getContext(), R.drawable.km_basic_scroll_strip_chevron_up);
+        if (up != null) {
+            chevronUp = DrawableCompat.wrap(up.mutate());
         }
-
-        scrollRunnable = new Runnable() {
-            @Override
-            public void run() {
-                if (isScrolling) {
-                    sendScrollEvent(scrollDirection);
-                    // Accelerate: reduce delay over time
-                    scrollDelay = Math.max(MIN_SCROLL_DELAY, scrollDelay - ACCELERATION_STEP);
-                    handler.postDelayed(this, scrollDelay);
-                }
-            }
-        };
-
-        handler.postDelayed(scrollRunnable, INITIAL_SCROLL_DELAY);
-    }
-
-    private void stopContinuousScroll() {
-        isScrolling = false;
-        if (scrollRunnable != null) {
-            handler.removeCallbacks(scrollRunnable);
-            scrollRunnable = null;
+        Drawable down = AppCompatResources.getDrawable(getContext(), R.drawable.km_basic_scroll_strip_chevron_down);
+        if (down != null) {
+            chevronDown = DrawableCompat.wrap(down.mutate());
         }
     }
 
-    private void sendScrollEvent(int direction) {
-        if (scrollListener != null) {
-            if (direction > 0) {
-                scrollListener.onScrollUp();
-            } else {
-                scrollListener.onScrollDown();
-            }
-        } else {
-            // Default: use MouseManager to send scroll
-            float scrollValue = direction > 0 ? 1.0f : -1.0f;
-            MouseManager.handleTwoFingerPanSlideUpDown(scrollValue);
-        }
-    }
-
-    public void setOnScrollListener(OnScrollListener listener) {
-        this.scrollListener = listener;
-    }
-
-    private void applyBackgroundColor() {
-        GradientDrawable drawable = new GradientDrawable();
-        drawable.setShape(GradientDrawable.RECTANGLE);
-        drawable.setColor(Color.parseColor("#2A2A2A"));
-        drawable.setCornerRadius(dpToPx(getContext(), 4));
-        setBackground(drawable);
-    }
-
-    private int dpToPx(Context context, int dp) {
-        float density = context.getResources().getDisplayMetrics().density;
-        return Math.round(dp * density);
+    public void setOnStripScrollListener(OnStripScrollListener listener) {
+        this.listener = listener;
     }
 
     @Override
     protected void onDetachedFromWindow() {
+        pulseHandler.removeCallbacks(clearChevronPulse);
         super.onDetachedFromWindow();
-        stopContinuousScroll();
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        if (w != oldw || h != oldh) {
+            invalidate();
+        }
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+
+        // Draw divider on the left edge
+        float x = dividerPaint.getStrokeWidth() * 0.5f;
+        canvas.drawLine(x, 0, x, getHeight(), dividerPaint);
+
+        if (chevronUp == null || chevronDown == null) {
+            return;
+        }
+
+        int w = getWidth();
+        int h = getHeight();
+        if (w <= 0 || h <= 0) {
+            return;
+        }
+
+        // Determine chevron tint based on pulse state
+        int baseChevronTint = getContext().getResources().getColor(R.color.km_touchpad_scroll_strip_chevron);
+        int accent = getContext().getResources().getColor(R.color.primary);
+        int upTint = baseChevronTint;
+        int dnTint = baseChevronTint;
+
+        if (chevronPulseDir > 0) {
+            upTint = blendColors(baseChevronTint, accent, PULSE_BLEND_STRONG);
+        } else if (chevronPulseDir < 0) {
+            dnTint = blendColors(baseChevronTint, accent, PULSE_BLEND_STRONG);
+        } else if (fingerDown) {
+            upTint = blendColors(upTint, accent, FINGER_DOWN_CHEVRON_BLEND);
+            dnTint = blendColors(dnTint, accent, FINGER_DOWN_CHEVRON_BLEND);
+        }
+
+        DrawableCompat.setTint(chevronUp, upTint);
+        DrawableCompat.setTint(chevronDown, dnTint);
+
+        // Calculate chevron size
+        float density = getResources().getDisplayMetrics().density;
+        int pad = Math.round(CHEVRON_EDGE_PAD_DP * density);
+        int maxSize = Math.round(CHEVRON_MAX_DP * density);
+        int size = Math.min(maxSize, Math.round(w * CHEVRON_MAX_WIDTH_FRACTION));
+        size = Math.max(1, size);
+
+        int needed = 2 * size + 2 * pad;
+        if (h < needed) {
+            int shrunk = (h - 2 * pad) / 2;
+            if (shrunk < CHEVRON_MIN_SHRUNK_PX) {
+                return;
+            }
+            size = shrunk;
+        }
+
+        int left = (w - size) / 2;
+
+        // Draw up chevron
+        chevronUp.setBounds(left, pad, left + size, pad + size);
+        chevronUp.draw(canvas);
+
+        // Draw down chevron
+        int bottomTop = h - pad - size;
+        chevronDown.setBounds(left, bottomTop, left + size, h - pad);
+        chevronDown.draw(canvas);
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN:
+                lastY = event.getY();
+                accumY = 0f;
+                fingerDown = true;
+                invalidate();
+                return true;
+
+            case MotionEvent.ACTION_MOVE:
+                float y = event.getY();
+                float dy = y - lastY;
+                lastY = y;
+
+                // Accumulate scroll based on finger movement
+                accumY += (-dy / STRIP_PIXELS_PER_WHEEL_UNIT);
+                int sy = (int) accumY;
+
+                if (sy != 0) {
+                    accumY -= sy;
+
+                    // Dispatch scroll event
+                    if (listener != null) {
+                        listener.onStripScroll(0, sy);
+                    } else {
+                        // Default: send to MouseManager
+                        MouseManager.handleTwoFingerPanSlideUpDown((float) sy);
+                    }
+
+                    // Trigger haptic feedback and chevron pulse
+                    onWheelStepDispatched(sy);
+                }
+                return true;
+
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+                lastY = 0f;
+                fingerDown = false;
+                pulseHandler.removeCallbacks(clearChevronPulse);
+                chevronPulseDir = 0;
+                invalidate();
+                return true;
+
+            default:
+                return super.onTouchEvent(event);
+        }
+    }
+
+    private void onWheelStepDispatched(int sy) {
+        // Trigger haptic feedback
+        performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
+
+        // Set chevron pulse direction
+        chevronPulseDir = sy > 0 ? 1 : -1;
+        pulseHandler.removeCallbacks(clearChevronPulse);
+        pulseHandler.postDelayed(clearChevronPulse, CHEVRON_PULSE_MS);
+        invalidate();
+    }
+
+    /**
+     * Blend two colors together with a given ratio.
+     */
+    private int blendColors(int color1, int color2, float ratio) {
+        final float inverseRatio = 1f - ratio;
+        float r = ((color1 >> 16) & 0xFF) * inverseRatio + ((color2 >> 16) & 0xFF) * ratio;
+        float g = ((color1 >> 8) & 0xFF) * inverseRatio + ((color2 >> 8) & 0xFF) * ratio;
+        float b = (color1 & 0xFF) * inverseRatio + (color2 & 0xFF) * ratio;
+        return ((int) r << 16) | ((int) g << 8) | (int) b;
     }
 }

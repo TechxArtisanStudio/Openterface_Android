@@ -2586,7 +2586,7 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Setup mouse module for portrait mode.
-     * No TouchPadView - just the MouseControlStripView with gesture guide.
+     * Includes MouseControlStripView (L/M/R) and BasicPortraitScrollStripView.
      */
     private void setupMouseModule(View view) {
         com.openterface.AOS.view.MouseControlStripView portraitMouseStrip =
@@ -2630,19 +2630,35 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void onScrollClick() {
-                        com.openterface.AOS.target.MouseManager.handleTwoPress();
+                        // Deprecated: scroll handled by BasicPortraitScrollStripView
                     }
 
                     @Override
                     public void onScrollUp() {
-                        com.openterface.AOS.target.MouseManager.handleTwoFingerPanSlideUpDown(1.0f);
+                        // Deprecated: scroll handled by BasicPortraitScrollStripView
                     }
 
                     @Override
                     public void onScrollDown() {
-                        com.openterface.AOS.target.MouseManager.handleTwoFingerPanSlideUpDown(-1.0f);
+                        // Deprecated: scroll handled by BasicPortraitScrollStripView
                     }
                 });
+        }
+
+        // Setup scroll strip
+        com.openterface.AOS.view.BasicPortraitScrollStripView portraitScrollStrip =
+            view.findViewById(R.id.portrait_scroll_strip);
+
+        if (portraitScrollStrip != null) {
+            portraitScrollStrip.setOnStripScrollListener(new com.openterface.AOS.view.BasicPortraitScrollStripView.OnStripScrollListener() {
+                @Override
+                public void onStripScroll(int deltaX, int deltaY) {
+                    // deltaY > 0 means scroll up, deltaY < 0 means scroll down
+                    if (deltaY != 0) {
+                        com.openterface.AOS.target.MouseManager.handleTwoFingerPanSlideUpDown((float) deltaY);
+                    }
+                }
+            });
         }
     }
 
@@ -3048,17 +3064,33 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onScrollClick() {
-                    HidManager.handleTwoPress();
+                    // Deprecated: scroll handled by BasicPortraitScrollStripView
                 }
 
                 @Override
                 public void onScrollUp() {
-                    HidManager.handleTwoFingerPanSlideUpDown(1.0f);
+                    // Deprecated: scroll handled by BasicPortraitScrollStripView
                 }
 
                 @Override
                 public void onScrollDown() {
-                    HidManager.handleTwoFingerPanSlideUpDown(-1.0f);
+                    // Deprecated: scroll handled by BasicPortraitScrollStripView
+                }
+            });
+        }
+
+        // Setup landscape scroll strip
+        com.openterface.AOS.view.BasicPortraitScrollStripView landscapeScrollStrip =
+            findViewById(R.id.landscape_scroll_strip);
+
+        if (landscapeScrollStrip != null) {
+            landscapeScrollStrip.setOnStripScrollListener(new com.openterface.AOS.view.BasicPortraitScrollStripView.OnStripScrollListener() {
+                @Override
+                public void onStripScroll(int deltaX, int deltaY) {
+                    // deltaY > 0 means scroll up, deltaY < 0 means scroll down
+                    if (deltaY != 0) {
+                        com.openterface.AOS.target.MouseManager.handleTwoFingerPanSlideUpDown((float) deltaY);
+                    }
                 }
             });
         }

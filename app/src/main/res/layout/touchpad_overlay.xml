@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Simplified touchpad overlay: gesture guide + L/M/R buttons + scroll -->
+<!-- Landscape touchpad overlay: Mouse guide + scroll strip + L/M/R buttons -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/TouchPad_View"
@@ -16,166 +16,66 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="8dp">
+        android:padding="8dp"
+        android:background="@color/background_light">
 
-        <!-- Gesture Guide Area (landscape) -->
+        <!-- Mouse Guide Area + Scroll Strip -->
         <LinearLayout
-            android:id="@+id/gesture_guide_area_landscape"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:background="#2A2A2A"
-            android:padding="8dp"
-            android:layout_marginBottom="8dp">
+            android:orientation="horizontal">
 
-            <!-- Left Click Guide -->
-            <LinearLayout
+            <!-- Mouse Guide (weight=5) -->
+            <ScrollView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:padding="2dp">
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/baseline_mouse_24"
-                    android:scaleType="centerInside"
-                    android:contentDescription="左键"/>
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="左键"
-                    android:textSize="9sp"
-                    android:textColor="#FFFFFF"/>
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="点击/拖动"
-                    android:textSize="7sp"
-                    android:textColor="#AAAAAA"/>
-            </LinearLayout>
+                android:layout_weight="5"
+                android:background="@drawable/km_basic_mouse_guide_background"
+                android:padding="8dp"
+                android:layout_marginEnd="4dp"
+                android:maxHeight="120dp">
 
-            <!-- Right Click Guide -->
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:padding="2dp">
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/baseline_mouse_24"
-                    android:scaleType="centerInside"
-                    android:contentDescription="右键"/>
-                <TextView
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="右键"
-                    android:textSize="9sp"
-                    android:textColor="#FFFFFF"/>
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="单击"
-                    android:textSize="7sp"
-                    android:textColor="#AAAAAA"/>
-            </LinearLayout>
+                    android:orientation="vertical">
 
-            <!-- Middle Click Guide -->
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:padding="2dp">
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/baseline_mouse_24"
-                    android:scaleType="centerInside"
-                    android:contentDescription="中键"/>
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="中键"
-                    android:textSize="9sp"
-                    android:textColor="#FFFFFF"/>
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="滚轮点击"
-                    android:textSize="7sp"
-                    android:textColor="#AAAAAA"/>
-            </LinearLayout>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Mouse Operations"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary"
+                        android:layout_marginBottom="4dp" />
 
-            <!-- Scroll Up Guide -->
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:padding="2dp">
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/baseline_arrow_drop_up_24"
-                    android:scaleType="centerInside"
-                    android:contentDescription="上滚"/>
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="上滚"
-                    android:textSize="9sp"
-                    android:textColor="#FFFFFF"/>
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="长按加速"
-                    android:textSize="7sp"
-                    android:textColor="#AAAAAA"/>
-            </LinearLayout>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="• Single finger: Move cursor\n• Tap: Left click\n• Two finger scroll: Scroll wheel\n• Three finger tap: Middle click\n• Long press: Right click"
+                        android:textSize="11sp"
+                        android:textColor="@color/text_secondary"
+                        android:lineSpacingExtra="2dp" />
 
-            <!-- Scroll Down Guide -->
-            <LinearLayout
+                </LinearLayout>
+
+            </ScrollView>
+
+            <!-- Scroll Strip (weight=1) -->
+            <com.openterface.AOS.view.BasicPortraitScrollStripView
+                android:id="@+id/landscape_scroll_strip"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical"
-                android:gravity="center"
-                android:padding="2dp">
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/baseline_arrow_drop_down_24"
-                    android:scaleType="centerInside"
-                    android:contentDescription="下滚"/>
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="下滚"
-                    android:textSize="9sp"
-                    android:textColor="#FFFFFF"/>
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="长按加速"
-                    android:textSize="7sp"
-                    android:textColor="#AAAAAA"/>
-            </LinearLayout>
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
 
         </LinearLayout>
 
-        <!-- Mouse button strip: ScrollUp + L + M + R + ScrollDown -->
+        <!-- Mouse Button Strip: L + M + R -->
         <com.openterface.AOS.view.MouseControlStripView
             android:id="@+id/mouseButtonStrip"
             android:layout_width="match_parent"
-            android:layout_height="52dp" />
+            android:layout_height="48dp"
+            android:layout_marginTop="6dp" />
 
     </LinearLayout>
 </FrameLayout>

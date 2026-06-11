@@ -186,6 +186,7 @@
     <string name="Key_Ctrl" tools:ignore="MissingTranslation">Ctrl</string>
     <string name="Key_Win" tools:ignore="MissingTranslation">Win</string>
     <string name="Key_Alt" tools:ignore="MissingTranslation">Alt</string>
+    <string name="Key_FN" tools:ignore="MissingTranslation">FN</string>
     <string name="Space_Button" />
     <string name="Key_AltGr" tools:ignore="MissingTranslation">Alt</string>
     <string name="Key_CtrlGr" tools:ignore="MissingTranslation">Ctrl</string>
