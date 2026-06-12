@@ -6,6 +6,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.LinearLayout;
 
+import androidx.core.content.ContextCompat;
+
 import com.openterface.AOS.R;
 
 /**
@@ -38,7 +40,8 @@ public class PortraitKeyboardView extends LinearLayout {
 
     private void init(Context context) {
         setOrientation(VERTICAL);
-        setBackgroundColor(context.getResources().getColor(R.color.background_light));
+        // Use ContextCompat for proper theme-aware color resolution
+        setBackgroundColor(ContextCompat.getColor(context, R.color.background_light));
 
         // Load keyboard panels
         systemPanel = loadPanel(context, R.layout.system_button);

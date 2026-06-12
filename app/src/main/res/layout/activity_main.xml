@@ -62,7 +62,7 @@
             android:layout_height="wrap_content"
             android:text="@string/KeyMouse_Drag"
             android:layout_marginTop="5dp"
-            android:textColor="@color/black"
+            android:textColor="@color/text_on_surface"
             android:background="@drawable/lable_background"
             android:visibility="gone"/>
     </LinearLayout>
@@ -90,7 +90,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="@color/white"
+        android:background="@color/surface_background"
         android:visibility="gone">
 
         <!-- TouchPad settings and help buttons (above keyboard toolbar) -->
@@ -133,7 +133,7 @@
                 android:id="@+id/drag_handle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@color/white"
+                android:background="@color/surface_background"
                 android:src="@drawable/three_dots"
                 tools:ignore="ContentDescription" />
         </LinearLayout>
@@ -216,7 +216,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="@string/ShortCut"
-                        android:textColor="@color/black"
+                        android:textColor="@color/text_on_surface"
                         android:background="@drawable/button_background"
                         android:theme="@style/ButtonTheme"
                         android:layout_marginHorizontal="1dp" />
@@ -227,7 +227,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="@string/Function"
-                        android:textColor="@color/black"
+                        android:textColor="@color/text_on_surface"
                         android:background="@drawable/button_background"
                         android:theme="@style/ButtonTheme"
                         android:layout_marginHorizontal="1dp" />
@@ -238,7 +238,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="@string/Ctrl"
-                        android:textColor="@color/black"
+                        android:textColor="@color/text_on_surface"
                         android:background="@drawable/button_background"
                         android:theme="@style/ButtonTheme"
                         android:layout_marginHorizontal="1dp" />
@@ -249,7 +249,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="@string/Shift"
-                        android:textColor="@color/black"
+                        android:textColor="@color/text_on_surface"
                         android:background="@drawable/button_background"
                         android:theme="@style/ButtonTheme"
                         android:layout_marginHorizontal="1dp" />
@@ -260,7 +260,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="@string/Alt"
-                        android:textColor="@color/black"
+                        android:textColor="@color/text_on_surface"
                         android:background="@drawable/button_background"
                         android:theme="@style/ButtonTheme"
                         android:layout_marginHorizontal="1dp" />
@@ -271,7 +271,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="@string/Win"
-                        android:textColor="@color/black"
+                        android:textColor="@color/text_on_surface"
                         android:background="@drawable/button_background"
                         android:theme="@style/ButtonTheme"
                         android:layout_marginHorizontal="1dp" />
@@ -305,7 +305,7 @@
         android:layout_gravity="top|center_horizontal"
         android:layout_marginTop="30dp"
         android:drawablePadding="5dp"
-        android:textColor="@color/black"
+        android:textColor="@color/text_on_surface"
         android:textSize="14sp"
         android:visibility="gone"
         app:drawableLeftCompat="@drawable/ic_record_red_dot"

@@ -5,5 +5,5 @@
     android:layout_margin="2dp"
     android:gravity="center"
     android:textSize="18sp"
-    android:textColor="@android:color/black"
+    android:textColor="@color/text_on_surface"
     android:background="@drawable/alternate_item_normal" />

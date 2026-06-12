@@ -79,7 +79,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/ShortCut"
-                android:textColor="@color/black"
+                android:textColor="@color/text_on_surface"
                 android:background="@drawable/button_background"
                 android:theme="@style/ButtonTheme"
                 android:layout_marginHorizontal="1dp" />
@@ -90,7 +90,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/Function"
-                android:textColor="@color/black"
+                android:textColor="@color/text_on_surface"
                 android:background="@drawable/button_background"
                 android:theme="@style/ButtonTheme"
                 android:layout_marginHorizontal="1dp" />
@@ -101,7 +101,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/Ctrl"
-                android:textColor="@color/black"
+                android:textColor="@color/text_on_surface"
                 android:background="@drawable/button_background"
                 android:theme="@style/ButtonTheme"
                 android:layout_marginHorizontal="1dp" />
@@ -112,7 +112,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/Shift"
-                android:textColor="@color/black"
+                android:textColor="@color/text_on_surface"
                 android:background="@drawable/button_background"
                 android:theme="@style/ButtonTheme"
                 android:layout_marginHorizontal="1dp" />
@@ -123,7 +123,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/Alt"
-                android:textColor="@color/black"
+                android:textColor="@color/text_on_surface"
                 android:background="@drawable/button_background"
                 android:theme="@style/ButtonTheme"
                 android:layout_marginHorizontal="1dp" />
@@ -134,7 +134,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/Win"
-                android:textColor="@color/black"
+                android:textColor="@color/text_on_surface"
                 android:background="@drawable/button_background"
                 android:theme="@style/ButtonTheme"
                 android:layout_marginHorizontal="1dp" />

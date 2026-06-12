@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5"
+    android:background="@color/background_light"
     tools:context="com.openterface.AOS.activity.MainActivity">
 
     <LinearLayout
@@ -21,7 +21,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="@android:color/white"
+            android:background="@color/card_background"
             android:padding="12dp"
             android:layout_marginBottom="12dp">
 
@@ -31,7 +31,7 @@
                 android:text="主题设置"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="#333333"
+                android:textColor="@color/text_primary"
                 android:layout_marginBottom="8dp" />
 
             <!-- 主题颜色选择 -->
@@ -52,7 +52,7 @@
                     android:layout_weight="1"
                     android:text="主题颜色"
                     android:textSize="14sp"
-                    android:textColor="#333333" />
+                    android:textColor="@color/text_primary" />
 
                 <TextView
                     android:id="@+id/settings_theme_color_value"
@@ -60,7 +60,7 @@
                     android:layout_height="wrap_content"
                     android:text="橙色"
                     android:textSize="14sp"
-                    android:textColor="#1976D2" />
+                    android:textColor="?attr/colorPrimary" />
             </LinearLayout>
 
             <!-- 显示模式选择 -->
@@ -81,7 +81,7 @@
                     android:layout_weight="1"
                     android:text="显示模式"
                     android:textSize="14sp"
-                    android:textColor="#333333" />
+                    android:textColor="@color/text_primary" />
 
                 <TextView
                     android:id="@+id/settings_theme_mode_value"
@@ -89,7 +89,7 @@
                     android:layout_height="wrap_content"
                     android:text="跟随系统"
                     android:textSize="14sp"
-                    android:textColor="#1976D2" />
+                    android:textColor="?attr/colorPrimary" />
             </LinearLayout>
 
         </LinearLayout>
@@ -100,7 +100,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="@android:color/white"
+            android:background="@color/card_background"
             android:padding="12dp"
             android:layout_marginBottom="12dp">
 
@@ -110,7 +110,7 @@
                 android:text="键盘设置"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="#333333"
+                android:textColor="@color/text_primary"
                 android:layout_marginBottom="8dp" />
 
             <!-- 目标操作系统 -->
@@ -131,7 +131,7 @@
                     android:layout_weight="1"
                     android:text="目标操作系统"
                     android:textSize="14sp"
-                    android:textColor="#333333" />
+                    android:textColor="@color/text_primary" />
 
                 <TextView
                     android:id="@+id/settings_target_os_value"
@@ -139,7 +139,7 @@
                     android:layout_height="wrap_content"
                     android:text="Windows"
                     android:textSize="14sp"
-                    android:textColor="#1976D2" />
+                    android:textColor="?attr/colorPrimary" />
             </LinearLayout>
 
             <!-- 按键音效开关 -->
@@ -156,7 +156,7 @@
                     android:layout_weight="1"
                     android:text="按键音效"
                     android:textSize="14sp"
-                    android:textColor="#333333" />
+                    android:textColor="@color/text_primary" />
 
                 <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/settings_key_sound_switch"
@@ -177,7 +177,7 @@
                     android:layout_height="wrap_content"
                     android:text="音量"
                     android:textSize="12sp"
-                    android:textColor="#888888" />
+                    android:textColor="@color/text_secondary" />
 
                 <SeekBar
                     android:id="@+id/settings_volume_seekbar"
@@ -201,7 +201,7 @@
                     android:layout_weight="1"
                     android:text="振动反馈"
                     android:textSize="14sp"
-                    android:textColor="#333333" />
+                    android:textColor="@color/text_primary" />
 
                 <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/settings_vibrate_switch"
@@ -222,7 +222,7 @@
                     android:layout_height="wrap_content"
                     android:text="振动强度"
                     android:textSize="12sp"
-                    android:textColor="#888888" />
+                    android:textColor="@color/text_secondary" />
 
                 <SeekBar
                     android:id="@+id/settings_vibrate_intensity_seekbar"
@@ -240,7 +240,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="@android:color/white"
+            android:background="@color/card_background"
             android:padding="12dp"
             android:layout_marginBottom="12dp">
 
@@ -250,7 +250,7 @@
                 android:text="鼠标设置"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="#333333"
+                android:textColor="@color/text_primary"
                 android:layout_marginBottom="8dp" />
 
             <!-- 滚轮速度 -->
@@ -265,7 +265,7 @@
                     android:layout_height="wrap_content"
                     android:text="滚轮速度"
                     android:textSize="12sp"
-                    android:textColor="#888888" />
+                    android:textColor="@color/text_secondary" />
 
                 <SeekBar
                     android:id="@+id/settings_scroll_speed_seekbar"
@@ -280,7 +280,7 @@
                     android:layout_height="wrap_content"
                     android:text="中等"
                     android:textSize="11sp"
-                    android:textColor="#AAAAAA" />
+                    android:textColor="@color/text_secondary" />
             </LinearLayout>
 
         </LinearLayout>
@@ -291,7 +291,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="@android:color/white"
+            android:background="@color/card_background"
             android:padding="12dp"
             android:layout_marginBottom="12dp">
 
@@ -301,7 +301,7 @@
                 android:text="输入设置"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="#333333"
+                android:textColor="@color/text_primary"
                 android:layout_marginBottom="8dp" />
 
             <!-- 发送前验证开关 -->
@@ -318,7 +318,7 @@
                     android:layout_weight="1"
                     android:text="发送前验证文本"
                     android:textSize="14sp"
-                    android:textColor="#333333" />
+                    android:textColor="@color/text_primary" />
 
                 <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/settings_pre_validate_switch"
@@ -340,12 +340,59 @@
                     android:layout_weight="1"
                     android:text="自动保存草稿"
                     android:textSize="14sp"
-                    android:textColor="#333333" />
+                    android:textColor="@color/text_primary" />
 
                 <androidx.appcompat.widget.SwitchCompat
                     android:id="@+id/settings_auto_save_switch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- 快捷键管理分区 -->
+        <LinearLayout
+            android:id="@+id/settings_shortcut_section"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@color/card_background"
+            android:padding="12dp"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="快捷键管理"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:id="@+id/settings_shortcut_manager_layout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingVertical="8dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?android:attr/selectableItemBackground">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="管理快捷键配置"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_primary" />
+
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_chevron_right_24"
+                    android:tint="@color/text_secondary" />
             </LinearLayout>
 
         </LinearLayout>

@@ -31,6 +31,8 @@ public class KeyPreviewPopup {
     private void initPopup() {
         View view = LayoutInflater.from(context).inflate(R.layout.key_preview_popup, null);
         textView = view.findViewById(R.id.key_preview_text);
+        // Set text color based on current theme (dark = white, light = black)
+        textView.setTextColor(androidx.core.content.ContextCompat.getColor(context, R.color.popup_text));
 
         popupWindow = new PopupWindow(view,
             android.view.ViewGroup.LayoutParams.WRAP_CONTENT,

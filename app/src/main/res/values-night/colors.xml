@@ -16,6 +16,7 @@
     <color name="key_bg_pressed">#FF6B3A0A</color>
     <color name="key_border">#FF5A5A5F</color>
     <color name="key_text">#FFFFFFFF</color>
+    <color name="DODGERBLUE">#FF4DA6FF</color>
 
     <!-- Theme Colors (Dark) -->
     <color name="primary">#FFF57C00</color>
@@ -31,4 +32,10 @@
     <color name="km_basic_touchpad_pattern_soft_shadow">#14000000</color>
     <color name="km_basic_touchpad_pattern_glow">#18FFFFFF</color>
     <color name="km_basic_touchpad_pattern_sink">#1C000000</color>
+
+    <!-- Theme-aware colors (dark mode overrides) -->
+    <color name="text_on_surface">#FFFFFFFF</color>
+    <color name="surface_background">#FF1C1C1E</color>
+    <color name="popup_background">#FF2C2C2E</color>
+    <color name="popup_text">#FFFFFFFF</color>
 </resources>

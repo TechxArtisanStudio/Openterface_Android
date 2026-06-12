@@ -44,6 +44,7 @@ public class ShortcutManagerFragment extends Fragment implements ShortcutProfile
     private TextView tvEmpty;
     private View btnAddProfile;
     private View btnImport;
+    private ShortcutProfile pendingExportProfile;  // Store profile being exported
 
     public static ShortcutManagerFragment newInstance() {
         return new ShortcutManagerFragment();
@@ -169,6 +170,49 @@ public class ShortcutManagerFragment extends Fragment implements ShortcutProfile
     }
 
     private void importProfile() {
+        // Show dialog with two options: paste JSON or file picker
+        new android.app.AlertDialog.Builder(requireContext())
+            .setTitle("导入快捷键配置")
+            .setItems(new String[]{"粘贴JSON文本", "浏览文件"}, (dialog, which) -> {
+                if (which == 0) {
+                    showPasteJsonDialog();
+                } else {
+                    openFilePicker();
+                }
+            })
+            .setNegativeButton("取消", null)
+            .show();
+    }
+
+    private void showPasteJsonDialog() {
+        android.widget.EditText editText = new android.widget.EditText(requireContext());
+        editText.setMinLines(8);
+        editText.setGravity(android.view.Gravity.TOP);
+        editText.setHint("粘贴JSON内容...");
+
+        new android.app.AlertDialog.Builder(requireContext())
+            .setTitle("粘贴JSON")
+            .setView(editText)
+            .setPositiveButton("导入", (dialog, which) -> {
+                String json = editText.getText().toString().trim();
+                if (json.isEmpty()) {
+                    Toast.makeText(getContext(), "JSON为空", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                ShortcutProfile imported = profileManager.importProfile(json);
+                if (imported != null) {
+                    loadProfiles();
+                    Toast.makeText(getContext(), "导入成功: " + imported.name, Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(getContext(), "导入失败: JSON格式错误", Toast.LENGTH_SHORT).show();
+                }
+            })
+            .setNegativeButton("取消", null)
+            .show();
+    }
+
+    private void openFilePicker() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("application/json");
@@ -176,7 +220,9 @@ public class ShortcutManagerFragment extends Fragment implements ShortcutProfile
     }
 
     private void exportProfile(ShortcutProfile profile) {
+        pendingExportProfile = profile;  // Store for onActivityResult
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("application/json");
         intent.putExtra(Intent.EXTRA_TITLE, profile.name + ".json");
         startActivityForResult(intent, REQUEST_EXPORT_PROFILE);
@@ -198,8 +244,37 @@ public class ShortcutManagerFragment extends Fragment implements ShortcutProfile
         if (requestCode == REQUEST_IMPORT_PROFILE) {
             importProfileFromUri(uri);
         } else if (requestCode == REQUEST_EXPORT_PROFILE) {
-            // For now, just show a message - full export implementation would need the profile
-            Toast.makeText(getContext(), "导出功能开发中", Toast.LENGTH_SHORT).show();
+            exportProfileToUri(uri, pendingExportProfile);
+            pendingExportProfile = null;
+        }
+    }
+
+    private void exportProfileToUri(Uri uri, ShortcutProfile profile) {
+        if (profile == null) {
+            Toast.makeText(getContext(), "导出失败: 配置为空", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        try {
+            String json = profileManager.exportProfile(profile.id);
+            if (json == null) {
+                Toast.makeText(getContext(), "导出失败: 无法序列化配置", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            OutputStream outputStream = requireContext().getContentResolver().openOutputStream(uri);
+            if (outputStream == null) {
+                Toast.makeText(getContext(), "导出失败: 无法写入文件", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            OutputStreamWriter writer = new OutputStreamWriter(outputStream);
+            writer.write(json);
+            writer.close();
+
+            Toast.makeText(getContext(), "配置已导出: " + profile.name, Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Toast.makeText(getContext(), "导出失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 

@@ -106,6 +106,11 @@ public class ShortcutProfileManager {
         p.shortcuts.add(new Shortcut("default_undo", "Undo", "Ctrl+Z", ShortcutProfile.MOD_CTRL, KEY_Z, "undo_24", 6));
         p.shortcuts.add(new Shortcut("default_redo", "Redo", "Ctrl+Y", ShortcutProfile.MOD_CTRL, KEY_Y, "redo_24", 7));
         p.shortcuts.add(new Shortcut("default_find", "Find", "Ctrl+F", ShortcutProfile.MOD_CTRL, KEY_F, "search_24", 8));
+        p.shortcuts.add(new Shortcut("default_new", "New", "Ctrl+N", ShortcutProfile.MOD_CTRL, KEY_N, "new_24", 9));
+        p.shortcuts.add(new Shortcut("default_open", "Open", "Ctrl+O", ShortcutProfile.MOD_CTRL, KEY_O, "open_24", 10));
+        p.shortcuts.add(new Shortcut("default_print", "Print", "Ctrl+P", ShortcutProfile.MOD_CTRL, KEY_P, "print_24", 11));
+        p.shortcuts.add(new Shortcut("default_close_tab", "Close Tab", "Ctrl+W", ShortcutProfile.MOD_CTRL, KEY_W, "close_24", 12));
+        p.shortcuts.add(new Shortcut("default_replace", "Replace", "Ctrl+H", ShortcutProfile.MOD_CTRL, KEY_H, "replace_24", 13));
 
         profiles.add(p);
         saveProfiles();

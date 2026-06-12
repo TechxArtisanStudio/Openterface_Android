@@ -36,9 +36,11 @@ import android.widget.LinearLayout;
 
 import com.openterface.AOS.R;
 import com.openterface.AOS.activity.MainActivity;
+import com.openterface.AOS.model.CharacterAlternates;
 import com.openterface.AOS.target.HidManager;
 // import com.openterface.AOS.target.KeyBoardManager;
 import com.openterface.AOS.target.KeyBoardMapping;
+import com.openterface.AOS.view.CharacterAlternatesPopup;
 import com.openterface.AOS.view.KeyPreviewPopup;
 import com.openterface.AOS.manager.TargetOsManager;
 
@@ -193,6 +195,11 @@ public class KeyBoardSystem {
         winButton = rootView.findViewById(R.id.Key_Win);
         applyTargetOsLabels();
         SystemButtonListeners();
+
+        // Ensure keyboard starts in lowercase mode (fix initialization issue)
+        KeyBoard_ShIft_Press_state = false;
+        KeyBoard_FN_Press_state = false;
+        refreshLetterButtons();
     }
 
     /**
@@ -219,12 +226,12 @@ public class KeyBoardSystem {
 
     /**
      * Refresh Row 1 buttons based on FN state.
-     * When FN is active, show F1-F10; otherwise show letters Q-P.
+     * When FN is active, show 1-0; otherwise show letters Q-P.
      */
     public static void refreshRow1Buttons() {
         if (instance == null) return;
 
-        String[] fnLabels = {"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10"};
+        String[] fnLabels = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0"};
         String[] letterLabels = {"Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"};
 
         for (int i = 0; i < row1LetterButtons.size() && i < 10; i++) {
@@ -367,7 +374,10 @@ public class KeyBoardSystem {
                 // Modifier key: use ModifierKeyHelper for press feedback + long-press toggle
                 setupModifierButton(view);
             } else {
-                // Regular key: press feedback on touch, send key events
+                // Regular key: press feedback on touch, send key events + long-press for alternates
+                final Handler longPressHandler = new Handler();
+                final boolean[] longPressFired = {false};
+
                 view.setOnTouchListener((v, event) -> {
                     String systemButtonId = getKey(view.getId());
 
@@ -375,13 +385,56 @@ public class KeyBoardSystem {
                         case MotionEvent.ACTION_DOWN:
                             // Visual feedback: show pressed
                             v.setBackgroundResource(R.drawable.press_button_background);
+                            longPressFired[0] = false;
+
+                            // Schedule long-press check for alternates popup
+                            longPressHandler.postDelayed(() -> {
+                                if (isKeyPressed[0] && !longPressFired[0]) {
+                                    longPressFired[0] = true;
+
+                                    // Check if this key has alternates
+                                    Integer hidCode = BUTTON_TO_HID_MAP.get(view.getId());
+                                    if (hidCode != null && CharacterAlternates.hasAlternates(hidCode)) {
+                                        List<String> alternates = CharacterAlternates.getAlternates(hidCode);
+
+                                        // Dismiss normal key preview
+                                        if (keyPreviewPopup != null) {
+                                            keyPreviewPopup.dismiss();
+                                        }
+
+                                        // Show alternates popup
+                                        if (alternatesPopup != null) {
+                                            alternatesPopup.show(v, alternates, new CharacterAlternatesPopup.OnCharacterSelectedListener() {
+                                                @Override
+                                                public void onCharacterSelected(String character) {
+                                                    // Release the original key first
+                                                    handleKeyRelease();
+                                                    isKeyPressed[0] = false;
+
+                                                    // Send the selected character
+                                                    sendAlternateCharacter(character);
+                                                }
+
+                                                @Override
+                                                public void onDismissed() {
+                                                    // Release the key and restore visual
+                                                    handleKeyRelease();
+                                                    v.setBackgroundResource(R.drawable.nopress_button_background);
+                                                    isKeyPressed[0] = false;
+                                                }
+                                            });
+                                        }
+                                    }
+                                }
+                            }, ALTERNATES_LONG_PRESS_MS);
+
                             if (!isKeyPressed[0]) {
                                 handleKeyPress(systemButtonId);
                                 isKeyPressed[0] = true;
                                 // Sound and vibration feedback
                                 playKeyFeedback(v);
-                                // Bubble hint
-                                showKeyPreview(v, keyLabel);
+                                // Bubble hint — read label dynamically so FN layer shows correct label
+                                showKeyPreview(v, getViewLabel(v));
                             }
                             return true;
 
@@ -397,16 +450,21 @@ public class KeyBoardSystem {
 
                         case MotionEvent.ACTION_UP:
                         case MotionEvent.ACTION_CANCEL:
-                            // Restore background
-                            v.setBackgroundResource(R.drawable.nopress_button_background);
-                            if (isKeyPressed[0]) {
-                                handleKeyRelease();
-                                isKeyPressed[0] = false;
-                                // Dismiss the key preview bubble immediately
-                                if (keyPreviewPopup != null) {
-                                    keyPreviewPopup.dismiss();
+                            longPressHandler.removeCallbacksAndMessages(null);
+
+                            if (!longPressFired[0]) {
+                                // Normal key release
+                                v.setBackgroundResource(R.drawable.nopress_button_background);
+                                if (isKeyPressed[0]) {
+                                    handleKeyRelease();
+                                    isKeyPressed[0] = false;
+                                    // Dismiss the key preview bubble immediately
+                                    if (keyPreviewPopup != null) {
+                                        keyPreviewPopup.dismiss();
+                                    }
                                 }
                             }
+                            // If long press fired, the popup's onDismissed handles cleanup
                             return true;
                     }
                     return false;
@@ -636,52 +694,104 @@ public class KeyBoardSystem {
     }
 
     /**
-     * Map Row 1 letter buttons (Q-P) to F1-F10 when FN is active.
+     * Map Row 1 letter buttons (Q-P) to digits 1-0 when FN is active.
+     * Reference: KeyCMD CustomKeyboardView.resolveFnMapping()
      */
     private static final Map<Integer, String> fnRow1Map = new HashMap<>();
     static {
-        fnRow1Map.put(R.id.Q_Button, "F1");
-        fnRow1Map.put(R.id.W_Button, "F2");
-        fnRow1Map.put(R.id.E_Button, "F3");
-        fnRow1Map.put(R.id.R_Button, "F4");
-        fnRow1Map.put(R.id.T_Button, "F5");
-        fnRow1Map.put(R.id.Y_Button, "F6");
-        fnRow1Map.put(R.id.U_Button, "F7");
-        fnRow1Map.put(R.id.I_Button, "F8");
-        fnRow1Map.put(R.id.O_Button, "F9");
-        fnRow1Map.put(R.id.P_Button, "F10");
+        fnRow1Map.put(R.id.Q_Button, "1");
+        fnRow1Map.put(R.id.W_Button, "2");
+        fnRow1Map.put(R.id.E_Button, "3");
+        fnRow1Map.put(R.id.R_Button, "4");
+        fnRow1Map.put(R.id.T_Button, "5");
+        fnRow1Map.put(R.id.Y_Button, "6");
+        fnRow1Map.put(R.id.U_Button, "7");
+        fnRow1Map.put(R.id.I_Button, "8");
+        fnRow1Map.put(R.id.O_Button, "9");
+        fnRow1Map.put(R.id.P_Button, "0");
     }
 
     /**
-     * Map Row 2 letter buttons (A-L) to special keys when FN is active.
-     * A=F11, S=F12, then remaining map to other navigation keys.
+     * Map Row 2 letter buttons (A-L) to F1-F9 when FN is active.
+     * Only A-L have mappings; other keys in this row (Tab, Backspace) are not affected.
      */
     private static final Map<Integer, String> fnRow2Map = new HashMap<>();
     static {
-        fnRow2Map.put(R.id.A_Button, "F11");
-        fnRow2Map.put(R.id.S_Button, "F12");
-        fnRow2Map.put(R.id.D_Button, "PrtSc");
-        fnRow2Map.put(R.id.F_Button, "ScrLk");
-        fnRow2Map.put(R.id.G_Button, "Pause");
-        fnRow2Map.put(R.id.H_Button, "Ins");
-        fnRow2Map.put(R.id.J_Button, "Home");
-        fnRow2Map.put(R.id.K_Button, "PgUp");
-        fnRow2Map.put(R.id.L_Button, "Delete");
+        fnRow2Map.put(R.id.A_Button, "F1");
+        fnRow2Map.put(R.id.S_Button, "F2");
+        fnRow2Map.put(R.id.D_Button, "F3");
+        fnRow2Map.put(R.id.F_Button, "F4");
+        fnRow2Map.put(R.id.G_Button, "F5");
+        fnRow2Map.put(R.id.H_Button, "F6");
+        fnRow2Map.put(R.id.J_Button, "F7");
+        fnRow2Map.put(R.id.K_Button, "F8");
+        fnRow2Map.put(R.id.L_Button, "F9");
     }
 
     /**
-     * Map Row 3 letter buttons (Z-M, /) to special keys when FN is active.
+     * Map Row 3 letter buttons to F10-F12 when FN is active.
+     * Only Z, X, C have FN mappings; V, B, N, M, / have no FN layer mapping.
      */
     private static final Map<Integer, String> fnRow3Map = new HashMap<>();
     static {
-        fnRow3Map.put(R.id.Z_Button, "End");
-        fnRow3Map.put(R.id.X_Button, "PgDn");
-        fnRow3Map.put(R.id.C_Button, "DPAD_UP");
-        fnRow3Map.put(R.id.V_Button, "DPAD_DOWN");
-        fnRow3Map.put(R.id.B_Button, "DPAD_LEFT");
-        fnRow3Map.put(R.id.N_Button, "DPAD_RIGHT");
-        fnRow3Map.put(R.id.M_Button, "TAB");
-        fnRow3Map.put(R.id.Key_Slash, "Esc");
+        fnRow3Map.put(R.id.Z_Button, "F10");
+        fnRow3Map.put(R.id.X_Button, "F11");
+        fnRow3Map.put(R.id.C_Button, "F12");
+    }
+
+    /**
+     * Map button IDs to HID usage codes for CharacterAlternates lookup.
+     * HID codes match USB HID Keyboard/Keypad Usage IDs (0x04=A, 0x14=Q, etc.)
+     */
+    private static final Map<Integer, Integer> BUTTON_TO_HID_MAP = new HashMap<>();
+    static {
+        // Row 1: Q-P
+        BUTTON_TO_HID_MAP.put(R.id.Q_Button, 0x14); // Q
+        BUTTON_TO_HID_MAP.put(R.id.W_Button, 0x1A); // W
+        BUTTON_TO_HID_MAP.put(R.id.E_Button, 0x08); // E
+        BUTTON_TO_HID_MAP.put(R.id.R_Button, 0x15); // R
+        BUTTON_TO_HID_MAP.put(R.id.T_Button, 0x17); // T
+        BUTTON_TO_HID_MAP.put(R.id.Y_Button, 0x1C); // Y
+        BUTTON_TO_HID_MAP.put(R.id.U_Button, 0x18); // U
+        BUTTON_TO_HID_MAP.put(R.id.I_Button, 0x0C); // I
+        BUTTON_TO_HID_MAP.put(R.id.O_Button, 0x12); // O
+        BUTTON_TO_HID_MAP.put(R.id.P_Button, 0x13); // P
+
+        // Row 2: A-L
+        BUTTON_TO_HID_MAP.put(R.id.A_Button, 0x04); // A
+        BUTTON_TO_HID_MAP.put(R.id.S_Button, 0x16); // S
+        BUTTON_TO_HID_MAP.put(R.id.D_Button, 0x07); // D
+        BUTTON_TO_HID_MAP.put(R.id.F_Button, 0x09); // F
+        BUTTON_TO_HID_MAP.put(R.id.G_Button, 0x0A); // G
+        BUTTON_TO_HID_MAP.put(R.id.H_Button, 0x0B); // H
+        BUTTON_TO_HID_MAP.put(R.id.J_Button, 0x0D); // J
+        BUTTON_TO_HID_MAP.put(R.id.K_Button, 0x0E); // K
+        BUTTON_TO_HID_MAP.put(R.id.L_Button, 0x0F); // L
+
+        // Row 3: Z-M, /
+        BUTTON_TO_HID_MAP.put(R.id.Z_Button, 0x1D); // Z
+        BUTTON_TO_HID_MAP.put(R.id.X_Button, 0x1B); // X
+        BUTTON_TO_HID_MAP.put(R.id.C_Button, 0x06); // C
+        BUTTON_TO_HID_MAP.put(R.id.V_Button, 0x19); // V
+        BUTTON_TO_HID_MAP.put(R.id.B_Button, 0x05); // B
+        BUTTON_TO_HID_MAP.put(R.id.N_Button, 0x11); // N
+        BUTTON_TO_HID_MAP.put(R.id.M_Button, 0x10); // M
+        BUTTON_TO_HID_MAP.put(R.id.Key_Slash, 0x38); // /
+    }
+
+    /**
+     * Character alternates popup for long-press functionality.
+     * Shows alternative characters (e.g., q/Q/1) when user long-presses a letter key.
+     */
+    private static CharacterAlternatesPopup alternatesPopup;
+    private static final long ALTERNATES_LONG_PRESS_MS = 500;
+
+    /**
+     * Set the CharacterAlternatesPopup for long-press character selection.
+     * Called from MainActivity after KeyBoardSystem is initialized.
+     */
+    public static void setAlternatesPopup(CharacterAlternatesPopup popup) {
+        alternatesPopup = popup;
     }
 
     /**
@@ -801,6 +911,115 @@ public class KeyBoardSystem {
         Log.e("KeyBoardSystem", "🔴 handleKeyRelease called");
         HidManager.sendKeyBoardRelease();
         Log.e("KeyBoardSystem", "🔴 Key release command sent");
+    }
+
+    /**
+     * Send an alternate character (from long-press popup) to HID.
+     * Handles uppercase letters by temporarily activating Shift.
+     */
+    /**
+     * Send an alternate character selected from the long-press popup.
+     * Maps the character to the correct physical key name + shift state,
+     * then sends the key press via handleKeyPress.
+     */
+    private void sendAlternateCharacter(String character) {
+        if (character == null || character.isEmpty()) return;
+
+        char c = character.charAt(0);
+        String keyName;
+        boolean needsShift = false;
+
+        // Map character to physical key name
+        switch (c) {
+            // Numbers (no shift)
+            case '0': case '1': case '2': case '3': case '4':
+            case '5': case '6': case '7': case '8': case '9':
+                keyName = String.valueOf(c);
+                break;
+
+            // Symbols that require Shift + number key
+            case '!': keyName = "1"; needsShift = true; break;
+            case '@': keyName = "2"; needsShift = true; break;
+            case '#': keyName = "3"; needsShift = true; break;
+            case '$': keyName = "4"; needsShift = true; break;
+            case '%': keyName = "5"; needsShift = true; break;
+            case '^': keyName = "6"; needsShift = true; break;
+            case '&': keyName = "7"; needsShift = true; break;
+            case '*': keyName = "8"; needsShift = true; break;
+            case '(': keyName = "9"; needsShift = true; break;
+            case ')': keyName = "0"; needsShift = true; break;
+
+            // Lowercase letters
+            case 'a': case 'b': case 'c': case 'd': case 'e':
+            case 'f': case 'g': case 'h': case 'i': case 'j':
+            case 'k': case 'l': case 'm': case 'n': case 'o':
+            case 'p': case 'q': case 'r': case 's': case 't':
+            case 'u': case 'v': case 'w': case 'x': case 'y':
+            case 'z':
+                keyName = String.valueOf(c);
+                break;
+
+            // Uppercase letters
+            case 'A': case 'B': case 'C': case 'D': case 'E':
+            case 'F': case 'G': case 'H': case 'I': case 'J':
+            case 'K': case 'L': case 'M': case 'N': case 'O':
+            case 'P': case 'Q': case 'R': case 'S': case 'T':
+            case 'U': case 'V': case 'W': case 'X': case 'Y':
+            case 'Z':
+                keyName = String.valueOf(Character.toLowerCase(c));
+                needsShift = true;
+                break;
+
+            // Other symbols (use their keyboard key)
+            case '/': keyName = "/"; break;
+            case '?': keyName = "/"; needsShift = true; break;
+            case '[': keyName = "["; break;
+            case ']': keyName = "]"; break;
+            case ';': keyName = ";"; break;
+            case ':': keyName = ";"; needsShift = true; break;
+            case '\'': keyName = "'"; break;
+            case '"': keyName = "'"; needsShift = true; break;
+            case ',': keyName = ","; break;
+            case '.': keyName = "."; break;
+            case '<': keyName = ","; needsShift = true; break;
+            case '>': keyName = "."; needsShift = true; break;
+            case '\\': keyName = "BACKSLASH"; break;
+            case '|': keyName = "BACKSLASH"; needsShift = true; break;
+            case '=': keyName = "="; break;
+            case '+': keyName = "="; needsShift = true; break;
+            case '-': keyName = "-"; break;
+            case '_': keyName = "-"; needsShift = true; break;
+            case '`': keyName = "`"; break;
+            case '~': keyName = "`"; needsShift = true; break;
+            case '{': keyName = "["; needsShift = true; break;
+            case '}': keyName = "]"; needsShift = true; break;
+
+            default:
+                Log.e("KeyBoardSystem", "No key mapping for character: " + c);
+                return;
+        }
+
+        // Temporarily set shift state if needed
+        boolean originalShiftState = KeyBoard_ShIft_Press_state;
+        if (needsShift && !originalShiftState) {
+            KeyBoard_ShIft_Press(true);
+        }
+
+        // Send the key press
+        handleKeyPress(keyName);
+
+        // Release immediately
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        handleKeyRelease();
+
+        // Restore shift state
+        if (needsShift && !originalShiftState) {
+            KeyBoard_ShIft_Press(false);
+        }
     }
 
     public void setSystemButtonsClickColor(){

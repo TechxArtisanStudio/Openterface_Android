@@ -85,6 +85,27 @@ public class ThemeManager {
     }
 
     /**
+     * Apply theme mode (light/dark/system) using AppCompatDelegate.
+     */
+    public void applyThemeMode(String mode) {
+        switch (mode) {
+            case MODE_LIGHT:
+                androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(
+                    androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO);
+                break;
+            case MODE_DARK:
+                androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(
+                    androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES);
+                break;
+            case MODE_SYSTEM:
+            default:
+                androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(
+                    androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+                break;
+        }
+    }
+
+    /**
      * 应用主题到Activity
      */
     public void applyTheme(Activity activity) {

@@ -66,6 +66,7 @@ import com.openterface.AOS.KeyBoardClick.KeyBoardSystem;
 import com.openterface.AOS.KeyBoardClick.KeyBoardWin;
 import com.openterface.AOS.KeyBoardClick.KeyboardSettingsManager;
 import com.openterface.AOS.view.KeyPreviewPopup;
+import com.openterface.AOS.view.CharacterAlternatesPopup;
 import com.openterface.AOS.view.TouchPadView;
 import com.openterface.AOS.view.TouchPadHelpDialog;
 import com.openterface.AOS.view.MouseControlStripView;
@@ -73,6 +74,8 @@ import com.openterface.AOS.KeyBoardClick.TouchPadSettings;
 import com.openterface.AOS.dialog.TargetOsPickerDialog;
 import com.openterface.AOS.manager.TargetOsManager;
 import com.openterface.AOS.manager.ThemeManager;
+import com.openterface.AOS.manager.ShortcutProfileManager;
+import com.openterface.AOS.model.ShortcutProfile;
 import com.openterface.AOS.adapter.ThemeColorAdapter;
 import com.openterface.AOS.drawerLayout.DrawerLayoutDeal;
 import com.openterface.AOS.drawerLayout.ZoomLayoutDeal;
@@ -97,6 +100,7 @@ import com.serenegiant.utils.UriHelper;
 import com.openterface.AOS.R;
 import com.openterface.AOS.databinding.ActivityMainBinding;
 import com.openterface.AOS.fragment.CameraControlsDialogFragment;
+import com.openterface.AOS.fragment.SettingsFloatingFragment;
 import com.openterface.AOS.fragment.DeviceListDialogFragment;
 import com.openterface.AOS.fragment.VideoFormatDialogFragment;
 import com.openterface.AOS.fragment.VncServerSettingsDialogFragment;
@@ -159,7 +163,7 @@ import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.IntentFilter;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SettingsFloatingFragment.SettingsCallback {
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final boolean DEBUG = true;
@@ -2335,7 +2339,7 @@ public class MainActivity extends AppCompatActivity {
             portraitImeTab.setOnClickListener(v -> toggleModule(ModuleType.IME));
         }
         if (portraitSettingsTab != null) {
-            portraitSettingsTab.setOnClickListener(v -> toggleModule(ModuleType.SETTINGS));
+            portraitSettingsTab.setOnClickListener(v -> showFloatingSettings());
         }
         if (portraitRotationButton != null) {
             portraitRotationButton.setOnClickListener(v -> toggleScreenOrientation());
@@ -2448,8 +2452,36 @@ public class MainActivity extends AppCompatActivity {
                 showKeyboardSettingsDialog();
             });
         }
+
+        // Profile switch button (switches shortcut profile)
+        ImageButton profileSwitchButton = findViewById(R.id.shortcut_profile_switch);
+        if (profileSwitchButton != null) {
+            profileSwitchButton.setOnClickListener(v -> {
+                showProfileSwitcherDialog();
+            });
+        }
     }
 
+
+    @Override
+    public void onBackPressed() {
+        // Handle back navigation from ShortcutManagerFragment or close module
+        if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+            getSupportFragmentManager().popBackStack();
+            // After popping, re-inflate the settings module if needed
+            if (isPortraitMode && currentModule == ModuleType.SETTINGS && portraitModuleContent != null) {
+                settingsModuleView = null; // Clear cache to force recreation
+                portraitModuleContent.removeAllViews();
+                inflateModuleView(ModuleType.SETTINGS);
+            }
+            return;
+        } else if (isPortraitMode && currentModule != ModuleType.NONE) {
+            // Close the current module if back stack is empty and a module is open
+            setModuleState(ModuleType.NONE, true);
+            return;
+        }
+        super.onBackPressed();
+    }
 
     private void toggleModule(ModuleType type) {
         if (currentModule == type) {
@@ -2581,6 +2613,10 @@ public class MainActivity extends AppCompatActivity {
             // Pass popup and settings to KeyBoardSystem for all-key bubble + sound/vibration
             KeyBoardSystem.setKeyPreviewPopup(keyPreviewPopup);
             KeyBoardSystem.setSettingsManager(keyboardSettingsManager);
+
+            // Setup CharacterAlternatesPopup for long-press character selection (portrait mode)
+            CharacterAlternatesPopup alternatesPopup = new CharacterAlternatesPopup(this);
+            KeyBoardSystem.setAlternatesPopup(alternatesPopup);
 
             keyBoardShortCut.setShortCutButtonsClickColor();
             keyBoardFunction.setFunctionButtonsClickColor();
@@ -2910,47 +2946,49 @@ public class MainActivity extends AppCompatActivity {
      * Update tab visual states (active/inactive)
      */
     private void updateTabVisuals() {
+        // Get theme-aware colors
+        int activeColor = androidx.core.content.ContextCompat.getColor(this, R.color.primary);
+        int inactiveColor = androidx.core.content.ContextCompat.getColor(this, R.color.background_light);
+        int activeIconColor = androidx.core.content.ContextCompat.getColor(this, R.color.on_primary);
+        int inactiveIconColor = androidx.core.content.ContextCompat.getColor(this, R.color.text_secondary);
+
         // Keyboard tab
         if (portraitKeyboardTab != null) {
             boolean active = (currentModule == ModuleType.KEYBOARD);
-            portraitKeyboardTab.setBackgroundColor(
-                active ? 0xFF3700B3 : 0xFF1A1A1A);
+            portraitKeyboardTab.setBackgroundColor(active ? activeColor : inactiveColor);
             ImageView icon = portraitKeyboardTab.findViewById(R.id.tab_keyboard_icon);
             if (icon != null) {
-                icon.setColorFilter(active ? 0xFFFFFFFF : 0xFF888888);
+                icon.setColorFilter(active ? activeIconColor : inactiveIconColor);
             }
         }
 
         // Mouse tab
         if (portraitMouseTab != null) {
             boolean active = (currentModule == ModuleType.MOUSE);
-            portraitMouseTab.setBackgroundColor(
-                active ? 0xFF3700B3 : 0xFF1A1A1A);
+            portraitMouseTab.setBackgroundColor(active ? activeColor : inactiveColor);
             ImageView icon = portraitMouseTab.findViewById(R.id.tab_mouse_icon);
             if (icon != null) {
-                icon.setColorFilter(active ? 0xFFFFFFFF : 0xFF888888);
+                icon.setColorFilter(active ? activeIconColor : inactiveIconColor);
             }
         }
 
         // IME tab
         if (portraitImeTab != null) {
             boolean active = (currentModule == ModuleType.IME);
-            portraitImeTab.setBackgroundColor(
-                active ? 0xFF3700B3 : 0xFF1A1A1A);
+            portraitImeTab.setBackgroundColor(active ? activeColor : inactiveColor);
             ImageView icon = portraitImeTab.findViewById(R.id.tab_ime_icon);
             if (icon != null) {
-                icon.setColorFilter(active ? 0xFFFFFFFF : 0xFF888888);
+                icon.setColorFilter(active ? activeIconColor : inactiveIconColor);
             }
         }
 
         // Settings tab
         if (portraitSettingsTab != null) {
             boolean active = (currentModule == ModuleType.SETTINGS);
-            portraitSettingsTab.setBackgroundColor(
-                active ? 0xFF3700B3 : 0xFF1A1A1A);
+            portraitSettingsTab.setBackgroundColor(active ? activeColor : inactiveColor);
             ImageView icon = portraitSettingsTab.findViewById(R.id.tab_settings_icon);
             if (icon != null) {
-                icon.setColorFilter(active ? 0xFFFFFFFF : 0xFF888888);
+                icon.setColorFilter(active ? activeIconColor : inactiveIconColor);
             }
         }
     }
@@ -3237,6 +3275,25 @@ public class MainActivity extends AppCompatActivity {
         if (preValidateSwitch != null) preValidateSwitch.setChecked(preValidate);
         if (autoSaveSwitch != null) autoSaveSwitch.setChecked(autoSave);
 
+        // === Shortcut Manager ===
+        LinearLayout shortcutManagerLayout = view.findViewById(R.id.settings_shortcut_manager_layout);
+        if (shortcutManagerLayout != null) {
+            shortcutManagerLayout.setOnClickListener(v -> {
+                // Clear the cached settings module view before navigating
+                // This ensures it will be recreated when returning from ShortcutManagerFragment
+                settingsModuleView = null;
+
+                // Navigate to ShortcutManagerFragment
+                com.openterface.AOS.fragment.ShortcutManagerFragment fragment =
+                    com.openterface.AOS.fragment.ShortcutManagerFragment.newInstance();
+                getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.module_content_container, fragment)
+                    .addToBackStack(null)
+                    .commit();
+            });
+        }
+
         // === Keyboard Sound Switch ===
         if (soundSwitch != null) {
             soundSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -3377,6 +3434,65 @@ public class MainActivity extends AppCompatActivity {
         return getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).getInt(KEY_SCROLL_SPEED, 50);
     }
 
+    // ============================================================
+    // SettingsFloatingFragment.SettingsCallback implementation
+    // ============================================================
+
+    @Override
+    public void setupSettingsContent(View view) {
+        // Delegate to existing setupSettingsModule logic
+        setupSettingsModule(view);
+    }
+
+    @Override
+    public void setSoundEnabled(boolean enabled) {
+        getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).edit().putBoolean(KEY_SOUND_ENABLED, enabled).apply();
+        if (keyboardSettingsManager != null) {
+            keyboardSettingsManager.setSoundEnabled(enabled);
+        }
+    }
+
+    @Override
+    public void setSoundVolume(int volume) {
+        getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).edit().putInt(KEY_SOUND_VOLUME, volume).apply();
+        if (keyboardSettingsManager != null) {
+            keyboardSettingsManager.setSoundVolume(volume);
+        }
+    }
+
+    @Override
+    public void setVibrateEnabled(boolean enabled) {
+        getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).edit().putBoolean(KEY_VIBRATE_ENABLED, enabled).apply();
+        if (keyboardSettingsManager != null) {
+            keyboardSettingsManager.setVibrateEnabled(enabled);
+        }
+    }
+
+    @Override
+    public void setVibrateIntensity(int intensity) {
+        getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).edit().putInt(KEY_VIBRATE_INTENSITY, intensity).apply();
+        if (keyboardSettingsManager != null) {
+            keyboardSettingsManager.setVibrateStrength(intensity);
+        }
+    }
+
+    @Override
+    public void setScrollSpeed(int speed) {
+        getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).edit().putInt(KEY_SCROLL_SPEED, speed).apply();
+    }
+
+    /**
+     * Show floating settings dialog instead of bottom drawer.
+     */
+    private void showFloatingSettings() {
+        SettingsFloatingFragment fragment = new SettingsFloatingFragment();
+        fragment.setOnDismissListener(() -> {
+            currentModule = ModuleType.NONE;
+            updateTabVisuals();
+        });
+        fragment.show(getSupportFragmentManager(), "settings_floating");
+    }
+
     private void showThemePickerDialog() {
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
         builder.setTitle("选择主题颜色");
@@ -3404,7 +3520,7 @@ public class MainActivity extends AppCompatActivity {
             // 更新设置界面的显示
             android.view.View settingsView = findViewById(R.id.settings_module_root);
             if (settingsView != null) {
-                TextView themeValue = settingsView.findViewById(R.id.settings_theme_value);
+                TextView themeValue = settingsView.findViewById(R.id.settings_theme_color_value);
                 if (themeValue != null) {
                     themeValue.setText(displayNames[which]);
                 }
@@ -3437,11 +3553,12 @@ public class MainActivity extends AppCompatActivity {
         builder.setSingleChoiceItems(displayNames, selectedIndex, (dialog, which) -> {
             String selectedMode = modes[which];
             ThemeManager.getInstance().setThemeMode(this, selectedMode);
+            ThemeManager.getInstance().applyThemeMode(selectedMode);
 
             // 更新设置界面的显示
             android.view.View settingsView = findViewById(R.id.settings_module_root);
             if (settingsView != null) {
-                TextView themeValue = settingsView.findViewById(R.id.settings_theme_value);
+                TextView themeValue = settingsView.findViewById(R.id.settings_theme_mode_value);
                 if (themeValue != null) {
                     themeValue.setText(displayNames[which]);
                 }
@@ -3472,5 +3589,48 @@ public class MainActivity extends AppCompatActivity {
             default:
                 return "跟随系统";
         }
+    }
+
+    /**
+     * Show dialog for switching shortcut profiles in portrait mode.
+     * Displays a list of available profiles with the active one checked.
+     * Selecting a profile updates the active profile and refreshes the shortcut strip.
+     */
+    private void showProfileSwitcherDialog() {
+        ShortcutProfileManager profileManager = ShortcutProfileManager.getInstance(this);
+        java.util.List<ShortcutProfile> profiles = profileManager.getAllProfiles();
+
+        if (profiles.isEmpty()) {
+            android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+            builder.setTitle("快捷键配置")
+                .setMessage("暂无可用的快捷键配置")
+                .setPositiveButton("确定", null)
+                .show();
+            return;
+        }
+
+        String[] profileNames = new String[profiles.size()];
+        String activeProfileId = profileManager.getActiveProfile() != null ? profileManager.getActiveProfile().id : null;
+        int checkedItem = -1;
+
+        for (int i = 0; i < profiles.size(); i++) {
+            ShortcutProfile profile = profiles.get(i);
+            profileNames[i] = profile.name;
+            if (profile.id.equals(activeProfileId)) {
+                checkedItem = i;
+            }
+        }
+
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        builder.setTitle("选择快捷键配置");
+        builder.setSingleChoiceItems(profileNames, checkedItem, (dialog, which) -> {
+            ShortcutProfile selected = profiles.get(which);
+            profileManager.setActiveProfile(selected.id);
+            // Update the shortcut strip buttons to reflect the new profile
+            setupPortraitShortcutStrip();
+            dialog.dismiss();
+        });
+        builder.setNegativeButton("取消", (dialog, which) -> dialog.dismiss());
+        builder.show();
     }
 }

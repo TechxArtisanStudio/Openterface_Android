@@ -21,17 +21,22 @@
         android:layout_width="match_parent"
         android:layout_height="52dp"
         android:orientation="horizontal"
-        android:background="#1A1A1A"
+        android:background="@color/card_background"
         android:paddingHorizontal="6dp"
         android:gravity="center_vertical">
 
-        <Spinner
-            android:id="@+id/shortcut_profile_spinner"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:layout_marginEnd="6dp"
-            android:backgroundTint="#CCCCCC"
-            android:theme="@style/Theme.AppCompat" />
+        <!-- 切换快捷键配置 -->
+        <ImageButton
+            android:id="@+id/shortcut_profile_switch"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginHorizontal="3dp"
+            android:background="@drawable/shortcut_button_background"
+            android:src="@drawable/ic_list_24"
+            android:scaleType="centerInside"
+            android:contentDescription="切换配置"
+            android:padding="8dp"
+            android:tint="@color/on_primary" />
 
         <HorizontalScrollView
             android:id="@+id/shortcut_scroll"
@@ -57,7 +62,7 @@
                     android:scaleType="centerInside"
                     android:contentDescription="Esc"
                     android:padding="10dp"
-                    android:tint="#FFFFFF" />
+                    android:tint="@color/on_primary" />
 
                 <android.widget.Button
                     android:id="@+id/shortcut_ctrl_c"
@@ -65,7 +70,7 @@
                     android:layout_height="40dp"
                     android:layout_marginHorizontal="3dp"
                     android:text="Ctrl+C"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/on_primary"
                     android:textSize="11sp"
                     android:textStyle="bold"
                     android:background="@drawable/shortcut_button_background"
@@ -77,7 +82,7 @@
                     android:layout_height="40dp"
                     android:layout_marginHorizontal="3dp"
                     android:text="Ctrl+V"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/on_primary"
                     android:textSize="11sp"
                     android:textStyle="bold"
                     android:background="@drawable/shortcut_button_background"
@@ -89,7 +94,7 @@
                     android:layout_height="40dp"
                     android:layout_marginHorizontal="3dp"
                     android:text="Ctrl+A"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/on_primary"
                     android:textSize="11sp"
                     android:textStyle="bold"
                     android:background="@drawable/shortcut_button_background"
@@ -101,7 +106,7 @@
                     android:layout_height="40dp"
                     android:layout_marginHorizontal="3dp"
                     android:text="Ctrl+Z"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/on_primary"
                     android:textSize="11sp"
                     android:textStyle="bold"
                     android:background="@drawable/shortcut_button_background"
@@ -113,7 +118,7 @@
                     android:layout_height="40dp"
                     android:layout_marginHorizontal="3dp"
                     android:text="Ctrl+S"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/on_primary"
                     android:textSize="11sp"
                     android:textStyle="bold"
                     android:background="@drawable/shortcut_button_background"
@@ -129,7 +134,7 @@
                     android:scaleType="centerInside"
                     android:contentDescription="键盘设置"
                     android:padding="10dp"
-                    android:tint="#FFFFFF" />
+                    android:tint="@color/on_primary" />
 
             </LinearLayout>
         </HorizontalScrollView>
@@ -166,7 +171,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="#F5F5F5"
+        android:background="@color/background_light"
         android:visibility="gone">
 
         <!-- Module Content Container -->
@@ -183,7 +188,7 @@
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:orientation="horizontal"
-        android:background="#1A1A1A"
+        android:background="@color/card_background"
         android:gravity="center_vertical"
         android:paddingHorizontal="4dp">
 
@@ -210,7 +215,7 @@
                 android:layout_height="wrap_content"
                 android:text="键盘"
                 android:textSize="11sp"
-                android:textColor="#888888"
+                android:textColor="@color/text_secondary"
                 android:layout_marginTop="2dp" />
         </LinearLayout>
 
@@ -237,7 +242,7 @@
                 android:layout_height="wrap_content"
                 android:text="鼠标"
                 android:textSize="11sp"
-                android:textColor="#888888"
+                android:textColor="@color/text_secondary"
                 android:layout_marginTop="2dp" />
         </LinearLayout>
 
@@ -264,7 +269,7 @@
                 android:layout_height="wrap_content"
                 android:text="输入"
                 android:textSize="11sp"
-                android:textColor="#888888"
+                android:textColor="@color/text_secondary"
                 android:layout_marginTop="2dp" />
         </LinearLayout>
 
@@ -291,7 +296,7 @@
                 android:layout_height="wrap_content"
                 android:text="设置"
                 android:textSize="11sp"
-                android:textColor="#888888"
+                android:textColor="@color/text_secondary"
                 android:layout_marginTop="2dp" />
         </LinearLayout>
 
