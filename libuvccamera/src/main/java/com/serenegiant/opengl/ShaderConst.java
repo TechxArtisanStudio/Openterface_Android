@@ -22,7 +22,7 @@ import android.opengl.GLES20;
 
 /**
  * Created by saki on 16/08/26.
- * フラグメントシェーダーとかの文字列定数達を集める
+ * Collection of string constants for fragment shaders and such
  */
 public class ShaderConst {
 	public static final int GL_TEXTURE_EXTERNAL_OES	= 0x8D65;
@@ -60,9 +60,9 @@ public class ShaderConst {
 		GLES20.GL_TEXTURE30, GLES20.GL_TEXTURE31,
 	};
 
-// 関数文字列定義
+// Function string definitions
 	/**
-	 * RGBをHSVに変換
+	 * Convert RGB to HSV
 	 * {R[0.0-1.0], G[0.0-1.0], B([0.0-1.0]} => {H[0.0-1.0], S[0.0-1.0], V[0.0-1.0]}
 	 */
 	public static final String FUNC_RGB2HSV
@@ -75,7 +75,7 @@ public class ShaderConst {
 			"return vec3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);\n" +
 		"}\n";
 	/**
-	 * HSVをRGBに変換
+	 * Convert HSV to RGB
 	 * {H[0.0-1.0], S[0.0-1.0], V[0.0-1.0]} => {R[0.0-1.0], G[0.0-1.0], B([0.0-1.0]}
 	 */
 	public static final String FUNC_HSV2RGB
@@ -86,9 +86,9 @@ public class ShaderConst {
 		"}\n";
 
 	/**
-	 * RGBの輝度を取得
-	 * 変換係数との内積を計算するだけ
-	 * 係数は(0.2125, 0.7154, 0.0721)
+	 * Get RGB luminance
+	 * Simply calculates the dot product with conversion coefficients
+	 * Coefficients are (0.2125, 0.7154, 0.0721)
 	 */
 	public static final String FUNC_GET_INTENSITY
 		= "const highp vec3 luminanceWeighting = vec3(0.2125, 0.7154, 0.0721);\n" +
@@ -96,22 +96,22 @@ public class ShaderConst {
 			"return dot(c.rgb, luminanceWeighting);\n" +
 		"}\n";
 
-// 頂点シェーダー
+// Vertex shader
 	/**
-	 * モデルビュー変換行列とテクスチャ変換行列適用するだけの頂点シェーダー
+	 * Vertex shader that simply applies model-view transformation matrix and texture transformation matrix
 	 */
 	public static final String VERTEX_SHADER = SHADER_VERSION +
-		"uniform mat4 uMVPMatrix;\n" +				// モデルビュー変換行列
-		"uniform mat4 uTexMatrix;\n" +				// テクスチャ変換行列
-		"attribute highp vec4 aPosition;\n" +		// 頂点座標
-		"attribute highp vec4 aTextureCoord;\n" +	// テクスチャ情報
-		"varying highp vec2 vTextureCoord;\n" +		// フラグメントシェーダーへ引き渡すテクスチャ座標
+		"uniform mat4 uMVPMatrix;\n" +				// Model-view transformation matrix
+		"uniform mat4 uTexMatrix;\n" +				// Texture transformation matrix
+		"attribute highp vec4 aPosition;\n" +		// Vertex coordinates
+		"attribute highp vec4 aTextureCoord;\n" +	// Texture information
+		"varying highp vec2 vTextureCoord;\n" +		// Texture coordinates to pass to fragment shader
 		"void main() {\n" +
 		"    gl_Position = uMVPMatrix * aPosition;\n" +
 		"    vTextureCoord = (uTexMatrix * aTextureCoord).xy;\n" +
 		"}\n";
 
-// フラグメントシェーダー
+// Fragment shader
 	public static final String FRAGMENT_SHADER_SIMPLE_OES
 		= SHADER_VERSION
 		+ HEADER_OES
@@ -379,17 +379,17 @@ public class ShaderConst {
 		= String.format(FRAGMENT_SHADER_SOBEL_BASE, HEADER_OES, SAMPLER_OES);
 
 	public static final float[] KERNEL_NULL = { 0f, 0f, 0f,  0f, 1f, 0f,  0f, 0f, 0f};
-	public static final float[] KERNEL_SOBEL_H = { 1f, 0f, -1f, 2f, 0f, -2f, 1f, 0f, -1f, };	// ソーベル(1次微分)
+	public static final float[] KERNEL_SOBEL_H = { 1f, 0f, -1f, 2f, 0f, -2f, 1f, 0f, -1f, };	// Sobel (first derivative)
 	public static final float[] KERNEL_SOBEL_V = { 1f, 2f, 1f, 0f, 0f, 0f, -1f, -2f, -1f, };
 	public static final float[] KERNEL_SOBEL2_H = { 3f, 0f, -3f, 10f, 0f, -10f, 3f, 0f, -3f, };
 	public static final float[] KERNEL_SOBEL2_V = { 3f, 10f, 3f, 0f, 0f, 0f, -3f, -10f, -3f, };
-	public static final float[] KERNEL_SHARPNESS = { 0f, -1f, 0f, -1f, 5f, -1f, 0f, -1f, 0f,};	// シャープネス
-	public static final float[] KERNEL_EDGE_DETECT = { -1f, -1f, -1f, -1f, 8f, -1f, -1f, -1f, -1f, }; // エッジ検出
-	public static final float[] KERNEL_EMBOSS = { 2f, 0f, 0f, 0f, -1f, 0f, 0f, 0f, -1f };	// エンボス, オフセット0.5f
-	public static final float[] KERNEL_SMOOTH = { 1/9f, 1/9f, 1/9f, 1/9f, 1/9f, 1/9f, 1/9f, 1/9f, 1/9f, };	// 移動平均
-	public static final float[] KERNEL_GAUSSIAN = { 1/16f, 2/16f, 1/16f, 2/16f, 4/16f, 2/16f, 1/16f, 2/16f, 1/16f, };	// ガウシアン(ノイズ除去/)
+	public static final float[] KERNEL_SHARPNESS = { 0f, -1f, 0f, -1f, 5f, -1f, 0f, -1f, 0f,};	// Sharpness
+	public static final float[] KERNEL_EDGE_DETECT = { -1f, -1f, -1f, -1f, 8f, -1f, -1f, -1f, -1f, }; // Edge detection
+	public static final float[] KERNEL_EMBOSS = { 2f, 0f, 0f, 0f, -1f, 0f, 0f, 0f, -1f };	// Emboss, offset 0.5f
+	public static final float[] KERNEL_SMOOTH = { 1/9f, 1/9f, 1/9f, 1/9f, 1/9f, 1/9f, 1/9f, 1/9f, 1/9f, };	// Moving average
+	public static final float[] KERNEL_GAUSSIAN = { 1/16f, 2/16f, 1/16f, 2/16f, 4/16f, 2/16f, 1/16f, 2/16f, 1/16f, };	// Gaussian (noise removal)
 	public static final float[] KERNEL_BRIGHTEN = { 1f, 1f, 1f, 1f, 2f, 1f, 1f, 1f, 1f, };
-	public static final float[] KERNEL_LAPLACIAN = { 1f, 1f, 1f, 1f, -8f, 1f, 1f, 1f, 1f, };	// ラプラシアン(2次微分)
+	public static final float[] KERNEL_LAPLACIAN = { 1f, 1f, 1f, 1f, -8f, 1f, 1f, 1f, 1f, };	// Laplacian (second derivative)
 
 	private static final String FRAGMENT_SHADER_FILT3x3_BASE = SHADER_VERSION +
 		"%s" +

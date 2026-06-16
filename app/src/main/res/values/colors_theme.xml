@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Theme accent color families -->
+    <color name="theme_accent_orange">#FFF57C00</color>
+    <color name="theme_accent_orange_container">#FFFFE0B2</color>
+    <color name="theme_accent_orange_on_container">#FF5D2A00</color>
+    <color name="theme_accent_orange_low_emphasis">#1AF57C00</color>
+
+    <color name="theme_accent_blue">#FF1976D2</color>
+    <color name="theme_accent_blue_container">#FFBBDEFB</color>
+    <color name="theme_accent_blue_on_container">#FF0D47A1</color>
+    <color name="theme_accent_blue_low_emphasis">#1A1976D2</color>
+
+    <color name="theme_accent_green">#FF2E7D32</color>
+    <color name="theme_accent_green_container">#FFC8E6C9</color>
+    <color name="theme_accent_green_on_container">#FF1B5E20</color>
+    <color name="theme_accent_green_low_emphasis">#1A2E7D32</color>
+
+    <color name="theme_accent_pink">#FFAD1457</color>
+    <color name="theme_accent_pink_container">#FFF8BBD0</color>
+    <color name="theme_accent_pink_on_container">#FF880E4F</color>
+    <color name="theme_accent_pink_low_emphasis">#1AAD1457</color>
+
+    <color name="theme_accent_purple">#FF6A1B9A</color>
+    <color name="theme_accent_purple_container">#FFE1BEE7</color>
+    <color name="theme_accent_purple_on_container">#FF4A148C</color>
+    <color name="theme_accent_purple_low_emphasis">#1A6A1B9A</color>
+
+    <color name="theme_accent_red">#FFC62828</color>
+    <color name="theme_accent_red_container">#FFFFCDD2</color>
+    <color name="theme_accent_red_on_container">#FFB71C1C</color>
+    <color name="theme_accent_red_low_emphasis">#1AC62828</color>
+
+    <color name="theme_accent_teal">#FF00695C</color>
+    <color name="theme_accent_teal_container">#FFB2DFDB</color>
+    <color name="theme_accent_teal_on_container">#FF004D40</color>
+    <color name="theme_accent_teal_low_emphasis">#1A00695C</color>
+
+    <color name="theme_accent_indigo">#FF303F9F</color>
+    <color name="theme_accent_indigo_container">#FFC5CAE9</color>
+    <color name="theme_accent_indigo_on_container">#FF1A237E</color>
+    <color name="theme_accent_indigo_low_emphasis">#1A303F9F</color>
+</resources>

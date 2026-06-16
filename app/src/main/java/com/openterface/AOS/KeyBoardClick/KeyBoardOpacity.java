@@ -40,7 +40,7 @@ public class KeyBoardOpacity {
     private static final int DEFAULT_OPACITY = 100;
 
     private final ImageButton KeyBoard_Opacity;
-    private final LinearLayout keyBoardView;
+    private final View keyBoardView;
     private final android.content.SharedPreferences prefs;
     private final MainActivity activity;
 
@@ -51,8 +51,20 @@ public class KeyBoardOpacity {
         this.activity = activity;
     }
 
+    /**
+     * Constructor for portrait module where views are in the module view.
+     */
+    public KeyBoardOpacity(MainActivity activity, View rootView) {
+        KeyBoard_Opacity = rootView.findViewById(R.id.KeyBoard_Opacity);
+        keyBoardView = rootView; // Use the module root view for opacity
+        prefs = activity.getPreferences(Context.MODE_PRIVATE);
+        this.activity = activity;
+    }
+
     public void setOpacityButtonClick() {
-        KeyBoard_Opacity.setOnClickListener(v -> showOpacityDialog());
+        if (KeyBoard_Opacity != null) {
+            KeyBoard_Opacity.setOnClickListener(v -> showOpacityDialog());
+        }
     }
 
     private void showOpacityDialog() {

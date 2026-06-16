@@ -39,14 +39,14 @@ import com.serenegiant.utils.AssetsHelper;
 import java.io.IOException;
 
 /**
- * OpenGL|ES2/3用のヘルパークラス
+ * Helper class for OpenGL|ES2/3
  */
 public final class GLHelper {
-    //	private static final boolean DEBUG = false;	// FIXME 実働時はfalseにすること
+    //	private static final boolean DEBUG = false;	// FIXME set to false in production
     private static final String TAG = "GLHelper";
 
     /**
-     * OpenGL|ESのエラーをチェックしてlogCatに出力する
+     * Check OpenGL|ES error and output to logCat
      *
      * @param op
      */
@@ -63,10 +63,10 @@ public final class GLHelper {
     }
 
     /**
-     * テクスチャ名を生成, テクスチャユニットはGL_TEXTURE0, クランプ方法はGL_CLAMP_TO_EDGE
+     * Generate texture name, texture unit is GL_TEXTURE0, clamp method is GL_CLAMP_TO_EDGE
      *
      * @param texTarget
-     * @param filter_param テクスチャの補完方法を指定, min/mag共に同じ値になる, GL_LINEARとかGL_NEAREST
+     * @param filter_param texture interpolation method, same value for min/mag, GL_LINEAR or GL_NEAREST
      * @return
      */
     public static int initTex(final int texTarget, final int filter_param) {
@@ -75,13 +75,13 @@ public final class GLHelper {
     }
 
     /**
-     * テクスチャ名を生成(GL_TEXTURE0のみ)
+     * Generate texture name (GL_TEXTURE0 only)
      *
      * @param texTarget
-     * @param texUnit    テクスチャユニット, GL_TEXTURE0...GL_TEXTURE31
-     * @param min_filter テクスチャの補間方法を指定, GL_LINEARとかGL_NEAREST
-     * @param mag_filter テクスチャの補間方法を指定, GL_LINEARとかGL_NEAREST
-     * @param wrap       テクスチャのクランプ方法, GL_CLAMP_TO_EDGE
+     * @param texUnit    texture unit, GL_TEXTURE0...GL_TEXTURE31
+     * @param min_filter texture interpolation method, GL_LINEAR or GL_NEAREST
+     * @param mag_filter texture interpolation method, GL_LINEAR or GL_NEAREST
+     * @param wrap       texture clamp method, GL_CLAMP_TO_EDGE
      * @return
      */
     public static int initTex(final int texTarget, final int texUnit,
@@ -100,9 +100,9 @@ public final class GLHelper {
     }
 
     /**
-     * テクスチャ名配列を生成(前から順にGL_TEXTURE0, GL_TEXTURE1, ...)
+     * Generate texture name array (GL_TEXTURE0, GL_TEXTURE1, ... in order from the front)
      *
-     * @param n            生成するテキスチャ名の数, 最大で32個(GL_MAX_TEXTURE_IMAGE_UNITS以下)
+     * @param n            number of texture names to generate, maximum 32 (no more than GL_MAX_TEXTURE_IMAGE_UNITS)
      * @param texTarget
      * @param filter_param
      * @return
@@ -115,9 +115,9 @@ public final class GLHelper {
     }
 
     /**
-     * テクスチャ名配列を生成(前から順にGL_TEXTURE0, GL_TEXTURE1, ...)
+     * Generate texture name array (GL_TEXTURE0, GL_TEXTURE1, ... in order from the front)
      *
-     * @param texIds       テクスチャ名配列, 最大で32個(GL_MAX_TEXTURE_IMAGE_UNITS以下)
+     * @param texIds       texture name array, maximum 32 (no more than GL_MAX_TEXTURE_IMAGE_UNITS)
      * @param texTarget
      * @param filter_param
      * @return
@@ -130,9 +130,9 @@ public final class GLHelper {
     }
 
     /**
-     * テクスチャ名配列を生成(前から順にGL_TEXTURE0, GL_TEXTURE1, ...)
+     * Generate texture name array (GL_TEXTURE0, GL_TEXTURE1, ... in order from the front)
      *
-     * @param n          生成するテキスチャ名の数, 最大32
+     * @param n          number of texture names to generate, maximum 32
      * @param texTarget
      * @param min_filter
      * @param mag_filter
@@ -146,9 +146,9 @@ public final class GLHelper {
     }
 
     /**
-     * テクスチャ名配列を生成(前から順にGL_TEXTURE0, GL_TEXTURE1, ...)
+     * Generate texture name array (GL_TEXTURE0, GL_TEXTURE1, ... in order from the front)
      *
-     * @param texIds     テクスチャ名配列, 最大で32個(GL_MAX_TEXTURE_IMAGE_UNITS以下)
+     * @param texIds     texture name array, maximum 32 (no more than GL_MAX_TEXTURE_IMAGE_UNITS)
      * @param texTarget
      * @param min_filter
      * @param mag_filter
@@ -171,9 +171,9 @@ public final class GLHelper {
     }
 
     /**
-     * テクスチャ名配列を生成(こっちは全部同じテクスチャユニット)
+     * Generate texture name array (all use the same texture unit here)
      *
-     * @param n          最大で32個(GL_MAX_TEXTURE_IMAGE_UNITS以下)
+     * @param n          maximum 32 (no more than GL_MAX_TEXTURE_IMAGE_UNITS)
      * @param texTarget
      * @param texUnit
      * @param min_filter
@@ -190,9 +190,9 @@ public final class GLHelper {
     }
 
     /**
-     * テクスチャ名配列を生成(こっちは全部同じテクスチャユニット)
+     * Generate texture name array (all use the same texture unit here)
      *
-     * @param texIds       最大で32個(GL_MAX_TEXTURE_IMAGE_UNITS以下)
+     * @param texIds       maximum 32 (no more than GL_MAX_TEXTURE_IMAGE_UNITS)
      * @param texTarget
      * @param texUnit
      * @param filter_param
@@ -206,7 +206,7 @@ public final class GLHelper {
     }
 
     /**
-     * テクスチャ名配列を生成(こっちは全部同じテクスチャユニット)
+     * Generate texture name array (all use the same texture unit here)
      *
      * @param texIds
      * @param texTarget
@@ -360,17 +360,17 @@ public final class GLHelper {
     public static int loadShader(final String vss, final String fss) {
 //		if (DEBUG) Log.v(TAG, "loadShader:");
         final int[] compiled = new int[1];
-        // 頂点シェーダーをコンパイル
+        // Compile vertex shader
         final int vs = loadShader(GLES20.GL_VERTEX_SHADER, vss);
         if (vs == 0) {
             return 0;
         }
-        // フラグメントシェーダーをコンパイル
+        // Compile fragment shader
         int fs = loadShader(GLES20.GL_FRAGMENT_SHADER, fss);
         if (fs == 0) {
             return 0;
         }
-        // リンク
+        // Link
         final int program = GLES20.glCreateProgram();
         checkGlError("glCreateProgram");
         if (program == 0) {

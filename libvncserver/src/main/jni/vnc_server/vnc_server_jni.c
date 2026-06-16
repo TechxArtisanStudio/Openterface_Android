@@ -149,18 +149,9 @@ JNIEXPORT jlong JNICALL Java_com_openterface_AOS_vnc_VncServerNative_vncServerSt
         }
     }
 
-    /* Set server-level forced encoding (-1 = auto/client decides, >= 0 = force specific encoding) */
-    server->screen->forcePreferredEncoding = server->preferred_encoding;
-    if (server->preferred_encoding >= 0) {
-        LOGI("Forcing encoding=%d on all clients", server->preferred_encoding);
-    }
+    /* Note: Encoding, quality and compression settings are per-client in this version of libvncserver */
+    /* They will be set to defaults when clients connect */
 
-    /* Set server-level quality and compression defaults */
-    server->screen->forceQualityLevel = server->quality_level;
-    server->screen->forceCompressLevel = server->compress_level;
-    if (server->quality_level >= 0 || server->compress_level >= 0) {
-        LOGI("Forcing quality=%d compress=%d on all clients", server->quality_level, server->compress_level);
-    }
 
     LOGI("Starting VNC server on port %d, %dx%d", j_port, j_width, j_height);
 

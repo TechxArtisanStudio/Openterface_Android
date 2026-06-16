@@ -201,7 +201,7 @@ public class UVCCamera {
         stopPreview();
         if (mNativePtr != 0) {
             nativeRelease(mNativePtr);
-//    		mNativePtr = 0;	// nativeDestroyを呼ぶのでここでクリアしちゃダメ
+//    		mNativePtr = 0;	// Don't clear here since nativeDestroy will be called
         }
         if (mCtrlBlock != null) {
             mCtrlBlock.close(isSilent);

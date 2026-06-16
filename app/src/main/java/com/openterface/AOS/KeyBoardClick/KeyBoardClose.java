@@ -41,25 +41,40 @@ public class KeyBoardClose {
     private final FloatingActionButton FloatKeyBoard;
     private final FloatingActionButton FloatSetUpButton;
 
-    public KeyBoardClose(MainActivity activity) {
-        KeyBoard_Close = activity.findViewById(R.id.KeyBoard_Close);
-        keyBoardView = activity.findViewById(R.id.KeyBoard_View);
-        FloatKeyBoard = activity.findViewById(R.id.keyBoard);
-        FloatSetUpButton = activity.findViewById(R.id.set_up_button);
-        this.context = activity;
+    public KeyBoardClose(View rootView) {
+        KeyBoard_Close = rootView.findViewById(R.id.KeyBoard_Close);
+        keyBoardView = rootView.findViewById(R.id.KeyBoard_View);
+        // These views may not exist in portrait mode - add null checks
+        FloatKeyBoard = rootView.findViewById(R.id.keyBoard);
+        FloatSetUpButton = rootView.findViewById(R.id.set_up_button);
+        this.context = rootView.getContext();
     }
 
     public void setCloseButtonClickColor(){
+        if (KeyBoard_Close == null) return;
+
         KeyBoard_Close.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);//open keyboard
+                InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
                 imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
 
-
-                FloatKeyBoard.setVisibility(View.VISIBLE);
-                FloatSetUpButton.setVisibility(View.VISIBLE);
-                keyBoardView.setVisibility(View.GONE);
+                // Only execute if views exist (landscape mode)
+                if (FloatKeyBoard != null && FloatSetUpButton != null && keyBoardView != null) {
+                    FloatKeyBoard.setVisibility(View.VISIBLE);
+                    FloatSetUpButton.setVisibility(View.VISIBLE);
+                    keyBoardView.setVisibility(View.GONE);
+                } else {
+                    // Portrait mode: hide the keyboard module
+                    // The parent view will handle this through OnCloseListener
+                    View parent = (View) v.getParent();
+                    while (parent != null && parent.getId() != R.id.keyboard_module_root) {
+                        parent = (View) parent.getParent();
+                    }
+                    if (parent != null) {
+                        parent.setVisibility(View.GONE);
+                    }
+                }
             }
         });
     }

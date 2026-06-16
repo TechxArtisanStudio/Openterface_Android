@@ -39,6 +39,8 @@ import android.graphics.SurfaceTexture;
 import android.graphics.drawable.Drawable;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.IBinder;
 
@@ -62,10 +64,19 @@ import com.openterface.AOS.KeyBoardClick.KeyBoardShift;
 import com.openterface.AOS.KeyBoardClick.KeyBoardShortCut;
 import com.openterface.AOS.KeyBoardClick.KeyBoardSystem;
 import com.openterface.AOS.KeyBoardClick.KeyBoardWin;
+import com.openterface.AOS.KeyBoardClick.KeyboardSettingsManager;
+import com.openterface.AOS.view.KeyPreviewPopup;
+import com.openterface.AOS.view.CharacterAlternatesPopup;
 import com.openterface.AOS.view.TouchPadView;
 import com.openterface.AOS.view.TouchPadHelpDialog;
 import com.openterface.AOS.view.MouseControlStripView;
 import com.openterface.AOS.KeyBoardClick.TouchPadSettings;
+import com.openterface.AOS.dialog.TargetOsPickerDialog;
+import com.openterface.AOS.manager.TargetOsManager;
+import com.openterface.AOS.manager.ThemeManager;
+import com.openterface.AOS.manager.ShortcutProfileManager;
+import com.openterface.AOS.model.ShortcutProfile;
+import com.openterface.AOS.adapter.ThemeColorAdapter;
 import com.openterface.AOS.drawerLayout.DrawerLayoutDeal;
 import com.openterface.AOS.drawerLayout.ZoomLayoutDeal;
 import com.openterface.AOS.serial.CustomTouchListener;
@@ -89,10 +100,13 @@ import com.serenegiant.utils.UriHelper;
 import com.openterface.AOS.R;
 import com.openterface.AOS.databinding.ActivityMainBinding;
 import com.openterface.AOS.fragment.CameraControlsDialogFragment;
+import com.openterface.AOS.fragment.SettingsFloatingFragment;
 import com.openterface.AOS.fragment.DeviceListDialogFragment;
 import com.openterface.AOS.fragment.VideoFormatDialogFragment;
 import com.openterface.AOS.fragment.VncServerSettingsDialogFragment;
 import com.openterface.AOS.fragment.WebRtcDialogFragment;
+import com.openterface.AOS.fragment.ShortcutManagerFragment;
+import com.openterface.AOS.fragment.ShortcutHubFloatingFragment;
 import com.openterface.AOS.vnc.VncFrameCapture;
 import com.openterface.AOS.vnc.VncKeyMap;
 import com.openterface.AOS.vnc.VncServerCallback;
@@ -111,6 +125,7 @@ import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
+import android.view.LayoutInflater;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -124,16 +139,22 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.SeekBar;
+import android.widget.Spinner;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -146,7 +167,7 @@ import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.IntentFilter;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements SettingsFloatingFragment.SettingsCallback {
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final boolean DEBUG = true;
@@ -255,6 +276,41 @@ public class MainActivity extends AppCompatActivity {
     private final Queue<Character> characterQueue = new LinkedList<>();
     private String currentFunctionKey;
 
+    // Screen orientation state
+    private boolean isPortraitMode = false;
+    private static final String KEY_PORTRAIT_MODE = "is_portrait_mode";
+
+    // Portrait 4-zone module state
+    public enum ModuleType { NONE, KEYBOARD, MOUSE, IME, SETTINGS }
+    private ModuleType currentModule = ModuleType.NONE;
+    private static final String KEY_CURRENT_MODULE = "current_module";
+
+    // Portrait zone views (use View to avoid ClassCastException across orientation changes)
+    private View portraitRootLayout;
+    private View portraitVideoContainer;
+    private View portraitModuleDrawer;
+    private View portraitCollapseHandle;
+    private FrameLayout portraitModuleContent;
+    private View portraitKeyboardTab;
+    private View portraitMouseTab;
+    private View portraitImeTab;
+    private View portraitSettingsTab;
+    private View portraitRotationButton;
+    private View portraitShortcutStrip;
+
+    // Portrait module views (for reuse)
+    private View keyboardModuleView;
+    private View mouseModuleView;
+    private View imeModuleView;
+    private View settingsModuleView;
+
+    // Keyboard settings and popup manager
+    private KeyboardSettingsManager keyboardSettingsManager;
+    private KeyPreviewPopup keyPreviewPopup;
+
+    // Gesture detector for collapse
+    private GestureDetector collapseGestureDetector;
+
     private Button action_device, action_safely_eject;
     private Drawable action_device_drawable, action_safely_eject_drawable;
 
@@ -310,6 +366,13 @@ public class MainActivity extends AppCompatActivity {
         webRtcInputRouter = new WebRtcInputRouter();
         bindWebRtcService();
 
+        // Initialize Target OS Manager
+        TargetOsManager.getInstance().initialize(this);
+
+        // Initialize Theme Manager
+        ThemeManager.getInstance().initialize(this);
+        ThemeManager.getInstance().applyTheme(this);
+
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
 
@@ -323,26 +386,53 @@ public class MainActivity extends AppCompatActivity {
 
         KeyBoardManager keyBoardManager = new KeyBoardManager(this);
 
-        //Short Cut Button
-        KeyBoardShortCut KeyBoardShortCut = new KeyBoardShortCut(this);
-        //Ctrl Button
-        KeyBoardCtrl KeyBoardCtrlButton = new KeyBoardCtrl(this);
-        //Shift Button
-        KeyBoardShift KeyBoardShiftButton = new KeyBoardShift(this);
-        //Alt Button
-        KeyBoardAlt KeyBoardAltButton = new KeyBoardAlt(this);
-        //Win Button
-        KeyBoardWin KeyBoardWinButton = new KeyBoardWin(this);
-        //FunctionKey Button
-        KeyBoardFunction KeyBoardFunction = new KeyBoardFunction(this);
-        //System Button
-        KeyBoardSystem KeyBoardSystem = new KeyBoardSystem(this);
-        //KeyBoard Close Button
-        KeyBoardClose KeyBoardClose = new KeyBoardClose(this);
+        // Check if we're in portrait mode (layout-port has no keyboard overlay buttons)
+        boolean isPortraitLayout = (findViewById(R.id.module_selector_bar) != null);
+        isPortraitMode = isPortraitLayout;
 
-        //Drawer Layout
-        DrawerLayoutDeal DrawerLayoutDeal = new DrawerLayoutDeal(this, savedInstanceState, mIsRecording);
+        // Only initialize landscape keyboard buttons in landscape layout
+        // Portrait uses the 4-zone module system instead
+        KeyBoardShortCut KeyBoardShortCut = null;
+        KeyBoardCtrl KeyBoardCtrlButton = null;
+        KeyBoardShift KeyBoardShiftButton = null;
+        KeyBoardAlt KeyBoardAltButton = null;
+        KeyBoardWin KeyBoardWinButton = null;
+        KeyBoardFunction KeyBoardFunction = null;
+        KeyBoardSystem KeyBoardSystem = null;
+        KeyBoardClose KeyBoardClose = null;
+        DrawerLayoutDeal DrawerLayoutDeal = null;
 
+        // Initialize keyboard settings manager
+        keyboardSettingsManager = new KeyboardSettingsManager(this);
+
+        if (!isPortraitLayout) {
+            // Create KeyPreviewPopup for bubble hint
+            KeyPreviewPopup keyPreviewPopup = new KeyPreviewPopup(this);
+
+            //Short Cut Button
+            KeyBoardShortCut = new KeyBoardShortCut(mBinding.getRoot());
+            //Ctrl Button
+            KeyBoardCtrlButton = new KeyBoardCtrl(mBinding.getRoot(), keyPreviewPopup);
+            //Shift Button
+            KeyBoardShiftButton = new KeyBoardShift(mBinding.getRoot(), keyPreviewPopup);
+            //Alt Button
+            KeyBoardAltButton = new KeyBoardAlt(mBinding.getRoot(), keyPreviewPopup);
+            //Win Button
+            KeyBoardWinButton = new KeyBoardWin(mBinding.getRoot(), keyPreviewPopup);
+            //FunctionKey Button
+            KeyBoardFunction = new KeyBoardFunction(mBinding.getRoot());
+            //System Button
+            KeyBoardSystem = new KeyBoardSystem(mBinding.getRoot());
+            //KeyBoard Close Button
+            KeyBoardClose = new KeyBoardClose(mBinding.getRoot());
+
+            // Pass popup and settings to KeyBoardSystem for all-key bubble + sound/vibration
+            KeyBoardSystem.setKeyPreviewPopup(keyPreviewPopup);
+            KeyBoardSystem.setSettingsManager(keyboardSettingsManager);
+
+            //Drawer Layout
+            DrawerLayoutDeal = new DrawerLayoutDeal(this, savedInstanceState, mIsRecording);
+        }
 
         usbDeviceManager.setOnDataReadListener(new UsbDeviceManager.OnDataReadListener() {
             @Override
@@ -350,43 +440,54 @@ public class MainActivity extends AppCompatActivity {
                 sendNextCharacter();
             }
         });
-        
+
         // Enable debugging for FE0C keyboard testing
         // enableKeyboardDebugging(); // Commented out - was auto-typing 'B' key on startup
-        
+
         // Register debug broadcast receiver
         registerDebugReceiver();
         // Modifier keys (Ctrl, Shift, Alt, Win) are now initialized in their constructors
         // with long-press toggle and press visual feedback
 
-        KeyBoardShortCut.setShortCutButtonsClickColor();//deal short cut button click color
-
-        KeyBoardFunction.setFunctionButtonsClickColor();//deal function button click color
-
-        KeyBoardSystem.setSystemButtonsClickColor();//deal system button click color
-
-        KeyBoardClose.setCloseButtonClickColor();//deal close button click color
+        if (!isPortraitLayout && KeyBoardShortCut != null) {
+            KeyBoardShortCut.setShortCutButtonsClickColor();//deal short cut button click color
+        }
+        if (!isPortraitLayout && KeyBoardFunction != null) {
+            KeyBoardFunction.setFunctionButtonsClickColor();//deal function button click color
+        }
+        if (!isPortraitLayout && KeyBoardSystem != null) {
+            KeyBoardSystem.setSystemButtonsClickColor();//deal system button click color
+        }
+        if (!isPortraitLayout && KeyBoardClose != null) {
+            KeyBoardClose.setCloseButtonClickColor();//deal close button click color
+        }
 
         //Keyboard Opacity
-        mKeyBoardOpacity = new KeyBoardOpacity(this);
-        mKeyBoardOpacity.setOpacityButtonClick();
+        if (!isPortraitLayout) {
+            mKeyBoardOpacity = new KeyBoardOpacity(this);
+            mKeyBoardOpacity.setOpacityButtonClick();
+        }
 
         // Initialize TouchPad
         initTouchPad();
 
-        // TouchPad toggle button
-        ImageButton KeyBoard_TouchPad = findViewById(R.id.KeyBoard_TouchPad);
-        if (KeyBoard_TouchPad != null) {
-            KeyBoard_TouchPad.setOnClickListener(v -> toggleTouchPadMode());
-        }
+        // TouchPad toggle button (landscape only)
+        if (!isPortraitLayout) {
+            ImageButton KeyBoard_TouchPad = findViewById(R.id.KeyBoard_TouchPad);
+            if (KeyBoard_TouchPad != null) {
+                KeyBoard_TouchPad.setOnClickListener(v -> toggleTouchPadMode());
+            }
 
-        DrawerLayoutDeal.setDrawerLayoutButtonClickColor();//deal drawer layout button click color
+            if (DrawerLayoutDeal != null) {
+                DrawerLayoutDeal.setDrawerLayoutButtonClickColor();//deal drawer layout button click color
+            }
+        }
 
         action_device = findViewById(R.id.action_device);
         action_safely_eject = findViewById(R.id.action_safely_eject);
 
-        action_device_drawable = action_device.getCompoundDrawables()[1];
-        action_safely_eject_drawable = action_safely_eject.getCompoundDrawables()[1];
+        if (action_device != null) action_device_drawable = action_device.getCompoundDrawables()[1];
+        if (action_safely_eject != null) action_safely_eject_drawable = action_safely_eject.getCompoundDrawables()[1];
 
         //Zoom layout deal
         setCameraViewSecond();
@@ -396,13 +497,81 @@ public class MainActivity extends AppCompatActivity {
 
         setLanguage();
 
+        // Initialize portrait 4-zone layout
+        initPortraitZones();
+
+    }
+
+    /**
+     * Show the keyboard settings dialog (sound and vibration preferences)
+     */
+    @SuppressLint("ClickableViewAccessibility")
+    private void showKeyboardSettingsDialog() {
+        if (keyboardSettingsManager == null) {
+            keyboardSettingsManager = new KeyboardSettingsManager(this);
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("键盘设置");
+
+        View view = getLayoutInflater().inflate(R.layout.dialog_keyboard_settings, null);
+        builder.setView(view);
+
+        // Sound settings
+        final androidx.appcompat.widget.SwitchCompat switchKeySound = view.findViewById(R.id.switch_key_sound);
+        final SeekBar seekbarVolume = view.findViewById(R.id.seekbar_volume);
+        final LinearLayout layoutVolume = view.findViewById(R.id.layout_volume);
+
+        // Vibration settings
+        final androidx.appcompat.widget.SwitchCompat switchKeyVibrate = view.findViewById(R.id.switch_key_vibrate);
+        final SeekBar seekbarVibrate = view.findViewById(R.id.seekbar_vibrate);
+        final LinearLayout layoutVibrate = view.findViewById(R.id.layout_vibrate);
+
+        // Initialize
+        switchKeySound.setChecked(keyboardSettingsManager.isSoundEnabled());
+        seekbarVolume.setProgress(keyboardSettingsManager.getSoundVolume());
+        switchKeyVibrate.setChecked(keyboardSettingsManager.isVibrateEnabled());
+        seekbarVibrate.setProgress(keyboardSettingsManager.getVibrateStrength());
+
+        layoutVolume.setVisibility(switchKeySound.isChecked() ? View.VISIBLE : View.GONE);
+        layoutVibrate.setVisibility(switchKeyVibrate.isChecked() ? View.VISIBLE : View.GONE);
+
+        switchKeySound.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            keyboardSettingsManager.setSoundEnabled(isChecked);
+            layoutVolume.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+        });
+
+        seekbarVolume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) keyboardSettingsManager.setSoundVolume(progress);
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+
+        switchKeyVibrate.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            keyboardSettingsManager.setVibrateEnabled(isChecked);
+            layoutVibrate.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+        });
+
+        seekbarVibrate.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) keyboardSettingsManager.setVibrateStrength(progress);
+            }
+            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+        });
+
+        builder.setPositiveButton("确定", (dialog, which) -> dialog.dismiss());
+        builder.setNegativeButton("取消", (dialog, which) -> dialog.dismiss());
+        builder.show();
     }
 
     private void setLanguage(){
         Button Left_Than_Button = findViewById(R.id.Left_Than_Button);
         String currentLang = Locale.getDefault().getLanguage();
         if (currentLang.equals("us")) {
-            Left_Than_Button.setText("");
+            if (Left_Than_Button != null) Left_Than_Button.setText("");
             KeyBoardSystem.setKeyboardLanguage("us");
             KeyBoardFunction.setKeyboardLanguage("us");
         } else if (currentLang.equals("de")) {
@@ -411,7 +580,7 @@ public class MainActivity extends AppCompatActivity {
             KeyBoardSystem.setKeyboardLanguage("de");
             KeyBoardFunction.setKeyboardLanguage("de");
         }else {
-            Left_Than_Button.setText("");
+            if (Left_Than_Button != null) Left_Than_Button.setText("");
             KeyBoardSystem.setKeyboardLanguage("us");
             KeyBoardFunction.setKeyboardLanguage("us");
         }
@@ -419,6 +588,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void setCameraViewSecond() {
         cameraViewSecond = findViewById(R.id.cameraViewSecond);
+        if (cameraViewSecond == null) {
+            Log.d(TAG, "cameraViewSecond not found (possibly portrait mode layout)");
+            return;
+        }
         cameraViewSecond.setAspectRatio(DEFAULT_WIDTH, DEFAULT_HEIGHT);
 
         cameraViewSecond.getHolder().addCallback(new SurfaceHolder.Callback() {
@@ -605,11 +778,16 @@ public class MainActivity extends AppCompatActivity {
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
+        String action = intent.getAction();
+        Log.d(TAG, "onNewIntent: action=" + action + " isPortrait=" + isPortraitMode);
         usbDeviceManager.handleUsbDevice(intent);
-        if (intent.getAction() != null && intent.getAction().equals(UsbManager.ACTION_USB_DEVICE_ATTACHED)) {
+        if (action != null && action.equals(UsbManager.ACTION_USB_DEVICE_ATTACHED)) {
             if (!mIsCameraConnected) {
                 mUsbDevice = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                Log.d(TAG, "onNewIntent: USB device attached, device=" + (mUsbDevice != null ? mUsbDevice.getDeviceName() : "null"));
                 selectDevice(mUsbDevice);
+            } else {
+                Log.d(TAG, "onNewIntent: camera already connected, ignoring");
             }
         }
     }
@@ -657,47 +835,229 @@ public class MainActivity extends AppCompatActivity {
 //        usbDeviceManager.release();
     }
 
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        // Save current state
+        boolean wasPortrait = isPortraitMode;
+        ModuleType savedModule = currentModule;
+
+        // Update orientation state
+        isPortraitMode = (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT);
+
+        Log.d(TAG, "Configuration changed: " + (isPortraitMode ? "PORTRAIT" : "LANDSCAPE"));
+
+        // Reload layout for new orientation (this already calls initPreviewView)
+        reloadLayoutForOrientation();
+
+        // Restore module state if was expanded
+        if (savedModule != ModuleType.NONE && savedModule != null) {
+            setModuleState(savedModule, false);
+        }
+
+        // Adjust video preview size based on orientation
+        if (mCameraHelper != null && mIsCameraConnected) {
+            resizePreviewView(mCameraHelper.getPreviewSize());
+        }
+
+        Log.d(TAG, "Layout reloaded, module state: " + currentModule);
+    }
+
+    /**
+     * Reload the layout based on current orientation.
+     * Portrait uses the 4-zone layout, landscape uses the original layout.
+     */
+    private void reloadLayoutForOrientation() {
+        Log.d(TAG, "reloadLayoutForOrientation: START");
+        // Re-inflate view binding for the new orientation
+        mBinding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(mBinding.getRoot());
+
+        // Clear cached module views to ensure they reload in new orientation
+        keyboardModuleView = null;
+        mouseModuleView = null;
+        imeModuleView = null;
+        settingsModuleView = null;
+        Log.d(TAG, "reloadLayoutForOrientation: layout inflated, module views cleared");
+
+        // Re-check orientation after setting content view
+        boolean nowPortrait = (findViewById(R.id.module_selector_bar) != null);
+        isPortraitMode = nowPortrait;
+        Log.d(TAG, "reloadLayoutForOrientation: nowPortrait=" + nowPortrait);
+
+        // Re-setup all views after layout reload
+        setListeners();
+        initTouchPad();
+        initPortraitZones();
+        initPreviewView();
+        Log.d(TAG, "reloadLayoutForOrientation: views initialized");
+
+        // Re-attach CustomTouchListener to the new preview view after layout re-inflation
+        CustomTouchListener customTouchListener = new CustomTouchListener(this, usbDeviceManager);
+        mBinding.viewMainPreview.setOnTouchListener(customTouchListener);
+
+        // Re-setup DrawerLayoutDeal for new layout (only in landscape)
+        if (!nowPortrait) {
+            try {
+                com.openterface.AOS.drawerLayout.DrawerLayoutDeal drawerLayoutDeal =
+                        new com.openterface.AOS.drawerLayout.DrawerLayoutDeal(this, null, mIsRecording);
+                drawerLayoutDeal.setDrawerLayoutButtonClickColor();
+                Log.d(TAG, "reloadLayoutForOrientation: DrawerLayoutDeal created and buttons wired");
+            } catch (Exception e) {
+                Log.w(TAG, "reloadLayoutForOrientation: DrawerLayoutDeal failed (expected in portrait): " + e.getMessage());
+            }
+        }
+        try {
+            com.openterface.AOS.drawerLayout.ZoomLayoutDeal zoomLayoutDeal =
+                    new com.openterface.AOS.drawerLayout.ZoomLayoutDeal(this, mCameraHelper, mBinding);
+            Log.d(TAG, "reloadLayoutForOrientation: ZoomLayoutDeal created");
+        } catch (Exception e) {
+            Log.w(TAG, "reloadLayoutForOrientation: ZoomLayoutDeal failed: " + e.getMessage());
+        }
+
+        // Restore keyboard button states (only in landscape)
+        if (!nowPortrait) {
+            try {
+                // Create KeyPreviewPopup for bubble hint
+                KeyPreviewPopup restorePreviewPopup = new KeyPreviewPopup(this);
+
+                KeyBoardShortCut KeyBoardShortCut = new KeyBoardShortCut(mBinding.getRoot());
+                KeyBoardCtrl KeyBoardCtrlButton = new KeyBoardCtrl(mBinding.getRoot(), restorePreviewPopup);
+                KeyBoardShift KeyBoardShiftButton = new KeyBoardShift(mBinding.getRoot(), restorePreviewPopup);
+                KeyBoardAlt KeyBoardAltButton = new KeyBoardAlt(mBinding.getRoot(), restorePreviewPopup);
+                KeyBoardWin KeyBoardWinButton = new KeyBoardWin(mBinding.getRoot(), restorePreviewPopup);
+                KeyBoardFunction KeyBoardFunction = new KeyBoardFunction(mBinding.getRoot());
+                KeyBoardSystem KeyBoardSystem = new KeyBoardSystem(mBinding.getRoot());
+                KeyBoardClose KeyBoardClose = new KeyBoardClose(mBinding.getRoot());
+
+                // Pass popup and settings to KeyBoardSystem for all-key bubble + sound/vibration
+                com.openterface.AOS.KeyBoardClick.KeyBoardSystem.setKeyPreviewPopup(restorePreviewPopup);
+                com.openterface.AOS.KeyBoardClick.KeyBoardSystem.setSettingsManager(keyboardSettingsManager);
+
+                KeyBoardShortCut.setShortCutButtonsClickColor();
+                KeyBoardFunction.setFunctionButtonsClickColor();
+                KeyBoardSystem.setSystemButtonsClickColor();
+                KeyBoardClose.setCloseButtonClickColor();
+
+                mKeyBoardOpacity = new KeyBoardOpacity(this);
+                mKeyBoardOpacity.setOpacityButtonClick();
+                Log.d(TAG, "reloadLayoutForOrientation: keyboard buttons restored");
+            } catch (Exception e) {
+                Log.e(TAG, "reloadLayoutForOrientation: keyboard init failed", e);
+            }
+        }
+
+        action_device = findViewById(R.id.action_device);
+        action_safely_eject = findViewById(R.id.action_safely_eject);
+        if (action_device != null) {
+            Drawable[] drawables = action_device.getCompoundDrawables();
+            if (drawables.length > 1 && drawables[1] != null) {
+                action_device_drawable = drawables[1];
+            }
+        }
+        if (action_safely_eject != null) {
+            Drawable[] drawables = action_safely_eject.getCompoundDrawables();
+            if (drawables.length > 1 && drawables[1] != null) {
+                action_safely_eject_drawable = drawables[1];
+            }
+        }
+        Log.d(TAG, "reloadLayoutForOrientation: action buttons restored");
+
+        setCameraViewSecond();
+        setLanguage();
+        Log.d(TAG, "reloadLayoutForOrientation: camera view and language set");
+
+        // Reconnect camera surfaces after layout reload if camera is connected
+        if (mCameraHelper != null && mIsCameraConnected) {
+            Log.d(TAG, "Reconnecting camera surfaces after orientation change");
+            // Wait for surface to be available before reconnecting
+            if (mBinding.viewMainPreview != null && mBinding.viewMainPreview.getSurfaceTexture() != null) {
+                mCameraHelper.addSurface(mBinding.viewMainPreview.getSurfaceTexture(), false);
+                Log.d(TAG, "reloadLayoutForOrientation: main preview surface reconnected");
+            }
+            // Add secondary camera surface (landscape only)
+            if (mBinding.cameraViewSecond != null && mBinding.cameraViewSecond.getHolder() != null
+                    && mBinding.cameraViewSecond.getHolder().getSurface() != null) {
+                mCameraHelper.addSurface(mBinding.cameraViewSecond.getHolder().getSurface(), false);
+                Log.d(TAG, "reloadLayoutForOrientation: secondary camera surface reconnected");
+            }
+        }
+
+        // Update UI controls to reflect current state
+        updateUIControls();
+        Log.d(TAG, "reloadLayoutForOrientation: COMPLETE");
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean(KEY_PORTRAIT_MODE, isPortraitMode);
+        outState.putString(KEY_CURRENT_MODULE, currentModule != null ? currentModule.name() : "NONE");
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        isPortraitMode = savedInstanceState.getBoolean(KEY_PORTRAIT_MODE, false);
+        String moduleName = savedInstanceState.getString(KEY_CURRENT_MODULE, "NONE");
+        try {
+            currentModule = ModuleType.valueOf(moduleName);
+        } catch (IllegalArgumentException e) {
+            currentModule = ModuleType.NONE;
+        }
+        if (savedInstanceState != null) {
+            isPortraitMode = savedInstanceState.getBoolean(KEY_PORTRAIT_MODE, false);
+        }
+    }
+
     private void setListeners() {
+        // Only setup floating button listeners for landscape layout
+        // Portrait mode uses the Zone 4 tab bar instead
+        if (mBinding.keyBoard != null) {
+            mBinding.keyBoard.setOnClickListener(v -> {
+                // Removed InputMethodManager to prevent Android soft keyboard from appearing
+                // InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                // imm.toggleSoftInput(InputMethodManager.SHOW_FORCED,0);
+                LinearLayout Fragment_KeyBoard_ShortCut = findViewById(R.id.Fragment_KeyBoard_ShortCut);
+                LinearLayout Fragment_KeyBoard_Function = findViewById(R.id.Fragment_KeyBoard_Function);
+                LinearLayout Fragment_KeyBoard_System = findViewById(R.id.Fragment_KeyBoard_System);
+                LinearLayout keyBoardView = findViewById(R.id.KeyBoard_View);
+                Button KeyBoard_ShortCut = findViewById(R.id.KeyBoard_ShortCut);
+                Button KeyBoard_Function = findViewById(R.id.KeyBoard_Function);
+                ImageButton KeyBoard_System = findViewById(R.id.KeyBoard_System);
 
-        mBinding.keyBoard.setOnClickListener(v -> {
-            // Removed InputMethodManager to prevent Android soft keyboard from appearing
-            // InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
-            // imm.toggleSoftInput(InputMethodManager.SHOW_FORCED,0);
-            LinearLayout Fragment_KeyBoard_ShortCut = findViewById(R.id.Fragment_KeyBoard_ShortCut);
-            LinearLayout Fragment_KeyBoard_Function = findViewById(R.id.Fragment_KeyBoard_Function);
-            LinearLayout Fragment_KeyBoard_System = findViewById(R.id.Fragment_KeyBoard_System);
-            LinearLayout keyBoardView = findViewById(R.id.KeyBoard_View);
-            Button KeyBoard_ShortCut = findViewById(R.id.KeyBoard_ShortCut);
-            Button KeyBoard_Function = findViewById(R.id.KeyBoard_Function);
-            ImageButton KeyBoard_System = findViewById(R.id.KeyBoard_System);
-
-            keyBoardView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-                @Override
-                public void onGlobalLayout() {
-                    Log.d("keyBoardView","keyBoardView.getWidth():"+keyBoardView.getWidth() + "keyBoardView.getHeight():"+keyBoardView.getHeight());
-                    ZoomLayoutDeal.getViewWidthHeight(keyBoardView.getWidth(), keyBoardView.getHeight());
+                if (keyBoardView != null) {
+                    keyBoardView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+                        @Override
+                        public void onGlobalLayout() {
+                            Log.d("keyBoardView","keyBoardView.getWidth():"+keyBoardView.getWidth() + "keyBoardView.getHeight():"+keyBoardView.getHeight());
+                            ZoomLayoutDeal.getViewWidthHeight(keyBoardView.getWidth(), keyBoardView.getHeight());
+                        }
+                    });
+                    keyBoardView.setVisibility(View.VISIBLE);
                 }
+                if (mKeyBoardOpacity != null) {
+                    mKeyBoardOpacity.restoreOpacity();
+                }
+                //hide floating button keyboard and set_up_button
+                FloatingActionButton keyBoard = findViewById(R.id.keyBoard);
+                if (keyBoard != null) keyBoard.setVisibility(View.GONE);
+                FloatingActionButton set_up_button = findViewById(R.id.set_up_button);
+                if (set_up_button != null) set_up_button.setVisibility(View.GONE);
+
+                if (Fragment_KeyBoard_Function != null) Fragment_KeyBoard_Function.setVisibility(View.GONE);
+                if (Fragment_KeyBoard_ShortCut != null) Fragment_KeyBoard_ShortCut.setVisibility(View.GONE);
+                if (Fragment_KeyBoard_System != null) Fragment_KeyBoard_System.setVisibility(View.GONE);
+
+                if (KeyBoard_Function != null) KeyBoard_Function.setBackgroundResource(R.drawable.nopress_button_background);
+                if (KeyBoard_ShortCut != null) KeyBoard_ShortCut.setBackgroundResource(R.drawable.nopress_button_background);
+                if (KeyBoard_System != null) KeyBoard_System.setBackgroundResource(R.drawable.nopress_button_background);
+
+                // Initialize TouchPad settings and help buttons
+                initTouchPadButtons();
             });
-            keyBoardView.setVisibility(View.VISIBLE);
-            mKeyBoardOpacity.restoreOpacity();
-            //hide floating button keyboard and set_up_button
-            FloatingActionButton keyBoard = findViewById(R.id.keyBoard);
-            keyBoard.setVisibility(View.GONE);
-            FloatingActionButton set_up_button = findViewById(R.id.set_up_button);
-            set_up_button.setVisibility(View.GONE);
-
-            Fragment_KeyBoard_Function.setVisibility(View.GONE);
-            Fragment_KeyBoard_ShortCut.setVisibility(View.GONE);
-            Fragment_KeyBoard_System.setVisibility(View.GONE);
-
-            KeyBoard_Function.setBackgroundResource(R.drawable.nopress_button_background);
-            KeyBoard_ShortCut.setBackgroundResource(R.drawable.nopress_button_background);
-            KeyBoard_System.setBackgroundResource(R.drawable.nopress_button_background);
-
-            // Initialize TouchPad settings and help buttons
-            initTouchPadButtons();
-
-        });
+        }
     }
 
     public void showCameraControlsDialog() {
@@ -768,11 +1128,15 @@ public class MainActivity extends AppCompatActivity {
         if (mCameraHelper != null) {
             mCameraHelper.closeCamera();
 
-            action_safely_eject_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
-            action_safely_eject.setTextColor(getResources().getColor(android.R.color.holo_red_light));
-
-            action_device_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
-            action_device.setTextColor(getResources().getColor(android.R.color.white));
+            // Guard against landscape-only views in portrait mode
+            if (action_safely_eject_drawable != null && action_safely_eject != null) {
+                action_safely_eject_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+                action_safely_eject.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+            }
+            if (action_device_drawable != null && action_device != null) {
+                action_device_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                action_device.setTextColor(getResources().getColor(android.R.color.white));
+            }
         }
     }
 
@@ -837,15 +1201,34 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initPreviewView() {
+        if (mBinding == null || mBinding.viewMainPreview == null) {
+            Log.w(TAG, "initPreviewView: mBinding or viewMainPreview is null, skipping");
+            return;
+        }
         mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
-        Log.d(TAG, "1mPreviewWidth: " + mPreviewWidth + " mPreviewHeight: " + mPreviewHeight);
+        Log.d(TAG, "initPreviewView: mPreviewWidth=" + mPreviewWidth + " mPreviewHeight=" + mPreviewHeight);
         mBinding.viewMainPreview.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
             @Override
             public void onSurfaceTextureAvailable(@NonNull SurfaceTexture surface, int width, int height) {
                 HidManager.width_height(width, height);
-                Log.d(TAG, "1width: " + width + " height: " + height);
+                Log.d(TAG, "onSurfaceTextureAvailable: width=" + width + " height=" + height + " mIsCameraConnected=" + mIsCameraConnected);
                 if (mCameraHelper != null) {
+                    // Add the new surface to camera pipeline
                     mCameraHelper.addSurface(surface, false);
+
+                    // If camera already connected & previewing, reconnect the new surface
+                    if (mIsCameraConnected) {
+                        Log.d(TAG, "Camera already connected, reconnecting surface after orientation/creation change");
+                        // Make view visible after surface is ready
+                        runOnUiThread(() -> {
+                            if (mBinding != null && mBinding.viewMainPreview != null) {
+                                mBinding.viewMainPreview.setVisibility(View.VISIBLE);
+                                mBinding.viewMainPreview.setKeepScreenOn(true);
+                                // Re-apply aspect ratio for the new surface dimensions
+                                mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
+                            }
+                        });
+                    }
                 }
             }
 
@@ -891,18 +1274,24 @@ public class MainActivity extends AppCompatActivity {
         XXPermissions.with(this)
                 .permission(Manifest.permission.CAMERA)
                 .request((permissions, all) -> {
+                    Log.d(TAG, "selectDevice: CAMERA permission granted, connecting camera");
                     mIsCameraConnected = false;
                     updateUIControls();
 
                     if (mCameraHelper != null) {
                         // get usb device
+                        Log.d(TAG, "selectDevice: calling mCameraHelper.selectDevice()");
                         mCameraHelper.selectDevice(device);
 
-                        action_device_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
-                        action_device.setTextColor(getResources().getColor(android.R.color.holo_red_light));
-
-                        action_safely_eject_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
-                        action_safely_eject.setTextColor(getResources().getColor(android.R.color.white));
+                        // Guard against landscape-only views in portrait mode
+                        if (action_device_drawable != null && action_device != null) {
+                            action_device_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+                            action_device.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+                        }
+                        if (action_safely_eject_drawable != null && action_safely_eject != null) {
+                            action_safely_eject_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                            action_safely_eject.setTextColor(getResources().getColor(android.R.color.white));
+                        }
                     }
                 });
     }
@@ -937,19 +1326,38 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onCameraOpen(UsbDevice device) {
-            if (DEBUG) Log.v(TAG, "onCameraOpen:device=" + device.getDeviceName());
+            Log.d(TAG, "onCameraOpen:device=" + device.getDeviceName() + " isPortrait=" + isPortraitMode);
+            // Guard against null mBinding after orientation change
+            if (mBinding == null || mBinding.viewMainPreview == null) {
+                Log.w(TAG, "onCameraOpen: mBinding or viewMainPreview is null, deferring camera setup");
+                mIsCameraConnected = true; // Still mark as connected
+                Log.d(TAG, "onCameraOpen: deferred - updateUIControls will be called when surface becomes available");
+                // Preview will be set up when surface becomes available
+                return;
+            }
             mCameraHelper.startPreview();
+            Log.d(TAG, "onCameraOpen: startPreview called");
             // After connecting to the camera, you can get preview size of the camera
             Size size = mCameraHelper.getPreviewSize();
             if (size != null) {
+                Log.d(TAG, "onCameraOpen: preview size=" + size.width + "x" + size.height);
                 resizePreviewView(size);
 //                cameraViewSecond.setAspectRatio(640, 480);
 
+            } else {
+                Log.w(TAG, "onCameraOpen: preview size is null");
             }
 
-            if (mBinding.viewMainPreview.getSurfaceTexture() != null) {
+            boolean hasSurfaceTexture = (mBinding.viewMainPreview.getSurfaceTexture() != null);
+            Log.d(TAG, "onCameraOpen: hasSurfaceTexture=" + hasSurfaceTexture);
+            if (hasSurfaceTexture) {
                 mCameraHelper.addSurface(mBinding.viewMainPreview.getSurfaceTexture(), false);
-                mCameraHelper.addSurface(mBinding.cameraViewSecond.getHolder().getSurface(), false);
+                // Guard against landscape-only cameraViewSecond in portrait mode
+                if (mBinding.cameraViewSecond != null && mBinding.cameraViewSecond.getHolder() != null
+                        && mBinding.cameraViewSecond.getHolder().getSurface() != null
+                        && mBinding.cameraViewSecond.getHolder().getSurface().isValid()) {
+                    mCameraHelper.addSurface(mBinding.cameraViewSecond.getHolder().getSurface(), false);
+                }
             }
 
             mIsCameraConnected = true;
@@ -991,7 +1399,11 @@ public class MainActivity extends AppCompatActivity {
 
             if (mCameraHelper != null && mBinding.viewMainPreview.getSurfaceTexture() != null) {
                 mCameraHelper.removeSurface(mBinding.viewMainPreview.getSurfaceTexture());
-                mCameraHelper.removeSurface(cameraViewSecond.getHolder().getSurface());
+                // Guard against landscape-only cameraViewSecond in portrait mode
+                if (cameraViewSecond != null && cameraViewSecond.getHolder() != null
+                        && cameraViewSecond.getHolder().getSurface() != null) {
+                    mCameraHelper.removeSurface(cameraViewSecond.getHolder().getSurface());
+                }
             }
 
             mIsCameraConnected = false;
@@ -1005,11 +1417,15 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onDeviceClose(UsbDevice device) {
             if (DEBUG) Log.v(TAG, "onDeviceClose:device=" + device.getDeviceName());
-            action_safely_eject_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
-            action_safely_eject.setTextColor(getResources().getColor(android.R.color.holo_red_light));
-
-            action_device_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
-            action_device.setTextColor(getResources().getColor(android.R.color.white));
+            // Guard against landscape-only views in portrait mode
+            if (action_safely_eject_drawable != null && action_safely_eject != null) {
+                action_safely_eject_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+                action_safely_eject.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+            }
+            if (action_device_drawable != null && action_device != null) {
+                action_device_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                action_device.setTextColor(getResources().getColor(android.R.color.white));
+            }
         }
 
         @Override
@@ -1032,55 +1448,80 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void resizePreviewView(Size size) {
-        // Update the preview size
-//        mPreviewWidth = size.width;
-//        mPreviewHeight = size.height;
-        WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
-        DisplayMetrics metrics = new DisplayMetrics();
-        if (wm != null) {
-            Display display = wm.getDefaultDisplay();
-            display.getRealMetrics(metrics);
-            mPreviewWidth = metrics.widthPixels;
-            mPreviewHeight = metrics.heightPixels;
-
+        // Use actual video dimensions, not screen dimensions, to preserve aspect ratio
+        if (size != null && size.width > 0 && size.height > 0) {
+            mPreviewWidth = size.width;
+            mPreviewHeight = size.height;
+        } else {
+            // Fallback to screen dimensions if size not available
+            WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
+            DisplayMetrics metrics = new DisplayMetrics();
+            if (wm != null) {
+                Display display = wm.getDefaultDisplay();
+                display.getRealMetrics(metrics);
+                mPreviewWidth = metrics.widthPixels;
+                mPreviewHeight = metrics.heightPixels;
+            }
         }
-        Log.d(TAG, "22mPreviewWidth: " + mPreviewWidth + " mPreviewHeight: " + mPreviewHeight);
+        Log.d(TAG, "resizePreviewView: " + mPreviewWidth + "x" + mPreviewHeight);
         // Set the aspect ratio of TextureView to match the aspect ratio of the camera
         mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
     }
 
     private void updateUIControls() {
         runOnUiThread(() -> {
+            Log.d(TAG, "updateUIControls: mIsCameraConnected=" + mIsCameraConnected);
             if (mIsCameraConnected) {
-                mBinding.viewMainPreview.setVisibility(View.VISIBLE);
-                mBinding.tvConnectUSBCameraTip.setVisibility(View.GONE);
+                if (mBinding.viewMainPreview != null) {
+                    mBinding.viewMainPreview.setVisibility(View.VISIBLE);
+                    Log.d(TAG, "updateUIControls: viewMainPreview set VISIBLE");
+                }
+                if (mBinding.tvConnectUSBCameraTip != null) {
+                    mBinding.tvConnectUSBCameraTip.setVisibility(View.GONE);
+                }
 
-                mBinding.keyBoard.setVisibility(View.VISIBLE);
+                if (mBinding.keyBoard != null) {
+                    mBinding.keyBoard.setVisibility(View.VISIBLE);
+                }
 
                 Button Recording_Video = findViewById(R.id.Recording_Video);
-                Drawable Recording_Video_drawable = Recording_Video.getCompoundDrawables()[1];
-                // Update record button
-                if (mIsRecording) {
-                    Recording_Video_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
-                    Recording_Video.setTextColor(getResources().getColor(android.R.color.holo_red_light));
-                }else{
-                    Recording_Video_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
-                    Recording_Video.setTextColor(getResources().getColor(android.R.color.white));
+                if (Recording_Video != null) {
+                    Drawable Recording_Video_drawable = Recording_Video.getCompoundDrawables()[1];
+                    // Update record button
+                    if (mIsRecording) {
+                        Recording_Video_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+                        Recording_Video.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+                    }else{
+                        Recording_Video_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                        Recording_Video.setTextColor(getResources().getColor(android.R.color.white));
+                    }
                 }
 
             } else {
-                mBinding.viewMainPreview.setVisibility(View.GONE);
-                mBinding.tvConnectUSBCameraTip.setVisibility(View.VISIBLE);
+                if (mBinding.viewMainPreview != null) {
+                    mBinding.viewMainPreview.setVisibility(View.GONE);
+                }
+                if (mBinding.tvConnectUSBCameraTip != null) {
+                    mBinding.tvConnectUSBCameraTip.setVisibility(View.VISIBLE);
+                }
 
-                mBinding.keyBoard.setVisibility(View.GONE);
+                if (mBinding.keyBoard != null) {
+                    mBinding.keyBoard.setVisibility(View.GONE);
+                }
 
-                mBinding.tvVideoRecordTime.setVisibility(View.GONE);
+                if (mBinding.tvVideoRecordTime != null) {
+                    mBinding.tvVideoRecordTime.setVisibility(View.GONE);
+                }
             }
             invalidateOptionsMenu();
         });
     }
 
     private Size getSavedPreviewSize() {
+        if (mUsbDevice == null) {
+            Log.w(TAG, "getSavedPreviewSize: mUsbDevice is null, returning null");
+            return null;
+        }
         String key = getString(R.string.saved_preview_size) + USBMonitor.getProductKey(mUsbDevice);
         String sizeStr = getPreferences(MODE_PRIVATE).getString(key, null);
         if (TextUtils.isEmpty(sizeStr)) {
@@ -1283,7 +1724,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void startRecordTimer() {
-        runOnUiThread(() -> mBinding.tvVideoRecordTime.setVisibility(View.VISIBLE));
+        runOnUiThread(() -> {
+            if (mBinding.tvVideoRecordTime != null) {
+                mBinding.tvVideoRecordTime.setVisibility(View.VISIBLE);
+            }
+        });
 
         // Set "00:00:00" to record time TextView
         setVideoRecordTimeText(formatTime(0));
@@ -1304,7 +1749,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void stopRecordTimer() {
-        runOnUiThread(() -> mBinding.tvVideoRecordTime.setVisibility(View.GONE));
+        runOnUiThread(() -> {
+            if (mBinding.tvVideoRecordTime != null) {
+                mBinding.tvVideoRecordTime.setVisibility(View.GONE);
+            }
+        });
 
         // Stop Record Timer
         mRecordStartTime = 0;
@@ -1318,7 +1767,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void setVideoRecordTimeText(String timeText) {
         runOnUiThread(() -> {
-            mBinding.tvVideoRecordTime.setText(timeText);
+            if (mBinding.tvVideoRecordTime != null) {
+                mBinding.tvVideoRecordTime.setText(timeText);
+            }
         });
     }
 
@@ -1742,6 +2193,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
     /**
      * Stop WebRTC server.
      */
@@ -1841,162 +2293,869 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    // ============================================================
+    // Portrait 4-Zone Layout Management
+    // ============================================================
+
     /**
-     * Initialize the TouchPad for mouse control with gesture support
-     * (Same gesture logic as KeyCmd: single tap=left click, double tap=double click,
-     * two-finger tap=right click, long press=drag, two-finger pan=scroll)
+     * Initialize portrait mode zone views and set up listeners.
+     * Zone 1: Shortcut Strip (top)
+     * Zone 2: Video Stream (center)
+     * Zone 3: Module Drawer (hidden by default)
+     * Zone 4: Module Selector Bar (bottom)
      */
-    private void initTouchPad() {
-        touchPadView = findViewById(R.id.touchPadArea);
-        mouseControlStripView = findViewById(R.id.mouseButtonStrip);
-        touchPadContainer = findViewById(R.id.TouchPad_View);
+    private void initPortraitZones() {
+        // Try to find portrait-specific views (only exist in portrait layout)
+        portraitRootLayout = findViewById(R.id.thisFrameLayout);
+        portraitVideoContainer = findViewById(R.id.video_area_container);
+        portraitModuleDrawer = findViewById(R.id.module_drawer);
+        portraitCollapseHandle = findViewById(R.id.module_collapse_handle);
+        portraitModuleContent = findViewById(R.id.module_content_container);
+        portraitShortcutStrip = findViewById(R.id.shortcut_strip);
 
-        if (touchPadView != null) {
-            restoreTouchPadOpacity();
+        // Zone 4: Module Selector tabs
+        portraitKeyboardTab = findViewById(R.id.tab_keyboard);
+        portraitMouseTab = findViewById(R.id.tab_mouse);
+        portraitImeTab = findViewById(R.id.tab_ime);
+        portraitSettingsTab = findViewById(R.id.tab_settings);
+        portraitRotationButton = findViewById(R.id.action_screen_orientation);
 
-            touchPadView.setOnTouchPadListener(new TouchPadView.OnTouchPadListener() {
-                @Override
-                public void onTouchMove(float startX, float startY, float lastX, float lastY) {
-                    if (lastX == 0 && lastY == 0) {
-                        // Scroll mode (two-finger pan)
-                        HidManager.handleTwoFingerPanSlideUpDown(startY);
-                    } else {
-                        // Mouse move (relative)
-                        HidManager.sendHexRelData("SecNullData", startX, startY, lastX, lastY);
-                    }
-                }
+        // Check if we're in portrait mode by checking if root layout exists
+        boolean isPortrait = (portraitRootLayout != null);
+        isPortraitMode = isPortrait;
 
-                @Override
-                public void onTouchClick() {
-                    Log.d(TAG, "TouchPad single tap -> left click");
-                    new Thread(() -> {
-                        try {
-                            String clickData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
-                                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
-                                    CH9329MSKBMap.getKeyCodeMap().get("address") +
-                                    CH9329MSKBMap.CmdData().get("CmdMS_REL") +
-                                    CH9329MSKBMap.DataLen().get("DataLenRelMS") +
-                                    CH9329MSKBMap.MSRelData().get("FirstData") +
-                                    CH9329MSKBMap.MSRelData().get("SecLeftData") +
-                                    "00" + "00" + "00";
-                            clickData += CH9329Function.makeChecksum(clickData);
-                            byte[] bytes = CH9329Function.hexStringToByteArray(clickData);
-                            if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
-                                usbDeviceManager.writeData(bytes);
-                            }
-                            Thread.sleep(30);
-                            // Release
-                            String releaseData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
-                                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
-                                    CH9329MSKBMap.getKeyCodeMap().get("address") +
-                                    CH9329MSKBMap.CmdData().get("CmdMS_REL") +
-                                    CH9329MSKBMap.DataLen().get("DataLenRelMS") +
-                                    CH9329MSKBMap.MSRelData().get("FirstData") +
-                                    CH9329MSKBMap.MSRelData().get("SecNullData") +
-                                    "00" + "00" + "00";
-                            releaseData += CH9329Function.makeChecksum(releaseData);
-                            bytes = CH9329Function.hexStringToByteArray(releaseData);
-                            if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
-                                usbDeviceManager.writeData(bytes);
-                            }
-                        } catch (Exception e) {
-                            Log.e(TAG, "Error sending left click: " + e.getMessage());
-                        }
-                    }).start();
-                }
+        if (!isPortrait) {
+            // In landscape mode, portrait zone views won't exist
+            Log.d(TAG, "initPortraitZones: not in portrait, skipping");
+            return;
+        }
 
-                @Override
-                public void onTouchDoubleClick() {
-                    Log.d(TAG, "TouchPad double tap -> double click");
-                    new Thread(() -> {
-                        try {
-                            String clickData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
-                                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
-                                    CH9329MSKBMap.getKeyCodeMap().get("address") +
-                                    CH9329MSKBMap.CmdData().get("CmdMS_REL") +
-                                    CH9329MSKBMap.DataLen().get("DataLenRelMS") +
-                                    CH9329MSKBMap.MSRelData().get("FirstData") +
-                                    CH9329MSKBMap.MSRelData().get("SecLeftData") +
-                                    "00" + "00" + "00";
-                            clickData += CH9329Function.makeChecksum(clickData);
-                            byte[] bytes = CH9329Function.hexStringToByteArray(clickData);
-                            for (int i = 0; i < 2; i++) {
-                                if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
-                                    usbDeviceManager.writeData(bytes);
-                                }
-                                Thread.sleep(30);
-                                // Release
-                                String releaseData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
-                                        CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
-                                        CH9329MSKBMap.getKeyCodeMap().get("address") +
-                                        CH9329MSKBMap.CmdData().get("CmdMS_REL") +
-                                        CH9329MSKBMap.DataLen().get("DataLenRelMS") +
-                                        CH9329MSKBMap.MSRelData().get("FirstData") +
-                                        CH9329MSKBMap.MSRelData().get("SecNullData") +
-                                        "00" + "00" + "00";
-                                releaseData += CH9329Function.makeChecksum(releaseData);
-                                bytes = CH9329Function.hexStringToByteArray(releaseData);
-                                if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
-                                    usbDeviceManager.writeData(bytes);
-                                }
-                                Thread.sleep(30);
-                            }
-                        } catch (Exception e) {
-                            Log.e(TAG, "Error sending double click: " + e.getMessage());
-                        }
-                    }).start();
-                }
+        Log.d(TAG, "initPortraitZones: setting up portrait zone listeners");
 
-                @Override
-                public void onTouchRightClick() {
-                    Log.d(TAG, "TouchPad two-finger tap -> right click");
-                    new Thread(() -> {
-                        try {
-                            String clickData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
-                                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
-                                    CH9329MSKBMap.getKeyCodeMap().get("address") +
-                                    CH9329MSKBMap.CmdData().get("CmdMS_REL") +
-                                    CH9329MSKBMap.DataLen().get("DataLenRelMS") +
-                                    CH9329MSKBMap.MSRelData().get("FirstData") +
-                                    CH9329MSKBMap.MSRelData().get("SecRightData") +
-                                    "00" + "00" + "00";
-                            clickData += CH9329Function.makeChecksum(clickData);
-                            byte[] bytes = CH9329Function.hexStringToByteArray(clickData);
-                            if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
-                                usbDeviceManager.writeData(bytes);
-                            }
-                            Thread.sleep(30);
-                            // Release
-                            String releaseData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
-                                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
-                                    CH9329MSKBMap.getKeyCodeMap().get("address") +
-                                    CH9329MSKBMap.CmdData().get("CmdMS_REL") +
-                                    CH9329MSKBMap.DataLen().get("DataLenRelMS") +
-                                    CH9329MSKBMap.MSRelData().get("FirstData") +
-                                    CH9329MSKBMap.MSRelData().get("SecNullData") +
-                                    "00" + "00" + "00";
-                            releaseData += CH9329Function.makeChecksum(releaseData);
-                            bytes = CH9329Function.hexStringToByteArray(releaseData);
-                            if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
-                                usbDeviceManager.writeData(bytes);
-                            }
-                        } catch (Exception e) {
-                            Log.e(TAG, "Error sending right click: " + e.getMessage());
-                        }
-                    }).start();
-                }
+        // Set up module tab click listeners
+        if (portraitKeyboardTab != null) {
+            portraitKeyboardTab.setOnClickListener(v -> toggleModule(ModuleType.KEYBOARD));
+        }
+        if (portraitMouseTab != null) {
+            portraitMouseTab.setOnClickListener(v -> toggleModule(ModuleType.MOUSE));
+        }
+        if (portraitImeTab != null) {
+            portraitImeTab.setOnClickListener(v -> toggleModule(ModuleType.IME));
+        }
+        if (portraitSettingsTab != null) {
+            portraitSettingsTab.setOnClickListener(v -> showFloatingSettings());
+        }
+        if (portraitRotationButton != null) {
+            portraitRotationButton.setOnClickListener(v -> toggleScreenOrientation());
+        }
 
-                @Override
-                public void onTouchLongPress() {
-                    Log.d(TAG, "TouchPad long press -> drag mode");
-                }
-
-                @Override
-                public void onTouchRelease() {
-                    HidManager.releaseMSRelData();
+        // Collapse handle click listener
+        if (portraitCollapseHandle != null) {
+            portraitCollapseHandle.setOnClickListener(v -> {
+                if (currentModule != ModuleType.NONE) {
+                    setModuleState(ModuleType.NONE, true);
                 }
             });
         }
+
+        // Setup collapse gesture detector
+        collapseGestureDetector = new GestureDetector(this,
+            new GestureDetector.SimpleOnGestureListener() {
+                @Override
+                public boolean onFling(MotionEvent e1, MotionEvent e2,
+                                       float velocityX, float velocityY) {
+                    // Swipe DOWN to collapse
+                    if (velocityY > 500 && Math.abs(velocityY) > Math.abs(velocityX)) {
+                        if (currentModule != ModuleType.NONE) {
+                            setModuleState(ModuleType.NONE, true);
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+            }
+        );
+
+        // Set touch listener on module drawer for swipe collapse
+        if (portraitModuleDrawer != null) {
+            portraitModuleDrawer.setOnTouchListener((v, event) -> {
+                if (collapseGestureDetector != null) {
+                    collapseGestureDetector.onTouchEvent(event);
+                }
+                return false;
+            });
+        }
+
+        // Update tab visuals for current module state
+        updateTabVisuals();
+
+        // Set default module state (hidden)
+        setModuleState(currentModule != null ? currentModule : ModuleType.NONE, false);
+
+        // Setup portrait shortcut strip buttons
+        setupPortraitShortcutStrip();
+    }
+
+    /**
+     * Setup portrait mode shortcut strip buttons dynamically from active profile.
+     * Shows favorites (My Shortcuts) if available, otherwise first N shortcuts from first category.
+     * The profile switch button (left) opens the ShortcutHub floating fragment.
+     */
+    private void setupPortraitShortcutStrip() {
+        // Top-left button: open Shortcut Hub directly
+        ImageButton profileSwitchButton = findViewById(R.id.shortcut_profile_switch);
+        if (profileSwitchButton != null) {
+            profileSwitchButton.setOnClickListener(v -> {
+                ShortcutHubFloatingFragment fragment = new ShortcutHubFloatingFragment();
+                fragment.setOnDismissListener(() -> {
+                    // Refresh shortcut strip after closing (config may have changed)
+                    setupPortraitShortcutStrip();
+                });
+                fragment.show(getSupportFragmentManager(), "shortcut_hub_floating");
+            });
+        }
+
+        // Dynamically populate the shortcut buttons container
+        LinearLayout buttonsContainer = findViewById(R.id.shortcut_buttons_container);
+        if (buttonsContainer == null) return;
+
+        // Remove all dynamically added buttons (keep only XML-defined ones)
+        // We'll remove everything and re-add the settings button at the end
+        buttonsContainer.removeAllViews();
+
+        // Get active profile
+        ShortcutProfileManager profileManager = ShortcutProfileManager.getInstance(this);
+        ShortcutProfile activeProfile = profileManager.getActiveProfile();
+
+        List<ShortcutProfile.Shortcut> displayShortcuts = new ArrayList<>();
+
+        if (activeProfile != null) {
+            // First try favorites
+            List<ShortcutProfile.Shortcut> favorites = profileManager.getMyShortcuts(activeProfile.id);
+            if (!favorites.isEmpty()) {
+                displayShortcuts.addAll(favorites);
+            } else {
+                // Fall back to all shortcuts (handles both old flat list and new categories)
+                List<ShortcutProfile.Shortcut> allShortcuts = activeProfile.getAllShortcutsFlat();
+                int limit = Math.min(allShortcuts.size(), 8);
+                displayShortcuts.addAll(allShortcuts.subList(0, limit));
+            }
+        }
+
+        // Add shortcut buttons dynamically
+        for (ShortcutProfile.Shortcut shortcut : displayShortcuts) {
+            Button btn = new Button(this);
+            btn.setText(shortcut.label != null ? shortcut.label : shortcut.name);
+            btn.setTextSize(11);
+            btn.setTextColor(getResources().getColor(R.color.text_primary));
+            btn.setBackgroundResource(R.drawable.shortcut_button_background);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    (int) (40 * getResources().getDisplayMetrics().density));
+            lp.setMargins((int) (3 * getResources().getDisplayMetrics().density), 0,
+                    (int) (3 * getResources().getDisplayMetrics().density), 0);
+            btn.setLayoutParams(lp);
+            btn.setPadding((int) (12 * getResources().getDisplayMetrics().density), 0,
+                    (int) (12 * getResources().getDisplayMetrics().density), 0);
+            btn.setAllCaps(false);
+
+            btn.setOnClickListener(v -> executePortraitShortcut(shortcut));
+            buttonsContainer.addView(btn);
+        }
+
+        // Re-add the keyboard settings button at the end
+        ImageButton settingsBtn = new ImageButton(this);
+        settingsBtn.setImageResource(R.drawable.baseline_settings_24);
+        settingsBtn.setScaleType(ImageButton.ScaleType.CENTER_INSIDE);
+        settingsBtn.setContentDescription("键盘设置");
+        int btnSize = (int) (40 * getResources().getDisplayMetrics().density);
+        LinearLayout.LayoutParams sLp = new LinearLayout.LayoutParams(btnSize, btnSize);
+        sLp.setMargins((int) (3 * getResources().getDisplayMetrics().density), 0,
+                (int) (3 * getResources().getDisplayMetrics().density), 0);
+        settingsBtn.setLayoutParams(sLp);
+        settingsBtn.setPadding((int) (10 * getResources().getDisplayMetrics().density),
+                (int) (10 * getResources().getDisplayMetrics().density),
+                (int) (10 * getResources().getDisplayMetrics().density),
+                (int) (10 * getResources().getDisplayMetrics().density));
+        settingsBtn.setBackgroundResource(R.drawable.shortcut_button_background);
+        settingsBtn.setColorFilter(getResources().getColor(R.color.text_primary));
+        settingsBtn.setOnClickListener(v -> showKeyboardSettingsDialog());
+        buttonsContainer.addView(settingsBtn);
+    }
+
+    /**
+     * Execute a shortcut from the portrait strip.
+     */
+    private void executePortraitShortcut(ShortcutProfile.Shortcut shortcut) {
+        if (shortcut == null) return;
+
+        String key = hidKeyCodeToString(shortcut.keyCode);
+        if (key == null || key.isEmpty()) {
+            Toast.makeText(this, "未知按键", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Extract individual modifier flags
+        boolean ctrl = (shortcut.modifiers & ShortcutProfile.MOD_CTRL) != 0;
+        boolean shift = (shortcut.modifiers & ShortcutProfile.MOD_SHIFT) != 0;
+        boolean alt = (shortcut.modifiers & ShortcutProfile.MOD_ALT) != 0;
+        boolean win = (shortcut.modifiers & ShortcutProfile.MOD_WIN) != 0;
+
+        Log.d("MainActivity", "Executing shortcut: ctrl=" + ctrl + " shift=" + shift +
+                " alt=" + alt + " win=" + win + " key=" + key);
+
+        // Use HidManager to support both Java and Core implementations
+        if (ctrl || shift || alt || win) {
+            HidManager.sendKeyBoardFunction(
+                    ctrl ? "Ctrl" : "",
+                    shift ? "Shift" : "",
+                    alt ? "Alt" : "",
+                    win ? "Win" : "",
+                    key);
+        } else {
+            HidManager.sendKeyBoardPressAndRelease("", key);
+        }
+    }
+
+    /**
+     * Map HID usage code to the key string expected by KeyBoardManager/HidManager.
+     */
+    private String hidKeyCodeToString(int keyCode) {
+        switch (keyCode) {
+            // Letters (a-z)
+            case 4: return "A"; case 5: return "B"; case 6: return "C"; case 7: return "D";
+            case 8: return "E"; case 9: return "F"; case 10: return "G"; case 11: return "H";
+            case 12: return "I"; case 13: return "J"; case 14: return "K"; case 15: return "L";
+            case 16: return "M"; case 17: return "N"; case 18: return "O"; case 19: return "P";
+            case 20: return "Q"; case 21: return "R"; case 22: return "S"; case 23: return "T";
+            case 24: return "U"; case 25: return "V"; case 26: return "W"; case 27: return "X";
+            case 28: return "Y"; case 29: return "Z";
+            // Numbers (1-0)
+            case 30: return "1"; case 31: return "2"; case 32: return "3"; case 33: return "4";
+            case 34: return "5"; case 35: return "6"; case 36: return "7"; case 37: return "8";
+            case 38: return "9"; case 39: return "0";
+            // Enter / Escape / Backspace / Tab / Space
+            case 40: return "ENTER"; case 41: return "ESC"; case 42: return "BACKSPACE";
+            case 43: return "TAB"; case 44: return "SPACE";
+            // Symbols
+            case 45: return "-"; case 46: return "="; case 47: return "["; case 48: return "]";
+            case 49: return "\\"; case 51: return ";"; case 52: return "'"; case 53: return "`";
+            case 54: return ","; case 55: return "."; case 56: return "/";
+            // Caps Lock
+            case 57: return "CAPSLOCK";
+            // Function keys
+            case 58: return "F1"; case 59: return "F2"; case 60: return "F3"; case 61: return "F4";
+            case 62: return "F5"; case 63: return "F6"; case 64: return "F7"; case 65: return "F8";
+            case 66: return "F9"; case 67: return "F10"; case 68: return "F11"; case 69: return "F12";
+            // Additional keys
+            case 70: return "PRTSC"; case 71: return "SCROLLLOCK"; case 72: return "PAUSE";
+            case 73: return "INSERT";
+            // Navigation
+            case 74: return "HOME"; case 75: return "PAGEUP"; case 76: return "DELETE";
+            case 77: return "END"; case 78: return "PAGEDOWN";
+            case 79: return "RIGHT"; case 80: return "LEFT"; case 81: return "DOWN"; case 82: return "UP";
+            // Num Lock
+            case 83: return "NUMLOCK";
+            // Numpad operators
+            case 84: return "NUMPAD_DIVIDE"; case 85: return "NUMPAD_MULTIPLY";
+            case 86: return "NUMPAD_SUBTRACT"; case 87: return "NUMPAD_ADD";
+            case 88: return "NUMPAD_ENTER";
+            // Numpad digits
+            case 89: return "NUMPAD_1"; case 90: return "NUMPAD_2";
+            case 91: return "NUMPAD_3"; case 92: return "NUMPAD_4";
+            case 93: return "NUMPAD_5"; case 94: return "NUMPAD_6";
+            case 95: return "NUMPAD_7"; case 96: return "NUMPAD_8";
+            case 97: return "NUMPAD_9"; case 98: return "NUMPAD_0";
+            case 99: return "NUMPAD_DECIMAL";
+            default: return null;
+        }
+    }
+
+
+    @Override
+    public void onBackPressed() {
+        // Handle back navigation from ShortcutManagerFragment or close module
+        if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+            getSupportFragmentManager().popBackStack();
+            // After popping, re-inflate the settings module if needed
+            if (isPortraitMode && currentModule == ModuleType.SETTINGS && portraitModuleContent != null) {
+                settingsModuleView = null; // Clear cache to force recreation
+                portraitModuleContent.removeAllViews();
+                inflateModuleView(ModuleType.SETTINGS);
+            }
+            return;
+        } else if (isPortraitMode && currentModule != ModuleType.NONE) {
+            // Close the current module if back stack is empty and a module is open
+            setModuleState(ModuleType.NONE, true);
+            return;
+        }
+        super.onBackPressed();
+    }
+
+    private void toggleModule(ModuleType type) {
+        if (currentModule == type) {
+            // Same module: collapse
+            setModuleState(ModuleType.NONE, true);
+        } else {
+            // Different module: expand
+            setModuleState(type, true);
+        }
+    }
+
+    /**
+     * Set the active module and update layout accordingly.
+     * Module overlays the bottom of the video stream (fixed 200dp height).
+     * Video is NOT pushed up - it stays filling the full dynamic area.
+     * Zone 3 is positioned ABOVE Zone 4 (bottom bar).
+     * @param type Module to show, or NONE to hide
+     * @param animate Whether to animate the transition
+     */
+    private void setModuleState(ModuleType type, boolean animate) {
+        currentModule = type;
+
+        if (type == ModuleType.NONE) {
+            // COLLAPSE: Hide module drawer
+            if (portraitModuleDrawer != null) {
+                portraitModuleDrawer.setVisibility(View.GONE);
+            }
+        } else {
+            // EXPAND: Show module drawer at bottom
+            if (portraitModuleDrawer != null) {
+                portraitModuleDrawer.setVisibility(View.VISIBLE);
+                // Let the height be determined by content (wrap_content from XML)
+
+                // Inflate or show the appropriate module
+                inflateModuleView(type);
+            }
+        }
+
+        updateTabVisuals();
+
+        // Animate transition
+        if (animate && portraitVideoContainer != null) {
+            androidx.transition.TransitionManager.beginDelayedTransition(
+                (ViewGroup) portraitVideoContainer.getParent(),
+                new androidx.transition.ChangeBounds().setDuration(300)
+            );
+        }
+    }
+
+    /**
+     * Inflate the appropriate module view into the module content container.
+     */
+    private void inflateModuleView(ModuleType type) {
+        if (portraitModuleContent == null) return;
+
+        // Remove existing module views
+        portraitModuleContent.removeAllViews();
+
+        View moduleView = null;
+        LayoutInflater inflater = LayoutInflater.from(this);
+
+        switch (type) {
+            case KEYBOARD:
+                if (keyboardModuleView == null) {
+                    keyboardModuleView = inflater.inflate(
+                        R.layout.module_portrait_keyboard, portraitModuleContent, false);
+                    // Setup keyboard module buttons
+                    setupKeyboardModule(keyboardModuleView);
+                }
+                moduleView = keyboardModuleView;
+                break;
+
+            case MOUSE:
+                if (mouseModuleView == null) {
+                    mouseModuleView = inflater.inflate(
+                        R.layout.module_portrait_mouse, portraitModuleContent, false);
+                    setupMouseModule(mouseModuleView);
+                }
+                moduleView = mouseModuleView;
+                break;
+
+            case IME:
+                if (imeModuleView == null) {
+                    imeModuleView = inflater.inflate(
+                        R.layout.module_portrait_ime, portraitModuleContent, false);
+                    setupImeModule(imeModuleView);
+                }
+                moduleView = imeModuleView;
+                break;
+
+            case SETTINGS:
+                if (settingsModuleView == null) {
+                    settingsModuleView = inflater.inflate(
+                        R.layout.module_portrait_settings, portraitModuleContent, false);
+                    setupSettingsModule(settingsModuleView);
+                }
+                moduleView = settingsModuleView;
+                break;
+        }
+
+        if (moduleView != null && moduleView.getParent() == null) {
+            portraitModuleContent.addView(moduleView);
+        }
+    }
+
+    /**
+     * Setup keyboard module button listeners.
+     * NOTE: The existing keyboard classes (KeyBoardShortCut, KeyBoardCtrl, etc.)
+     * use activity.findViewById() which expects views in the main activity layout.
+     * In portrait module, these views are in the inflated module view.
+     * For now, use a try-catch to prevent crashes while we wire up properly.
+     */
+    private void setupKeyboardModule(View view) {
+        try {
+            // Create KeyPreviewPopup for bubble hint if not already created
+            if (keyPreviewPopup == null) {
+                keyPreviewPopup = new KeyPreviewPopup(this);
+            }
+
+            KeyBoardShortCut keyBoardShortCut = new KeyBoardShortCut(view);
+            KeyBoardCtrl keyBoardCtrl = new KeyBoardCtrl(view, keyPreviewPopup);
+            KeyBoardShift keyBoardShift = new KeyBoardShift(view, keyPreviewPopup);
+            KeyBoardAlt keyBoardAlt = new KeyBoardAlt(view, keyPreviewPopup);
+            KeyBoardWin keyBoardWin = new KeyBoardWin(view, keyPreviewPopup);
+            KeyBoardFunction keyBoardFunction = new KeyBoardFunction(view);
+            KeyBoardSystem keyBoardSystem = new KeyBoardSystem(view);
+            KeyBoardClose keyBoardClose = new KeyBoardClose(view);
+
+            // Pass popup and settings to KeyBoardSystem for all-key bubble + sound/vibration
+            KeyBoardSystem.setKeyPreviewPopup(keyPreviewPopup);
+            KeyBoardSystem.setSettingsManager(keyboardSettingsManager);
+
+            // Setup CharacterAlternatesPopup for long-press character selection (portrait mode)
+            CharacterAlternatesPopup alternatesPopup = new CharacterAlternatesPopup(this);
+            KeyBoardSystem.setAlternatesPopup(alternatesPopup);
+
+            keyBoardShortCut.setShortCutButtonsClickColor();
+            keyBoardFunction.setFunctionButtonsClickColor();
+            keyBoardSystem.setSystemButtonsClickColor();
+            keyBoardClose.setCloseButtonClickColor();
+
+            // Use the constructor that accepts rootView for portrait mode
+            mKeyBoardOpacity = new KeyBoardOpacity(this, view);
+            mKeyBoardOpacity.setOpacityButtonClick();
+        } catch (Exception e) {
+            Log.w(TAG, "setupKeyboardModule: keyboard init failed: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Setup mouse module for portrait mode.
+     * Includes MouseControlStripView (L/M/R) and BasicPortraitScrollStripView.
+     */
+    private void setupMouseModule(View view) {
+        com.openterface.AOS.view.MouseControlStripView portraitMouseStrip =
+            view.findViewById(R.id.portrait_mouseButtonStrip);
+
+        if (portraitMouseStrip != null) {
+            portraitMouseStrip.setOnMouseClickListener(
+                new com.openterface.AOS.view.MouseControlStripView.OnMouseClickListener() {
+                    @Override
+                    public void onMouseClick(int buttonMask) {
+                        String clickType;
+                        switch (buttonMask) {
+                            case com.openterface.AOS.view.MouseControlStripView.BTN_LEFT:
+                                clickType = "SecLeftData"; break;
+                            case com.openterface.AOS.view.MouseControlStripView.BTN_RIGHT:
+                                clickType = "SecRightData"; break;
+                            case com.openterface.AOS.view.MouseControlStripView.BTN_MIDDLE:
+                                clickType = "SecMiddleData"; break;
+                            default:
+                                clickType = "SecNullData";
+                        }
+                        sendMouseClick(clickType);
+                    }
+
+                    @Override
+                    public void onMouseRelease() {
+                        String releaseData = com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
+                            com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
+                            com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("address") +
+                            com.openterface.AOS.target.CH9329MSKBMap.CmdData().get("CmdMS_REL") +
+                            com.openterface.AOS.target.CH9329MSKBMap.DataLen().get("DataLenRelMS") +
+                            com.openterface.AOS.target.CH9329MSKBMap.MSRelData().get("FirstData") +
+                            com.openterface.AOS.target.CH9329MSKBMap.MSRelData().get("SecNullData") +
+                            "00" + "00" + "00";
+                        releaseData += com.openterface.AOS.serial.CH9329Function.makeChecksum(releaseData);
+                        byte[] bytes = com.openterface.AOS.serial.CH9329Function.hexStringToByteArray(releaseData);
+                        if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                            usbDeviceManager.writeData(bytes);
+                        }
+                    }
+
+                    @Override
+                    public void onScrollClick() {
+                        // Deprecated: scroll handled by BasicPortraitScrollStripView
+                    }
+
+                    @Override
+                    public void onScrollUp() {
+                        // Deprecated: scroll handled by BasicPortraitScrollStripView
+                    }
+
+                    @Override
+                    public void onScrollDown() {
+                        // Deprecated: scroll handled by BasicPortraitScrollStripView
+                    }
+                });
+        }
+
+        // Setup scroll strip
+        com.openterface.AOS.view.BasicPortraitScrollStripView portraitScrollStrip =
+            view.findViewById(R.id.portrait_scroll_strip);
+
+        if (portraitScrollStrip != null) {
+            portraitScrollStrip.setOnStripScrollListener(new com.openterface.AOS.view.BasicPortraitScrollStripView.OnStripScrollListener() {
+                @Override
+                public void onStripScroll(int deltaX, int deltaY) {
+                    // deltaY > 0 means scroll up, deltaY < 0 means scroll down
+                    if (deltaY != 0) {
+                        com.openterface.AOS.target.MouseManager.handleTwoFingerPanSlideUpDown((float) deltaY);
+                    }
+                }
+            });
+        }
+    }
+
+    /**
+     * Send a mouse click via CH9329 HID protocol
+     */
+    private void sendMouseClick(String clickType) {
+        new Thread(() -> {
+            try {
+                String clickData = com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
+                    com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
+                    com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("address") +
+                    com.openterface.AOS.target.CH9329MSKBMap.CmdData().get("CmdMS_REL") +
+                    com.openterface.AOS.target.CH9329MSKBMap.DataLen().get("DataLenRelMS") +
+                    com.openterface.AOS.target.CH9329MSKBMap.MSRelData().get("FirstData") +
+                    clickType + "00" + "00" + "00";
+                clickData += com.openterface.AOS.serial.CH9329Function.makeChecksum(clickData);
+                byte[] bytes = com.openterface.AOS.serial.CH9329Function.hexStringToByteArray(clickData);
+                if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                    usbDeviceManager.writeData(bytes);
+                }
+                // Auto release after 30ms
+                Thread.sleep(30);
+                String releaseData = com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
+                    com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
+                    com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("address") +
+                    com.openterface.AOS.target.CH9329MSKBMap.CmdData().get("CmdMS_REL") +
+                    com.openterface.AOS.target.CH9329MSKBMap.DataLen().get("DataLenRelMS") +
+                    com.openterface.AOS.target.CH9329MSKBMap.MSRelData().get("FirstData") +
+                    com.openterface.AOS.target.CH9329MSKBMap.MSRelData().get("SecNullData") +
+                    "00" + "00" + "00";
+                releaseData += com.openterface.AOS.serial.CH9329Function.makeChecksum(releaseData);
+                bytes = com.openterface.AOS.serial.CH9329Function.hexStringToByteArray(releaseData);
+                if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                    usbDeviceManager.writeData(bytes);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error sending mouse click: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    /**
+     * Setup IME module button listeners
+     */
+    private boolean isSendingText = false;
+    private int sendProgress = 0;
+    private int sendTotal = 0;
+    private ProgressBar imeProgressBar;
+    private TextView imeProgressLabel;
+
+    private void setupImeModule(View view) {
+        android.widget.Button sendButton = view.findViewById(R.id.ime_send_button);
+        android.widget.Button clearButton = view.findViewById(R.id.ime_clear_button);
+        android.widget.Button saveButton = view.findViewById(R.id.ime_save_button);
+        android.widget.Button savedTextsButton = view.findViewById(R.id.ime_saved_texts_button);
+        EditText textInput = view.findViewById(R.id.ime_text_input);
+        imeProgressBar = view.findViewById(R.id.ime_send_progress);
+        imeProgressLabel = view.findViewById(R.id.ime_send_progress_label);
+
+        if (sendButton != null && textInput != null) {
+            sendButton.setOnClickListener(v -> {
+                String text = textInput.getText().toString();
+                if (text.isEmpty()) {
+                    Toast.makeText(this, "请输入要发送的文本", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                if (isSendingText) {
+                    // Cancel send
+                    isSendingText = false;
+                    hideSendProgress();
+                    Toast.makeText(this, "已取消发送", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                sendTextViaHID(text, textInput);
+            });
+        }
+
+        if (clearButton != null && textInput != null) {
+            clearButton.setOnClickListener(v -> {
+                textInput.setText("");
+                Toast.makeText(this, "已清空文本", Toast.LENGTH_SHORT).show();
+            });
+        }
+
+        if (saveButton != null && textInput != null) {
+            saveButton.setOnClickListener(v -> {
+                String text = textInput.getText().toString();
+                if (text.isEmpty()) {
+                    Toast.makeText(this, "文本为空，无法保存", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                // Save to SharedPreferences
+                android.content.SharedPreferences prefs = getSharedPreferences("SavedTexts", MODE_PRIVATE);
+                String saved = prefs.getString("saved_text", "");
+                saved += (saved.isEmpty() ? "" : "\n") + text;
+                prefs.edit().putString("saved_text", saved).apply();
+                Toast.makeText(this, "文本已保存", Toast.LENGTH_SHORT).show();
+            });
+        }
+
+        if (savedTextsButton != null && textInput != null) {
+            savedTextsButton.setOnClickListener(v -> {
+                android.content.SharedPreferences prefs = getSharedPreferences("SavedTexts", MODE_PRIVATE);
+                String saved = prefs.getString("saved_text", "");
+                if (saved.isEmpty()) {
+                    Toast.makeText(this, "暂无已保存的文本", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                // Display list of saved texts
+                new android.app.AlertDialog.Builder(this)
+                    .setTitle("已保存的文本")
+                    .setMessage(saved)
+                    .setPositiveButton("关闭", null)
+                    .setNeutralButton("清空所有", (dialog, which) -> {
+                        prefs.edit().remove("saved_text").apply();
+                        Toast.makeText(this, "已清空所有保存的文本", Toast.LENGTH_SHORT).show();
+                    })
+                    .show();
+            });
+        }
+    }
+
+    private void sendTextViaHID(String text, EditText textInput) {
+        isSendingText = true;
+        sendProgress = 0;
+        sendTotal = text.length();
+        showSendProgress();
+
+        new Thread(() -> {
+            for (int i = 0; i < sendTotal; i++) {
+                if (!isSendingText) {
+                    // Was cancelled
+                    break;
+                }
+                char c = text.charAt(i);
+                final int index = i;
+
+                // Send HID data and update progress on the main thread
+                runOnUiThread(() -> {
+                    if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                        // Convert character to keyboard scan code and send
+                        String scanCode = charToScanCode(c);
+                        if (scanCode != null) {
+                            KeyBoardManager.sendKeyBoardData(null, scanCode);
+                            // Send release event
+                            try {
+                                Thread.sleep(50);
+                            } catch (InterruptedException ignored) {}
+                            KeyBoardManager.sendKeyBoardData(null, "00");
+                        }
+                    }
+                    sendProgress = index + 1;
+                    updateSendProgress();
+                });
+
+                try {
+                    // Control send rate, 100ms interval per character
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    break;
+                }
+            }
+
+            // Send completed
+            runOnUiThread(() -> {
+                if (isSendingText) {
+                    Toast.makeText(MainActivity.this, "文本发送完成", Toast.LENGTH_SHORT).show();
+                    textInput.setText("");
+                    hideSendProgress();
+                }
+                isSendingText = false;
+            });
+        }).start();
+    }
+
+    private void showSendProgress() {
+        if (imeProgressBar != null) {
+            imeProgressBar.setVisibility(android.view.View.VISIBLE);
+            imeProgressBar.setMax(sendTotal);
+            imeProgressBar.setProgress(0);
+        }
+        if (imeProgressLabel != null) {
+            imeProgressLabel.setVisibility(android.view.View.VISIBLE);
+            imeProgressLabel.setText("0/" + sendTotal);
+        }
+    }
+
+    private void updateSendProgress() {
+        if (imeProgressBar != null) {
+            imeProgressBar.setProgress(sendProgress);
+        }
+        if (imeProgressLabel != null) {
+            imeProgressLabel.setText(sendProgress + "/" + sendTotal);
+        }
+    }
+
+    private void hideSendProgress() {
+        if (imeProgressBar != null) {
+            imeProgressBar.setVisibility(android.view.View.GONE);
+        }
+        if (imeProgressLabel != null) {
+            imeProgressLabel.setVisibility(android.view.View.GONE);
+        }
+    }
+
+    private String charToScanCode(char c) {
+        // Simplified character-to-HID-scan-code mapping
+        // Actual implementation requires CH9329MSKBMap
+        if (c >= 'a' && c <= 'z') {
+            return String.format("%02X", 0x04 + (c - 'a'));
+        } else if (c >= 'A' && c <= 'Z') {
+            // Need Shift + letter
+            return String.format("%02X", 0x04 + (c - 'A'));
+        } else if (c >= '1' && c <= '9') {
+            return String.format("%02X", 0x1E + (c - '1'));
+        } else if (c == '0') {
+            return "27";
+        } else if (c == ' ') {
+            return "2C";
+        } else if (c == '\n') {
+            return "28"; // Enter
+        } else if (c == '.') {
+            return "37";
+        } else if (c == ',') {
+            return "36";
+        } else if (c == '!') {
+            return "1E"; // Shift + 1
+        } else if (c == '?') {
+            return "38"; // Shift + /
+        }
+        // More character mappings...
+        Log.w(TAG, "不支持的字符: " + c);
+        return null;
+    }
+
+    /**
+     * Update tab visual states (active/inactive)
+     */
+    private void updateTabVisuals() {
+        // Get theme-aware colors
+        int activeColor = androidx.core.content.ContextCompat.getColor(this, R.color.primary);
+        int inactiveColor = androidx.core.content.ContextCompat.getColor(this, R.color.background_light);
+        int activeIconColor = androidx.core.content.ContextCompat.getColor(this, R.color.on_primary);
+        int inactiveIconColor = androidx.core.content.ContextCompat.getColor(this, R.color.text_secondary);
+
+        // Keyboard tab
+        if (portraitKeyboardTab != null) {
+            boolean active = (currentModule == ModuleType.KEYBOARD);
+            portraitKeyboardTab.setBackgroundColor(active ? activeColor : inactiveColor);
+            ImageView icon = portraitKeyboardTab.findViewById(R.id.tab_keyboard_icon);
+            if (icon != null) {
+                icon.setColorFilter(active ? activeIconColor : inactiveIconColor);
+            }
+        }
+
+        // Mouse tab
+        if (portraitMouseTab != null) {
+            boolean active = (currentModule == ModuleType.MOUSE);
+            portraitMouseTab.setBackgroundColor(active ? activeColor : inactiveColor);
+            ImageView icon = portraitMouseTab.findViewById(R.id.tab_mouse_icon);
+            if (icon != null) {
+                icon.setColorFilter(active ? activeIconColor : inactiveIconColor);
+            }
+        }
+
+        // IME tab
+        if (portraitImeTab != null) {
+            boolean active = (currentModule == ModuleType.IME);
+            portraitImeTab.setBackgroundColor(active ? activeColor : inactiveColor);
+            ImageView icon = portraitImeTab.findViewById(R.id.tab_ime_icon);
+            if (icon != null) {
+                icon.setColorFilter(active ? activeIconColor : inactiveIconColor);
+            }
+        }
+
+        // Settings tab
+        if (portraitSettingsTab != null) {
+            boolean active = (currentModule == ModuleType.SETTINGS);
+            portraitSettingsTab.setBackgroundColor(active ? activeColor : inactiveColor);
+            ImageView icon = portraitSettingsTab.findViewById(R.id.tab_settings_icon);
+            if (icon != null) {
+                icon.setColorFilter(active ? activeIconColor : inactiveIconColor);
+            }
+        }
+    }
+
+    /**
+     * Open the settings drawer (same as existing settings menu)
+     */
+    private void openSettingsDrawer() {
+        // Collapse any active module first
+        if (currentModule != ModuleType.NONE) {
+            setModuleState(ModuleType.NONE, true);
+        }
+
+        // Open the existing settings drawer
+        LinearLayout drawerSetup = findViewById(R.id.drawer_layout_setup);
+        if (drawerSetup != null) {
+            drawerSetup.setVisibility(View.VISIBLE);
+        }
+
+        DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
+        if (drawerLayout != null) {
+            drawerLayout.openDrawer(androidx.core.view.GravityCompat.END);
+            drawerSetup.setVisibility(View.VISIBLE);
+        }
+    }
+
+    /**
+     * Toggle screen orientation between portrait and landscape modes.
+     * The orientation is set programmatically and the device will stay in that mode
+     * until the user toggles it again.
+     */
+    public void toggleScreenOrientation() {
+        int newOrientation;
+        if (isPortraitMode) {
+            // Currently portrait, switch to landscape
+            newOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
+            isPortraitMode = false;
+            Toast.makeText(this, R.string.orientation_toast_landscape, Toast.LENGTH_SHORT).show();
+        } else {
+            // Currently landscape, switch to portrait
+            newOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT;
+            isPortraitMode = true;
+            Toast.makeText(this, R.string.orientation_toast_portrait, Toast.LENGTH_SHORT).show();
+        }
+
+        Log.d(TAG, "toggleScreenOrientation: " + (isPortraitMode ? "PORTRAIT" : "LANDSCAPE"));
+        setRequestedOrientation(newOrientation);
+    }
+
+    /**
+     * Initialize TouchPad / Mouse strip for landscape mode.
+     * TouchPadView has been removed from the layout — only MouseControlStripView remains.
+     */
+    private void initTouchPad() {
+        mouseControlStripView = findViewById(R.id.mouseButtonStrip);
+        touchPadContainer = findViewById(R.id.TouchPad_View);
+
+        restoreTouchPadOpacity();
 
         if (mouseControlStripView != null) {
             mouseControlStripView.setOnMouseClickListener(new MouseControlStripView.OnMouseClickListener() {
@@ -2063,7 +3222,33 @@ public class MainActivity extends AppCompatActivity {
 
                 @Override
                 public void onScrollClick() {
-                    HidManager.handleTwoPress();
+                    // Deprecated: scroll handled by BasicPortraitScrollStripView
+                }
+
+                @Override
+                public void onScrollUp() {
+                    // Deprecated: scroll handled by BasicPortraitScrollStripView
+                }
+
+                @Override
+                public void onScrollDown() {
+                    // Deprecated: scroll handled by BasicPortraitScrollStripView
+                }
+            });
+        }
+
+        // Setup landscape scroll strip
+        com.openterface.AOS.view.BasicPortraitScrollStripView landscapeScrollStrip =
+            findViewById(R.id.landscape_scroll_strip);
+
+        if (landscapeScrollStrip != null) {
+            landscapeScrollStrip.setOnStripScrollListener(new com.openterface.AOS.view.BasicPortraitScrollStripView.OnStripScrollListener() {
+                @Override
+                public void onStripScroll(int deltaX, int deltaY) {
+                    // deltaY > 0 means scroll up, deltaY < 0 means scroll down
+                    if (deltaY != 0) {
+                        com.openterface.AOS.target.MouseManager.handleTwoFingerPanSlideUpDown((float) deltaY);
+                    }
                 }
             });
         }
@@ -2083,12 +3268,15 @@ public class MainActivity extends AppCompatActivity {
 
         if (settingsButton != null) {
             settingsButton.setOnClickListener(v -> {
-                if (touchPadSettings == null) {
-                    touchPadSettings = new TouchPadSettings(MainActivity.this);
+                // Open settings module
+                if (isPortraitMode) {
+                    toggleModule(ModuleType.SETTINGS);
+                } else {
+                    if (touchPadSettings == null) {
+                        touchPadSettings = new TouchPadSettings(MainActivity.this);
+                    }
+                    touchPadSettings.showSettingsDialog();
                 }
-                // Create a temporary TouchPadView reference for settings if needed
-                touchPadSettings.setTouchPadView(touchPadView);
-                touchPadSettings.showSettingsDialog();
             });
         }
 
@@ -2142,5 +3330,411 @@ public class MainActivity extends AppCompatActivity {
      */
     public int getTouchPadOpacity() {
         return getPreferences(Context.MODE_PRIVATE).getInt("touchpad_opacity", 100);
+    }
+
+    // ===== Settings Module =====
+
+    private final String PREF_SETTINGS = "AppSettings";
+    private final String KEY_SOUND_ENABLED = "key_sound_enabled";
+    private final String KEY_SOUND_VOLUME = "key_sound_volume";
+    private final String KEY_VIBRATE_ENABLED = "key_vibrate_enabled";
+    private final String KEY_VIBRATE_INTENSITY = "key_vibrate_intensity";
+    private final String KEY_SCROLL_SPEED = "scroll_speed";
+    private final String KEY_PRE_VALIDATE = "pre_validate_enabled";
+    private final String KEY_AUTO_SAVE = "auto_save_enabled";
+
+    private void setupSettingsModule(View view) {
+        android.content.SharedPreferences prefs = getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE);
+
+        // === Keyboard Settings ===
+        androidx.appcompat.widget.SwitchCompat soundSwitch = view.findViewById(R.id.settings_key_sound_switch);
+        LinearLayout volumeLayout = view.findViewById(R.id.settings_volume_layout);
+        SeekBar volumeSeekbar = view.findViewById(R.id.settings_volume_seekbar);
+
+        androidx.appcompat.widget.SwitchCompat vibrateSwitch = view.findViewById(R.id.settings_vibrate_switch);
+        LinearLayout vibrateIntensityLayout = view.findViewById(R.id.settings_vibrate_intensity_layout);
+        SeekBar vibrateSeekbar = view.findViewById(R.id.settings_vibrate_intensity_seekbar);
+
+        // === Mouse Settings ===
+        SeekBar scrollSpeedSeekbar = view.findViewById(R.id.settings_scroll_speed_seekbar);
+        TextView scrollSpeedValue = view.findViewById(R.id.settings_scroll_speed_value);
+
+        // === IME Settings ===
+        androidx.appcompat.widget.SwitchCompat preValidateSwitch = view.findViewById(R.id.settings_pre_validate_switch);
+        androidx.appcompat.widget.SwitchCompat autoSaveSwitch = view.findViewById(R.id.settings_auto_save_switch);
+
+        // Load saved values
+        boolean soundEnabled = prefs.getBoolean(KEY_SOUND_ENABLED, true);
+        int soundVolume = prefs.getInt(KEY_SOUND_VOLUME, 80);
+        boolean vibrateEnabled = prefs.getBoolean(KEY_VIBRATE_ENABLED, true);
+        int vibrateIntensity = prefs.getInt(KEY_VIBRATE_INTENSITY, 60);
+        int scrollSpeed = prefs.getInt(KEY_SCROLL_SPEED, 50);
+        boolean preValidate = prefs.getBoolean(KEY_PRE_VALIDATE, true);
+        boolean autoSave = prefs.getBoolean(KEY_AUTO_SAVE, false);
+
+        // Apply saved values
+        if (soundSwitch != null) soundSwitch.setChecked(soundEnabled);
+        if (volumeSeekbar != null) volumeSeekbar.setProgress(soundVolume);
+        if (volumeLayout != null) volumeLayout.setVisibility(soundEnabled ? View.VISIBLE : View.GONE);
+        if (vibrateSwitch != null) vibrateSwitch.setChecked(vibrateEnabled);
+        if (vibrateSeekbar != null) vibrateSeekbar.setProgress(vibrateIntensity);
+        if (vibrateIntensityLayout != null) vibrateIntensityLayout.setVisibility(vibrateEnabled ? View.VISIBLE : View.GONE);
+        if (scrollSpeedSeekbar != null) scrollSpeedSeekbar.setProgress(scrollSpeed);
+        if (scrollSpeedValue != null) scrollSpeedValue.setText(getScrollSpeedLabel(scrollSpeed));
+        if (preValidateSwitch != null) preValidateSwitch.setChecked(preValidate);
+        if (autoSaveSwitch != null) autoSaveSwitch.setChecked(autoSave);
+
+        // === Keyboard Sound Switch ===
+        if (soundSwitch != null) {
+            soundSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                prefs.edit().putBoolean(KEY_SOUND_ENABLED, isChecked).apply();
+                if (volumeLayout != null) volumeLayout.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+            });
+        }
+
+        // === Volume SeekBar ===
+        if (volumeSeekbar != null) {
+            volumeSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    if (fromUser) prefs.edit().putInt(KEY_SOUND_VOLUME, progress).apply();
+                }
+                @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+            });
+        }
+
+        // === Vibrate Switch ===
+        if (vibrateSwitch != null) {
+            vibrateSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                prefs.edit().putBoolean(KEY_VIBRATE_ENABLED, isChecked).apply();
+                if (vibrateIntensityLayout != null) vibrateIntensityLayout.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+            });
+        }
+
+        // === Vibrate Intensity ===
+        if (vibrateSeekbar != null) {
+            vibrateSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    if (fromUser) prefs.edit().putInt(KEY_VIBRATE_INTENSITY, progress).apply();
+                }
+                @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+            });
+        }
+
+        // === Scroll Speed ===
+        if (scrollSpeedSeekbar != null) {
+            scrollSpeedSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    if (fromUser) {
+                        prefs.edit().putInt(KEY_SCROLL_SPEED, progress).apply();
+                        if (scrollSpeedValue != null) scrollSpeedValue.setText(getScrollSpeedLabel(progress));
+                    }
+                }
+                @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+            });
+        }
+
+        // === Pre-validate Switch ===
+        if (preValidateSwitch != null) {
+            preValidateSwitch.setOnCheckedChangeListener((buttonView, isChecked) ->
+                prefs.edit().putBoolean(KEY_PRE_VALIDATE, isChecked).apply());
+        }
+
+        // === Auto Save Switch ===
+        if (autoSaveSwitch != null) {
+            autoSaveSwitch.setOnCheckedChangeListener((buttonView, isChecked) ->
+                prefs.edit().putBoolean(KEY_AUTO_SAVE, isChecked).apply());
+        }
+
+        // === Target OS Configuration ===
+        LinearLayout targetOsLayout = view.findViewById(R.id.settings_target_os_layout);
+        TextView targetOsValue = view.findViewById(R.id.settings_target_os_value);
+        if (targetOsLayout != null && targetOsValue != null) {
+            // Display current OS
+            targetOsValue.setText(TargetOsManager.getInstance().getCurrentOs().getName());
+
+            targetOsLayout.setOnClickListener(v -> {
+                TargetOsPickerDialog dialog = new TargetOsPickerDialog(MainActivity.this);
+                dialog.setOnTargetOsSelectedListener(os -> {
+                    TargetOsManager.getInstance().setCurrentOs(MainActivity.this, os);
+                    targetOsValue.setText(os.getName());
+                    // Update Win key label if keyboard is initialized
+                    if (KeyBoardSystem.getInstance() != null) {
+                        KeyBoardSystem.getInstance().applyTargetOsLabels();
+                    }
+                });
+                dialog.show();
+            });
+        }
+
+        // === Theme Configuration ===
+        LinearLayout themeColorLayout = view.findViewById(R.id.settings_theme_color_layout);
+        TextView themeColorValue = view.findViewById(R.id.settings_theme_color_value);
+        if (themeColorLayout != null && themeColorValue != null) {
+            // Display current theme color
+            themeColorValue.setText(ThemeManager.getFamilyDisplayName(ThemeManager.getInstance().getThemeFamily()));
+
+            themeColorLayout.setOnClickListener(v -> {
+                showThemePickerDialog();
+            });
+        }
+
+        LinearLayout themeModeLayout = view.findViewById(R.id.settings_theme_mode_layout);
+        TextView themeModeValue = view.findViewById(R.id.settings_theme_mode_value);
+        if (themeModeLayout != null && themeModeValue != null) {
+            // Display current theme mode
+            String mode = ThemeManager.getInstance().getThemeMode();
+            String modeDisplay = getThemeModeDisplay(mode);
+            themeModeValue.setText(modeDisplay);
+
+            themeModeLayout.setOnClickListener(v -> {
+                showThemeModeDialog();
+            });
+        }
+    }
+
+    private String getScrollSpeedLabel(int progress) {
+        if (progress <= 20) return "很慢";
+        if (progress <= 40) return "慢";
+        if (progress <= 60) return "中等";
+        if (progress <= 80) return "快";
+        return "很快";
+    }
+
+    public boolean isSoundEnabled() {
+        return getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).getBoolean(KEY_SOUND_ENABLED, true);
+    }
+
+    public int getSoundVolume() {
+        return getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).getInt(KEY_SOUND_VOLUME, 80);
+    }
+
+    public boolean isVibrateEnabled() {
+        return getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).getBoolean(KEY_VIBRATE_ENABLED, true);
+    }
+
+    public int getVibrateIntensity() {
+        return getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).getInt(KEY_VIBRATE_INTENSITY, 60);
+    }
+
+    public int getScrollSpeed() {
+        return getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).getInt(KEY_SCROLL_SPEED, 50);
+    }
+
+    // ============================================================
+    // SettingsFloatingFragment.SettingsCallback implementation
+    // ============================================================
+
+    @Override
+    public void setupSettingsContent(View view) {
+        // Delegate to existing setupSettingsModule logic
+        setupSettingsModule(view);
+    }
+
+    @Override
+    public void setSoundEnabled(boolean enabled) {
+        getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).edit().putBoolean(KEY_SOUND_ENABLED, enabled).apply();
+        if (keyboardSettingsManager != null) {
+            keyboardSettingsManager.setSoundEnabled(enabled);
+        }
+    }
+
+    @Override
+    public void setSoundVolume(int volume) {
+        getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).edit().putInt(KEY_SOUND_VOLUME, volume).apply();
+        if (keyboardSettingsManager != null) {
+            keyboardSettingsManager.setSoundVolume(volume);
+        }
+    }
+
+    @Override
+    public void setVibrateEnabled(boolean enabled) {
+        getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).edit().putBoolean(KEY_VIBRATE_ENABLED, enabled).apply();
+        if (keyboardSettingsManager != null) {
+            keyboardSettingsManager.setVibrateEnabled(enabled);
+        }
+    }
+
+    @Override
+    public void setVibrateIntensity(int intensity) {
+        getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).edit().putInt(KEY_VIBRATE_INTENSITY, intensity).apply();
+        if (keyboardSettingsManager != null) {
+            keyboardSettingsManager.setVibrateStrength(intensity);
+        }
+    }
+
+    @Override
+    public void setScrollSpeed(int speed) {
+        getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).edit().putInt(KEY_SCROLL_SPEED, speed).apply();
+    }
+
+    /**
+     * Show floating settings dialog instead of bottom drawer.
+     */
+    private void showFloatingSettings() {
+        SettingsFloatingFragment fragment = new SettingsFloatingFragment();
+        fragment.setOnDismissListener(() -> {
+            currentModule = ModuleType.NONE;
+            updateTabVisuals();
+        });
+        fragment.show(getSupportFragmentManager(), "settings_floating");
+    }
+
+    private void showThemePickerDialog() {
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        builder.setTitle("选择主题颜色");
+
+        String[] families = ThemeManager.getAllFamilies();
+        String[] displayNames = new String[families.length];
+        for (int i = 0; i < families.length; i++) {
+            displayNames[i] = ThemeManager.getFamilyDisplayName(families[i]);
+        }
+
+        String currentFamily = ThemeManager.getInstance().getThemeFamily();
+        int selectedIndex = 0;
+        for (int i = 0; i < families.length; i++) {
+            if (families[i].equals(currentFamily)) {
+                selectedIndex = i;
+                break;
+            }
+        }
+
+        builder.setSingleChoiceItems(displayNames, selectedIndex, (dialog, which) -> {
+            String selectedFamily = families[which];
+            ThemeManager.getInstance().setThemeFamily(this, selectedFamily);
+            ThemeManager.getInstance().applyTheme(this);
+
+            // Update settings UI display
+            android.view.View settingsView = findViewById(R.id.settings_module_root);
+            if (settingsView != null) {
+                TextView themeValue = settingsView.findViewById(R.id.settings_theme_color_value);
+                if (themeValue != null) {
+                    themeValue.setText(displayNames[which]);
+                }
+            }
+
+            dialog.dismiss();
+        });
+
+        builder.setNegativeButton("取消", (dialog, which) -> dialog.dismiss());
+
+        builder.show();
+    }
+
+    private void showThemeModeDialog() {
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        builder.setTitle("选择显示模式");
+
+        String[] modes = {ThemeManager.MODE_LIGHT, ThemeManager.MODE_DARK, ThemeManager.MODE_SYSTEM};
+        String[] displayNames = {"浅色模式", "深色模式", "跟随系统"};
+
+        String currentMode = ThemeManager.getInstance().getThemeMode();
+        int selectedIndex = 0;
+        for (int i = 0; i < modes.length; i++) {
+            if (modes[i].equals(currentMode)) {
+                selectedIndex = i;
+                break;
+            }
+        }
+
+        builder.setSingleChoiceItems(displayNames, selectedIndex, (dialog, which) -> {
+            String selectedMode = modes[which];
+            ThemeManager.getInstance().setThemeMode(this, selectedMode);
+            ThemeManager.getInstance().applyThemeMode(selectedMode);
+
+            // Update settings UI display
+            android.view.View settingsView = findViewById(R.id.settings_module_root);
+            if (settingsView != null) {
+                TextView themeValue = settingsView.findViewById(R.id.settings_theme_mode_value);
+                if (themeValue != null) {
+                    themeValue.setText(displayNames[which]);
+                }
+            }
+
+            // Apply theme mode change (requires Activity recreation)
+            recreate();
+
+            dialog.dismiss();
+        });
+
+        builder.setNegativeButton("取消", (dialog, which) -> dialog.dismiss());
+
+        builder.show();
+    }
+
+    private String getThemeModeDisplay(String mode) {
+        if (mode == null) {
+            return "跟随系统";
+        }
+        switch (mode) {
+            case ThemeManager.MODE_LIGHT:
+                return "浅色模式";
+            case ThemeManager.MODE_DARK:
+                return "深色模式";
+            case ThemeManager.MODE_SYSTEM:
+                return "跟随系统";
+            default:
+                return "跟随系统";
+        }
+    }
+
+    /**
+     * Show dialog for switching shortcut profiles in portrait mode.
+     * Displays a list of available profiles with the active one checked.
+     * Selecting a profile updates the active profile and refreshes the shortcut strip.
+     * Includes a "Manage" button to open the ShortcutManagerFragment.
+     */
+    private void showProfileSwitcherDialog() {
+        ShortcutProfileManager profileManager = ShortcutProfileManager.getInstance(this);
+        java.util.List<ShortcutProfile> profiles = profileManager.getAllProfiles();
+
+        if (profiles.isEmpty()) {
+            android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+            builder.setTitle("快捷键配置")
+                .setMessage("暂无可用的快捷键配置")
+                .setPositiveButton("确定", null)
+                .show();
+            return;
+        }
+
+        String[] profileNames = new String[profiles.size()];
+        String activeProfileId = profileManager.getActiveProfile() != null ? profileManager.getActiveProfile().id : null;
+        int checkedItem = -1;
+
+        for (int i = 0; i < profiles.size(); i++) {
+            ShortcutProfile profile = profiles.get(i);
+            profileNames[i] = profile.name;
+            if (profile.id.equals(activeProfileId)) {
+                checkedItem = i;
+            }
+        }
+
+        android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
+        builder.setTitle("选择快捷键配置");
+        builder.setSingleChoiceItems(profileNames, checkedItem, (dialog, which) -> {
+            ShortcutProfile selected = profiles.get(which);
+            profileManager.setActiveProfile(selected.id);
+            // Update the shortcut strip buttons to reflect the new profile
+            setupPortraitShortcutStrip();
+            dialog.dismiss();
+        });
+        builder.setNegativeButton("取消", (dialog, which) -> dialog.dismiss());
+
+        // Add "Manage" button to open ShortcutHubFloatingFragment
+        builder.setNeutralButton("管理", (dialog, which) -> {
+            dialog.dismiss();
+            // Open Shortcut Hub as a floating panel (left side, dual-panel design)
+            ShortcutHubFloatingFragment fragment = new ShortcutHubFloatingFragment();
+            fragment.setOnDismissListener(() -> {
+                // Refresh shortcut strip after closing (config may have changed)
+                setupPortraitShortcutStrip();
+            });
+            fragment.show(getSupportFragmentManager(), "shortcut_hub_floating");
+        });
+
+        builder.show();
     }
 }

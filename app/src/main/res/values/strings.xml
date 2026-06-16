@@ -186,6 +186,7 @@
     <string name="Key_Ctrl" tools:ignore="MissingTranslation">Ctrl</string>
     <string name="Key_Win" tools:ignore="MissingTranslation">Win</string>
     <string name="Key_Alt" tools:ignore="MissingTranslation">Alt</string>
+    <string name="Key_FN" tools:ignore="MissingTranslation">FN</string>
     <string name="Space_Button" />
     <string name="Key_AltGr" tools:ignore="MissingTranslation">Alt</string>
     <string name="Key_CtrlGr" tools:ignore="MissingTranslation">Ctrl</string>
@@ -270,6 +271,13 @@
     <string name="touchpad_help_btn_middle_desc">中键/滚轮点击</string>
     <string name="touchpad_help_btn_right_desc">右键</string>
 
+    <!-- Portrait/Landscape Orientation Toggle -->
+    <string name="orientation_toggle">Screen Orientation</string>
+    <string name="switch_to_landscape">Landscape</string>
+    <string name="switch_to_portrait">Portrait</string>
+    <string name="orientation_toast_portrait">Switched to Portrait mode</string>
+    <string name="orientation_toast_landscape">Switched to Landscape mode</string>
+
     <!-- Common -->
     <string name="ok_button">确定</string>
 
@@ -301,4 +309,13 @@
     <!-- WebRTC Server -->
     <string name="webrtc_server_title">WebRTC Server</string>
     <string name="webrtc_server_menu_item">WebRTC</string>
+
+    <!-- Target OS Configuration -->
+    <string name="target_os_title">选择目标操作系统</string>
+    <string name="target_os_windows">Windows (Win键)</string>
+    <string name="target_os_macos">macOS (Cmd键)</string>
+    <string name="target_os_linux">Linux (Super键)</string>
+    <string name="target_os_current">当前: %s</string>
+    <string name="target_os_setting_title">目标操作系统</string>
+    <string name="target_os_setting_desc">切换Win/Cmd/Super键标签</string>
 </resources>

@@ -85,9 +85,9 @@ import javax.microedition.khronos.egl.EGLSurface;
     }
 
     /**
-     * Android4.1.2だとSurfaceを使えない。
-     * SurfaceTexture/SurfaceHolderの場合は内部でSurfaceを生成して使っているにもかかわらず。
-     * SurfaceHolderはインターフェースなのでSurfaceHolderを継承したダミークラスを生成して食わす
+     * Surface cannot be used on Android 4.1.2.
+     * This is despite the fact that Surface is generated internally for SurfaceTexture/SurfaceHolder.
+     * SurfaceHolder is an interface, so generate a dummy class inheriting SurfaceHolder and pass it in.
      */
     public static class MySurfaceHolder implements SurfaceHolder {
         private final Surface surface;
@@ -101,7 +101,7 @@ import javax.microedition.khronos.egl.EGLSurface;
             return surface;
         }
 
-        // ここより下はどないでもええ
+        // Everything below this is irrelevant
         @Override
         public void addCallback(final Callback callback) {
         }
@@ -174,11 +174,11 @@ import javax.microedition.khronos.egl.EGLSurface;
 //			if (DEBUG) Log.v(TAG, "EglSurface:");
             mEglBase = eglBase;
             if ((surface instanceof Surface) && Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                // Android4.1.2だとSurfaceを使えない。
-                // SurfaceTexture/SurfaceHolderの場合は内部で
-                // Surfaceを生成して使っているにもかかわらず。
-                // SurfaceHolderはインターフェースなのでSurfaceHolderを
-                // 継承したダミークラスを生成して食わす
+                // Surface cannot be used on Android 4.1.2.
+                // This is despite the fact that Surface is generated
+                // internally for SurfaceTexture/SurfaceHolder.
+                // SurfaceHolder is an interface, so generate a dummy class
+                // inheriting SurfaceHolder and pass it in.
                 mEglSurface = mEglBase.createWindowSurface(
                         new MySurfaceHolder((Surface) surface));
             } else if ((surface instanceof Surface)
@@ -295,7 +295,7 @@ import javax.microedition.khronos.egl.EGLSurface;
         destroyContext();
         mContext = EGL_NO_CONTEXT;
         if (mEgl == null) return;
-//		mEgl.eglReleaseThread();	// XXX これを入れるとハングアップする機種がある
+//		mEgl.eglReleaseThread();	// XXX Some devices will hang if this is included
         mEgl.eglTerminate(mEglDisplay);
         mEglDisplay = null;
         mEglConfig = null;
@@ -417,7 +417,7 @@ import javax.microedition.khronos.egl.EGLSurface;
             if (config != null) {
                 final EGLContext context = createContext(sharedContext, config, 3);
                 if ((mEgl.eglGetError()) == EGL10.EGL_SUCCESS) {
-                    // ここは例外生成したくないのでcheckEglErrorの代わりに自前でチェック
+                    // We don't want to throw an exception here, so check manually instead of checkEglError
                     //Log.d(TAG, "Got GLES 3 config");
                     mEglConfig = new Config(config);
                     mContext = new Context(context);
@@ -596,7 +596,7 @@ import javax.microedition.khronos.egl.EGLSurface;
                 throw new RuntimeException("createWindowSurface failed error=" + error);
             }
             makeCurrent(result);
-            // 画面サイズ・フォーマットの取得
+            // Get screen size and format
         } catch (final Exception e) {
             Log.e(TAG, "eglCreateWindowSurface", e);
             throw new IllegalArgumentException(e);
@@ -684,8 +684,8 @@ import javax.microedition.khronos.egl.EGLSurface;
             attribList[offset++] = 16;
         }
         if (isRecordable && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
-            // MediaCodecの入力用Surfaceの場合
-            // A-1000F(Android4.1.2)はこのフラグをつけるとうまく動かない
+            // For MediaCodec input Surface
+            // A-1000F (Android 4.1.2) does not work properly if this flag is set
             attribList[offset++] = EGL_RECORDABLE_ANDROID;
             attribList[offset++] = 1;
         }
@@ -695,7 +695,7 @@ import javax.microedition.khronos.egl.EGLSurface;
         EGLConfig config = internalGetConfig(attribList);
         if ((config == null) && (version == 2)) {
             if (isRecordable) {
-                // EGL_RECORDABLE_ANDROIDをつけると失敗する機種もあるので取り除く
+                // Some devices fail when EGL_RECORDABLE_ANDROID is set, so remove it
                 final int n = attribList.length;
                 for (int i = 10; i < n - 1; i += 2) {
                     if (attribList[i] == EGL_RECORDABLE_ANDROID) {

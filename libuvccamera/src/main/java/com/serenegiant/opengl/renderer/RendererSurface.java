@@ -85,8 +85,8 @@ class RendererSurface {
     public void draw(final GLDrawer2D drawer, final int textId, final float[] texMatrix, final float[] mvpMatrix) {
         if (drawer != null && mEGLSurface != null) {
             mEGLSurface.makeCurrent();
-            // 本来は映像が全面に描画されるので#glClearでクリアする必要はないけど
-            // ハングアップする機種があるのでクリアしとく
+            // Normally the video is drawn to fill the entire surface so there's no need to clear with #glClear
+            // But some devices hang up, so we clear it anyway
             GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
             drawer.setMvpMatrix(mvpMatrix, 0);
             drawer.draw(textId, texMatrix, 0);

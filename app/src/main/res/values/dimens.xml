@@ -1,4 +1,10 @@
 <resources>
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="text_margin">16dp</dimen>
+
+    <!-- Portrait Keyboard Dimensions -->
+    <dimen name="keyboard_outer_padding_top">2dp</dimen>
+    <dimen name="keyboard_outer_padding_bottom">2dp</dimen>
+    <dimen name="keyboard_key_margin_horizontal">1dp</dimen>
+    <dimen name="keyboard_key_margin_vertical">1dp</dimen>
 </resources>

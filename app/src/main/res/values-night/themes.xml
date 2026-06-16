@@ -1,16 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Theme.Usbvideo" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
-        <!-- Primary brand color. -->
-        <item name="colorPrimary">@color/purple_200</item>
-        <item name="colorPrimaryVariant">@color/purple_700</item>
-        <item name="colorOnPrimary">@color/black</item>
-        <!-- Secondary brand color. -->
-        <item name="colorSecondary">@color/teal_200</item>
-        <item name="colorSecondaryVariant">@color/teal_200</item>
-        <item name="colorOnSecondary">@color/black</item>
-        <!-- Status bar color. -->
-        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
-        <!-- Customize your theme here. -->
+    <!-- Base theme (night mode) -->
+    <style name="Base.Theme.Usbvideo" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/theme_accent_orange</item>
+        <item name="colorPrimaryContainer">@color/theme_accent_orange_container</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/theme_accent_orange</item>
+        <item name="colorSecondaryContainer">@color/theme_accent_orange_container</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimary</item>
+        <item name="android:windowBackground">@color/background_dark</item>
+        <item name="android:navigationBarColor">@color/background_dark</item>
+    </style>
+
+    <style name="Theme.Usbvideo" parent="Base.Theme.Usbvideo" />
+
+    <!-- Blue theme (night mode) -->
+    <style name="Theme.Usbvideo.Blue" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/theme_accent_blue</item>
+        <item name="colorPrimaryContainer">@color/theme_accent_blue_container</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/theme_accent_blue</item>
+        <item name="colorSecondaryContainer">@color/theme_accent_blue_container</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimary</item>
+        <item name="android:windowBackground">@color/background_dark</item>
+        <item name="android:navigationBarColor">@color/background_dark</item>
+    </style>
+
+    <!-- Green theme (night mode) -->
+    <style name="Theme.Usbvideo.Green" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/theme_accent_green</item>
+        <item name="colorPrimaryContainer">@color/theme_accent_green_container</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/theme_accent_green</item>
+        <item name="colorSecondaryContainer">@color/theme_accent_green_container</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimary</item>
+        <item name="android:windowBackground">@color/background_dark</item>
+        <item name="android:navigationBarColor">@color/background_dark</item>
+    </style>
+
+    <!-- Pink theme (night mode) -->
+    <style name="Theme.Usbvideo.Pink" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/theme_accent_pink</item>
+        <item name="colorPrimaryContainer">@color/theme_accent_pink_container</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/theme_accent_pink</item>
+        <item name="colorSecondaryContainer">@color/theme_accent_pink_container</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimary</item>
+        <item name="android:windowBackground">@color/background_dark</item>
+        <item name="android:navigationBarColor">@color/background_dark</item>
+    </style>
+
+    <!-- Purple theme (night mode) -->
+    <style name="Theme.Usbvideo.Purple" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/theme_accent_purple</item>
+        <item name="colorPrimaryContainer">@color/theme_accent_purple_container</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/theme_accent_purple</item>
+        <item name="colorSecondaryContainer">@color/theme_accent_purple_container</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimary</item>
+        <item name="android:windowBackground">@color/background_dark</item>
+        <item name="android:navigationBarColor">@color/background_dark</item>
+    </style>
+
+    <!-- Red theme (night mode) -->
+    <style name="Theme.Usbvideo.Red" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/theme_accent_red</item>
+        <item name="colorPrimaryContainer">@color/theme_accent_red_container</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/theme_accent_red</item>
+        <item name="colorSecondaryContainer">@color/theme_accent_red_container</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimary</item>
+        <item name="android:windowBackground">@color/background_dark</item>
+        <item name="android:navigationBarColor">@color/background_dark</item>
+    </style>
+
+    <!-- Teal theme (night mode) -->
+    <style name="Theme.Usbvideo.Teal" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/theme_accent_teal</item>
+        <item name="colorPrimaryContainer">@color/theme_accent_teal_container</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/theme_accent_teal</item>
+        <item name="colorSecondaryContainer">@color/theme_accent_teal_container</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimary</item>
+        <item name="android:windowBackground">@color/background_dark</item>
+        <item name="android:navigationBarColor">@color/background_dark</item>
+    </style>
+
+    <!-- Indigo theme (night mode) -->
+    <style name="Theme.Usbvideo.Indigo" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/theme_accent_indigo</item>
+        <item name="colorPrimaryContainer">@color/theme_accent_indigo_container</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/theme_accent_indigo</item>
+        <item name="colorSecondaryContainer">@color/theme_accent_indigo_container</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimary</item>
+        <item name="android:windowBackground">@color/background_dark</item>
+        <item name="android:navigationBarColor">@color/background_dark</item>
     </style>
 </resources>

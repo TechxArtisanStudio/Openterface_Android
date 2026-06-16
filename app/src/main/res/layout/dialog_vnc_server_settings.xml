@@ -17,7 +17,7 @@
             android:text="VNC Server"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="@color/black"
+            android:textColor="@color/text_on_surface"
             android:layout_marginBottom="16dp" />
 
         <!-- Status -->

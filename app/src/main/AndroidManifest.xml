@@ -30,7 +30,9 @@
             android:label="@string/app_name"
             android:launchMode="singleTask"
             android:theme="@style/Theme.Usbvideo.FullScreen"
-            android:screenOrientation="landscape">
+            android:screenOrientation="sensor"
+            android:configChanges="orientation|screenSize|screenLayout"
+            android:windowSoftInputMode="adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -51,6 +53,19 @@
             android:name="com.openterface.AOS.debug.SerialDebugActivity"
             android:label="Serial Debug"
             android:exported="true"
+            android:theme="@style/Theme.Usbvideo">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!-- Test Activity for Keyboard Module -->
+        <activity
+            android:name="com.openterface.AOS.activity.KeyboardTestActivity"
+            android:label="Keyboard Test"
+            android:exported="true"
+            android:screenOrientation="portrait"
             android:theme="@style/Theme.Usbvideo">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

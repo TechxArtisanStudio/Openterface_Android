@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- IME/Input module for portrait mode - Text input + clear/save/saved/send buttons -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/ime_module_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/background_light"
+    android:padding="12dp"
+    tools:context="com.openterface.AOS.activity.MainActivity">
+
+    <!-- Text Input Area -->
+    <EditText
+        android:id="@+id/ime_text_input"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="top|start"
+        android:hint="Enter text to send to host..."
+        android:inputType="textMultiLine"
+        android:padding="12dp"
+        android:background="@drawable/basic_compose_editor_background"
+        android:textColor="@color/text_primary"
+        android:textColorHint="@color/text_secondary"
+        android:textSize="14sp"
+        android:autofillHints=""
+        android:minLines="3"
+        android:scrollbars="vertical"
+        tools:ignore="LabelFor" />
+
+    <!-- Send Progress Bar (hidden by default) -->
+    <LinearLayout
+        android:id="@+id/ime_send_progress_wrap"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="4dp"
+        android:visibility="gone">
+
+        <ProgressBar
+            android:id="@+id/ime_send_progress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:max="1000" />
+
+        <TextView
+            android:id="@+id/ime_send_progress_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:fontFamily="monospace" />
+    </LinearLayout>
+
+    <!-- Action Buttons: Clear | Save | Saved | Send -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical">
+
+        <!-- Clear button -->
+        <android.widget.Button
+            android:id="@+id/ime_clear_button"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="Clear"
+            android:textColor="@color/key_text"
+            android:background="@drawable/key_background"
+            android:textSize="12sp"
+            android:layout_marginEnd="4dp" />
+
+        <!-- Save button -->
+        <android.widget.Button
+            android:id="@+id/ime_save_button"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="Save"
+            android:textColor="@color/key_text"
+            android:background="@drawable/key_background"
+            android:textSize="12sp"
+            android:layout_marginHorizontal="4dp" />
+
+        <!-- Saved Texts button -->
+        <android.widget.Button
+            android:id="@+id/ime_saved_texts_button"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="Saved"
+            android:textColor="@color/key_text"
+            android:background="@drawable/key_background"
+            android:textSize="12sp"
+            android:layout_marginHorizontal="4dp" />
+
+        <!-- Send button -->
+        <android.widget.Button
+            android:id="@+id/ime_send_button"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="2"
+            android:text="Send"
+            android:textColor="@color/on_primary"
+            android:backgroundTint="@color/primary"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:layout_marginStart="4dp" />
+
+    </LinearLayout>
+
+</LinearLayout>

@@ -1,0 +1,384 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Portrait Mode Keyboard - Function Panel (reference KeyCMD layout) -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/Fragment_KeyBoard_Function"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingHorizontal="@dimen/keyboard_outer_padding_top"
+    android:paddingVertical="@dimen/keyboard_outer_padding_bottom"
+    android:visibility="gone">
+
+    <!-- Row 1: Symbol keys (10 keys: - + [ ] : " | < > ?) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:layout_marginBottom="@dimen/keyboard_key_margin_vertical">
+
+        <android.widget.Button android:id="@+id/Minus_Sign_Button"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/Minus_Sign_Button"
+            android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+        <android.widget.Button android:id="@+id/Plus_Sign_Button"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/Plus_Sign_Button"
+            android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+        <android.widget.Button android:id="@+id/Left_Bracket_Button"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/Left_Bracket_Button"
+            android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+        <android.widget.Button android:id="@+id/Right_Bracket_Button"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/Right_Bracket_Button"
+            android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+        <android.widget.Button android:id="@+id/Colon_Button"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/Colon_Button"
+            android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+        <android.widget.Button android:id="@+id/Quotation_Button"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/Quotation_Button"
+            android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+        <android.widget.Button android:id="@+id/Bitwise_OR_Button"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/Bitwise_OR_Button"
+            android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+        <android.widget.Button android:id="@+id/Less_Sign_Button"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/Less_Sign_Button"
+            android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+        <android.widget.Button android:id="@+id/Greater_Sign_Button"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/Greater_Sign_Button"
+            android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+        <android.widget.Button android:id="@+id/Question_Mark"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/Question_Mark"
+            android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+    </LinearLayout>
+
+    <!-- Row 2: F1-F4 + PrtSc + ScrLk + Pause + Esc + ~ + Tab -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:layout_marginBottom="@dimen/keyboard_key_margin_vertical">
+
+        <android.widget.Button android:id="@+id/Function1"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/Function1"
+            android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+        <android.widget.Button android:id="@+id/Function2"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/Function2"
+            android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+        <android.widget.Button android:id="@+id/Function3"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/Function3"
+            android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+        <android.widget.Button android:id="@+id/Function4"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/Function4"
+            android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+        <android.widget.Button android:id="@+id/PrtSc"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/PrtSc"
+            android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+        <android.widget.Button android:id="@+id/ScrLk"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/ScrLk"
+            android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+        <android.widget.Button android:id="@+id/Pause"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/Pause"
+            android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+        <android.widget.Button android:id="@+id/Esc"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/Esc"
+            android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+        <android.widget.Button android:id="@+id/Tilde"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/Tilde"
+            android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+        <android.widget.Button android:id="@+id/TAB"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/TAB"
+            android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+    </LinearLayout>
+
+    <!-- Row 3: F5-F8 + Ins + Home + PgUp + Arrow key area -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:layout_marginBottom="@dimen/keyboard_key_margin_vertical">
+
+        <!-- Left area: F5-F8 + Ins + Home + PgUp (7 keys) -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="7"
+            android:orientation="horizontal">
+
+            <android.widget.Button android:id="@+id/Function5"
+                android:layout_width="0dp" android:layout_height="match_parent"
+                android:layout_weight="1" android:text="@string/Function5"
+                android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+                android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+                android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+            <android.widget.Button android:id="@+id/Function6"
+                android:layout_width="0dp" android:layout_height="match_parent"
+                android:layout_weight="1" android:text="@string/Function6"
+                android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+                android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+                android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+            <android.widget.Button android:id="@+id/Function7"
+                android:layout_width="0dp" android:layout_height="match_parent"
+                android:layout_weight="1" android:text="@string/Function7"
+                android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+                android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+                android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+            <android.widget.Button android:id="@+id/Function8"
+                android:layout_width="0dp" android:layout_height="match_parent"
+                android:layout_weight="1" android:text="@string/Function8"
+                android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+                android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+                android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+            <android.widget.Button android:id="@+id/Ins"
+                android:layout_width="0dp" android:layout_height="match_parent"
+                android:layout_weight="1" android:text="@string/Ins"
+                android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+                android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+                android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+            <android.widget.Button android:id="@+id/Home"
+                android:layout_width="0dp" android:layout_height="match_parent"
+                android:layout_weight="1" android:text="@string/Home"
+                android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+                android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+                android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+            <android.widget.Button android:id="@+id/PgUp"
+                android:layout_width="0dp" android:layout_height="match_parent"
+                android:layout_weight="1" android:text="@string/PgUp"
+                android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+                android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+                android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+        </LinearLayout>
+
+        <!-- Right area: Arrow keys (3 keys) -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="3"
+            android:orientation="horizontal">
+
+            <android.widget.Button android:id="@+id/Left_Than_Button"
+                android:layout_width="0dp" android:layout_height="match_parent"
+                android:layout_weight="1" android:text="@string/Left_Than_Button_Text"
+                android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+                android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+                android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+            <ImageButton android:id="@+id/dropUp"
+                android:layout_width="0dp" android:layout_height="match_parent"
+                android:layout_weight="1" android:background="@drawable/button_background"
+                android:contentDescription="TODO"
+                android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+                android:src="@drawable/baseline_arrow_drop_up_24"
+                android:scaleType="centerInside"
+                android:padding="4dp"/>
+
+            <android.widget.Button android:id="@+id/german_right_button"
+                android:layout_width="0dp" android:layout_height="match_parent"
+                android:layout_weight="1" android:text=" "
+                android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+                android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+                android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+                android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Row 4: F9-F12 + Delete + End + PgDn + Arrow keys -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal">
+
+        <android.widget.Button android:id="@+id/Function9"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/Function9"
+            android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+        <android.widget.Button android:id="@+id/Function10"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/Function10"
+            android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+        <android.widget.Button android:id="@+id/Function11"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/Function11"
+            android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+        <android.widget.Button android:id="@+id/Function12"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/Function12"
+            android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+        <android.widget.Button android:id="@+id/Delete"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/Delete"
+            android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+        <android.widget.Button android:id="@+id/End"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/End"
+            android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+        <android.widget.Button android:id="@+id/PgDn"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:text="@string/PgDn"
+            android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
+            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+
+        <ImageButton android:id="@+id/dropLeft"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:background="@drawable/button_background"
+            android:contentDescription="TODO"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:src="@drawable/baseline_arrow_left_24"
+            android:scaleType="centerInside"
+            android:padding="4dp"/>
+
+        <ImageButton android:id="@+id/dropDown"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:background="@drawable/button_background"
+            android:contentDescription="TODO"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:src="@drawable/baseline_arrow_drop_down_24"
+            android:scaleType="centerInside"
+            android:padding="4dp"/>
+
+        <ImageButton android:id="@+id/dropRight"
+            android:layout_width="0dp" android:layout_height="match_parent"
+            android:layout_weight="1" android:background="@drawable/button_background"
+            android:contentDescription="TODO"
+            android:theme="@style/ButtonTheme" android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
+            android:src="@drawable/baseline_arrow_right_24"
+            android:scaleType="centerInside"
+            android:padding="4dp"/>
+    </LinearLayout>
+
+</LinearLayout>

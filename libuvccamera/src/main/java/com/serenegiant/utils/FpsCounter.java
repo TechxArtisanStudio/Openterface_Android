@@ -33,14 +33,14 @@ public class FpsCounter {
 	}
 
 	/**
-	 * フレームをカウント
+	 * Count frames
 	 */
 	public synchronized void count() {
 		cnt++;
 	}
 
 	/**
-	 * FPSの値を更新, 1秒程度毎に呼び出す
+	 * Update FPS value, call approximately every second
 	 * @return
 	 */
 	public synchronized FpsCounter update() {

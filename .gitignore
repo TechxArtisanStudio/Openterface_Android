@@ -76,6 +76,8 @@ lint/outputs/
 lint/tmp/
 # lint/reports/
 
+.codegraph/*
+
 # macOS
 .DS_Store
 *.swp
