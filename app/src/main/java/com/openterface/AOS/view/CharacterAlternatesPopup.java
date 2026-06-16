@@ -48,9 +48,13 @@ public class CharacterAlternatesPopup {
             ViewGroup.LayoutParams.WRAP_CONTENT,
             ViewGroup.LayoutParams.WRAP_CONTENT);
         popupWindow.setClippingEnabled(true);
-        popupWindow.setTouchable(true);
-        popupWindow.setFocusable(true);
-        popupWindow.setOutsideTouchable(true);
+        // CRITICAL: popup must NOT consume touch events.
+        // All gestures (move/up) flow through the anchor button, which calls
+        // handleMove() / getSelectedCharacter() on this popup.
+        // This matches KeyCMD BasicKeyPreview behavior.
+        popupWindow.setTouchable(false);
+        popupWindow.setFocusable(false);
+        popupWindow.setOutsideTouchable(false);
 
         popupWindow.setOnDismissListener(() -> {
             if (listener != null) {
@@ -63,14 +67,23 @@ public class CharacterAlternatesPopup {
      * Show popup with character alternatives above the anchor view
      * @param anchor The button being long-pressed
      * @param alternatives List of character options (first is usually the uppercase version)
-     * @param listener Callback for character selection
+     * @param listener Callback for character selection (can be null)
      */
     public void show(View anchor, List<String> alternatives, OnCharacterSelectedListener listener) {
+        this.listener = listener;
+        show(anchor, alternatives);
+    }
+
+    /**
+     * Show popup with character alternatives above the anchor view (no listener)
+     * @param anchor The button being long-pressed
+     * @param alternatives List of character options
+     */
+    public void show(View anchor, List<String> alternatives) {
         if (popupWindow == null || anchor == null || alternatives == null || alternatives.isEmpty()) {
             return;
         }
 
-        this.listener = listener;
         container.removeAllViews();
         optionViews = new java.util.ArrayList<>();
 
@@ -83,38 +96,14 @@ public class CharacterAlternatesPopup {
                 .inflate(R.layout.item_character_alternate, container, false);
             optionView.setText(character);
 
-            // Handle touch events for selection
-            optionView.setOnTouchListener((v, event) -> {
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        // Highlight selected option
-                        updateSelection(position);
-                        return true;
-
-                    case MotionEvent.ACTION_UP:
-                        // Confirm selection
-                        if (listener != null && selectedPosition == position) {
-                            listener.onCharacterSelected(character);
-                        }
-                        dismiss();
-                        return true;
-
-                    case MotionEvent.ACTION_MOVE:
-                        // Update selection as finger moves
-                        Rect rect = new Rect();
-                        v.getGlobalVisibleRect(rect);
-                        if (rect.contains((int) event.getRawX(), (int) event.getRawY())) {
-                            updateSelection(position);
-                        } else {
-                            updateSelection(-1);
-                        }
-                        return true;
-                }
-                return false;
-            });
-
             container.addView(optionView);
             optionViews.add(optionView);
+        }
+
+        // 默认选中第一个选项（通常是原始字符或大写）
+        selectedPosition = 0;
+        if (optionViews.size() > 0) {
+            optionViews.get(0).setBackgroundResource(R.drawable.alternate_item_selected);
         }
 
         // Measure the popup
@@ -151,8 +140,6 @@ public class CharacterAlternatesPopup {
             popupY = anchorTop + anchorHeight + gap;
         }
 
-        selectedPosition = -1;
-
         try {
             popupWindow.showAtLocation(anchor, Gravity.NO_GRAVITY, popupX, popupY);
         } catch (Exception e) {
@@ -187,5 +174,43 @@ public class CharacterAlternatesPopup {
 
     public boolean isShowing() {
         return popupWindow != null && popupWindow.isShowing();
+    }
+
+    /**
+     * Handle move events for swipe-to-select
+     * @param rawX raw X coordinate from MotionEvent
+     * @param rawY raw Y coordinate from MotionEvent
+     */
+    public void handleMove(float rawX, float rawY) {
+        if (optionViews == null || optionViews.isEmpty()) return;
+
+        for (int i = 0; i < optionViews.size(); i++) {
+            TextView optionView = optionViews.get(i);
+            Rect rect = new Rect();
+            optionView.getGlobalVisibleRect(rect);
+
+            if (rect.contains((int) rawX, (int) rawY)) {
+                updateSelection(i);
+                return;
+            }
+        }
+        // Finger is outside all options - keep default selection (first option)
+        // Don't clear selection, just keep the default
+        if (selectedPosition < 0 || selectedPosition >= optionViews.size()) {
+            updateSelection(0);
+        }
+    }
+
+    /**
+     * Get the currently selected character based on swipe position
+     * @return The selected character, or null if nothing is selected
+     */
+    public String getSelectedCharacter() {
+        if (selectedPosition >= 0 && selectedPosition < optionViews.size()) {
+            TextView selectedView = optionViews.get(selectedPosition);
+            CharSequence text = selectedView.getText();
+            return text != null ? text.toString() : null;
+        }
+        return null;
     }
 }

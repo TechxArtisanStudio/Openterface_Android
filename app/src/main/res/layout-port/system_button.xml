@@ -343,14 +343,17 @@
             android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
             android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
 
-        <android.widget.Button android:id="@+id/Space_Button"
+        <ImageButton android:id="@+id/Space_Button"
             android:layout_width="0dp" android:layout_height="match_parent"
-            android:layout_weight="3.6" android:text="@string/Space_Button"
-            android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
+            android:layout_weight="3.6"
+            android:background="@drawable/button_background"
             android:theme="@style/ButtonTheme"
             android:layout_marginHorizontal="@dimen/keyboard_key_margin_horizontal"
-            android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
-            android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
+            android:src="@drawable/space_bar_icon"
+            android:scaleType="centerInside"
+            android:padding="12dp"
+            android:contentDescription="@string/Space_Button"
+            tools:ignore="UnusedAttribute"/>
 
         <android.widget.Button android:id="@+id/Key_Alt"
             android:layout_width="0dp" android:layout_height="match_parent"

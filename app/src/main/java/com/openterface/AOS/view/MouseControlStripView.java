@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.HapticFeedbackConstants;
@@ -29,6 +30,9 @@ public class MouseControlStripView extends LinearLayout {
     public static final int BTN_RIGHT = 0x02;
     public static final int BTN_MIDDLE = 0x04;
 
+    // Long press threshold for lock activation (ms)
+    private static final long LONG_PRESS_THRESHOLD = 500;
+
     private KeycapButton btnLeft;
     private KeycapButton btnMiddle;
     private KeycapButton btnRight;
@@ -37,6 +41,11 @@ public class MouseControlStripView extends LinearLayout {
     private boolean isLeftPressed = false;
     private boolean isRightPressed = false;
     private boolean isMiddlePressed = false;
+
+    // Track which buttons are locked
+    private boolean isLeftLocked = false;
+    private boolean isRightLocked = false;
+    private boolean isMiddleLocked = false;
 
     private int currentOpacity = 100;
 
@@ -172,7 +181,11 @@ public class MouseControlStripView extends LinearLayout {
     public KeycapButton getBtnRight() { return btnRight; }
 
     /**
-     * Keycap-styled mouse button with haptic feedback.
+     * Keycap-styled mouse button with haptic feedback and long-press lock support.
+     * Gesture protocol:
+     * - Short press (tap): normal click → press + release
+     * - Long press (500ms): lock button in pressed state (stays active)
+     * - Tap when locked: unlock button (release)
      */
     public class KeycapButton extends View {
         private final String label;
@@ -183,10 +196,17 @@ public class MouseControlStripView extends LinearLayout {
         private final RectF bgRect = new RectF();
         private boolean isPressed = false;
 
+        // Long press lock detection
+        private final Handler longPressHandler;
+        private boolean longPressFired = false;
+        private boolean isLocked = false;
+        private Runnable longPressRunnable;
+
         public KeycapButton(Context context, String label, int buttonMask, int height) {
             super(context);
             this.label = label;
             this.buttonMask = buttonMask;
+            this.longPressHandler = new Handler();
 
             float density = context.getResources().getDisplayMetrics().density;
 
@@ -218,7 +238,10 @@ public class MouseControlStripView extends LinearLayout {
 
             bgRect.set(0, 0, w, h);
 
-            if (isPressed) {
+            if (isLocked) {
+                // Locked state: orange highlight (Material Amber 200)
+                bgPaint.setColor(Color.parseColor("#FFB74D"));
+            } else if (isPressed) {
                 bgPaint.setColor(Color.parseColor("#FFE0B2"));
             } else {
                 bgPaint.setColor(Color.WHITE);
@@ -230,28 +253,81 @@ public class MouseControlStripView extends LinearLayout {
             float textX = w / 2f;
             float textY = (h / 2f) - ((textPaint.descent() + textPaint.ascent()) / 2f);
             canvas.drawText(label, textX, textY, textPaint);
+
+            // Draw lock indicator dot in top-right corner when locked
+            if (isLocked) {
+                float dotRadius = 4 * getResources().getDisplayMetrics().density;
+                float dotX = w - 10 * getResources().getDisplayMetrics().density;
+                float dotY = 10 * getResources().getDisplayMetrics().density;
+                Paint dotPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                dotPaint.setColor(Color.parseColor("#FF6F00"));
+                canvas.drawCircle(dotX, dotY, dotRadius, dotPaint);
+            }
         }
 
         @Override
         public boolean onTouchEvent(MotionEvent event) {
             switch (event.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN:
+                    // If already locked, a tap will unlock (unlock on ACTION_UP)
                     isPressed = true;
+                    longPressFired = false;
                     invalidate();
                     performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK);
-                    setButtonPressed(buttonMask, true);
-                    sendMouseButtonPress(buttonMask);
+
+                    // Only send press if not already locked
+                    if (!isLocked) {
+                        setButtonPressed(buttonMask, true);
+                        sendMouseButtonPress(buttonMask);
+                    }
+
+                    // Schedule long-press detection
+                    longPressRunnable = () -> {
+                        longPressFired = true;
+                        isLocked = true;
+                        updateLockedState(buttonMask, true);
+                        invalidate();
+                        performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+                    };
+                    longPressHandler.postDelayed(longPressRunnable, LONG_PRESS_THRESHOLD);
                     return true;
 
                 case MotionEvent.ACTION_UP:
                 case MotionEvent.ACTION_CANCEL:
-                    isPressed = false;
-                    invalidate();
-                    setButtonPressed(buttonMask, false);
-                    sendMouseRelease();
+                    // Cancel pending long-press
+                    if (longPressRunnable != null) {
+                        longPressHandler.removeCallbacks(longPressRunnable);
+                        longPressRunnable = null;
+                    }
+
+                    if (isLocked && !longPressFired) {
+                        // This was a tap on an already-locked button → unlock
+                        isLocked = false;
+                        isPressed = false;
+                        updateLockedState(buttonMask, false);
+                        invalidate();
+                        setButtonPressed(buttonMask, false);
+                        sendMouseRelease();
+                    } else if (!isLocked) {
+                        // Normal short press release
+                        isPressed = false;
+                        invalidate();
+                        setButtonPressed(buttonMask, false);
+                        sendMouseRelease();
+                    } else {
+                        // Long press just triggered, just update visual
+                        isPressed = false;
+                        invalidate();
+                    }
+
+                    longPressFired = false;
                     return true;
             }
             return super.onTouchEvent(event);
+        }
+
+        public boolean isLocked() {
+            return isLocked;
         }
     }
 
@@ -262,4 +338,16 @@ public class MouseControlStripView extends LinearLayout {
             case BTN_RIGHT:   isRightPressed = pressed; break;
         }
     }
+
+    private void updateLockedState(int mask, boolean locked) {
+        switch (mask) {
+            case BTN_LEFT:    isLeftLocked = locked; break;
+            case BTN_MIDDLE:  isMiddleLocked = locked; break;
+            case BTN_RIGHT:   isRightLocked = locked; break;
+        }
+    }
+
+    public boolean isLeftLocked() { return isLeftLocked; }
+    public boolean isMiddleLocked() { return isMiddleLocked; }
+    public boolean isRightLocked() { return isRightLocked; }
 }

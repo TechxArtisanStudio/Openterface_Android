@@ -11,7 +11,7 @@
         android:minHeight="36dp"
         android:gravity="center"
         android:background="@drawable/key_preview_background"
-        android:textColor="@android:color/white"
+        android:textColor="@color/popup_text"
         android:textSize="16sp"
         android:textStyle="bold"
         android:padding="6dp" />

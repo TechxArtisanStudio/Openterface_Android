@@ -374,9 +374,12 @@ public class KeyBoardSystem {
                 // Modifier key: use ModifierKeyHelper for press feedback + long-press toggle
                 setupModifierButton(view);
             } else {
-                // Regular key: press feedback on touch, send key events + long-press for alternates
+                // Regular key: delayed send to support long-press alternates
+                // - Short press (tap): send on ACTION_UP
+                // - Long press: show alternates, slide-to-select, send on ACTION_UP
                 final Handler longPressHandler = new Handler();
                 final boolean[] longPressFired = {false};
+                final boolean[] alternatesShown = {false};
 
                 view.setOnTouchListener((v, event) -> {
                     String systemButtonId = getKey(view.getId());
@@ -386,85 +389,87 @@ public class KeyBoardSystem {
                             // Visual feedback: show pressed
                             v.setBackgroundResource(R.drawable.press_button_background);
                             longPressFired[0] = false;
+                            alternatesShown[0] = false;
+
+                            // DO NOT send key yet — wait to see if it's a short press or long press
+                            // Sound and vibration feedback
+                            playKeyFeedback(v);
+                            // Bubble hint — read label dynamically so FN layer shows correct label
+                            showKeyPreview(v, getViewLabel(v));
 
                             // Schedule long-press check for alternates popup
                             longPressHandler.postDelayed(() -> {
-                                if (isKeyPressed[0] && !longPressFired[0]) {
+                                Log.d("KeyBoardSystem", "Long press fired for " + systemButtonId);
+                                if (!longPressFired[0]) {
                                     longPressFired[0] = true;
 
                                     // Check if this key has alternates
                                     Integer hidCode = BUTTON_TO_HID_MAP.get(view.getId());
                                     if (hidCode != null && CharacterAlternates.hasAlternates(hidCode)) {
                                         List<String> alternates = CharacterAlternates.getAlternates(hidCode);
+                                        Log.d("KeyBoardSystem", "Alternates: " + alternates);
 
                                         // Dismiss normal key preview
                                         if (keyPreviewPopup != null) {
                                             keyPreviewPopup.dismiss();
                                         }
 
-                                        // Show alternates popup
+                                        // Show alternates popup with swipe-to-select
                                         if (alternatesPopup != null) {
-                                            alternatesPopup.show(v, alternates, new CharacterAlternatesPopup.OnCharacterSelectedListener() {
-                                                @Override
-                                                public void onCharacterSelected(String character) {
-                                                    // Release the original key first
-                                                    handleKeyRelease();
-                                                    isKeyPressed[0] = false;
-
-                                                    // Send the selected character
-                                                    sendAlternateCharacter(character);
-                                                }
-
-                                                @Override
-                                                public void onDismissed() {
-                                                    // Release the key and restore visual
-                                                    handleKeyRelease();
-                                                    v.setBackgroundResource(R.drawable.nopress_button_background);
-                                                    isKeyPressed[0] = false;
-                                                }
-                                            });
+                                            alternatesPopup.show(v, alternates);
+                                            alternatesShown[0] = true;
+                                            Log.d("KeyBoardSystem", "Alternates popup shown");
                                         }
+                                    } else {
+                                        // No alternates — send key on long press
+                                        handleKeyPress(systemButtonId);
+                                        try { Thread.sleep(10); } catch (InterruptedException ignored) {}
+                                        handleKeyRelease();
+                                        v.setBackgroundResource(R.drawable.nopress_button_background);
                                     }
                                 }
                             }, ALTERNATES_LONG_PRESS_MS);
-
-                            if (!isKeyPressed[0]) {
-                                handleKeyPress(systemButtonId);
-                                isKeyPressed[0] = true;
-                                // Sound and vibration feedback
-                                playKeyFeedback(v);
-                                // Bubble hint — read label dynamically so FN layer shows correct label
-                                showKeyPreview(v, getViewLabel(v));
-                            }
                             return true;
 
                         case MotionEvent.ACTION_MOVE:
-                            // Finger moved away from button - release visual
-                            if (event.getY() < 0 || event.getY() > v.getHeight() ||
-                                event.getX() < 0 || event.getX() > v.getWidth()) {
-                                if (isKeyPressed[0]) {
-                                    v.setBackgroundResource(R.drawable.nopress_button_background);
-                                }
+                            // If alternates popup is showing, forward move events for swipe selection
+                            if (alternatesShown[0] && alternatesPopup != null && alternatesPopup.isShowing()) {
+                                alternatesPopup.handleMove(event.getRawX(), event.getRawY());
                             }
                             return true;
 
                         case MotionEvent.ACTION_UP:
                         case MotionEvent.ACTION_CANCEL:
+                            Log.d("KeyBoardSystem", "ACTION_UP: longPressFired=" + longPressFired[0] + ", alternatesShown=" + alternatesShown[0]);
                             longPressHandler.removeCallbacksAndMessages(null);
 
-                            if (!longPressFired[0]) {
-                                // Normal key release
-                                v.setBackgroundResource(R.drawable.nopress_button_background);
-                                if (isKeyPressed[0]) {
-                                    handleKeyRelease();
-                                    isKeyPressed[0] = false;
-                                    // Dismiss the key preview bubble immediately
-                                    if (keyPreviewPopup != null) {
-                                        keyPreviewPopup.dismiss();
+                            if (alternatesShown[0]) {
+                                // Long press with alternates popup showing
+                                // Confirm the selected character and send it
+                                if (alternatesPopup != null && alternatesPopup.isShowing()) {
+                                    String selected = alternatesPopup.getSelectedCharacter();
+                                    Log.d("KeyBoardSystem", "Selected character: " + selected);
+                                    if (selected != null && !selected.isEmpty()) {
+                                        sendAlternateCharacter(selected);
                                     }
+                                    alternatesPopup.dismiss();
                                 }
+                                v.setBackgroundResource(R.drawable.nopress_button_background);
+                            } else if (!longPressFired[0]) {
+                                // Short press — send key now, then release
+                                handleKeyPress(systemButtonId);
+                                try { Thread.sleep(10); } catch (InterruptedException ignored) {}
+                                handleKeyRelease();
+                                // Restore visual
+                                v.setBackgroundResource(R.drawable.nopress_button_background);
+                                // Dismiss the key preview bubble
+                                if (keyPreviewPopup != null) {
+                                    keyPreviewPopup.dismiss();
+                                }
+                            } else {
+                                // Long press fired but no alternates (or no alternates available)
+                                v.setBackgroundResource(R.drawable.nopress_button_background);
                             }
-                            // If long press fired, the popup's onDismissed handles cleanup
                             return true;
                     }
                     return false;
@@ -485,6 +490,7 @@ public class KeyBoardSystem {
             int id = v.getId();
             if (id == R.id.Key_Backspace) return "⌫";
             if (id == R.id.Enter_Button) return "↵";
+            if (id == R.id.Space_Button) return "␣";
             if (id == R.id.Key_Up) return "↑";
             if (id == R.id.Key_Down) return "↓";
             if (id == R.id.Key_Left) return "←";
