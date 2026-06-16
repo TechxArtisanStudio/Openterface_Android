@@ -51,10 +51,10 @@ public class ViewAnimationHelper {
     }
 
     /**
-     * アルファ値を0→1まで変化(Viewをフェードイン)させる
+     * Animate alpha value from 0 to 1 (fade in the View)
      *
      * @param target
-     * @param duration   0以下ならデフォルト値(0.5秒)
+     * @param duration   If 0 or less, use default value (0.5 seconds)
      * @param startDelay
      * @param listener
      */
@@ -66,7 +66,7 @@ public class ViewAnimationHelper {
             @Override
             public void run() {
                 target.setVisibility(View.VISIBLE);
-                target.setTag(R.id.anim_type, ANIMATION_FADE_IN);    // フェードインの時の印
+                target.setTag(R.id.anim_type, ANIMATION_FADE_IN);    // Mark as fade-in
                 target.setTag(R.id.anim_listener, listener);
                 target.setScaleX(1.0f);
                 target.setScaleY(1.0f);
@@ -74,19 +74,19 @@ public class ViewAnimationHelper {
                 final ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(target, "alpha", 0f, 1f);
                 objectAnimator.addListener(mAnimatorListener);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2)
-                    objectAnimator.setAutoCancel(true);        // API >= 18 同じターゲットに対して別のAnimatorが開始したら自分をキャンセルする
+                    objectAnimator.setAutoCancel(true);        // API >= 18 Cancel itself when another Animator starts for the same target
                 objectAnimator.setDuration(duration > 0 ? duration : DEFAULT_DURATION_MS);
-                objectAnimator.setStartDelay(startDelay > 0 ? startDelay : 0);    // 開始までの時間
-                objectAnimator.start();                        // アニメーションを開始
+                objectAnimator.setStartDelay(startDelay > 0 ? startDelay : 0);    // Delay before starting
+                objectAnimator.start();                        // Start the animation
             }
         }, 100);
     }
 
     /**
-     * アルファ値を1→0まで変化(Viewをフェードアウト)させる
+     * Animate alpha value from 1 to 0 (fade out the View)
      *
      * @param target
-     * @param duration   0以下ならデフォルト値(0.5秒)
+     * @param duration   If 0 or less, use default value (0.5 seconds)
      * @param startDelay
      * @param listener
      */
@@ -97,7 +97,7 @@ public class ViewAnimationHelper {
             target.postDelayed(new Runnable() {
                 @Override
                 public void run() {
-                    target.setTag(R.id.anim_type, ANIMATION_FADE_OUT);    // フェードアウトの印
+                    target.setTag(R.id.anim_type, ANIMATION_FADE_OUT);    // Mark as fade-out
                     target.setTag(R.id.anim_listener, listener);
                     target.setScaleX(1.0f);
                     target.setScaleY(1.0f);
@@ -105,20 +105,20 @@ public class ViewAnimationHelper {
                     final ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(target, "alpha", 1f, 0f);
                     objectAnimator.addListener(mAnimatorListener);
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2)
-                        objectAnimator.setAutoCancel(true);        // API >= 18 同じターゲットに対して別のAnimatorが開始したら自分をキャンセルする
+                        objectAnimator.setAutoCancel(true);        // API >= 18 Cancel itself when another Animator starts for the same target
                     objectAnimator.setDuration(duration > 0 ? duration : DEFAULT_DURATION_MS);
-                    objectAnimator.setStartDelay(startDelay > 0 ? startDelay : 0);    // 開始までの時間
-                    objectAnimator.start();                        // アニメーションを開始
+                    objectAnimator.setStartDelay(startDelay > 0 ? startDelay : 0);    // Delay before starting
+                    objectAnimator.start();                        // Start the animation
                 }
             }, 100);
         }
     }
 
     /**
-     * スケールを0→1まで変化(Viewをズームイン)させる
+     * Animate scale from 0 to 1 (zoom in the View)
      *
      * @param target
-     * @param duration   0以下ならデフォルト値(0.5秒)
+     * @param duration   If 0 or less, use default value (0.5 seconds)
      * @param startDelay
      * @param listener
      */
@@ -130,7 +130,7 @@ public class ViewAnimationHelper {
             @Override
             public void run() {
                 target.setVisibility(View.VISIBLE);
-                target.setTag(R.id.anim_type, ANIMATION_ZOOM_IN);    // ズームインの時の印
+                target.setTag(R.id.anim_type, ANIMATION_ZOOM_IN);    // Mark as zoom-in
                 target.setTag(R.id.anim_listener, listener);
                 target.setScaleX(0.0f);
                 target.setScaleY(0.0f);
@@ -140,19 +140,19 @@ public class ViewAnimationHelper {
                 final ObjectAnimator objectAnimator = ObjectAnimator.ofPropertyValuesHolder(target, scale_x, scale_y);
                 objectAnimator.addListener(mAnimatorListener);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2)
-                    objectAnimator.setAutoCancel(true);        // API >= 18 同じターゲットに対して別のAnimatorが開始したら自分をキャンセルする
+                    objectAnimator.setAutoCancel(true);        // API >= 18 Cancel itself when another Animator starts for the same target
                 objectAnimator.setDuration(duration > 0 ? duration : DEFAULT_DURATION_MS);
-                objectAnimator.setStartDelay(startDelay > 0 ? startDelay : 0);    // 開始までの時間
-                objectAnimator.start();                        // アニメーションを開始
+                objectAnimator.setStartDelay(startDelay > 0 ? startDelay : 0);    // Delay before starting
+                objectAnimator.start();                        // Start the animation
             }
         }, 100);
     }
 
     /**
-     * スケールを1→0まで変化(Viewをズームアウト)させる
+     * Animate scale from 1 to 0 (zoom out the View)
      *
      * @param target
-     * @param duration   0以下ならデフォルト値(0.5秒)
+     * @param duration   If 0 or less, use default value (0.5 seconds)
      * @param startDelay
      * @param listener
      */
@@ -164,7 +164,7 @@ public class ViewAnimationHelper {
             @Override
             public void run() {
                 target.setVisibility(View.VISIBLE);
-                target.setTag(R.id.anim_type, ANIMATION_ZOOM_OUT);    // ズームアウトの時の印
+                target.setTag(R.id.anim_type, ANIMATION_ZOOM_OUT);    // Mark as zoom-out
                 target.setTag(R.id.anim_listener, listener);
                 target.setScaleX(1.0f);
                 target.setScaleY(1.0f);
@@ -174,16 +174,16 @@ public class ViewAnimationHelper {
                 final ObjectAnimator objectAnimator = ObjectAnimator.ofPropertyValuesHolder(target, scale_x, scale_y);
                 objectAnimator.addListener(mAnimatorListener);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2)
-                    objectAnimator.setAutoCancel(true);        // API >= 18 同じターゲットに対して別のAnimatorが開始したら自分をキャンセルする
+                    objectAnimator.setAutoCancel(true);        // API >= 18 Cancel itself when another Animator starts for the same target
                 objectAnimator.setDuration(duration > 0 ? duration : DEFAULT_DURATION_MS);
-                objectAnimator.setStartDelay(startDelay > 0 ? startDelay : 0);    // 開始までの時間
-                objectAnimator.start();                        // アニメーションを開始
+                objectAnimator.setStartDelay(startDelay > 0 ? startDelay : 0);    // Delay before starting
+                objectAnimator.start();                        // Start the animation
             }
         }, 100);
     }
 
     /**
-     * アニメーション用コールバックリスナー
+     * Callback listener for animations
      */
     private static final Animator.AnimatorListener mAnimatorListener = new Animator.AnimatorListener() {
         @Override
@@ -210,7 +210,7 @@ public class ViewAnimationHelper {
         if (animator instanceof ObjectAnimator) {
             final ObjectAnimator anim = (ObjectAnimator) animator;
             final View target = (View) anim.getTarget();
-            if (target == null) return;    // これはありえないはずだけど
+            if (target == null) return;    // This should never happen
 
             final ViewAnimationListener listener = (ViewAnimationListener) target.getTag(R.id.anim_listener);
             final int animType;

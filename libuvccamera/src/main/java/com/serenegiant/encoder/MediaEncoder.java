@@ -271,7 +271,7 @@ public abstract class MediaEncoder extends Thread {
      * Method to set ByteBuffer to the MediaCodec encoder
      *
      * @param buffer
-     * @param length             　length of byte array, zero means EOS.
+     * @param length              length of byte array, zero means EOS.
      * @param presentationTimeUs
      */
     protected void encode(final ByteBuffer buffer, final int length, final long presentationTimeUs) {

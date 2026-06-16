@@ -100,7 +100,7 @@ public final class DeviceFilter {
 	}
 
 	/**
-	 * 指定したxmlリソースからDeviceFilterリストを生成する
+	 * Generate a DeviceFilter list from the specified XML resource
 	 * @param context
 	 * @param deviceFilterXmlId
 	 * @return
@@ -334,8 +334,8 @@ public final class DeviceFilter {
 	} */
 
 	/**
-	 * 指定したクラス・サブクラス・プロトコルがこのDeviceFilterとマッチするかどうかを返す
-	 * mExcludeフラグは別途#isExcludeか自前でチェックすること
+	 * Returns whether the specified class/subclass/protocol matches this DeviceFilter.
+	 * The mExclude flag must be checked separately via #isExclude or directly.
 	 * @param clasz
 	 * @param subclass
 	 * @param protocol
@@ -347,8 +347,8 @@ public final class DeviceFilter {
 	}
 
 	/**
-	 * 指定したUsbDeviceがこのDeviceFilterにマッチするかどうかを返す
-	 * mExcludeフラグは別途#isExcludeか自前でチェックすること
+	 * Returns whether the specified UsbDevice matches this DeviceFilter.
+	 * The mExclude flag must be checked separately via #isExclude or directly.
 	 * @param device
 	 * @return
 	 */
@@ -393,7 +393,7 @@ public final class DeviceFilter {
 	}
 
 	/**
-	 * このDeviceFilterに一致してかつmExcludeがtrueならtrueを返す
+	 * Returns true if this DeviceFilter matches and mExclude is true
 	 * @param device
 	 * @return
 	 */
@@ -402,7 +402,7 @@ public final class DeviceFilter {
 	}
 
 	/**
-	 * これって要らんかも, equalsでできる気が
+	 * This might not be needed, could probably be done with equals
 	 * @param f
 	 * @return
 	 */

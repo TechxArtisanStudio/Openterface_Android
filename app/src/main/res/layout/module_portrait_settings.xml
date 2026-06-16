@@ -15,7 +15,7 @@
         android:orientation="vertical"
         android:padding="12dp">
 
-        <!-- 主题设置分区 -->
+        <!-- Theme Settings Section -->
         <LinearLayout
             android:id="@+id/settings_theme_section"
             android:layout_width="match_parent"
@@ -34,7 +34,7 @@
                 android:textColor="@color/text_primary"
                 android:layout_marginBottom="8dp" />
 
-            <!-- 主题颜色选择 -->
+            <!-- Theme Color Selection -->
             <LinearLayout
                 android:id="@+id/settings_theme_color_layout"
                 android:layout_width="match_parent"
@@ -63,7 +63,7 @@
                     android:textColor="?attr/colorPrimary" />
             </LinearLayout>
 
-            <!-- 显示模式选择 -->
+            <!-- Display Mode Selection -->
             <LinearLayout
                 android:id="@+id/settings_theme_mode_layout"
                 android:layout_width="match_parent"
@@ -94,7 +94,7 @@
 
         </LinearLayout>
 
-        <!-- 键盘设置分区 -->
+        <!-- Keyboard Settings Section -->
         <LinearLayout
             android:id="@+id/settings_keyboard_section"
             android:layout_width="match_parent"
@@ -113,7 +113,7 @@
                 android:textColor="@color/text_primary"
                 android:layout_marginBottom="8dp" />
 
-            <!-- 目标操作系统 -->
+            <!-- Target Operating System -->
             <LinearLayout
                 android:id="@+id/settings_target_os_layout"
                 android:layout_width="match_parent"
@@ -142,7 +142,7 @@
                     android:textColor="?attr/colorPrimary" />
             </LinearLayout>
 
-            <!-- 按键音效开关 -->
+            <!-- Key Sound Toggle -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -164,7 +164,7 @@
                     android:layout_height="wrap_content" />
             </LinearLayout>
 
-            <!-- 音效音量 -->
+            <!-- Sound Volume -->
             <LinearLayout
                 android:id="@+id/settings_volume_layout"
                 android:layout_width="match_parent"
@@ -187,7 +187,7 @@
                     android:progress="80" />
             </LinearLayout>
 
-            <!-- 振动反馈开关 -->
+            <!-- Vibration Feedback Toggle -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -209,7 +209,7 @@
                     android:layout_height="wrap_content" />
             </LinearLayout>
 
-            <!-- 振动强度 -->
+            <!-- Vibration Intensity -->
             <LinearLayout
                 android:id="@+id/settings_vibrate_intensity_layout"
                 android:layout_width="match_parent"
@@ -234,7 +234,7 @@
 
         </LinearLayout>
 
-        <!-- 鼠标设置分区 -->
+        <!-- Mouse Settings Section -->
         <LinearLayout
             android:id="@+id/settings_mouse_section"
             android:layout_width="match_parent"
@@ -253,7 +253,7 @@
                 android:textColor="@color/text_primary"
                 android:layout_marginBottom="8dp" />
 
-            <!-- 滚轮速度 -->
+            <!-- Scroll Speed -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -285,7 +285,7 @@
 
         </LinearLayout>
 
-        <!-- 输入设置分区 -->
+        <!-- Input Settings Section -->
         <LinearLayout
             android:id="@+id/settings_ime_section"
             android:layout_width="match_parent"
@@ -304,7 +304,7 @@
                 android:textColor="@color/text_primary"
                 android:layout_marginBottom="8dp" />
 
-            <!-- 发送前验证开关 -->
+            <!-- Pre-send Validation Toggle -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -326,7 +326,7 @@
                     android:layout_height="wrap_content" />
             </LinearLayout>
 
-            <!-- 自动保存草稿开关 -->
+            <!-- Auto-save Draft Toggle -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -346,53 +346,6 @@
                     android:id="@+id/settings_auto_save_switch"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
-            </LinearLayout>
-
-        </LinearLayout>
-
-        <!-- 快捷键管理分区 -->
-        <LinearLayout
-            android:id="@+id/settings_shortcut_section"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="@color/card_background"
-            android:padding="12dp"
-            android:layout_marginBottom="12dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="快捷键管理"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_primary"
-                android:layout_marginBottom="8dp" />
-
-            <LinearLayout
-                android:id="@+id/settings_shortcut_manager_layout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingVertical="8dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:background="?android:attr/selectableItemBackground">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="管理快捷键配置"
-                    android:textSize="14sp"
-                    android:textColor="@color/text_primary" />
-
-                <ImageView
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:src="@drawable/ic_chevron_right_24"
-                    android:tint="@color/text_secondary" />
             </LinearLayout>
 
         </LinearLayout>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Portrait Mode Keyboard - Function Panel (参考 KeyCMD 布局) -->
+<!-- Portrait Mode Keyboard - Function Panel (reference KeyCMD layout) -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/Fragment_KeyBoard_Function"
@@ -10,7 +10,7 @@
     android:paddingVertical="@dimen/keyboard_outer_padding_bottom"
     android:visibility="gone">
 
-    <!-- Row 1: 符号键 (10个: - + [ ] : " | < > ?) -->
+    <!-- Row 1: Symbol keys (10 keys: - + [ ] : " | < > ?) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="48dp"
@@ -186,14 +186,14 @@
             android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
     </LinearLayout>
 
-    <!-- Row 3: F5-F8 + Ins + Home + PgUp + 方向键区 -->
+    <!-- Row 3: F5-F8 + Ins + Home + PgUp + Arrow key area -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:orientation="horizontal"
         android:layout_marginBottom="@dimen/keyboard_key_margin_vertical">
 
-        <!-- 左区：F5-F8 + Ins + Home + PgUp (7键) -->
+        <!-- Left area: F5-F8 + Ins + Home + PgUp (7 keys) -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -257,7 +257,7 @@
                 android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
         </LinearLayout>
 
-        <!-- 右区：方向键 (3键) -->
+        <!-- Right area: Arrow keys (3 keys) -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -291,7 +291,7 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Row 4: F9-F12 + Delete + End + PgDn + 方向键 -->
+    <!-- Row 4: F9-F12 + Delete + End + PgDn + Arrow keys -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="48dp"

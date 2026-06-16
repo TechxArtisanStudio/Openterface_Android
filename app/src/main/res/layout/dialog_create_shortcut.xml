@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Dialog for creating / editing a shortcut -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="20dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Name -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="快捷键名称">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_shortcut_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:maxLines="1" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <!-- Modifier checkboxes -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="修饰键"
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary"
+            android:layout_marginTop="12dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="4dp">
+
+            <CheckBox
+                android:id="@+id/cb_ctrl"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ctrl" />
+
+            <CheckBox
+                android:id="@+id/cb_shift"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Shift"
+                android:layout_marginStart="12dp" />
+
+            <CheckBox
+                android:id="@+id/cb_alt"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Alt"
+                android:layout_marginStart="12dp" />
+
+            <CheckBox
+                android:id="@+id/cb_win"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Win"
+                android:layout_marginStart="12dp" />
+        </LinearLayout>
+
+        <!-- Category selection (Chip group) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="目标类别"
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary"
+            android:layout_marginTop="12dp" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:scrollbars="none">
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chip_group_category"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:singleSelection="true"
+                app:selectionRequired="true" />
+        </HorizontalScrollView>
+
+        <!-- Key selection -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="按键"
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary"
+            android:layout_marginTop="12dp" />
+
+        <!-- Category tabs for key selection -->
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tab_keys_category"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            app:tabMode="scrollable" />
+
+        <!-- Key buttons container -->
+        <com.google.android.flexbox.FlexboxLayout
+            android:id="@+id/flexbox_keys"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:flexWrap="wrap"
+            app:justifyContent="flex_start"
+            app:alignItems="flex_start"
+            app:alignContent="flex_start"
+            android:padding="8dp"/>
+
+        <!-- Preview -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="预览"
+            android:textSize="14sp"
+            android:textColor="@color/text_secondary"
+            android:layout_marginTop="12dp" />
+
+        <TextView
+            android:id="@+id/tv_preview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="16sp"
+            android:textColor="?attr/colorPrimary"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:padding="8dp"
+            android:background="@color/card_background" />
+    </LinearLayout>
+</ScrollView>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- 基础主题（夜间模式） -->
+    <!-- Base theme (night mode) -->
     <style name="Base.Theme.Usbvideo" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/theme_accent_orange</item>
         <item name="colorPrimaryContainer">@color/theme_accent_orange_container</item>
@@ -15,7 +15,7 @@
 
     <style name="Theme.Usbvideo" parent="Base.Theme.Usbvideo" />
 
-    <!-- 蓝色主题（夜间模式） -->
+    <!-- Blue theme (night mode) -->
     <style name="Theme.Usbvideo.Blue" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/theme_accent_blue</item>
         <item name="colorPrimaryContainer">@color/theme_accent_blue_container</item>
@@ -28,7 +28,7 @@
         <item name="android:navigationBarColor">@color/background_dark</item>
     </style>
 
-    <!-- 绿色主题（夜间模式） -->
+    <!-- Green theme (night mode) -->
     <style name="Theme.Usbvideo.Green" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/theme_accent_green</item>
         <item name="colorPrimaryContainer">@color/theme_accent_green_container</item>
@@ -41,7 +41,7 @@
         <item name="android:navigationBarColor">@color/background_dark</item>
     </style>
 
-    <!-- 粉色主题（夜间模式） -->
+    <!-- Pink theme (night mode) -->
     <style name="Theme.Usbvideo.Pink" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/theme_accent_pink</item>
         <item name="colorPrimaryContainer">@color/theme_accent_pink_container</item>
@@ -54,7 +54,7 @@
         <item name="android:navigationBarColor">@color/background_dark</item>
     </style>
 
-    <!-- 紫色主题（夜间模式） -->
+    <!-- Purple theme (night mode) -->
     <style name="Theme.Usbvideo.Purple" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/theme_accent_purple</item>
         <item name="colorPrimaryContainer">@color/theme_accent_purple_container</item>
@@ -67,7 +67,7 @@
         <item name="android:navigationBarColor">@color/background_dark</item>
     </style>
 
-    <!-- 红色主题（夜间模式） -->
+    <!-- Red theme (night mode) -->
     <style name="Theme.Usbvideo.Red" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/theme_accent_red</item>
         <item name="colorPrimaryContainer">@color/theme_accent_red_container</item>
@@ -80,7 +80,7 @@
         <item name="android:navigationBarColor">@color/background_dark</item>
     </style>
 
-    <!-- 青色主题（夜间模式） -->
+    <!-- Teal theme (night mode) -->
     <style name="Theme.Usbvideo.Teal" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/theme_accent_teal</item>
         <item name="colorPrimaryContainer">@color/theme_accent_teal_container</item>
@@ -93,7 +93,7 @@
         <item name="android:navigationBarColor">@color/background_dark</item>
     </style>
 
-    <!-- 靛蓝色主题（夜间模式） -->
+    <!-- Indigo theme (night mode) -->
     <style name="Theme.Usbvideo.Indigo" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/theme_accent_indigo</item>
         <item name="colorPrimaryContainer">@color/theme_accent_indigo_container</item>

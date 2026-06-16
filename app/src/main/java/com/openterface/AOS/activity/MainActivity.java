@@ -105,6 +105,8 @@ import com.openterface.AOS.fragment.DeviceListDialogFragment;
 import com.openterface.AOS.fragment.VideoFormatDialogFragment;
 import com.openterface.AOS.fragment.VncServerSettingsDialogFragment;
 import com.openterface.AOS.fragment.WebRtcDialogFragment;
+import com.openterface.AOS.fragment.ShortcutManagerFragment;
+import com.openterface.AOS.fragment.ShortcutHubFloatingFragment;
 import com.openterface.AOS.vnc.VncFrameCapture;
 import com.openterface.AOS.vnc.VncKeyMap;
 import com.openterface.AOS.vnc.VncServerCallback;
@@ -151,6 +153,8 @@ import android.widget.Toast;
 
 import java.io.File;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -870,7 +874,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
         mBinding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(mBinding.getRoot());
 
-        // 清空缓存的模块视图，确保它们在新方向下重新加载
+        // Clear cached module views to ensure they reload in new orientation
         keyboardModuleView = null;
         mouseModuleView = null;
         imeModuleView = null;
@@ -2393,72 +2397,177 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
     }
 
     /**
-     * Setup portrait mode shortcut strip buttons (Esc, Ctrl+C/V/A/Z/S)
-     * These buttons are in the Zone 1 shortcut strip at the top
+     * Setup portrait mode shortcut strip buttons dynamically from active profile.
+     * Shows favorites (My Shortcuts) if available, otherwise first N shortcuts from first category.
+     * The profile switch button (left) opens the ShortcutHub floating fragment.
      */
     private void setupPortraitShortcutStrip() {
-        // Esc button
-        ImageButton escButton = findViewById(R.id.shortcut_esc);
-        if (escButton != null) {
-            escButton.setOnClickListener(v -> {
-                KeyBoardManager.sendKeyBoardShortCut("", "Esc");
-            });
-        }
-
-        // Ctrl+C button
-        Button ctrlCButton = findViewById(R.id.shortcut_ctrl_c);
-        if (ctrlCButton != null) {
-            ctrlCButton.setOnClickListener(v -> {
-                KeyBoardManager.sendKeyBoardShortCut("Ctrl", "C");
-            });
-        }
-
-        // Ctrl+V button
-        Button ctrlVButton = findViewById(R.id.shortcut_ctrl_v);
-        if (ctrlVButton != null) {
-            ctrlVButton.setOnClickListener(v -> {
-                KeyBoardManager.sendKeyBoardShortCut("Ctrl", "V");
-            });
-        }
-
-        // Ctrl+A button
-        Button ctrlAButton = findViewById(R.id.shortcut_ctrl_a);
-        if (ctrlAButton != null) {
-            ctrlAButton.setOnClickListener(v -> {
-                KeyBoardManager.sendKeyBoardShortCut("Ctrl", "A");
-            });
-        }
-
-        // Ctrl+Z button
-        Button ctrlZButton = findViewById(R.id.shortcut_ctrl_z);
-        if (ctrlZButton != null) {
-            ctrlZButton.setOnClickListener(v -> {
-                KeyBoardManager.sendKeyBoardShortCut("Ctrl", "Z");
-            });
-        }
-
-        // Ctrl+S button
-        Button ctrlSButton = findViewById(R.id.shortcut_ctrl_s);
-        if (ctrlSButton != null) {
-            ctrlSButton.setOnClickListener(v -> {
-                KeyBoardManager.sendKeyBoardShortCut("Ctrl", "S");
-            });
-        }
-
-        // Keyboard settings button
-        ImageButton keyboardSettingsButton = findViewById(R.id.shortcut_keyboard_settings);
-        if (keyboardSettingsButton != null) {
-            keyboardSettingsButton.setOnClickListener(v -> {
-                showKeyboardSettingsDialog();
-            });
-        }
-
-        // Profile switch button (switches shortcut profile)
+        // Top-left button: open Shortcut Hub directly
         ImageButton profileSwitchButton = findViewById(R.id.shortcut_profile_switch);
         if (profileSwitchButton != null) {
             profileSwitchButton.setOnClickListener(v -> {
-                showProfileSwitcherDialog();
+                ShortcutHubFloatingFragment fragment = new ShortcutHubFloatingFragment();
+                fragment.setOnDismissListener(() -> {
+                    // Refresh shortcut strip after closing (config may have changed)
+                    setupPortraitShortcutStrip();
+                });
+                fragment.show(getSupportFragmentManager(), "shortcut_hub_floating");
             });
+        }
+
+        // Dynamically populate the shortcut buttons container
+        LinearLayout buttonsContainer = findViewById(R.id.shortcut_buttons_container);
+        if (buttonsContainer == null) return;
+
+        // Remove all dynamically added buttons (keep only XML-defined ones)
+        // We'll remove everything and re-add the settings button at the end
+        buttonsContainer.removeAllViews();
+
+        // Get active profile
+        ShortcutProfileManager profileManager = ShortcutProfileManager.getInstance(this);
+        ShortcutProfile activeProfile = profileManager.getActiveProfile();
+
+        List<ShortcutProfile.Shortcut> displayShortcuts = new ArrayList<>();
+
+        if (activeProfile != null) {
+            // First try favorites
+            List<ShortcutProfile.Shortcut> favorites = profileManager.getMyShortcuts(activeProfile.id);
+            if (!favorites.isEmpty()) {
+                displayShortcuts.addAll(favorites);
+            } else {
+                // Fall back to all shortcuts (handles both old flat list and new categories)
+                List<ShortcutProfile.Shortcut> allShortcuts = activeProfile.getAllShortcutsFlat();
+                int limit = Math.min(allShortcuts.size(), 8);
+                displayShortcuts.addAll(allShortcuts.subList(0, limit));
+            }
+        }
+
+        // Add shortcut buttons dynamically
+        for (ShortcutProfile.Shortcut shortcut : displayShortcuts) {
+            Button btn = new Button(this);
+            btn.setText(shortcut.label != null ? shortcut.label : shortcut.name);
+            btn.setTextSize(11);
+            btn.setTextColor(getResources().getColor(R.color.text_primary));
+            btn.setBackgroundResource(R.drawable.shortcut_button_background);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    (int) (40 * getResources().getDisplayMetrics().density));
+            lp.setMargins((int) (3 * getResources().getDisplayMetrics().density), 0,
+                    (int) (3 * getResources().getDisplayMetrics().density), 0);
+            btn.setLayoutParams(lp);
+            btn.setPadding((int) (12 * getResources().getDisplayMetrics().density), 0,
+                    (int) (12 * getResources().getDisplayMetrics().density), 0);
+            btn.setAllCaps(false);
+
+            btn.setOnClickListener(v -> executePortraitShortcut(shortcut));
+            buttonsContainer.addView(btn);
+        }
+
+        // Re-add the keyboard settings button at the end
+        ImageButton settingsBtn = new ImageButton(this);
+        settingsBtn.setImageResource(R.drawable.baseline_settings_24);
+        settingsBtn.setScaleType(ImageButton.ScaleType.CENTER_INSIDE);
+        settingsBtn.setContentDescription("键盘设置");
+        int btnSize = (int) (40 * getResources().getDisplayMetrics().density);
+        LinearLayout.LayoutParams sLp = new LinearLayout.LayoutParams(btnSize, btnSize);
+        sLp.setMargins((int) (3 * getResources().getDisplayMetrics().density), 0,
+                (int) (3 * getResources().getDisplayMetrics().density), 0);
+        settingsBtn.setLayoutParams(sLp);
+        settingsBtn.setPadding((int) (10 * getResources().getDisplayMetrics().density),
+                (int) (10 * getResources().getDisplayMetrics().density),
+                (int) (10 * getResources().getDisplayMetrics().density),
+                (int) (10 * getResources().getDisplayMetrics().density));
+        settingsBtn.setBackgroundResource(R.drawable.shortcut_button_background);
+        settingsBtn.setColorFilter(getResources().getColor(R.color.text_primary));
+        settingsBtn.setOnClickListener(v -> showKeyboardSettingsDialog());
+        buttonsContainer.addView(settingsBtn);
+    }
+
+    /**
+     * Execute a shortcut from the portrait strip.
+     */
+    private void executePortraitShortcut(ShortcutProfile.Shortcut shortcut) {
+        if (shortcut == null) return;
+
+        String key = hidKeyCodeToString(shortcut.keyCode);
+        if (key == null || key.isEmpty()) {
+            Toast.makeText(this, "未知按键", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Extract individual modifier flags
+        boolean ctrl = (shortcut.modifiers & ShortcutProfile.MOD_CTRL) != 0;
+        boolean shift = (shortcut.modifiers & ShortcutProfile.MOD_SHIFT) != 0;
+        boolean alt = (shortcut.modifiers & ShortcutProfile.MOD_ALT) != 0;
+        boolean win = (shortcut.modifiers & ShortcutProfile.MOD_WIN) != 0;
+
+        Log.d("MainActivity", "Executing shortcut: ctrl=" + ctrl + " shift=" + shift +
+                " alt=" + alt + " win=" + win + " key=" + key);
+
+        // Use HidManager to support both Java and Core implementations
+        if (ctrl || shift || alt || win) {
+            HidManager.sendKeyBoardFunction(
+                    ctrl ? "Ctrl" : "",
+                    shift ? "Shift" : "",
+                    alt ? "Alt" : "",
+                    win ? "Win" : "",
+                    key);
+        } else {
+            HidManager.sendKeyBoardPressAndRelease("", key);
+        }
+    }
+
+    /**
+     * Map HID usage code to the key string expected by KeyBoardManager/HidManager.
+     */
+    private String hidKeyCodeToString(int keyCode) {
+        switch (keyCode) {
+            // Letters (a-z)
+            case 4: return "A"; case 5: return "B"; case 6: return "C"; case 7: return "D";
+            case 8: return "E"; case 9: return "F"; case 10: return "G"; case 11: return "H";
+            case 12: return "I"; case 13: return "J"; case 14: return "K"; case 15: return "L";
+            case 16: return "M"; case 17: return "N"; case 18: return "O"; case 19: return "P";
+            case 20: return "Q"; case 21: return "R"; case 22: return "S"; case 23: return "T";
+            case 24: return "U"; case 25: return "V"; case 26: return "W"; case 27: return "X";
+            case 28: return "Y"; case 29: return "Z";
+            // Numbers (1-0)
+            case 30: return "1"; case 31: return "2"; case 32: return "3"; case 33: return "4";
+            case 34: return "5"; case 35: return "6"; case 36: return "7"; case 37: return "8";
+            case 38: return "9"; case 39: return "0";
+            // Enter / Escape / Backspace / Tab / Space
+            case 40: return "ENTER"; case 41: return "ESC"; case 42: return "BACKSPACE";
+            case 43: return "TAB"; case 44: return "SPACE";
+            // Symbols
+            case 45: return "-"; case 46: return "="; case 47: return "["; case 48: return "]";
+            case 49: return "\\"; case 51: return ";"; case 52: return "'"; case 53: return "`";
+            case 54: return ","; case 55: return "."; case 56: return "/";
+            // Caps Lock
+            case 57: return "CAPSLOCK";
+            // Function keys
+            case 58: return "F1"; case 59: return "F2"; case 60: return "F3"; case 61: return "F4";
+            case 62: return "F5"; case 63: return "F6"; case 64: return "F7"; case 65: return "F8";
+            case 66: return "F9"; case 67: return "F10"; case 68: return "F11"; case 69: return "F12";
+            // Additional keys
+            case 70: return "PRTSC"; case 71: return "SCROLLLOCK"; case 72: return "PAUSE";
+            case 73: return "INSERT";
+            // Navigation
+            case 74: return "HOME"; case 75: return "PAGEUP"; case 76: return "DELETE";
+            case 77: return "END"; case 78: return "PAGEDOWN";
+            case 79: return "RIGHT"; case 80: return "LEFT"; case 81: return "DOWN"; case 82: return "UP";
+            // Num Lock
+            case 83: return "NUMLOCK";
+            // Numpad operators
+            case 84: return "NUMPAD_DIVIDE"; case 85: return "NUMPAD_MULTIPLY";
+            case 86: return "NUMPAD_SUBTRACT"; case 87: return "NUMPAD_ADD";
+            case 88: return "NUMPAD_ENTER";
+            // Numpad digits
+            case 89: return "NUMPAD_1"; case 90: return "NUMPAD_2";
+            case 91: return "NUMPAD_3"; case 92: return "NUMPAD_4";
+            case 93: return "NUMPAD_5"; case 94: return "NUMPAD_6";
+            case 95: return "NUMPAD_7"; case 96: return "NUMPAD_8";
+            case 97: return "NUMPAD_9"; case 98: return "NUMPAD_0";
+            case 99: return "NUMPAD_DECIMAL";
+            default: return null;
         }
     }
 
@@ -2774,7 +2883,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                     return;
                 }
                 if (isSendingText) {
-                    // 取消发送
+                    // Cancel send
                     isSendingText = false;
                     hideSendProgress();
                     Toast.makeText(this, "已取消发送", Toast.LENGTH_SHORT).show();
@@ -2798,7 +2907,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                     Toast.makeText(this, "文本为空，无法保存", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                // 保存到 SharedPreferences
+                // Save to SharedPreferences
                 android.content.SharedPreferences prefs = getSharedPreferences("SavedTexts", MODE_PRIVATE);
                 String saved = prefs.getString("saved_text", "");
                 saved += (saved.isEmpty() ? "" : "\n") + text;
@@ -2815,7 +2924,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                     Toast.makeText(this, "暂无已保存的文本", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                // 显示已保存的文本列表
+                // Display list of saved texts
                 new android.app.AlertDialog.Builder(this)
                     .setTitle("已保存的文本")
                     .setMessage(saved)
@@ -2838,20 +2947,20 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
         new Thread(() -> {
             for (int i = 0; i < sendTotal; i++) {
                 if (!isSendingText) {
-                    // 被取消
+                    // Was cancelled
                     break;
                 }
                 char c = text.charAt(i);
                 final int index = i;
 
-                // 在主线程发送 HID 数据和更新进度
+                // Send HID data and update progress on the main thread
                 runOnUiThread(() -> {
                     if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
-                        // 将字符转换为键盘扫描码并发送
+                        // Convert character to keyboard scan code and send
                         String scanCode = charToScanCode(c);
                         if (scanCode != null) {
                             KeyBoardManager.sendKeyBoardData(null, scanCode);
-                            // 发送释放事件
+                            // Send release event
                             try {
                                 Thread.sleep(50);
                             } catch (InterruptedException ignored) {}
@@ -2863,14 +2972,14 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                 });
 
                 try {
-                    // 控制发送速度，每个字符间隔 100ms
+                    // Control send rate, 100ms interval per character
                     Thread.sleep(100);
                 } catch (InterruptedException e) {
                     break;
                 }
             }
 
-            // 发送完成
+            // Send completed
             runOnUiThread(() -> {
                 if (isSendingText) {
                     Toast.makeText(MainActivity.this, "文本发送完成", Toast.LENGTH_SHORT).show();
@@ -2913,12 +3022,12 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
     }
 
     private String charToScanCode(char c) {
-        // 简化的字符到 HID 扫描码映射
-        // 实际实现需要根据 CH9329MSKBMap 来完成
+        // Simplified character-to-HID-scan-code mapping
+        // Actual implementation requires CH9329MSKBMap
         if (c >= 'a' && c <= 'z') {
             return String.format("%02X", 0x04 + (c - 'a'));
         } else if (c >= 'A' && c <= 'Z') {
-            // 需要 Shift + 字母
+            // Need Shift + letter
             return String.format("%02X", 0x04 + (c - 'A'));
         } else if (c >= '1' && c <= '9') {
             return String.format("%02X", 0x1E + (c - '1'));
@@ -2937,7 +3046,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
         } else if (c == '?') {
             return "38"; // Shift + /
         }
-        // 更多字符映射...
+        // More character mappings...
         Log.w(TAG, "不支持的字符: " + c);
         return null;
     }
@@ -3159,7 +3268,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
 
         if (settingsButton != null) {
             settingsButton.setOnClickListener(v -> {
-                // 打开设置模块
+                // Open settings module
                 if (isPortraitMode) {
                     toggleModule(ModuleType.SETTINGS);
                 } else {
@@ -3274,25 +3383,6 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
         if (scrollSpeedValue != null) scrollSpeedValue.setText(getScrollSpeedLabel(scrollSpeed));
         if (preValidateSwitch != null) preValidateSwitch.setChecked(preValidate);
         if (autoSaveSwitch != null) autoSaveSwitch.setChecked(autoSave);
-
-        // === Shortcut Manager ===
-        LinearLayout shortcutManagerLayout = view.findViewById(R.id.settings_shortcut_manager_layout);
-        if (shortcutManagerLayout != null) {
-            shortcutManagerLayout.setOnClickListener(v -> {
-                // Clear the cached settings module view before navigating
-                // This ensures it will be recreated when returning from ShortcutManagerFragment
-                settingsModuleView = null;
-
-                // Navigate to ShortcutManagerFragment
-                com.openterface.AOS.fragment.ShortcutManagerFragment fragment =
-                    com.openterface.AOS.fragment.ShortcutManagerFragment.newInstance();
-                getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.module_content_container, fragment)
-                    .addToBackStack(null)
-                    .commit();
-            });
-        }
 
         // === Keyboard Sound Switch ===
         if (soundSwitch != null) {
@@ -3517,7 +3607,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
             ThemeManager.getInstance().setThemeFamily(this, selectedFamily);
             ThemeManager.getInstance().applyTheme(this);
 
-            // 更新设置界面的显示
+            // Update settings UI display
             android.view.View settingsView = findViewById(R.id.settings_module_root);
             if (settingsView != null) {
                 TextView themeValue = settingsView.findViewById(R.id.settings_theme_color_value);
@@ -3555,7 +3645,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
             ThemeManager.getInstance().setThemeMode(this, selectedMode);
             ThemeManager.getInstance().applyThemeMode(selectedMode);
 
-            // 更新设置界面的显示
+            // Update settings UI display
             android.view.View settingsView = findViewById(R.id.settings_module_root);
             if (settingsView != null) {
                 TextView themeValue = settingsView.findViewById(R.id.settings_theme_mode_value);
@@ -3564,7 +3654,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                 }
             }
 
-            // 应用主题模式变化（需要重新创建Activity）
+            // Apply theme mode change (requires Activity recreation)
             recreate();
 
             dialog.dismiss();
@@ -3595,6 +3685,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
      * Show dialog for switching shortcut profiles in portrait mode.
      * Displays a list of available profiles with the active one checked.
      * Selecting a profile updates the active profile and refreshes the shortcut strip.
+     * Includes a "Manage" button to open the ShortcutManagerFragment.
      */
     private void showProfileSwitcherDialog() {
         ShortcutProfileManager profileManager = ShortcutProfileManager.getInstance(this);
@@ -3631,6 +3722,19 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
             dialog.dismiss();
         });
         builder.setNegativeButton("取消", (dialog, which) -> dialog.dismiss());
+
+        // Add "Manage" button to open ShortcutHubFloatingFragment
+        builder.setNeutralButton("管理", (dialog, which) -> {
+            dialog.dismiss();
+            // Open Shortcut Hub as a floating panel (left side, dual-panel design)
+            ShortcutHubFloatingFragment fragment = new ShortcutHubFloatingFragment();
+            fragment.setOnDismissListener(() -> {
+                // Refresh shortcut strip after closing (config may have changed)
+                setupPortraitShortcutStrip();
+            });
+            fragment.show(getSupportFragmentManager(), "shortcut_hub_floating");
+        });
+
         builder.show();
     }
 }

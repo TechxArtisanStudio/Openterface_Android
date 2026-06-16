@@ -939,7 +939,7 @@ public final class USBMonitor {
                 // skip first two bytes(bLength & bDescriptorType), and copy the rest to the string
                 try {
                     result = new String(work, 2, ret - 2, "UTF-16LE");
-                    if (!"Љ".equals(result)) {    // 変なゴミが返ってくる時がある
+                    if (!"Љ".equals(result)) {    // Sometimes garbage data is returned
                         break;
                     } else {
                         result = null;

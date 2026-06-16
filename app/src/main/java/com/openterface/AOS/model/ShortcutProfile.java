@@ -16,18 +16,42 @@ public class ShortcutProfile {
     public String icon;
     public boolean builtIn;
     public List<Shortcut> shortcuts;
+    public List<ShortcutCategory> categories;
     public long createdAt;
     public long updatedAt;
 
     public ShortcutProfile() {
         shortcuts = new ArrayList<>();
+        categories = new ArrayList<>();
+    }
+
+    /**
+     * Returns all shortcuts flattened across categories (and flat list).
+     */
+    public List<Shortcut> getAllShortcutsFlat() {
+        List<Shortcut> all = new ArrayList<>();
+        if (shortcuts != null) {
+            all.addAll(shortcuts);
+        }
+        if (categories != null) {
+            for (ShortcutCategory cat : categories) {
+                if (cat != null && cat.shortcuts != null) {
+                    all.addAll(cat.shortcuts);
+                }
+            }
+        }
+        return all;
     }
 
     /**
      * Returns total count of shortcuts in this profile.
      */
     public int getShortcutCount() {
-        return shortcuts != null ? shortcuts.size() : 0;
+        int count = shortcuts != null ? shortcuts.size() : 0;
+        if (categories != null) {
+            for (ShortcutCategory cat : categories) count += cat.shortcuts.size();
+        }
+        return count;
     }
 
     /**
@@ -62,13 +86,34 @@ public class ShortcutProfile {
     }
 
     /**
+     * Category grouping shortcuts within a profile
+     */
+    public static class ShortcutCategory {
+        public String id;
+        public String name;
+        public List<Shortcut> shortcuts;
+
+        public ShortcutCategory() { shortcuts = new ArrayList<>(); }
+
+        public ShortcutCategory(String id, String name) {
+            this.id = id;
+            this.name = name;
+            this.shortcuts = new ArrayList<>();
+        }
+    }
+
+    /**
      * HID Modifier bitmasks (USB HID Specification)
      */
     public static final int MOD_NONE = 0;
     public static final int MOD_CTRL = 1;
     public static final int MOD_SHIFT = 2;
     public static final int MOD_ALT = 4;
+    public static final int MOD_WIN = 8;
     public static final int MOD_CTRL_SHIFT = 3;
     public static final int MOD_CTRL_ALT = 5;
     public static final int MOD_SHIFT_ALT = 6;
+    public static final int MOD_WIN_SHIFT = 10;
+    public static final int MOD_CTRL_WIN = 9;
+    public static final int MOD_CTRL_ALT_SHIFT = 7;
 }

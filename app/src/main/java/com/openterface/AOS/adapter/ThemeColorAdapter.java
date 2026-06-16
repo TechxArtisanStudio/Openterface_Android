@@ -50,7 +50,7 @@ public class ThemeColorAdapter extends RecyclerView.Adapter<ThemeColorAdapter.Vi
         holder.tvColorName.setText(displayName);
         holder.viewColorPreview.setBackgroundColor(previewColor);
 
-        // 显示选中标记
+        // Show selected indicator
         if (family.equals(selectedFamily)) {
             holder.ivSelected.setVisibility(View.VISIBLE);
             holder.itemView.setBackgroundResource(R.drawable.bg_theme_color_selected);

@@ -5,7 +5,7 @@
     android:orientation="vertical"
     android:background="@android:color/black">
 
-    <!-- 顶部标题栏 -->
+    <!-- Top title bar -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -30,13 +30,13 @@
             android:textSize="14sp" />
     </LinearLayout>
 
-    <!-- 测试区域：模拟竖屏 4-zone 布局 -->
+    <!-- Test area: simulate portrait 4-zone layout -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <!-- Zone 1: 快捷栏 -->
+        <!-- Zone 1: Shortcut strip -->
         <LinearLayout
             android:id="@+id/shortcut_strip"
             android:layout_width="match_parent"
@@ -56,7 +56,7 @@
                 android:gravity="center" />
         </LinearLayout>
 
-        <!-- Zone 2: 视频区域 -->
+        <!-- Zone 2: Video area -->
         <RelativeLayout
             android:id="@+id/video_area_container"
             android:layout_width="match_parent"
@@ -74,7 +74,7 @@
                 android:gravity="center" />
         </RelativeLayout>
 
-        <!-- Zone 3: 模块抽屉 -->
+        <!-- Zone 3: Module drawer -->
         <LinearLayout
             android:id="@+id/module_drawer"
             android:layout_width="match_parent"
@@ -116,7 +116,7 @@
             </FrameLayout>
         </LinearLayout>
 
-        <!-- Zone 4: 底部导航栏 -->
+        <!-- Zone 4: Bottom navigation bar -->
         <LinearLayout
             android:id="@+id/module_selector_bar"
             android:layout_width="match_parent"

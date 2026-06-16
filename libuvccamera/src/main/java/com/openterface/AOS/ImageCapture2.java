@@ -175,12 +175,14 @@ public class ImageCapture2 implements IImageCapture {
                     if (image != null) {
                         final Image.Plane[] planes = image.getPlanes();
                         if (planes.length > 0) {
-                            //因为我们要求的是RGBA格式的数据，所以全部的存储在planes[0]中
+                            // Since we request RGBA format data, all data is stored in planes[0]
                             Image.Plane plane = planes[0];
                             final ByteBuffer buffer = plane.getBuffer();
-                            //由于Image中的缓冲区存在数据对齐，所以其大小不一定是我们生成ImageReader实例时指定的大小，
-                            //ImageReader会自动为画面每一行最右侧添加一个padding，以进行对齐，对齐多少字节可能因硬件而异，
-                            //所以我们在取出数据时需要忽略这一部分数据。
+                            // Due to data alignment in Image, the buffer size may not match
+                            // the size specified when creating the ImageReader instance.
+                            // ImageReader automatically adds padding to the right side of each
+                            // row for alignment. The alignment bytes may vary by hardware,
+                            // so we need to ignore this extra data when extracting.
                             int pixelStride = plane.getPixelStride();
                             int rowStride = plane.getRowStride();
                             int rowPadding = rowStride - pixelStride * width;

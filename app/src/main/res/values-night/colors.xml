@@ -38,4 +38,9 @@
     <color name="surface_background">#FF1C1C1E</color>
     <color name="popup_background">#FF2C2C2E</color>
     <color name="popup_text">#FFFFFFFF</color>
+
+    <!-- Shortcut strip button colors (dark mode) -->
+    <color name="shortcut_btn_normal">#FF2A2A2A</color>
+    <color name="shortcut_btn_pressed">#FF444444</color>
+    <color name="shortcut_btn_border">#FF555555</color>
 </resources>

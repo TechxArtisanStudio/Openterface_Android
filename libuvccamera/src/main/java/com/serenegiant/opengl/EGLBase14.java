@@ -510,7 +510,7 @@ import android.view.SurfaceView;
                 throw new RuntimeException("createWindowSurface failed error=" + error);
             }
             makeCurrent(result);
-            // 画面サイズ・フォーマットの取得
+            // Get screen size and format
         } catch (final Exception e) {
             Log.e(TAG, "eglCreateWindowSurface", e);
             throw new IllegalArgumentException(e);
@@ -594,7 +594,7 @@ import android.view.SurfaceView;
             attribList[offset++] = EGL14.EGL_DEPTH_SIZE;
             attribList[offset++] = 16;
         }
-        if (isRecordable && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {// MediaCodecの入力用Surfaceの場合
+        if (isRecordable && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {// For MediaCodec input Surface
             attribList[offset++] = EGL_RECORDABLE_ANDROID;
             attribList[offset++] = 1;
         }
@@ -604,7 +604,7 @@ import android.view.SurfaceView;
         EGLConfig config = internalGetConfig(attribList);
         if ((config == null) && (version == 2)) {
             if (isRecordable) {
-                // EGL_RECORDABLE_ANDROIDをつけると失敗する機種もあるので取り除く
+                // Some devices fail when EGL_RECORDABLE_ANDROID is set, so remove it
                 final int n = attribList.length;
                 for (int i = 10; i < n - 1; i += 2) {
                     if (attribList[i] == EGL_RECORDABLE_ANDROID) {

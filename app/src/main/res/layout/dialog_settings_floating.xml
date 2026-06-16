@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- 半透明遮罩层（点击关闭） -->
+    <!-- Semi-transparent overlay (click to close) -->
     <View
         android:id="@+id/settings_dim_overlay"
         android:layout_width="match_parent"
@@ -13,7 +13,7 @@
         android:clickable="true"
         android:focusable="true" />
 
-    <!-- 浮窗卡片 -->
+    <!-- Floating card -->
     <LinearLayout
         android:id="@+id/settings_floating_card"
         android:layout_width="320dp"
@@ -25,7 +25,7 @@
         android:elevation="8dp"
         android:padding="16dp">
 
-    <!-- 标题栏 -->
+    <!-- Title bar -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -52,7 +52,7 @@
             tools:ignore="ContentDescription" />
     </LinearLayout>
 
-    <!-- 设置内容容器 -->
+    <!-- Settings content container -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -63,7 +63,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
-            <!-- 动态加载设置内容 -->
+            <!-- Settings content loaded dynamically -->
         </LinearLayout>
     </ScrollView>
 

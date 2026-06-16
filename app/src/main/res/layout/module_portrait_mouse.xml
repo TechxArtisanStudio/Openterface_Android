@@ -42,7 +42,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="• Single finger move: Move cursor\n• Tap: Left click\n• Two finger scroll: Scroll wheel\n• Three finger tap: Middle click\n• Long press: Right click"
+                    android:text="• Single finger tap: Left click\n• Two finger tap: Right click\n• Two finger slide: Scroll wheel\n• Single finger move: Move cursor"
                     android:textSize="13sp"
                     android:textColor="@color/text_secondary"
                     android:lineSpacingExtra="4dp" />

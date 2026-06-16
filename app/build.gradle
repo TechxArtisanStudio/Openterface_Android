@@ -162,6 +162,8 @@ dependencies {
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     // AndroidX RecyclerView for flexible list management
     implementation 'androidx.recyclerview:recyclerview:1.3.0'
+    // Google FlexboxLayout for flexible grid layouts
+    implementation 'com.google.android.flexbox:flexbox:3.0.0'
 
     // SwitchButton widget in Android.
     implementation 'com.kyleduo.switchbutton:library:2.1.0'

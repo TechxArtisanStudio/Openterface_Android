@@ -18,8 +18,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.util.List;
 
 /**
- * 键盘 UI 测试 Activity
- * 用于测试竖屏键盘的 UI 显示和功能
+ * Keyboard UI test Activity
+ * For testing portrait keyboard UI display and functionality
  */
 public class KeyboardTestActivity extends AppCompatActivity {
     private static final String TAG = "KeyboardTestActivity";
@@ -32,18 +32,18 @@ public class KeyboardTestActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // 创建测试界面
+        // Create test interface
         setupTestUI();
 
-        // 延迟运行测试，确保 UI 已渲染
+        // Run tests with delay to ensure UI is rendered
         testContainer.postDelayed(this::runTests, 500);
     }
 
     /**
-     * 设置测试界面
+     * Setup test interface
      */
     private void setupTestUI() {
-        // 创建根布局
+        // Create root layout
         ScrollView scrollView = new ScrollView(this);
         scrollView.setLayoutParams(new ViewGroup.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
@@ -55,7 +55,7 @@ public class KeyboardTestActivity extends AppCompatActivity {
         testContainer.setOrientation(LinearLayout.VERTICAL);
         testContainer.setPadding(32, 32, 32, 32);
 
-        // 添加标题
+        // Add title
         TextView titleView = new TextView(this);
         titleView.setText("竖屏键盘 UI 测试");
         titleView.setTextSize(24);
@@ -63,7 +63,7 @@ public class KeyboardTestActivity extends AppCompatActivity {
         titleView.setPadding(0, 0, 0, 32);
         testContainer.addView(titleView);
 
-        // 添加测试区域
+        // Add test area
         LinearLayout testArea = new LinearLayout(this);
         testArea.setOrientation(LinearLayout.VERTICAL);
         testArea.setBackgroundColor(Color.LTGRAY);
@@ -73,7 +73,7 @@ public class KeyboardTestActivity extends AppCompatActivity {
             LinearLayout.LayoutParams.WRAP_CONTENT
         ));
 
-        // 创建键盘 View
+        // Create keyboard View
         keyboardView = new PortraitKeyboardView(this);
         keyboardView.setLayoutParams(new LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
@@ -83,7 +83,7 @@ public class KeyboardTestActivity extends AppCompatActivity {
 
         testContainer.addView(testArea);
 
-        // 添加结果显示区域
+        // Add result display area
         TextView resultLabel = new TextView(this);
         resultLabel.setText("测试结果：");
         resultLabel.setTextSize(18);
@@ -98,7 +98,7 @@ public class KeyboardTestActivity extends AppCompatActivity {
         resultTextView.setBackgroundColor(Color.parseColor("#F0F0F0"));
         testContainer.addView(resultTextView);
 
-        // 添加重新测试按钮
+        // Add retry test button
         Button retryButton = new Button(this);
         retryButton.setText("重新测试");
         retryButton.setOnClickListener(v -> runTests());
@@ -115,7 +115,7 @@ public class KeyboardTestActivity extends AppCompatActivity {
     }
 
     /**
-     * 运行所有测试
+     * Run all tests
      */
     private void runTests() {
         Log.d(TAG, "开始运行键盘 UI 测试...");
@@ -125,14 +125,14 @@ public class KeyboardTestActivity extends AppCompatActivity {
         KeyboardUITest test = new KeyboardUITest(KeyboardTestActivity.this);
         KeyboardUITest.TestResults results = test.runAllTests();
 
-        // 显示测试结果
+        // Display test results
         displayResults(results);
 
         Log.d(TAG, "测试完成");
     }
 
     /**
-     * 显示测试结果
+     * Display test results
      */
     private void displayResults(KeyboardUITest.TestResults results) {
         StringBuilder sb = new StringBuilder();
@@ -156,7 +156,7 @@ public class KeyboardTestActivity extends AppCompatActivity {
 
         resultTextView.setText(sb.toString());
 
-        // 滚动到结果显示区域
+        // Scroll to result display area
         ScrollView parent = (ScrollView) resultTextView.getParent().getParent();
         parent.post(() -> parent.smoothScrollTo(0, resultTextView.getTop()));
     }

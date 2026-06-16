@@ -20,7 +20,7 @@
 */
 -->
 <resources>
-    <!-- ARGBで指定　 -->
+    <!-- Specify in ARGB -->
     <!-- transparent colors -->
     <color name="CLEAR">#00000000</color>
     <color name="HALF_CLEAR_WHITE">#7fffffff</color>

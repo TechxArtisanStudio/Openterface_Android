@@ -20,8 +20,8 @@ import androidx.fragment.app.DialogFragment;
 import com.openterface.AOS.R;
 
 /**
- * 浮窗设置界面 - 从右下角弹出，支持左滑关闭
- * 替代原有的底部抽屉式设置模块
+ * Floating settings interface - pops up from bottom right, supports swipe left to close
+ * Replaces the original bottom drawer style settings module
  */
 public class SettingsFloatingFragment extends DialogFragment {
 
@@ -47,11 +47,11 @@ public class SettingsFloatingFragment extends DialogFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // 设置手势检测器（左滑关闭）
+        // Setup gesture detector (swipe left to close)
         gestureDetector = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
             @Override
             public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-                // 左滑：X 方向移动超过 50px，且速度超过 100px/s
+                // Swipe left: X movement > 50px, and speed > 100px/s
                 if (e1 != null && e1.getX() - e2.getX() > 50 && Math.abs(velocityX) > 100) {
                     dismissWithCallback();
                     return true;
@@ -60,7 +60,7 @@ public class SettingsFloatingFragment extends DialogFragment {
             }
         });
 
-        // 为浮窗卡片设置触摸监听
+        // Set touch listener for floating card
         View card = view.findViewById(R.id.settings_floating_card);
         if (card != null) {
             card.setOnTouchListener((v, event) -> {
@@ -69,19 +69,19 @@ public class SettingsFloatingFragment extends DialogFragment {
             });
         }
 
-        // 点击遮罩关闭
+        // Dismiss on overlay click
         View overlay = view.findViewById(R.id.settings_dim_overlay);
         if (overlay != null) {
             overlay.setOnClickListener(v -> dismissWithCallback());
         }
 
-        // 关闭按钮
+        // Close button
         View closeBtn = view.findViewById(R.id.btn_close_settings);
         if (closeBtn != null) {
             closeBtn.setOnClickListener(v -> dismissWithCallback());
         }
 
-        // 加载设置内容
+        // Load settings content
         loadSettingsContent(view);
     }
 
@@ -112,20 +112,20 @@ public class SettingsFloatingFragment extends DialogFragment {
         LinearLayout container = rootView.findViewById(R.id.settings_content_container);
         if (container == null) return;
 
-        // 清空容器
+        // Clear container
         container.removeAllViews();
 
-        // 从 module_portrait_settings.xml 加载设置内容
+        // Load settings content from module_portrait_settings.xml
         LayoutInflater inflater = LayoutInflater.from(getContext());
         View settingsContent = inflater.inflate(R.layout.module_portrait_settings_inner, container, false);
         container.addView(settingsContent);
 
-        // 设置各个设置项
+        // Setup each settings item
         setupSettingsItems(settingsContent);
     }
 
     private void setupSettingsItems(View view) {
-        // 让 MainActivity 来设置具体的项（通过 callback 或直接调用）
+        // Let MainActivity set up specific items (via callback or direct call)
         if (getActivity() instanceof SettingsCallback) {
             ((SettingsCallback) getActivity()).setupSettingsContent(view);
         }

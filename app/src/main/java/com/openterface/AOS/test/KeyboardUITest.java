@@ -9,8 +9,8 @@ import com.openterface.AOS.R;
 import com.openterface.AOS.view.PortraitKeyboardView;
 
 /**
- * 竖屏键盘 UI 测试类
- * 测试键盘模块的 UI 显示和基本功能
+ * Portrait keyboard UI test class
+ * Tests the UI display and basic functionality of the keyboard module
  */
 public class KeyboardUITest {
     private static final String TAG = "KeyboardUITest";
@@ -24,7 +24,7 @@ public class KeyboardUITest {
     }
 
     /**
-     * 运行所有测试
+     * Run all tests
      */
     public TestResults runAllTests() {
         Log.d(TAG, "========== 开始竖屏键盘 UI 测试 ==========");
@@ -48,7 +48,7 @@ public class KeyboardUITest {
     }
 
     /**
-     * 测试 1: 键盘 View 是否能正确加载
+     * Test 1: Verify keyboard View loads correctly
      */
     private void testKeyboardViewInflation() {
         Log.d(TAG, "\n[测试 1] 键盘 View 加载测试");
@@ -61,7 +61,7 @@ public class KeyboardUITest {
                 return;
             }
 
-            // 检查基本属性
+            // Check basic properties
             if (keyboardView.getOrientation() != LinearLayout.VERTICAL) {
                 results.addFailure("keyboardView 方向不是 VERTICAL");
                 return;
@@ -85,7 +85,7 @@ public class KeyboardUITest {
     }
 
     /**
-     * 测试 2: 工具栏按钮是否存在
+     * Test 2: Check if toolbar buttons exist
      */
     private void testToolbarButtons() {
         Log.d(TAG, "\n[测试 2] 工具栏按钮测试");
@@ -96,7 +96,7 @@ public class KeyboardUITest {
         }
 
         try {
-            // 检查关键按钮
+            // Check key buttons
             checkButton(R.id.KeyBoard_System, "System");
             checkButton(R.id.KeyBoard_Opacity, "Opacity");
             checkButton(R.id.KeyBoard_TouchPad, "TouchPad");
@@ -129,7 +129,7 @@ public class KeyboardUITest {
     }
 
     /**
-     * 测试 3: 面板切换功能
+     * Test 3: Panel switching functionality
      */
     private void testPanelSwitching() {
         Log.d(TAG, "\n[测试 3] 面板切换测试");
@@ -140,7 +140,7 @@ public class KeyboardUITest {
         }
 
         try {
-            // 获取面板
+            // Get panels
             View systemPanel = keyboardView.findViewById(R.id.Fragment_KeyBoard_System);
             View functionPanel = keyboardView.findViewById(R.id.Fragment_KeyBoard_Function);
             View shortCutPanel = keyboardView.findViewById(R.id.Fragment_KeyBoard_ShortCut);
@@ -150,7 +150,7 @@ public class KeyboardUITest {
                 return;
             }
 
-            // 测试初始状态（应该显示 System 面板）
+            // Test initial state (System panel should be displayed)
             if (systemPanel.getVisibility() != View.VISIBLE) {
                 results.addFailure("初始状态：System 面板未显示");
                 return;
@@ -171,7 +171,7 @@ public class KeyboardUITest {
     }
 
     /**
-     * 测试 4: 面板布局参数
+     * Test 4: Panel layout parameters
      */
     private void testPanelLayout() {
         Log.d(TAG, "\n[测试 4] 面板布局测试");
@@ -188,7 +188,7 @@ public class KeyboardUITest {
                 return;
             }
 
-            // 检查键盘 View 总尺寸
+            // Check keyboard View total size
             int keyboardWidth = keyboardView.getWidth();
             int keyboardHeight = keyboardView.getHeight();
             Log.d(TAG, "✓ 键盘 View 尺寸: " + keyboardWidth + "x" + keyboardHeight + "px");
@@ -207,7 +207,7 @@ public class KeyboardUITest {
     }
 
     /**
-     * 测试结果类
+     * Test results class
      */
     public static class TestResults {
         private int passedTests = 0;

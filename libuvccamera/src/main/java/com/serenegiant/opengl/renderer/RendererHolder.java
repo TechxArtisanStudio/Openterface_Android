@@ -567,7 +567,7 @@ public class RendererHolder extends EGLTask implements IRendererHolder {
                 if (slaveSurface != null) {
                     mSlaveSurfaces.remove(id);
                     if (slaveSurface.isValid()) {
-                        slaveSurface.clear(0);    // XXX 黒で塗りつぶし, 色指定できるようにする?
+                        slaveSurface.clear(0);    // XXX Fill with black, should we allow color specification?
                     }
                     slaveSurface.release();
                 }
@@ -586,7 +586,7 @@ public class RendererHolder extends EGLTask implements IRendererHolder {
                     slaveSurface = mSlaveSurfaces.valueAt(i);
                     if (slaveSurface != null) {
                         if (slaveSurface.isValid()) {
-                            slaveSurface.clear(0);    // XXX 黒で塗りつぶし, 色指定できるようにする?
+                            slaveSurface.clear(0);    // XXX Fill with black, should we allow color specification?
                         }
                         slaveSurface.release();
                     }

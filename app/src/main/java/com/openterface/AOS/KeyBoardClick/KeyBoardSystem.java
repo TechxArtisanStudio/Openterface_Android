@@ -264,10 +264,10 @@ public class KeyBoardSystem {
             int id = btn.getId();
 
             if (KeyBoard_FN_Press_state && fnDisplayMap.containsKey(id)) {
-                // FN激活时显示功能键标签
+                // When FN is activated, display function key label
                 btn.setText(fnDisplayMap.get(id));
             } else {
-                // 正常模式显示字母（受Shift影响）
+                // Normal mode displays letters (affected by Shift)
                 String[] mapping = currentMapping.getKeyMappings().get(id);
                 if (mapping != null) {
                     btn.setText(KeyBoard_ShIft_Press_state ? mapping[1] : mapping[0]);

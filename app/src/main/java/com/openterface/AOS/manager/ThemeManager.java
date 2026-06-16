@@ -10,8 +10,8 @@ import androidx.core.content.ContextCompat;
 import com.openterface.AOS.R;
 
 /**
- * 主题管理器 - 管理应用的主题颜色配置
- * 支持8种颜色主题和深色/浅色模式
+ * Theme Manager - manages app theme color configuration
+ * Supports 8 color themes and dark/light modes
  */
 public class ThemeManager {
     private static final String PREFS_NAME = "AppPrefs";
@@ -51,14 +51,14 @@ public class ThemeManager {
     }
 
     /**
-     * 获取当前主题颜色家族
+     * Get the current theme color family
      */
     public String getThemeFamily() {
         return prefs != null ? prefs.getString(KEY_THEME_FAMILY, DEFAULT_FAMILY) : DEFAULT_FAMILY;
     }
 
     /**
-     * 设置主题颜色家族
+     * Set the theme color family
      */
     public void setThemeFamily(Context context, String family) {
         if (prefs == null) {
@@ -68,14 +68,14 @@ public class ThemeManager {
     }
 
     /**
-     * 获取当前主题模式
+     * Get the current theme mode
      */
     public String getThemeMode() {
         return prefs != null ? prefs.getString(KEY_THEME_MODE, DEFAULT_MODE) : DEFAULT_MODE;
     }
 
     /**
-     * 设置主题模式
+     * Set the theme mode
      */
     public void setThemeMode(Context context, String mode) {
         if (prefs == null) {
@@ -106,7 +106,7 @@ public class ThemeManager {
     }
 
     /**
-     * 应用主题到Activity
+     * Apply theme to the Activity
      */
     public void applyTheme(Activity activity) {
         String family = getThemeFamily();
@@ -115,7 +115,7 @@ public class ThemeManager {
     }
 
     /**
-     * 根据颜色家族获取主题资源ID
+     * Get theme resource ID based on color family
      */
     public int getThemeResId(String family) {
         switch (family) {
@@ -140,7 +140,7 @@ public class ThemeManager {
     }
 
     /**
-     * 获取主题颜色
+     * Get theme color
      */
     public int getThemeColor(Context context, int attrId) {
         TypedValue typedValue = new TypedValue();
@@ -157,7 +157,7 @@ public class ThemeManager {
     }
 
     /**
-     * 获取所有可用的主题颜色家族
+     * Get all available theme color families
      */
     public static String[] getAllFamilies() {
         return new String[]{
@@ -173,7 +173,7 @@ public class ThemeManager {
     }
 
     /**
-     * 获取主题颜色家族的显示名称
+     * Get the display name of a theme color family
      */
     public static String getFamilyDisplayName(String family) {
         switch (family) {
@@ -199,7 +199,7 @@ public class ThemeManager {
     }
 
     /**
-     * 获取主题颜色家族的预览颜色
+     * Get the preview color of a theme color family
      */
     public static int getFamilyPreviewColor(Context context, String family) {
         switch (family) {
