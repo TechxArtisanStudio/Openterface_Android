@@ -68,12 +68,17 @@ public class ZoomLayoutDeal {
     private static ImageButton dragButton;
     private float lastTouchX, lastTouchY;
 
+    // Drag offset to prevent indicator jumping when starting to drag
+    private static float dragOffsetX = 0f;
+    private static float dragOffsetY = 0f;
+
     private boolean isKeyboardScaled = false; // Track scaling state
     private static int originalWidth;
     private static int originalHeight; // Store original dimensions
     private LinearLayout keyBoardView;
     private ImageButton keyBoardZoomInOutButton;
     private ImageButton dragHandle;
+    private boolean isPortraitMode = false; // Track if in portrait mode
 
     public static void getViewWidthHeight(int originalWidth, int originalHeight){
 
@@ -95,9 +100,12 @@ public class ZoomLayoutDeal {
         keyBoardView = activity.findViewById(R.id.KeyBoard_View); // Initialize
         dragHandle = activity.findViewById(R.id.drag_handle);
 
-        // Skip initialization if essential views are missing (e.g. portrait mode layout)
+        // Check if in portrait mode
+        isPortraitMode = activity.findViewById(R.id.module_selector_bar) != null;
+
+        // Skip initialization if essential views are missing
         if (cameraViewSecond == null || thumbnailContainer == null || dragButton == null) {
-            Log.d("ZoomLayoutDeal", "Essential views not found (portrait mode?), skipping zoom setup");
+            Log.d("ZoomLayoutDeal", "Essential views not found, skipping zoom setup");
             return;
         }
 
@@ -108,18 +116,55 @@ public class ZoomLayoutDeal {
 
         Log.d("initViews", "screenWidth: " + screenWidth + " screenHeight: " + screenHeight);
 
+        if (isPortraitMode) {
+            // Portrait mode: PiP window with chip's aspect ratio
+            // Use the chip's actual resolution to determine aspect ratio
+            int chipWidth = activity.getPreviewWidth();
+            int chipHeight = activity.getPreviewHeight();
 
-        cameraViewSecond.getLayoutParams().width = screenWidth / 4;
-        cameraViewSecond.getLayoutParams().height = screenHeight / 4;
-        cameraViewSecond.requestLayout();
+            // If chip resolution is not available yet, use default 16:9
+            if (chipWidth <= 0 || chipHeight <= 0) {
+                chipWidth = 16;
+                chipHeight = 9;
+            }
 
-        indicatorView.getLayoutParams().width = screenWidth / 8;
-        indicatorView.getLayoutParams().height = screenHeight / 8;
-        indicatorView.requestLayout();
+            // Calculate PiP dimensions based on chip's aspect ratio
+            // Use screen width as reference, calculate height to match chip's aspect ratio
+            int pipWidth = screenWidth / 3;
+            int pipHeight = (pipWidth * chipHeight) / chipWidth;
+            cameraViewSecond.getLayoutParams().width = pipWidth;
+            cameraViewSecond.getLayoutParams().height = pipHeight;
+            cameraViewSecond.requestLayout();
+
+            // Set cameraViewSecond's aspect ratio to match the chip
+            cameraViewSecond.setAspectRatio(chipWidth, chipHeight);
+
+            if (indicatorView != null) {
+                indicatorView.getLayoutParams().width = screenWidth / 6;
+                indicatorView.getLayoutParams().height = (indicatorView.getLayoutParams().width * chipHeight) / chipWidth;
+                indicatorView.requestLayout();
+            }
+        } else {
+            // Landscape mode: original sizing
+            cameraViewSecond.getLayoutParams().width = screenWidth / 4;
+            cameraViewSecond.getLayoutParams().height = screenHeight / 4;
+            cameraViewSecond.requestLayout();
+
+            if (indicatorView != null) {
+                indicatorView.getLayoutParams().width = screenWidth / 8;
+                indicatorView.getLayoutParams().height = screenHeight / 8;
+                indicatorView.requestLayout();
+            }
+        }
+
         setupDragButton();
 
-        setupKeyboardZoomButton(); // New setup method
-        setupDragHandle();
+        if (keyBoardZoomInOutButton != null && keyBoardView != null) {
+            setupKeyboardZoomButton(); // New setup method
+        }
+        if (dragHandle != null) {
+            setupDragHandle();
+        }
     }
     
     private void setupKeyboardZoomButton() {
@@ -170,58 +215,64 @@ public class ZoomLayoutDeal {
     }
 
     public static void enlargeView(){
-        // Guard against portrait mode where landscape views don't exist
+        // Guard against missing views
         if (thumbnailContainer == null || dragButton == null || activity == null) {
-            Log.d("ZoomLayoutDeal", "enlargeView: views not initialized (portrait mode), skipping");
+            Log.d("ZoomLayoutDeal", "enlargeView: views not initialized, skipping");
             return;
         }
+
+        // First, make the views visible so Surface can be created
+        if (thumbnailContainer.getVisibility() != View.VISIBLE) {
+            thumbnailContainer.setVisibility(View.VISIBLE);
+            dragButton.setVisibility(View.VISIBLE);
+
+            // Position drag button
+            thumbnailContainer.post(() -> {
+                float thumbnailX = thumbnailContainer.getX();
+                float thumbnailY = thumbnailContainer.getY();
+                float thumbnailWidth = thumbnailContainer.getWidth();
+                float dragButtonWidth = dragButton.getWidth();
+
+                float thumbnailCenterX = thumbnailX + (thumbnailWidth / 2f);
+                float dragButtonX = thumbnailCenterX - (dragButtonWidth / 2f);
+                float dragButtonY = thumbnailY - dragButton.getHeight() - (4 * activity.getResources().getDisplayMetrics().density);
+
+                dragButton.setX(dragButtonX);
+                dragButton.setY(dragButtonY);
+            });
+        }
+
+        // Now try to add surface if available
         if (activity.mBinding == null || activity.mBinding.cameraViewSecond == null) {
-            Log.d("ZoomLayoutDeal", "enlargeView: cameraViewSecond not available, skipping");
+            Log.d("ZoomLayoutDeal", "enlargeView: cameraViewSecond not available");
             return;
         }
-        if (activity.mBinding.cameraViewSecond.getHolder() == null ||
-            activity.mBinding.cameraViewSecond.getHolder().getSurface() == null) {
-            Log.d("ZoomLayoutDeal", "enlargeView: surface not ready, skipping");
-            return;
+
+        if (activity.mBinding.cameraViewSecond.getHolder() != null &&
+            activity.mBinding.cameraViewSecond.getHolder().getSurface() != null) {
+            activity.mCameraHelper.addSurface(activity.mBinding.cameraViewSecond.getHolder().getSurface(), false);
         }
-        activity.mCameraHelper.addSurface(activity.mBinding.cameraViewSecond.getHolder().getSurface(), false);
-        thumbnailContainer.setVisibility(View.VISIBLE);
-        dragButton.setVisibility(View.VISIBLE);
+
         showThumbnailWindow();
         resetIndicatorToCenter();
-
-        thumbnailContainer.post(() -> {
-            // Get thumbnailContainer's position and dimensions
-            float thumbnailX = thumbnailContainer.getX();
-            float thumbnailY = thumbnailContainer.getY();
-            float thumbnailWidth = thumbnailContainer.getWidth();
-            float dragButtonWidth = dragButton.getWidth();
-
-            // Calculate the center X position relative to thumbnailContainer
-            float thumbnailCenterX = thumbnailX + (thumbnailWidth / 2f);
-
-            // Position dragButton at the top center of thumbnailContainer
-            float dragButtonX = thumbnailCenterX - (dragButtonWidth / 2f); // Center horizontally relative to thumbnailContainer
-            float dragButtonY = thumbnailY - dragButton.getHeight() - (4 * activity.getResources().getDisplayMetrics().density); // Slightly above thumbnailContainer
-
-            dragButton.setX(dragButtonX);
-            dragButton.setY(dragButtonY);
-
-            Log.d("enlargeView", "thumbnailX=" + thumbnailX + ", thumbnailY=" + thumbnailY + ", thumbnailWidth=" + thumbnailWidth + ", dragButtonX=" + dragButtonX + ", dragButtonY=" + dragButtonY);
-        });
     }
 
 
     public static void zoomOut(){
-        // Guard against portrait mode where landscape views don't exist
+        // Guard against missing views
         if (thumbnailContainer == null || dragButton == null || activity == null) {
-            Log.d("ZoomLayoutDeal", "zoomOut: views not initialized (portrait mode), skipping");
+            Log.d("ZoomLayoutDeal", "zoomOut: views not initialized, skipping");
             return;
         }
+        // Reset drawer layout if it exists (landscape mode)
         if (drawerLayout != null) {
             drawerLayout.setScaleX(1f);
             drawerLayout.setScaleY(1f);
             drawerLayout.scrollTo(0, 0);
+        }
+        // Reset portrait zoom if in portrait mode (check if viewMainPreview exists)
+        if (activity.mBinding != null && activity.mBinding.viewMainPreview != null) {
+            activity.mBinding.viewMainPreview.setTransform(null);
         }
         if (activity.cameraViewSecond != null && activity.cameraViewSecond.getHolder() != null
                 && activity.cameraViewSecond.getHolder().getSurface() != null && mCameraHelper != null) {
@@ -283,6 +334,12 @@ public class ZoomLayoutDeal {
     }
 
     private static void resetIndicatorToCenter() {
+        // Guard against null views
+        if (activity == null || activity.cameraViewSecond == null || indicatorView == null) {
+            Log.d("ZoomLayoutDeal", "resetIndicatorToCenter: views not available, skipping");
+            return;
+        }
+
         // Calculate center position of cameraViewSecond
         float centerX = activity.cameraViewSecond.getWidth() / 2f - indicatorView.getWidth() / 2f;
         float centerY = activity.cameraViewSecond.getHeight() / 2f - indicatorView.getHeight() / 2f;
@@ -298,41 +355,113 @@ public class ZoomLayoutDeal {
     }
 
     private static void showThumbnailWindow() {
+        // Guard against null views before calling sub-methods
+        if (activity == null || activity.mBinding == null || activity.mBinding.viewMainPreview == null) {
+            Log.d("ZoomLayoutDeal", "showThumbnailWindow: views not available, skipping");
+            return;
+        }
 
         // Generate thumbnail
         generateThumbnail();
 
         // Set drag and drop listening
         setupThumbnailDrag();
+
+        // Initialize indicator position based on current main view state
+        initializeIndicatorPosition();
     }
 
     private static void generateThumbnail() {
+        if (activity == null || activity.mBinding == null || activity.mBinding.viewMainPreview == null) {
+            Log.e("generateThumbnail", "TextureView is not available");
+            return;
+        }
+
         if (!activity.mBinding.viewMainPreview.isAvailable()) {
             Log.e("generateThumbnail", "TextureView is not available");
             return;
         }
 
-        Bitmap mainBitmap = activity.mBinding.viewMainPreview.getBitmap();
-        if (mainBitmap == null) {
-            Log.e("generateThumbnail", "Failed to get bitmap from TextureView");
+        try {
+            Bitmap mainBitmap = activity.mBinding.viewMainPreview.getBitmap();
+            if (mainBitmap == null) {
+                Log.e("generateThumbnail", "Failed to get bitmap from TextureView");
+                return;
+            }
+        } catch (Exception e) {
+            Log.e("generateThumbnail", "Exception getting bitmap: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Initialize indicator position based on current main view zoom/pan state
+     * This ensures the green box shows the correct area of the main view
+     */
+    private static void initializeIndicatorPosition() {
+        if (indicatorView == null || activity == null || activity.cameraViewSecond == null ||
+            activity.mBinding == null || activity.mBinding.viewMainPreview == null) {
             return;
         }
 
+        // Get current zoom scale from CustomTouchListener
+        float currentScale = getCurrentPortraitZoomScale();
+
+        // Calculate indicator size based on zoom scale
+        // When zoomed in, the visible area is smaller, so indicator should be smaller
+        float indicatorWidth = activity.cameraViewSecond.getWidth() / currentScale;
+        float indicatorHeight = activity.cameraViewSecond.getHeight() / currentScale;
+
+        // Constrain indicator size
+        indicatorWidth = Math.max(20f, Math.min(indicatorWidth, activity.cameraViewSecond.getWidth()));
+        indicatorHeight = Math.max(20f, Math.min(indicatorHeight, activity.cameraViewSecond.getHeight()));
+
+        indicatorView.getLayoutParams().width = (int) indicatorWidth;
+        indicatorView.getLayoutParams().height = (int) indicatorHeight;
+        indicatorView.requestLayout();
+
+        // Position indicator at center initially
+        resetIndicatorToCenter();
+    }
+
+    /**
+     * Get current portrait zoom scale from CustomTouchListener
+     */
+    private static float getCurrentPortraitZoomScale() {
+        return com.openterface.AOS.serial.CustomTouchListener.getPortraitZoomScale();
     }
 
     @SuppressLint("ClickableViewAccessibility")
     private static void setupThumbnailDrag() {
+        // Guard against null views
+        if (activity == null || activity.cameraViewSecond == null) {
+            Log.d("ZoomLayoutDeal", "setupThumbnailDrag: cameraViewSecond not available, skipping");
+            return;
+        }
+
         activity.cameraViewSecond.setOnTouchListener((v, event) -> {
             switch (event.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN:
+                    // Record the offset between touch point and indicator position
+                    // to prevent jumping when starting to drag
+                    if (indicatorView != null) {
+                        dragOffsetX = event.getX() - indicatorView.getX();
+                        dragOffsetY = event.getY() - indicatorView.getY();
+                    }
+                    // Update indicator position with offset preserved
                     updateIndicatorPosition(event.getX(), event.getY());
-                    syncMainViewPosition(event.getX(), event.getY());
-//                    indicatorView.setVisibility(View.VISIBLE);
+                    syncMainViewPosition(
+                        indicatorView.getX() + indicatorView.getWidth() / 2f,
+                        indicatorView.getY() + indicatorView.getHeight() / 2f
+                    );
                     return true;
 
                 case MotionEvent.ACTION_MOVE:
+                    // Dragging - update position with offset preserved
                     updateIndicatorPosition(event.getX(), event.getY());
-                    syncMainViewPosition(event.getX(), event.getY());
+                    syncMainViewPosition(
+                        indicatorView.getX() + indicatorView.getWidth() / 2f,
+                        indicatorView.getY() + indicatorView.getHeight() / 2f
+                    );
                     return true;
 
                 case MotionEvent.ACTION_UP:
@@ -351,21 +480,128 @@ public class ZoomLayoutDeal {
     }
 
     private static void updateIndicatorPosition(float x, float y) {
-        // Center display indicator
-        float indicatorX = x - indicatorView.getWidth()/2f;
-        float indicatorY = y - indicatorView.getHeight()/2f;
-        indicatorView.setX(Math.max(0, Math.min(
-                indicatorX,
-                activity.cameraViewSecond.getWidth() - indicatorView.getWidth()
-        )));
+        // Guard against null views
+        if (indicatorView == null || activity == null || activity.cameraViewSecond == null) {
+            return;
+        }
 
-        indicatorView.setY(Math.max(0, Math.min(
-                indicatorY,
-                activity.cameraViewSecond.getHeight() - indicatorView.getHeight()
-        )));
+        // Get the dimensions
+        float pipWidth = activity.cameraViewSecond.getWidth();
+        float pipHeight = activity.cameraViewSecond.getHeight();
+        float indicatorWidth = indicatorView.getWidth();
+        float indicatorHeight = indicatorView.getHeight();
+
+        // Calculate the position using the drag offset to prevent jumping
+        float indicatorX = x - dragOffsetX;
+        float indicatorY = y - dragOffsetY;
+
+        // Clamp the position to keep the indicator within bounds
+        float maxX = pipWidth - indicatorWidth;
+        float maxY = pipHeight - indicatorHeight;
+
+        indicatorX = Math.max(0, Math.min(indicatorX, maxX));
+        indicatorY = Math.max(0, Math.min(indicatorY, maxY));
+
+        // Update position directly (no animation for immediate response)
+        indicatorView.setX(indicatorX);
+        indicatorView.setY(indicatorY);
     }
 
+    /**
+     * Update the indicator position and size based on the main view's zoom and pan state
+     * This should be called whenever the main view is zoomed or panned
+     *
+     * The math:
+     * - Main view is scaled around its center by zoomScale
+     * - translateX shifts the scaled view (positive = shift right)
+     * - When translateX = 0, the center of the content is visible
+     * - When translateX = -maxTranslate, the left edge is visible (indicator at left of PiP)
+     * - When translateX = +maxTranslate, the right edge is visible (indicator at right of PiP)
+     *
+     * @param zoomScale Current zoom scale of the main view (1.0 = no zoom)
+     * @param translateX Horizontal translation of the main view
+     * @param translateY Vertical translation of the main view
+     */
+    public static void updateIndicatorFromMainView(float zoomScale, float translateX, float translateY) {
+        if (indicatorView == null || activity == null || activity.cameraViewSecond == null ||
+            activity.mBinding == null || activity.mBinding.viewMainPreview == null) {
+            return;
+        }
+
+        // Use the chip's actual resolution (mPreviewWidth x mPreviewHeight)
+        int chipWidth = activity.getPreviewWidth();
+        int chipHeight = activity.getPreviewHeight();
+
+        // If chip resolution is not available yet, use default 1920x1080
+        if (chipWidth <= 0 || chipHeight <= 0) {
+            chipWidth = 1920;
+            chipHeight = 1080;
+        }
+
+        float pipWidth = activity.cameraViewSecond.getWidth();
+        float pipHeight = activity.cameraViewSecond.getHeight();
+
+        if (pipWidth <= 0 || pipHeight <= 0) return;
+
+        // Calculate indicator size based on zoom scale
+        float indicatorWidth = pipWidth / zoomScale;
+        float indicatorHeight = pipHeight / zoomScale;
+        indicatorWidth = Math.max(20f, Math.min(indicatorWidth, pipWidth));
+        indicatorHeight = Math.max(20f, Math.min(indicatorHeight, pipHeight));
+
+        // Update indicator size
+        ViewGroup.LayoutParams params = indicatorView.getLayoutParams();
+        params.width = (int) indicatorWidth;
+        params.height = (int) indicatorHeight;
+        indicatorView.setLayoutParams(params);
+
+        if (zoomScale <= 1.0f) {
+            // Not zoomed, center the indicator
+            indicatorView.setX((pipWidth - indicatorWidth) / 2f);
+            indicatorView.setY((pipHeight - indicatorHeight) / 2f);
+            return;
+        }
+
+        // Use the chip's actual resolution to calculate max translation
+        // The chip resolution is the actual video content dimensions
+        float maxTranslateX = (chipWidth * (zoomScale - 1f)) / 2f;
+        float maxTranslateY = (chipHeight * (zoomScale - 1f)) / 2f;
+
+        float normalizedX = 0.5f;
+        float normalizedY = 0.5f;
+
+        if (maxTranslateX > 0) {
+            normalizedX = 0.5f - (translateX / (2f * maxTranslateX));
+            normalizedX = Math.max(0, Math.min(normalizedX, 1));
+        }
+
+        if (maxTranslateY > 0) {
+            normalizedY = 0.5f - (translateY / (2f * maxTranslateY));
+            normalizedY = Math.max(0, Math.min(normalizedY, 1));
+        }
+
+        // The indicator center should be at normalizedX * pipWidth
+        float indicatorX = normalizedX * pipWidth - indicatorWidth / 2f;
+        float indicatorY = normalizedY * pipHeight - indicatorHeight / 2f;
+
+        // Clamp to bounds
+        indicatorX = Math.max(0, Math.min(indicatorX, pipWidth - indicatorWidth));
+        indicatorY = Math.max(0, Math.min(indicatorY, pipHeight - indicatorHeight));
+
+        indicatorView.setX(indicatorX);
+        indicatorView.setY(indicatorY);
+    }
+
+
     private static void syncMainViewPosition(float thumbX, float thumbY) {
+        // Guard against null views - especially drawerLayout which is null in portrait mode
+        if (indicatorView == null || thumbnailContainer == null || activity == null ||
+            activity.mBinding == null || activity.mBinding.viewMainPreview == null ||
+            activity.cameraViewSecond == null) {
+            Log.d("ZoomLayoutDeal", "syncMainViewPosition: views not available, skipping");
+            return;
+        }
+
         int[] location = new int[2];
         indicatorView.getLocationInWindow(location);
 
@@ -380,39 +616,100 @@ public class ZoomLayoutDeal {
 
         Log.d("syncMainViewPosition", "sizeThumbX: " + thumbX + " sizeThumbY: " + thumbY);
         // Calculate where the main view should scroll to
-        float currentScale = drawerLayout.getScaleX();
         ratioX = (float) (activity.mBinding.viewMainPreview.getWidth()) / activity.cameraViewSecond.getWidth();
         ratioY = (float) (activity.mBinding.viewMainPreview.getHeight()) / activity.cameraViewSecond.getHeight();
-        Log.d("syncMainViewPosition", "currentScale: " + currentScale);
-        Log.d("Center Coordinates", "ratioX: " + ratioX + ", ratioY: " + ratioY);
+        Log.d("syncMainViewPosition", "ratioX: " + ratioX + ", ratioY: " + ratioY);
 
         float mainX = thumbX * ratioX;
         float mainY = thumbY * ratioY;
 
-        Log.d("syncMainViewPosition", "mainX: " + mainX + " mainY: " + mainY);
-        // Update the main view location
-        Log.d("syncMainViewPosition", "mainX - drawerLayout.getWidth()/2f: " + (mainX - drawerLayout.getWidth()/2f));
-        Log.d("syncMainViewPosition", "mainY - drawerLayout.getHeight()/2f: " + (mainY - drawerLayout.getHeight()/2f));
-        if((mainX - drawerLayout.getWidth()/2f) < -(drawerLayout.getWidth()/ ratioX)){
-            setMaxViewX = (int)(-(drawerLayout.getWidth()/ ratioX));
-        } else if ((mainX - drawerLayout.getWidth()/2f) > (drawerLayout.getWidth()/ ratioX)) {
-            setMaxViewX = (int)((drawerLayout.getWidth()/ ratioX));
-        }else {
-            setMaxViewX = (int)(mainX - drawerLayout.getWidth()/2f);
-        }
+        // In landscape mode, use drawerLayout to scroll the main view
+        if (drawerLayout != null) {
+            float currentScale = drawerLayout.getScaleX();
+            Log.d("syncMainViewPosition", "currentScale: " + currentScale);
+            Log.d("Center Coordinates", "ratioX: " + ratioX + ", ratioY: " + ratioY);
 
-        if((mainY - drawerLayout.getHeight()/2f) < -(drawerLayout.getHeight()/ ratioY)){
-            setMaxViewY = (int)(-(drawerLayout.getHeight()/ ratioY));
-        } else if ((mainY - drawerLayout.getHeight()/2f) > (drawerLayout.getHeight()/ ratioY)) {
-            setMaxViewY = (int)((drawerLayout.getHeight()/ ratioY));
-        }else {
-            setMaxViewY = (int)(mainY - drawerLayout.getHeight()/2f);
+            Log.d("syncMainViewPosition", "mainX: " + mainX + " mainY: " + mainY);
+            // Update the main view location
+            Log.d("syncMainViewPosition", "mainX - drawerLayout.getWidth()/2f: " + (mainX - drawerLayout.getWidth()/2f));
+            Log.d("syncMainViewPosition", "mainY - drawerLayout.getHeight()/2f: " + (mainY - drawerLayout.getHeight()/2f));
+            if((mainX - drawerLayout.getWidth()/2f) < -(drawerLayout.getWidth()/ ratioX)){
+                setMaxViewX = (int)(-(drawerLayout.getWidth()/ ratioX));
+            } else if ((mainX - drawerLayout.getWidth()/2f) > (drawerLayout.getWidth()/ ratioX)) {
+                setMaxViewX = (int)((drawerLayout.getWidth()/ ratioX));
+            }else {
+                setMaxViewX = (int)(mainX - drawerLayout.getWidth()/2f);
+            }
+
+            if((mainY - drawerLayout.getHeight()/2f) < -(drawerLayout.getHeight()/ ratioY)){
+                setMaxViewY = (int)(-(drawerLayout.getHeight()/ ratioY));
+            } else if ((mainY - drawerLayout.getHeight()/2f) > (drawerLayout.getHeight()/ ratioY)) {
+                setMaxViewY = (int)((drawerLayout.getHeight()/ ratioY));
+            }else {
+                setMaxViewY = (int)(mainY - drawerLayout.getHeight()/2f);
+            }
+            Log.d("syncMainViewPosition", "setMaxViewX: " + setMaxViewX + " setMaxViewY: " + setMaxViewY);
+            drawerLayout.scrollTo(
+                    (setMaxViewX),
+                    (setMaxViewY)
+            );
+        } else {
+            // In portrait mode, use CustomTouchListener's zoom state
+            float currentZoomScale = com.openterface.AOS.serial.CustomTouchListener.getPortraitZoomScale();
+
+            if (currentZoomScale <= 1.0f) {
+                return;
+            }
+
+            // Use the chip's actual resolution (mPreviewWidth x mPreviewHeight)
+            int chipWidth = activity.getPreviewWidth();
+            int chipHeight = activity.getPreviewHeight();
+
+            // If chip resolution is not available yet, use default 1920x1080
+            if (chipWidth <= 0 || chipHeight <= 0) {
+                chipWidth = 1920;
+                chipHeight = 1080;
+            }
+
+            float pipWidth = activity.cameraViewSecond.getWidth();
+            float pipHeight = activity.cameraViewSecond.getHeight();
+
+            // Calculate indicator center in PiP coordinates
+            float indicatorCenterX = indicatorView.getX() + indicatorView.getWidth() / 2f;
+            float indicatorCenterY = indicatorView.getY() + indicatorView.getHeight() / 2f;
+
+            // Normalize: 0 = left/top edge, 0.5 = center, 1 = right/bottom edge
+            float normalizedX = pipWidth > 0 ? indicatorCenterX / pipWidth : 0.5f;
+            float normalizedY = pipHeight > 0 ? indicatorCenterY / pipHeight : 0.5f;
+
+            // Clamp to valid range
+            normalizedX = Math.max(0, Math.min(normalizedX, 1));
+            normalizedY = Math.max(0, Math.min(normalizedY, 1));
+
+            // Convert normalized position to main view translation
+            // Use chip's actual resolution for max translation calculation
+            float maxTranslateX = (chipWidth * (currentZoomScale - 1f)) / 2f;
+            float maxTranslateY = (chipHeight * (currentZoomScale - 1f)) / 2f;
+
+            float newTranslateX = (0.5f - normalizedX) * 2f * maxTranslateX;
+            float newTranslateY = (0.5f - normalizedY) * 2f * maxTranslateY;
+
+            // Clamp to valid range
+            newTranslateX = Math.max(-maxTranslateX, Math.min(maxTranslateX, newTranslateX));
+            newTranslateY = Math.max(-maxTranslateY, Math.min(maxTranslateY, newTranslateY));
+
+            // Update CustomTouchListener's state and apply transform
+            com.openterface.AOS.serial.CustomTouchListener.setPortraitPan(newTranslateX, newTranslateY);
+            com.openterface.AOS.serial.CustomTouchListener.applyCurrentPortraitTransform();
+
+            // Store for setMouseLocation calculation
+            setMaxViewX = (int) newTranslateX;
+            setMaxViewY = (int) newTranslateY;
+
+            Log.d("syncMainViewPosition", "Portrait mode: normalizedX=" + normalizedX + " normalizedY=" + normalizedY
+                + " translateX=" + newTranslateX + " translateY=" + newTranslateY
+                + " chipWidth=" + chipWidth + " chipHeight=" + chipHeight);
         }
-        Log.d("syncMainViewPosition", "setMaxViewX: " + setMaxViewX + " setMaxViewY: " + setMaxViewY);
-        drawerLayout.scrollTo(
-                (setMaxViewX),
-                (setMaxViewY)
-        );
     }
 
 }

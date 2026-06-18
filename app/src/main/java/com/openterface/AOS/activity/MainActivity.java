@@ -188,6 +188,20 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
      */
     private int mPreviewHeight = DEFAULT_HEIGHT;
 
+    /**
+     * Get the camera preview width (chip resolution)
+     */
+    public int getPreviewWidth() {
+        return mPreviewWidth;
+    }
+
+    /**
+     * Get the camera preview height (chip resolution)
+     */
+    public int getPreviewHeight() {
+        return mPreviewHeight;
+    }
+
     private int mPreviewRotation = 0;
 
     public ICameraHelper mCameraHelper;
