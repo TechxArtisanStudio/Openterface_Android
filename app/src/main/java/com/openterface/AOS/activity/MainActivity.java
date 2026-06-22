@@ -2895,6 +2895,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
 
     /**
      * Setup IME module button listeners
+     * Updated: TextHidSender for HID send, clear/restore toggle, saved text management, IME insets
      */
     private boolean isSendingText = false;
     private int sendProgress = 0;
@@ -2902,139 +2903,224 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
     private ProgressBar imeProgressBar;
     private TextView imeProgressLabel;
 
+    // Clear/Restore undo
+    private String undoSnapshot;
+    private boolean undoClearEligible;
+
+    // References for Send/Stop toggle
+    private java.util.concurrent.atomic.AtomicBoolean cancelSend;
+    private android.widget.Button imeSendButton;
+    private android.widget.Button imeClearButton;
+    private android.widget.Button imeSaveButton;
+    private android.widget.Button imeSavedTextsButton;
+    private EditText imeTextInput;
+
+    // Saved text repository
+    private com.openterface.AOS.utils.SavedTextRepository savedTextRepo;
+
     private void setupImeModule(View view) {
-        android.widget.Button sendButton = view.findViewById(R.id.ime_send_button);
-        android.widget.Button clearButton = view.findViewById(R.id.ime_clear_button);
-        android.widget.Button saveButton = view.findViewById(R.id.ime_save_button);
-        android.widget.Button savedTextsButton = view.findViewById(R.id.ime_saved_texts_button);
-        EditText textInput = view.findViewById(R.id.ime_text_input);
+        imeSendButton = view.findViewById(R.id.ime_send_button);
+        imeClearButton = view.findViewById(R.id.ime_clear_button);
+        imeSaveButton = view.findViewById(R.id.ime_save_button);
+        imeSavedTextsButton = view.findViewById(R.id.ime_saved_texts_button);
+        imeTextInput = view.findViewById(R.id.ime_text_input);
         imeProgressBar = view.findViewById(R.id.ime_send_progress);
         imeProgressLabel = view.findViewById(R.id.ime_send_progress_label);
 
-        if (sendButton != null && textInput != null) {
-            sendButton.setOnClickListener(v -> {
-                String text = textInput.getText().toString();
+        cancelSend = new java.util.concurrent.atomic.AtomicBoolean(false);
+        savedTextRepo = new com.openterface.AOS.utils.SavedTextRepository(this);
+
+        // --- Send button ---
+        if (imeSendButton != null && imeTextInput != null) {
+            imeSendButton.setOnClickListener(v -> {
+                if (isSendingText) {
+                    // Cancel send
+                    cancelSend.set(true);
+                    return;
+                }
+                String text = imeTextInput.getText().toString();
                 if (text.isEmpty()) {
                     Toast.makeText(this, "请输入要发送的文本", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                if (isSendingText) {
-                    // Cancel send
-                    isSendingText = false;
-                    hideSendProgress();
-                    Toast.makeText(this, "已取消发送", Toast.LENGTH_SHORT).show();
-                    return;
+                startSend(text);
+            });
+        }
+
+        // --- Clear / Restore button ---
+        if (imeClearButton != null && imeTextInput != null) {
+            imeClearButton.setOnClickListener(v -> {
+                if (isSendingText) return;
+                if (undoClearEligible && undoSnapshot != null) {
+                    // Restore
+                    imeTextInput.setText(undoSnapshot);
+                    imeTextInput.setSelection(undoSnapshot.length());
+                    undoSnapshot = null;
+                    undoClearEligible = false;
+                    updateClearButtonIcon();
+                } else {
+                    String current = imeTextInput.getText().toString();
+                    if (current.isEmpty()) return;
+                    undoSnapshot = current;
+                    undoClearEligible = true;
+                    imeTextInput.setText("");
+                    updateClearButtonIcon();
                 }
-                sendTextViaHID(text, textInput);
             });
         }
 
-        if (clearButton != null && textInput != null) {
-            clearButton.setOnClickListener(v -> {
-                textInput.setText("");
-                Toast.makeText(this, "已清空文本", Toast.LENGTH_SHORT).show();
+        // --- Text watcher: invalidate undo on new text ---
+        if (imeTextInput != null) {
+            imeTextInput.addTextChangedListener(new android.text.TextWatcher() {
+                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+                @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+                @Override
+                public void afterTextChanged(android.text.Editable s) {
+                    if (undoClearEligible && s != null && s.length() > 0) {
+                        // User typed something new, invalidate undo
+                        undoClearEligible = false;
+                        undoSnapshot = null;
+                        updateClearButtonIcon();
+                    }
+                }
             });
         }
 
-        if (saveButton != null && textInput != null) {
-            saveButton.setOnClickListener(v -> {
-                String text = textInput.getText().toString();
+        // --- Save button ---
+        if (imeSaveButton != null && imeTextInput != null) {
+            imeSaveButton.setOnClickListener(v -> {
+                if (isSendingText) return;
+                String text = imeTextInput.getText().toString();
                 if (text.isEmpty()) {
                     Toast.makeText(this, "文本为空，无法保存", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                // Save to SharedPreferences
-                android.content.SharedPreferences prefs = getSharedPreferences("SavedTexts", MODE_PRIVATE);
-                String saved = prefs.getString("saved_text", "");
-                saved += (saved.isEmpty() ? "" : "\n") + text;
-                prefs.edit().putString("saved_text", saved).apply();
-                Toast.makeText(this, "文本已保存", Toast.LENGTH_SHORT).show();
+                com.openterface.AOS.model.SavedTextItem item = savedTextRepo.addFromPlainText(text);
+                if (item != null) {
+                    Toast.makeText(this, "文本已保存", Toast.LENGTH_SHORT).show();
+                }
             });
         }
 
-        if (savedTextsButton != null && textInput != null) {
-            savedTextsButton.setOnClickListener(v -> {
-                android.content.SharedPreferences prefs = getSharedPreferences("SavedTexts", MODE_PRIVATE);
-                String saved = prefs.getString("saved_text", "");
-                if (saved.isEmpty()) {
-                    Toast.makeText(this, "暂无已保存的文本", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                // Display list of saved texts
-                new android.app.AlertDialog.Builder(this)
-                    .setTitle("已保存的文本")
-                    .setMessage(saved)
-                    .setPositiveButton("关闭", null)
-                    .setNeutralButton("清空所有", (dialog, which) -> {
-                        prefs.edit().remove("saved_text").apply();
-                        Toast.makeText(this, "已清空所有保存的文本", Toast.LENGTH_SHORT).show();
-                    })
-                    .show();
+        // --- Saved texts button ---
+        if (imeSavedTextsButton != null) {
+            imeSavedTextsButton.setOnClickListener(v -> {
+                if (isSendingText) return;
+                showSavedTextsDialog();
             });
+        }
+
+        // --- IME insets handling ---
+        setupImeInsets(view);
+
+        // Initial button state
+        updateClearButtonIcon();
+    }
+
+    private void setupImeInsets(View root) {
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(root, (v, windowInsets) -> {
+            androidx.core.graphics.Insets bars = windowInsets.getInsets(androidx.core.view.WindowInsetsCompat.Type.navigationBars());
+            androidx.core.graphics.Insets cut = windowInsets.getInsets(androidx.core.view.WindowInsetsCompat.Type.displayCutout());
+            androidx.core.graphics.Insets ime = windowInsets.getInsets(androidx.core.view.WindowInsetsCompat.Type.ime());
+            int leftInset = Math.max(bars.left, cut.left);
+            int rightInset = Math.max(bars.right, cut.right);
+            int bottomInset = Math.max(ime.bottom, Math.max(bars.bottom, cut.bottom));
+
+            root.setPadding(
+                root.getPaddingLeft(),
+                root.getPaddingTop(),
+                root.getPaddingRight(),
+                bottomInset
+            );
+            return windowInsets;
+        });
+        root.post(() -> androidx.core.view.ViewCompat.requestApplyInsets(root));
+    }
+
+    private void updateClearButtonIcon() {
+        if (imeClearButton == null) return;
+        if (undoClearEligible) {
+            imeClearButton.setText("↩");
+            imeClearButton.setContentDescription("恢复文本");
+        } else {
+            imeClearButton.setText("Clear");
+            imeClearButton.setContentDescription("清空文本");
         }
     }
 
-    private void sendTextViaHID(String text, EditText textInput) {
+    private void startSend(String text) {
+        if (isSendingText) return;
         isSendingText = true;
+        cancelSend.set(false);
         sendProgress = 0;
-        sendTotal = text.length();
+        sendTotal = com.openterface.AOS.utils.TextHidSender.countSendUnits(text);
+        if (sendTotal <= 0) sendTotal = text.length();
+
+        // Disable editor
+        if (imeTextInput != null) {
+            imeTextInput.setEnabled(false);
+        }
+
+        // Show progress
         showSendProgress();
 
+        // Switch send button to stop
+        if (imeSendButton != null) {
+            imeSendButton.setText("Stop");
+        }
+
+        final String sendText = text;
         new Thread(() -> {
-            for (int i = 0; i < sendTotal; i++) {
-                if (!isSendingText) {
-                    // Was cancelled
-                    break;
-                }
-                char c = text.charAt(i);
-                final int index = i;
-
-                // Send HID data and update progress on the main thread
-                runOnUiThread(() -> {
-                    if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
-                        // Convert character to keyboard scan code and send
-                        String scanCode = charToScanCode(c);
-                        if (scanCode != null) {
-                            KeyBoardManager.sendKeyBoardData(null, scanCode);
-                            // Send release event
-                            try {
-                                Thread.sleep(50);
-                            } catch (InterruptedException ignored) {}
-                            KeyBoardManager.sendKeyBoardData(null, "00");
-                        }
+            com.openterface.AOS.utils.TextHidSender.Result result;
+            try {
+                result = com.openterface.AOS.utils.TextHidSender.send(
+                    sendText,
+                    cancelSend,
+                    (completed, total) -> {
+                        // Progress callback - update UI on main thread
+                        runOnUiThread(() -> {
+                            sendProgress = completed;
+                            updateSendProgress();
+                        });
                     }
-                    sendProgress = index + 1;
-                    updateSendProgress();
-                });
-
-                try {
-                    // Control send rate, 100ms interval per character
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    break;
-                }
+                );
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                result = com.openterface.AOS.utils.TextHidSender.Result.CANCELLED;
             }
 
-            // Send completed
+            // Send complete
+            final com.openterface.AOS.utils.TextHidSender.Result finalResult = result;
             runOnUiThread(() -> {
-                if (isSendingText) {
-                    Toast.makeText(MainActivity.this, "文本发送完成", Toast.LENGTH_SHORT).show();
-                    textInput.setText("");
-                    hideSendProgress();
-                }
                 isSendingText = false;
+                if (imeTextInput != null) {
+                    imeTextInput.setEnabled(true);
+                }
+                hideSendProgress();
+
+                if (finalResult == com.openterface.AOS.utils.TextHidSender.Result.CANCELLED) {
+                    Toast.makeText(MainActivity.this, "已取消发送", Toast.LENGTH_SHORT).show();
+                } else if (finalResult == com.openterface.AOS.utils.TextHidSender.Result.COMPLETED) {
+                    Toast.makeText(MainActivity.this, "文本发送完成", Toast.LENGTH_SHORT).show();
+                    // Do NOT clear editor after send (保留文本)
+                }
+
+                // Reset send button
+                if (imeSendButton != null) {
+                    imeSendButton.setText("Send");
+                }
             });
-        }).start();
+        }, "ime-send").start();
     }
 
     private void showSendProgress() {
         if (imeProgressBar != null) {
-            imeProgressBar.setVisibility(android.view.View.VISIBLE);
+            imeProgressBar.setVisibility(View.VISIBLE);
             imeProgressBar.setMax(sendTotal);
             imeProgressBar.setProgress(0);
         }
         if (imeProgressLabel != null) {
-            imeProgressLabel.setVisibility(android.view.View.VISIBLE);
+            imeProgressLabel.setVisibility(View.VISIBLE);
             imeProgressLabel.setText("0/" + sendTotal);
         }
     }
@@ -3044,47 +3130,93 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
             imeProgressBar.setProgress(sendProgress);
         }
         if (imeProgressLabel != null) {
-            imeProgressLabel.setText(sendProgress + "/" + sendTotal);
+            int remaining = sendTotal - sendProgress;
+            imeProgressLabel.setText(remaining + " left");
         }
     }
 
     private void hideSendProgress() {
         if (imeProgressBar != null) {
-            imeProgressBar.setVisibility(android.view.View.GONE);
+            imeProgressBar.setVisibility(View.GONE);
         }
         if (imeProgressLabel != null) {
-            imeProgressLabel.setVisibility(android.view.View.GONE);
+            imeProgressLabel.setVisibility(View.GONE);
         }
     }
 
-    private String charToScanCode(char c) {
-        // Simplified character-to-HID-scan-code mapping
-        // Actual implementation requires CH9329MSKBMap
-        if (c >= 'a' && c <= 'z') {
-            return String.format("%02X", 0x04 + (c - 'a'));
-        } else if (c >= 'A' && c <= 'Z') {
-            // Need Shift + letter
-            return String.format("%02X", 0x04 + (c - 'A'));
-        } else if (c >= '1' && c <= '9') {
-            return String.format("%02X", 0x1E + (c - '1'));
-        } else if (c == '0') {
-            return "27";
-        } else if (c == ' ') {
-            return "2C";
-        } else if (c == '\n') {
-            return "28"; // Enter
-        } else if (c == '.') {
-            return "37";
-        } else if (c == ',') {
-            return "36";
-        } else if (c == '!') {
-            return "1E"; // Shift + 1
-        } else if (c == '?') {
-            return "38"; // Shift + /
+    private void showSavedTextsDialog() {
+        java.util.List<com.openterface.AOS.model.SavedTextItem> items = savedTextRepo.loadSorted();
+        if (items.isEmpty()) {
+            Toast.makeText(this, "暂无已保存的文本", Toast.LENGTH_SHORT).show();
+            return;
         }
-        // More character mappings...
-        Log.w(TAG, "不支持的字符: " + c);
-        return null;
+
+        String[] titles = new String[items.size()];
+        for (int i = 0; i < items.size(); i++) {
+            com.openterface.AOS.model.SavedTextItem item = items.get(i);
+            String prefix = item.pinned ? "📌 " : "";
+            String title = item.title != null ? item.title : "(untitled)";
+            String preview = item.content != null && item.content.length() > 40
+                ? item.content.substring(0, 40) + "..."
+                : item.content;
+            titles[i] = prefix + title + "\n" + preview;
+        }
+
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("已保存的文本")
+            .setItems(titles, (dialog, which) -> {
+                com.openterface.AOS.model.SavedTextItem selected = items.get(which);
+                showSavedTextItemActions(selected);
+            })
+            .setNegativeButton("关闭", null)
+            .show();
+    }
+
+    private void showSavedTextItemActions(com.openterface.AOS.model.SavedTextItem item) {
+        String[] actions = new String[]{"加载到编辑器", "直接发送", "重命名", "置顶/取消置顶", "删除"};
+        new android.app.AlertDialog.Builder(this)
+            .setTitle(item.title != null ? item.title : "(untitled)")
+            .setItems(actions, (dialog, which) -> {
+                switch (which) {
+                    case 0: // Load to editor
+                        if (imeTextInput != null && item.content != null) {
+                            imeTextInput.setText(item.content);
+                            imeTextInput.setSelection(item.content.length());
+                        }
+                        break;
+                    case 1: // Send directly
+                        if (!isSendingText && item.content != null) {
+                            startSend(item.content);
+                        }
+                        break;
+                    case 2: // Rename
+                        EditText input = new EditText(this);
+                        input.setText(item.title != null ? item.title : "");
+                        new android.app.AlertDialog.Builder(this)
+                            .setTitle("重命名")
+                            .setView(input)
+                            .setPositiveButton("确定", (d, w) -> {
+                                String newTitle = input.getText().toString().trim();
+                                if (!newTitle.isEmpty()) {
+                                    savedTextRepo.updateTitle(item.id, newTitle);
+                                    Toast.makeText(this, "已重命名", Toast.LENGTH_SHORT).show();
+                                }
+                            })
+                            .setNegativeButton("取消", null)
+                            .show();
+                        break;
+                    case 3: // Pin/Unpin
+                        savedTextRepo.setPinned(item.id, !item.pinned);
+                        Toast.makeText(this, item.pinned ? "已取消置顶" : "已置顶", Toast.LENGTH_SHORT).show();
+                        break;
+                    case 4: // Delete
+                        savedTextRepo.delete(item.id);
+                        Toast.makeText(this, "已删除", Toast.LENGTH_SHORT).show();
+                        break;
+                }
+            })
+            .setNegativeButton("返回", null)
+            .show();
     }
 
     /**

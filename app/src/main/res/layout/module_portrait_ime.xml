@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- IME/Input module for portrait mode - Text input + clear/save/saved/send buttons -->
+<!-- Updated: NestedScrollView keeps editor scrollable; IME insets keep buttons above keyboard -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/ime_module_root"
@@ -7,27 +8,43 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@color/background_light"
-    android:padding="12dp"
+    android:clipToPadding="false"
+    android:paddingStart="12dp"
+    android:paddingTop="12dp"
+    android:paddingEnd="12dp"
     tools:context="com.openterface.AOS.activity.MainActivity">
 
-    <!-- Text Input Area -->
-    <EditText
-        android:id="@+id/ime_text_input"
+    <!-- Scrollable editor area: EditText inside NestedScrollView -->
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:gravity="top|start"
-        android:hint="Enter text to send to host..."
-        android:inputType="textMultiLine"
-        android:padding="12dp"
-        android:background="@drawable/basic_compose_editor_background"
-        android:textColor="@color/text_primary"
-        android:textColorHint="@color/text_secondary"
-        android:textSize="14sp"
-        android:autofillHints=""
-        android:minLines="3"
-        android:scrollbars="vertical"
-        tools:ignore="LabelFor" />
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:scrollbars="vertical">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <EditText
+                android:id="@+id/ime_text_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="top|start"
+                android:hint="Enter text to send to host..."
+                android:inputType="textMultiLine"
+                android:padding="12dp"
+                android:background="@drawable/basic_compose_editor_background"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_secondary"
+                android:textSize="14sp"
+                android:autofillHints=""
+                android:minLines="3"
+                tools:ignore="LabelFor" />
+
+        </FrameLayout>
+    </androidx.core.widget.NestedScrollView>
 
     <!-- Send Progress Bar (hidden by default) -->
     <LinearLayout
@@ -37,7 +54,8 @@
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:layout_marginTop="4dp"
-        android:visibility="gone">
+        android:visibility="gone"
+        android:importantForAccessibility="yes">
 
         <ProgressBar
             android:id="@+id/ime_send_progress"
@@ -59,13 +77,15 @@
 
     <!-- Action Buttons: Clear | Save | Saved | Send -->
     <LinearLayout
+        android:id="@+id/ime_actions_row"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:layout_marginTop="8dp"
+        android:paddingBottom="8dp"
         android:gravity="center_vertical">
 
-        <!-- Clear button -->
+        <!-- Clear / Restore button -->
         <android.widget.Button
             android:id="@+id/ime_clear_button"
             android:layout_width="0dp"
@@ -75,7 +95,8 @@
             android:textColor="@color/key_text"
             android:background="@drawable/key_background"
             android:textSize="12sp"
-            android:layout_marginEnd="4dp" />
+            android:layout_marginEnd="4dp"
+            android:contentDescription="清空文本" />
 
         <!-- Save button -->
         <android.widget.Button
@@ -101,7 +122,7 @@
             android:textSize="12sp"
             android:layout_marginHorizontal="4dp" />
 
-        <!-- Send button -->
+        <!-- Send / Stop button -->
         <android.widget.Button
             android:id="@+id/ime_send_button"
             android:layout_width="0dp"
