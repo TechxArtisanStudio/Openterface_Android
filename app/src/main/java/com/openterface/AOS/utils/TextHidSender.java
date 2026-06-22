@@ -5,25 +5,29 @@ import android.util.Log;
 import com.openterface.AOS.serial.CH9329Function;
 import com.openterface.AOS.serial.UsbDeviceManager;
 import com.openterface.AOS.target.CH9329MSKBMap;
+import com.openterface.AOS.target.KeyBoardManager;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Sends plain text (and optional &lt;TAG&gt; tokens) as HID keystrokes via the CH9329 chip.
- * Replaces the broken charToScanCode() / sendTextViaHID() in MainActivity.
+ * Sends plain text (and optional &lt;TAG&gt; tokens) as keystrokes via serial port to CH9329 chip.
+ * Uses direct serial port writes for synchronous sequential sending.
  *
- * <p>Mirror of KeyCMD's HidTextKeystrokeSender, adapted for the AOS KeyBoardManager / CH9329MSKBMap.
+ * <p>Key characters (like 'A', '1', '!') are looked up in CH9329MSKBMap.
+ * Modifier keys (Shift for uppercase/symbols) are passed as functionKey parameter.
  */
 public final class TextHidSender {
 
     private static final String TAG = "TextHidSender";
+    private static final String MOD_NONE = "00";
+    private static final String MOD_SHIFT = "02";
 
     public enum Result {
         COMPLETED,
@@ -42,92 +46,78 @@ public final class TextHidSender {
 
     private TextHidSender() {}
 
-    // --- Character mapping (mirrors KeyCMD's HidTextKeystrokeSender.mapCharToHidCode) ---
+    // --- Character to keyName mapping ---
 
-    /** Map a printable ASCII char to its HID usage code. Returns -1 if no mapping. */
-    public static int mapCharToHidCode(char c) {
-        if (c >= 'a' && c <= 'z') return 4 + (c - 'a');
-        if (c >= 'A' && c <= 'Z') return 4 + (c - 'A');
-        if (c >= '1' && c <= '9') return 30 + (c - '1');
-        if (c == '0') return 39;
-        switch (c) {
-            case ' ':  return 0x2C;  // space
-            case '\n': return 0x28;  // enter
-            case '\t': return 0x2B;  // tab
-            case '-': case '_': return 0x2D;
-            case '=': case '+': return 0x2E;
-            case '[': case '{': return 0x2F;
-            case ']': case '}': return 0x30;
-            case '\\':case '|': return 0x31;
-            case ';': case ':': return 0x33;
-            case '\'':case '"': return 0x34;
-            case ',': case '<': return 0x36;
-            case '.': case '>': return 0x37;
-            case '/': case '?': return 0x38;
-            case '`': case '~': return 0x35;
-            case '!': return 0x1E;
-            case '@': return 0x1F;
-            case '#': return 0x20;
-            case '$': return 0x21;
-            case '%': return 0x22;
-            case '^': return 0x23;
-            case '&': return 0x24;
-            case '*': return 0x25;
-            case '(': return 0x26;
-            case ')': return 0x27;
-            default: return -1;
+    /**
+     * Map a character to its keyName in CH9329MSKBMap.
+     * Returns null if no mapping exists.
+     * The keyName is the character itself for most cases.
+     */
+    private static String charToKeyName(char c) {
+        // For letters, use the character directly (both upper and lower case are in the map)
+        if (Character.isLetter(c)) {
+            return String.valueOf(c);
         }
+        // For digits
+        if (Character.isDigit(c)) {
+            return String.valueOf(c);
+        }
+        // For special characters, check if they exist in the map
+        String keyName = String.valueOf(c);
+        Map<Object, String> keyCodeMap = CH9329MSKBMap.getKeyCodeMap();
+        if (keyCodeMap.containsKey(keyName)) {
+            return keyName;
+        }
+        return null;
     }
 
-    /** Returns true if the character needs Shift modifier (uppercase, symbols). */
-    public static boolean needsShift(char c) {
+    /** Returns true if the character needs Shift modifier. */
+    private static boolean needsShift(char c) {
+        // Uppercase letters need shift
         if (Character.isUpperCase(c)) return true;
+        // These symbols need shift
         return "~!@#$%^&*()_+{}|:\"<>?".indexOf(c) >= 0;
     }
 
     // --- Token parsing ---
 
-    /** Special key tokens mapped to HID usage codes. */
-    public static int specialTokenToHidCode(String token) {
+    /** Special key tokens mapped to keyNames in CH9329MSKBMap. */
+    private static String specialTokenToKeyName(String token) {
         if (!token.startsWith("<") || !token.endsWith(">") || token.startsWith("</")) {
-            return -1;
+            return null;
         }
         String content = token.substring(1, token.length() - 1).toUpperCase(Locale.ROOT);
         switch (content) {
-            case "ENTER":      return 0x28;
-            case "ESC":        return 0x29;
+            case "ENTER": return "ENTER";
+            case "ESC": return "Esc";
             case "BACK":
-            case "BACKSPACE":  return 0x2A;
-            case "TAB":        return 0x2B;
-            case "SPACE":      return 0x2C;
-            case "RIGHT":      return 0x4F;
-            case "LEFT":       return 0x50;
-            case "DOWN":       return 0x51;
-            case "UP":         return 0x52;
-            case "HOME":       return 0x4A;
-            case "END":        return 0x4D;
+            case "BACKSPACE": return "BACK";
+            case "TAB": return "TAB";
+            case "SPACE": return "SPACE";
+            case "RIGHT": return "DPAD_RIGHT";
+            case "LEFT": return "DPAD_LEFT";
+            case "DOWN": return "DPAD_DOWN";
+            case "UP": return "DPAD_UP";
+            case "HOME": return "MOVE_HOME";
+            case "END": return "MOVE_END";
             case "PAGEUP":
-            case "PGUP":       return 0x4B;
+            case "PGUP": return "PAGE_UP";
             case "PAGEDOWN":
-            case "PGDN":       return 0x4E;
-            case "INSERT":     return 0x49;
+            case "PGDN": return "PAGE_DOWN";
+            case "INSERT": return "INSERT";
             case "DELETE":
-            case "DEL":        return 0x4C;
-            case "F1":  return 0x3A; case "F7":  return 0x40;
-            case "F2":  return 0x3B; case "F8":  return 0x41;
-            case "F3":  return 0x3C; case "F9":  return 0x42;
-            case "F4":  return 0x3D; case "F10": return 0x43;
-            case "F5":  return 0x3E; case "F11": return 0x44;
-            case "F6":  return 0x3F; case "F12": return 0x45;
-            default: return -1;
+            case "DEL": return "Delete";
+            case "F1": case "F2": case "F3": case "F4": case "F5": case "F6":
+            case "F7": case "F8": case "F9": case "F10": case "F11": case "F12":
+                return content;
+            default: return null;
         }
     }
 
     /**
      * Tokenize input into &lt;TAG&gt; tokens and individual characters.
-     * Tag tokens are &lt;CTRL&gt;, &lt;SHIFT&gt;, &lt;ALT&gt;, &lt;WIN&gt;, &lt;/CTRL&gt; etc.
      */
-    public static List<String> tokenizeInput(String text) {
+    private static List<String> tokenizeInput(String text) {
         Pattern p = Pattern.compile("</?[A-Z0-9]+>|[\\s\\S]");
         Matcher m = p.matcher(text);
         List<String> tokens = new ArrayList<>();
@@ -140,7 +130,7 @@ public final class TextHidSender {
     // --- Count send units ---
 
     /**
-     * Count total HID send units for progress display.
+     * Count total send units for progress display.
      * Modifier open/close tags and delay tags contribute 0.
      */
     public static int countSendUnits(String text) {
@@ -161,17 +151,18 @@ public final class TextHidSender {
                 default: break;
             }
             if (isDelayTag(token)) continue;
-            int specialHid = specialTokenToHidCode(token);
-            if (specialHid > 0) { units++; continue; }
+            String keyName = specialTokenToKeyName(token);
+            if (keyName != null) { units++; continue; }
             for (int ci = 0; ci < token.length(); ) {
                 int cp = token.codePointAt(ci);
                 ci += Character.charCount(cp);
                 if (cp > 0x7E) {
-                    // Non-ASCII: skip (no HID mapping on CH9329)
                     continue;
                 }
-                int hidCode = mapCharToHidCode((char) cp);
-                if (hidCode >= 0) units++;
+                char c = (char) cp;
+                if (charToKeyName(c) != null) {
+                    units++;
+                }
             }
         }
         return units;
@@ -182,57 +173,79 @@ public final class TextHidSender {
                 || token.equals("<DELAY5S>") || token.equals("<DELAY10S>");
     }
 
-    // --- HID sending via CH9329 ---
-
-    private static final String RELEASE_DATA = CH9329MSKBMap.getKeyCodeMap().get("release");
+    // --- Direct serial port sending ---
 
     /**
-     * Send a single key press+release with the given modifier byte and HID usage code.
-     * This is the synchronous core — caller must be on a background thread.
+     * Send a key press command directly to serial port (synchronous).
+     * This builds the HID command and writes to port without spawning new threads.
      */
-    private static void sendHidKey(int modifier, int hidCode) throws InterruptedException {
-        try {
-            String modHex = String.format("%02X", modifier & 0xFF);
-            String keyCodeHex = String.format("%02X", hidCode & 0xFF);
-            String dataNull = CH9329MSKBMap.DataNull().get("DataNull");  // "00"
-
-            String sendKBData = CH9329MSKBMap.getKeyCodeMap().get("prefix1")
-                    + CH9329MSKBMap.getKeyCodeMap().get("prefix2")
-                    + CH9329MSKBMap.getKeyCodeMap().get("address")
-                    + CH9329MSKBMap.CmdData().get("CmdKB_HID")
-                    + CH9329MSKBMap.DataLen().get("DataLenKB")
-                    + modHex
-                    + dataNull
-                    + keyCodeHex
-                    + dataNull + dataNull + dataNull + dataNull + dataNull;
-
-            sendKBData = sendKBData + CH9329Function.makeChecksum(sendKBData);
-            byte[] bytes = CH9329Function.hexStringToByteArray(sendKBData);
-
-            if (UsbDeviceManager.port != null && UsbDeviceManager.port.isOpen()) {
-                UsbDeviceManager.port.write(bytes, 200);
-            } else {
-                Log.w(TAG, "USB port not available for HID send");
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Error sending HID key: " + e.getMessage());
+    private static void sendKeyPressToPort(String functionKey, String keyName) throws IOException {
+        if (UsbDeviceManager.port == null || !UsbDeviceManager.port.isOpen()) {
+            Log.w(TAG, "Serial port not available");
+            return;
         }
+
+        Map<Object, String> keyCodeMap = CH9329MSKBMap.getKeyCodeMap();
+        String keyCode = keyCodeMap.get(keyName);
+        if (keyCode == null) {
+            Log.w(TAG, "No keyCode for: " + keyName);
+            return;
+        }
+
+        // Build the HID command: prefix + address + command + length + modifier + null + keyCode + 5xnull
+        String sendKBData = keyCodeMap.get("prefix1")
+                + keyCodeMap.get("prefix2")
+                + keyCodeMap.get("address")
+                + CH9329MSKBMap.CmdData().get("CmdKB_HID")
+                + CH9329MSKBMap.DataLen().get("DataLenKB")
+                + functionKey
+                + CH9329MSKBMap.DataNull().get("DataNull")
+                + keyCode
+                + CH9329MSKBMap.DataNull().get("DataNull")
+                + CH9329MSKBMap.DataNull().get("DataNull")
+                + CH9329MSKBMap.DataNull().get("DataNull")
+                + CH9329MSKBMap.DataNull().get("DataNull")
+                + CH9329MSKBMap.DataNull().get("DataNull");
+
+        // Add checksum
+        sendKBData = sendKBData + CH9329Function.makeChecksum(sendKBData);
+
+        // Convert to bytes and send
+        byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendKBData);
+        UsbDeviceManager.port.write(sendKBDataBytes, 100);
     }
 
-    /** Send a release (all keys up). Synchronous, caller on background thread. */
-    private static void sendHidRelease() {
+    /**
+     * Send key release (empty keyboard) directly to serial port.
+     */
+    private static void sendKeyReleaseToPort() throws IOException {
+        if (UsbDeviceManager.port == null || !UsbDeviceManager.port.isOpen()) {
+            return;
+        }
+
+        // Release command is the pre-built release string
+        String releaseData = CH9329MSKBMap.getKeyCodeMap().get("release");
+        byte[] releaseBytes = CH9329Function.hexStringToByteArray(releaseData);
+        UsbDeviceManager.port.write(releaseBytes, 100);
+    }
+
+    /**
+     * Send a single key press+release synchronously.
+     * Caller must be on a background thread.
+     */
+    private static void sendKey(String modifier, String keyName) throws InterruptedException {
         try {
-            byte[] bytes = CH9329Function.hexStringToByteArray(RELEASE_DATA);
-            if (UsbDeviceManager.port != null && UsbDeviceManager.port.isOpen()) {
-                UsbDeviceManager.port.write(bytes, 200);
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Error sending HID release: " + e.getMessage());
+            sendKeyPressToPort(modifier, keyName);
+            Thread.sleep(30);  // Hold time
+            sendKeyReleaseToPort();
+            Thread.sleep(20);  // Gap between keys
+        } catch (IOException e) {
+            Log.e(TAG, "Error sending key: " + e.getMessage());
         }
     }
 
     /**
-     * Send text as HID keystrokes on the caller thread (must be a background thread).
+     * Send text as keystrokes on the caller thread (must be a background thread).
      *
      * @param text     text to send (may contain &lt;TAG&gt; tokens)
      * @param cancel   if non-null, polled between steps; true aborts
@@ -275,12 +288,11 @@ public final class TextHidSender {
             if (token.equals("<DELAY10S>")) { Thread.sleep(10000); continue; }
 
             // Special key tokens like <ENTER>
-            int specialHid = specialTokenToHidCode(token);
-            if (specialHid > 0) {
-                sendHidKey(activeMods, specialHid);
-                Thread.sleep(30);
-                sendHidRelease();
-                Thread.sleep(10);
+            String specialKeyName = specialTokenToKeyName(token);
+            if (specialKeyName != null) {
+                // Determine modifier for special key
+                String mod = (activeMods != 0) ? String.format("%02X", activeMods) : MOD_NONE;
+                sendKey(mod, specialKeyName);
                 reportProgress(progress, totalUnits, completed);
                 continue;
             }
@@ -297,17 +309,23 @@ public final class TextHidSender {
                 }
 
                 char c = (char) cp;
-                int hidCode = mapCharToHidCode(c);
-                if (hidCode < 0) {
-                    Log.w(TAG, "No HID code for char: '" + c + "' (U+" + Integer.toHexString(cp) + ")");
+                String keyName = charToKeyName(c);
+                if (keyName == null) {
+                    Log.w(TAG, "No keyName for char: '" + c + "' (U+" + Integer.toHexString(cp) + ")");
                     continue;
                 }
 
-                int mods = (activeMods != 0) ? activeMods : (needsShift(c) ? 0x02 : 0x00);
-                sendHidKey(mods, hidCode);
-                Thread.sleep(30);
-                sendHidRelease();
-                Thread.sleep(10);
+                // Determine modifier: use activeMods if set, otherwise check if shift is needed
+                String mod;
+                if (activeMods != 0) {
+                    mod = String.format("%02X", activeMods);
+                } else if (needsShift(c)) {
+                    mod = MOD_SHIFT;
+                } else {
+                    mod = MOD_NONE;
+                }
+
+                sendKey(mod, keyName);
                 reportProgress(progress, totalUnits, completed);
             }
         }
