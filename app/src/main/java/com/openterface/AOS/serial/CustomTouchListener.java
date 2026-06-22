@@ -448,13 +448,6 @@ public class CustomTouchListener implements View.OnTouchListener {
      * In portrait zoom mode: auto-pan view to keep mouse centered
      */
     private void handleNormalMove(float x, float y) {
-        // In portrait mode with zoom, auto-pan view to keep mouse centered
-        // Also check dynamically in case layout changed
-        boolean isPortrait = activity != null && activity.findViewById(R.id.module_selector_bar) != null;
-        if (isPortrait && mPortraitZoomScale > 1.0f && activity.mBinding != null) {
-            autoPanToKeepMouseCentered(x, y);
-        }
-
         if (KeyMouse_state) {
             HidManager.sendHexAbsData(x, y);
         } else {
@@ -469,12 +462,6 @@ public class CustomTouchListener implements View.OnTouchListener {
      * In portrait zoom mode: auto-pan view to keep mouse centered
      */
     private void handleDragMove(float x, float y) {
-        // In portrait mode with zoom, auto-pan view to keep mouse centered
-        boolean isPortrait = activity != null && activity.findViewById(R.id.module_selector_bar) != null;
-        if (isPortrait && mPortraitZoomScale > 1.0f && activity.mBinding != null) {
-            autoPanToKeepMouseCentered(x, y);
-        }
-
         if (KeyMouse_state) {
             // In drag mode with absolute: send with left button pressed
             HidManager.sendHexAbsButtonClickData("SecLeftData", x, y);
@@ -483,58 +470,6 @@ public class CustomTouchListener implements View.OnTouchListener {
             HidManager.sendHexRelData("SecLeftData", x, y, lastMoveMSX, lastMoveMSY);
             lastMoveMSX = x;
             lastMoveMSY = y;
-        }
-    }
-
-    /**
-     * Auto-pan the video view horizontally to keep mouse cursor at screen center.
-     * Only pans horizontally (left/right), vertical panning is disabled.
-     *
-     * Key insight: event.getX() returns coordinates in the view's own system,
-     * but when scaled > 1, the visible content on screen is a different region.
-     * We must convert touch coordinates to the visible content coordinate system.
-     */
-    private void autoPanToKeepMouseCentered(float mouseX, float mouseY) {
-        if (activity == null || activity.mBinding == null || activity.mBinding.viewMainPreview == null) {
-            return;
-        }
-
-        View videoView = activity.mBinding.viewMainPreview;
-        int viewWidth = videoView.getWidth();
-        int containerWidth = viewWidth; // container is match_parent
-        float maxTranslate = (viewWidth * mPortraitZoomScale - containerWidth) / 2f;
-
-        if (maxTranslate <= 0) return;
-
-        // Convert touch X from view coordinates to visible content coordinates.
-        // When scaled, the view's left edge is at (center - scaledWidth/2 + translateX)
-        // in container coordinates. The offset between view origin and visible origin:
-        //   offset = maxTranslate - mPortraitTranslateX
-        // So a touch at view coordinate mouseX corresponds to content coordinate:
-        //   viewCoord = mouseX + offset
-        float offset = maxTranslate - mPortraitTranslateX;
-        float viewCoord = mouseX + offset;
-
-        // Target: move the view so this content point ends up at screen center.
-        float target = maxTranslate - viewCoord;
-        target = Math.max(-maxTranslate, Math.min(maxTranslate, target));
-
-        if (Math.abs(target - mPortraitTranslateX) > 1f) {
-            mPortraitTranslateX = target;
-            // Also pan vertically to keep mouse centered
-            int viewHeight = videoView.getHeight();
-            int containerHeight = viewHeight;
-            float maxTranslateY = (viewHeight * mPortraitZoomScale - containerHeight) / 2f;
-            if (maxTranslateY > 0) {
-                float offsetY = maxTranslateY - mPortraitTranslateY;
-                float viewCoordY = mouseY + offsetY;
-                float targetY = maxTranslateY - viewCoordY;
-                targetY = Math.max(-maxTranslateY, Math.min(maxTranslateY, targetY));
-                if (Math.abs(targetY - mPortraitTranslateY) > 1f) {
-                    mPortraitTranslateY = targetY;
-                }
-            }
-            applyPortraitZoomTransform();
         }
     }
 

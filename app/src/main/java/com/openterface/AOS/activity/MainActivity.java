@@ -1226,6 +1226,8 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
             public void onSurfaceTextureAvailable(@NonNull SurfaceTexture surface, int width, int height) {
                 HidManager.width_height(width, height);
                 Log.d(TAG, "onSurfaceTextureAvailable: width=" + width + " height=" + height + " mIsCameraConnected=" + mIsCameraConnected);
+                // Set buffer size to chip resolution for better zoom quality
+                setSurfaceTextureBufferSize(surface, mPreviewWidth, mPreviewHeight);
                 if (mCameraHelper != null) {
                     // Add the new surface to camera pipeline
                     mCameraHelper.addSurface(surface, false);
@@ -1248,6 +1250,8 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
 
             @Override
             public void onSurfaceTextureSizeChanged(@NonNull SurfaceTexture surface, int width, int height) {
+                // Re-set buffer to chip resolution after view resize to maintain zoom quality
+                setSurfaceTextureBufferSize(surface, mPreviewWidth, mPreviewHeight);
             }
 
             @Override
@@ -1263,6 +1267,20 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
 
             }
         });
+    }
+
+    /**
+     * Set SurfaceTexture buffer size to chip resolution for better zoom quality.
+     * When the view is smaller than chip resolution, the default buffer would be
+     * the view's small size, causing blur when zoomed in. Setting to chip size
+     * gives the GPU more source pixels to sample from.
+     */
+    private void setSurfaceTextureBufferSize(SurfaceTexture surface, int bufferWidth, int bufferHeight) {
+        if (surface != null && bufferWidth > 0 && bufferHeight > 0) {
+            // Use chip resolution for buffer, not the small view size
+            surface.setDefaultBufferSize(bufferWidth, bufferHeight);
+            Log.d(TAG, "setSurfaceTextureBufferSize: " + bufferWidth + "x" + bufferHeight);
+        }
     }
 
     public void attachNewDevice(UsbDevice device) {
@@ -1480,6 +1498,10 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
         Log.d(TAG, "resizePreviewView: " + mPreviewWidth + "x" + mPreviewHeight);
         // Set the aspect ratio of TextureView to match the aspect ratio of the camera
         mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
+        // Update SurfaceTexture buffer to chip resolution for better zoom quality
+        if (mBinding.viewMainPreview.getSurfaceTexture() != null) {
+            setSurfaceTextureBufferSize(mBinding.viewMainPreview.getSurfaceTexture(), mPreviewWidth, mPreviewHeight);
+        }
     }
 
     private void updateUIControls() {

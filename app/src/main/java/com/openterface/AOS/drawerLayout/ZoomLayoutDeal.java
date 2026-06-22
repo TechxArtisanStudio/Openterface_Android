@@ -132,6 +132,14 @@ public class ZoomLayoutDeal {
             // Use screen width as reference, calculate height to match chip's aspect ratio
             int pipWidth = screenWidth / 3;
             int pipHeight = (pipWidth * chipHeight) / chipWidth;
+
+            // Resize thumbnail_container to match cameraViewSecond's dimensions
+            // This ensures the indicator position maps correctly to the PiP area
+            ViewGroup.LayoutParams containerParams = thumbnailContainer.getLayoutParams();
+            containerParams.width = pipWidth;
+            containerParams.height = pipHeight;
+            thumbnailContainer.setLayoutParams(containerParams);
+
             cameraViewSecond.getLayoutParams().width = pipWidth;
             cameraViewSecond.getLayoutParams().height = pipHeight;
             cameraViewSecond.requestLayout();
@@ -140,7 +148,7 @@ public class ZoomLayoutDeal {
             cameraViewSecond.setAspectRatio(chipWidth, chipHeight);
 
             if (indicatorView != null) {
-                indicatorView.getLayoutParams().width = screenWidth / 6;
+                indicatorView.getLayoutParams().width = pipWidth / 2;
                 indicatorView.getLayoutParams().height = (indicatorView.getLayoutParams().width * chipHeight) / chipWidth;
                 indicatorView.requestLayout();
             }
@@ -528,16 +536,6 @@ public class ZoomLayoutDeal {
             return;
         }
 
-        // Use the chip's actual resolution (mPreviewWidth x mPreviewHeight)
-        int chipWidth = activity.getPreviewWidth();
-        int chipHeight = activity.getPreviewHeight();
-
-        // If chip resolution is not available yet, use default 1920x1080
-        if (chipWidth <= 0 || chipHeight <= 0) {
-            chipWidth = 1920;
-            chipHeight = 1080;
-        }
-
         float pipWidth = activity.cameraViewSecond.getWidth();
         float pipHeight = activity.cameraViewSecond.getHeight();
 
@@ -562,10 +560,12 @@ public class ZoomLayoutDeal {
             return;
         }
 
-        // Use the chip's actual resolution to calculate max translation
-        // The chip resolution is the actual video content dimensions
-        float maxTranslateX = (chipWidth * (zoomScale - 1f)) / 2f;
-        float maxTranslateY = (chipHeight * (zoomScale - 1f)) / 2f;
+        // Use the main view's display dimensions to calculate max translation
+        // This matches the transform applied in applyPortraitZoomTransform()
+        float viewWidth = activity.mBinding.viewMainPreview.getWidth();
+        float viewHeight = activity.mBinding.viewMainPreview.getHeight();
+        float maxTranslateX = (viewWidth * (zoomScale - 1f)) / 2f;
+        float maxTranslateY = (viewHeight * (zoomScale - 1f)) / 2f;
 
         float normalizedX = 0.5f;
         float normalizedY = 0.5f;
@@ -580,13 +580,16 @@ public class ZoomLayoutDeal {
             normalizedY = Math.max(0, Math.min(normalizedY, 1));
         }
 
-        // The indicator center should be at normalizedX * pipWidth
-        float indicatorX = normalizedX * pipWidth - indicatorWidth / 2f;
-        float indicatorY = normalizedY * pipHeight - indicatorHeight / 2f;
+        // Map normalized position to indicator position within PiP bounds
+        // normalizedX=0 → indicator at left edge (0), normalizedX=1 → indicator at right edge
+        // Account for indicator's own size so it stays fully within bounds
+        float maxIndicatorX = pipWidth - indicatorWidth;
+        float maxIndicatorY = pipHeight - indicatorHeight;
+        float indicatorX = maxIndicatorX > 0 ? normalizedX * maxIndicatorX : 0;
+        float indicatorY = maxIndicatorY > 0 ? normalizedY * maxIndicatorY : 0;
 
-        // Clamp to bounds
-        indicatorX = Math.max(0, Math.min(indicatorX, pipWidth - indicatorWidth));
-        indicatorY = Math.max(0, Math.min(indicatorY, pipHeight - indicatorHeight));
+        indicatorX = Math.max(0, Math.min(indicatorX, maxIndicatorX));
+        indicatorY = Math.max(0, Math.min(indicatorY, maxIndicatorY));
 
         indicatorView.setX(indicatorX);
         indicatorView.setY(indicatorY);
@@ -661,36 +664,40 @@ public class ZoomLayoutDeal {
                 return;
             }
 
-            // Use the chip's actual resolution (mPreviewWidth x mPreviewHeight)
-            int chipWidth = activity.getPreviewWidth();
-            int chipHeight = activity.getPreviewHeight();
-
-            // If chip resolution is not available yet, use default 1920x1080
-            if (chipWidth <= 0 || chipHeight <= 0) {
-                chipWidth = 1920;
-                chipHeight = 1080;
-            }
+            // Use the main view's display dimensions to calculate max translation
+            // This matches the transform applied in applyPortraitZoomTransform()
+            float viewWidth = activity.mBinding.viewMainPreview.getWidth();
+            float viewHeight = activity.mBinding.viewMainPreview.getHeight();
 
             float pipWidth = activity.cameraViewSecond.getWidth();
             float pipHeight = activity.cameraViewSecond.getHeight();
 
-            // Calculate indicator center in PiP coordinates
-            float indicatorCenterX = indicatorView.getX() + indicatorView.getWidth() / 2f;
-            float indicatorCenterY = indicatorView.getY() + indicatorView.getHeight() / 2f;
+            // Get indicator dimensions for correct edge-to-edge mapping
+            float indicatorWidth = indicatorView.getWidth();
+            float indicatorHeight = indicatorView.getHeight();
 
-            // Normalize: 0 = left/top edge, 0.5 = center, 1 = right/bottom edge
-            float normalizedX = pipWidth > 0 ? indicatorCenterX / pipWidth : 0.5f;
-            float normalizedY = pipHeight > 0 ? indicatorCenterY / pipHeight : 0.5f;
+            // Map indicator position within valid range to normalized [0..1]
+            // indicatorX = 0 (left edge) → normalizedX = 0 (showing left edge of zoomed content)
+            // indicatorX = pipWidth - indicatorWidth (right edge) → normalizedX = 1 (showing right edge)
+            float maxIndicatorX = pipWidth - indicatorWidth;
+            float maxIndicatorY = pipHeight - indicatorHeight;
+            float indicatorX = indicatorView.getX();
+            float indicatorY = indicatorView.getY();
+
+            float normalizedX = maxIndicatorX > 0 ? indicatorX / maxIndicatorX : 0.5f;
+            float normalizedY = maxIndicatorY > 0 ? indicatorY / maxIndicatorY : 0.5f;
 
             // Clamp to valid range
             normalizedX = Math.max(0, Math.min(normalizedX, 1));
             normalizedY = Math.max(0, Math.min(normalizedY, 1));
 
             // Convert normalized position to main view translation
-            // Use chip's actual resolution for max translation calculation
-            float maxTranslateX = (chipWidth * (currentZoomScale - 1f)) / 2f;
-            float maxTranslateY = (chipHeight * (currentZoomScale - 1f)) / 2f;
+            // Use view's display dimensions for max translation calculation
+            float maxTranslateX = (viewWidth * (currentZoomScale - 1f)) / 2f;
+            float maxTranslateY = (viewHeight * (currentZoomScale - 1f)) / 2f;
 
+            // normalizedX=0 → translateX=+max (left edge visible)
+            // normalizedX=1 → translateX=-max (right edge visible)
             float newTranslateX = (0.5f - normalizedX) * 2f * maxTranslateX;
             float newTranslateY = (0.5f - normalizedY) * 2f * maxTranslateY;
 
@@ -708,7 +715,7 @@ public class ZoomLayoutDeal {
 
             Log.d("syncMainViewPosition", "Portrait mode: normalizedX=" + normalizedX + " normalizedY=" + normalizedY
                 + " translateX=" + newTranslateX + " translateY=" + newTranslateY
-                + " chipWidth=" + chipWidth + " chipHeight=" + chipHeight);
+                + " viewWidth=" + viewWidth + " viewHeight=" + viewHeight);
         }
     }
 
