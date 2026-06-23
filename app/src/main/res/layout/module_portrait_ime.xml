@@ -75,7 +75,7 @@
             android:fontFamily="monospace" />
     </LinearLayout>
 
-    <!-- Action Buttons: Clear | Save | Saved | Send -->
+    <!-- Action Buttons: Clear | Restore | Save | Saved | Send -->
     <LinearLayout
         android:id="@+id/ime_actions_row"
         android:layout_width="match_parent"
@@ -85,7 +85,7 @@
         android:paddingBottom="8dp"
         android:gravity="center_vertical">
 
-        <!-- Clear / Restore button -->
+        <!-- Clear button -->
         <android.widget.Button
             android:id="@+id/ime_clear_button"
             android:layout_width="0dp"
@@ -97,6 +97,20 @@
             android:textSize="12sp"
             android:layout_marginEnd="4dp"
             android:contentDescription="清空文本" />
+
+        <!-- Restore button (reuses the last cleared text) -->
+        <android.widget.Button
+            android:id="@+id/ime_restore_button"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:text="Restore"
+            android:textColor="@color/key_text"
+            android:background="@drawable/key_background"
+            android:textSize="12sp"
+            android:layout_marginHorizontal="4dp"
+            android:enabled="false"
+            android:contentDescription="恢复上次清空的文本" />
 
         <!-- Save button -->
         <android.widget.Button
@@ -136,5 +150,13 @@
             android:layout_marginStart="4dp" />
 
     </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/ime_saved_text_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="-48dp"
+        android:visibility="gone"
+        android:elevation="8dp" />
 
 </LinearLayout>

@@ -2911,9 +2911,11 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
     private java.util.concurrent.atomic.AtomicBoolean cancelSend;
     private android.widget.Button imeSendButton;
     private android.widget.Button imeClearButton;
+    private android.widget.Button imeRestoreButton;
     private android.widget.Button imeSaveButton;
     private android.widget.Button imeSavedTextsButton;
     private EditText imeTextInput;
+    private android.view.ViewGroup imeSavedTextOverlay;
 
     // Saved text repository
     private com.openterface.AOS.utils.SavedTextRepository savedTextRepo;
@@ -2921,11 +2923,13 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
     private void setupImeModule(View view) {
         imeSendButton = view.findViewById(R.id.ime_send_button);
         imeClearButton = view.findViewById(R.id.ime_clear_button);
+        imeRestoreButton = view.findViewById(R.id.ime_restore_button);
         imeSaveButton = view.findViewById(R.id.ime_save_button);
         imeSavedTextsButton = view.findViewById(R.id.ime_saved_texts_button);
         imeTextInput = view.findViewById(R.id.ime_text_input);
         imeProgressBar = view.findViewById(R.id.ime_send_progress);
         imeProgressLabel = view.findViewById(R.id.ime_send_progress_label);
+        imeSavedTextOverlay = view.findViewById(R.id.ime_saved_text_overlay);
 
         cancelSend = new java.util.concurrent.atomic.AtomicBoolean(false);
         savedTextRepo = new com.openterface.AOS.utils.SavedTextRepository(this);
@@ -2947,29 +2951,47 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
             });
         }
 
-        // --- Clear / Restore button ---
+        // --- Clear button (independent of restore) ---
         if (imeClearButton != null && imeTextInput != null) {
             imeClearButton.setOnClickListener(v -> {
                 if (isSendingText) return;
-                if (undoClearEligible && undoSnapshot != null) {
-                    // Restore
-                    imeTextInput.setText(undoSnapshot);
-                    imeTextInput.setSelection(undoSnapshot.length());
-                    undoSnapshot = null;
-                    undoClearEligible = false;
-                    updateClearButtonIcon();
-                } else {
-                    String current = imeTextInput.getText().toString();
-                    if (current.isEmpty()) return;
-                    undoSnapshot = current;
-                    undoClearEligible = true;
-                    imeTextInput.setText("");
-                    updateClearButtonIcon();
-                }
+                String current = imeTextInput.getText().toString();
+                if (current.isEmpty()) return;
+                // Always remember the last cleared/sent text so Restore can bring it back
+                undoSnapshot = current;
+                undoClearEligible = true;
+                imeTextInput.setText("");
+                updateClearButtonIcon();
+                android.util.Log.d("MainActivity_IME", "Clear: undoSnapshot saved, len=" + current.length() + ", Restore visible");
             });
         }
 
-        // --- Text watcher: invalidate undo on new text ---
+        // --- Restore button (reuses the last cleared text) ---
+        if (imeRestoreButton != null) {
+            imeRestoreButton.setOnClickListener(v -> {
+                if (isSendingText) return;
+                if (undoSnapshot == null || undoSnapshot.isEmpty()) {
+                    Toast.makeText(this, "没有可恢复的文本", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                // IMPORTANT: capture into a local variable BEFORE setText().
+                // setText() triggers the TextWatcher synchronously, which nulls
+                // undoSnapshot (because undoClearEligible is true and length > 0).
+                // Without a local, the setSelection() line would NPE.
+                final String textToRestore = undoSnapshot;
+                if (imeTextInput != null) {
+                    imeTextInput.setText(textToRestore);
+                    imeTextInput.setSelection(textToRestore.length());
+                }
+                // After restore, invalidate the snapshot (one-shot undo)
+                undoSnapshot = null;
+                undoClearEligible = false;
+                updateClearButtonIcon();
+                Toast.makeText(this, "已恢复", Toast.LENGTH_SHORT).show();
+            });
+        }
+
+        // --- Text watcher: typing or selecting a saved item invalidates undo snapshot ---
         if (imeTextInput != null) {
             imeTextInput.addTextChangedListener(new android.text.TextWatcher() {
                 @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -2977,7 +2999,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                 @Override
                 public void afterTextChanged(android.text.Editable s) {
                     if (undoClearEligible && s != null && s.length() > 0) {
-                        // User typed something new, invalidate undo
+                        // User typed something new — invalidate the undo snapshot
                         undoClearEligible = false;
                         undoSnapshot = null;
                         updateClearButtonIcon();
@@ -3038,13 +3060,15 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
     }
 
     private void updateClearButtonIcon() {
-        if (imeClearButton == null) return;
-        if (undoClearEligible) {
-            imeClearButton.setText("↩");
-            imeClearButton.setContentDescription("恢复文本");
-        } else {
-            imeClearButton.setText("Clear");
-            imeClearButton.setContentDescription("清空文本");
+        if (imeClearButton != null) {
+            imeClearButton.setText(undoClearEligible ? "↩ Clear" : "Clear");
+        }
+        if (imeRestoreButton != null) {
+            // Use enabled state instead of visibility — keeps the layout slot reserved
+            // so the action bar row doesn't reflow when Restore toggles.
+            boolean hasSnapshot = undoSnapshot != null && !undoSnapshot.isEmpty();
+            imeRestoreButton.setEnabled(hasSnapshot);
+            imeRestoreButton.setAlpha(hasSnapshot ? 1.0f : 0.4f);
         }
     }
 
@@ -3102,6 +3126,10 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                     Toast.makeText(MainActivity.this, "已取消发送", Toast.LENGTH_SHORT).show();
                 } else if (finalResult == com.openterface.AOS.utils.TextHidSender.Result.COMPLETED) {
                     Toast.makeText(MainActivity.this, "文本发送完成", Toast.LENGTH_SHORT).show();
+                    // Set undo snapshot to the sent text so user can restore it later
+                    undoSnapshot = sendText;
+                    undoClearEligible = true;
+                    updateClearButtonIcon();
                     // Do NOT clear editor after send (保留文本)
                 }
 
@@ -3145,53 +3173,104 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
     }
 
     private void showSavedTextsDialog() {
-        java.util.List<com.openterface.AOS.model.SavedTextItem> items = savedTextRepo.loadSorted();
-        if (items.isEmpty()) {
-            Toast.makeText(this, "暂无已保存的文本", Toast.LENGTH_SHORT).show();
+        // Open the full-screen RecyclerView overlay (mirrors KeyCMD ImeSavedTextFragment)
+        showImeSavedTextOverlay();
+    }
+
+    /**
+     * Show full-screen saved texts overlay as a Fragment with a RecyclerView,
+     * matching KeyCMD's ImeSavedTextFragment design.
+     */
+    public void showImeSavedTextOverlay() {
+        if (imeSavedTextOverlay == null) {
+            // Overlay container is missing in this orientation — bail out gracefully.
             return;
         }
-
-        String[] titles = new String[items.size()];
-        for (int i = 0; i < items.size(); i++) {
-            com.openterface.AOS.model.SavedTextItem item = items.get(i);
-            String prefix = item.pinned ? "📌 " : "";
-            String title = item.title != null ? item.title : "(untitled)";
-            String preview = item.content != null && item.content.length() > 40
-                ? item.content.substring(0, 40) + "..."
-                : item.content;
-            titles[i] = prefix + title + "\n" + preview;
+        if (getSupportFragmentManager().findFragmentByTag("ime_saved_text") != null) {
+            return; // already visible
         }
+        androidx.fragment.app.FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
+        ft.replace(android.R.id.content, new com.openterface.AOS.fragment.ImeSavedTextFragment(), "ime_saved_text");
+        ft.addToBackStack("ime_saved_text");
+        ft.commit();
+        // Note: a true overlay-by-replacing-content pauses the IME module behind the overlay.
+        // If we wanted a non-modal overlay we'd inflate the fragment into imeSavedTextOverlay,
+        // but the FrameLayout overlay isn't currently wired up for child fragments — using the
+        // content area keeps things simple and matches the visual feel of KeyCMD's full-screen page.
+        if (imeSavedTextOverlay != null) {
+            imeSavedTextOverlay.setVisibility(View.GONE);
+        }
+    }
 
-        new android.app.AlertDialog.Builder(this)
-            .setTitle("已保存的文本")
-            .setItems(titles, (dialog, which) -> {
-                com.openterface.AOS.model.SavedTextItem selected = items.get(which);
-                showSavedTextItemActions(selected);
-            })
-            .setNegativeButton("关闭", null)
-            .show();
+    public void hideImeSavedTextOverlay() {
+        androidx.fragment.app.FragmentManager fm = getSupportFragmentManager();
+        // The back stack name must match what we used in addToBackStack() above. Without a
+        // matching name, popBackStack returns false silently and the fragment is never popped.
+        if (fm.findFragmentByTag("ime_saved_text") != null) {
+            fm.popBackStack("ime_saved_text", androidx.fragment.app.FragmentManager.POP_BACK_STACK_INCLUSIVE);
+        }
+        if (imeSavedTextOverlay != null) {
+            imeSavedTextOverlay.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * Bridge so the saved texts fragment can read/write the IME editor without
+     * coupling to MainActivity internals. Mirrors KeyCMD's MainActivity.getImeSavedTextHost().
+     */
+    public com.openterface.AOS.fragment.ImeSavedTextFragment.Host getImeSavedTextHost() {
+        return new com.openterface.AOS.fragment.ImeSavedTextFragment.Host() {
+            @NonNull
+            @Override
+            public String readCurrentEditorText() {
+                if (imeTextInput == null) return "";
+                String t = imeTextInput.getText().toString();
+                return t != null ? t : "";
+            }
+
+            @Override
+            public void onLoadIntoEditor(@NonNull String content) {
+                if (imeTextInput == null) return;
+                imeTextInput.setText(content);
+                imeTextInput.setSelection(content.length());
+                // Loading a saved item invalidates the undo snapshot (we now have new editor content)
+                undoSnapshot = null;
+                undoClearEligible = false;
+                updateClearButtonIcon();
+            }
+
+            @Override
+            public void onSendSavedText(@NonNull String content) {
+                if (isSendingText || content == null) return;
+                startSend(content);
+            }
+        };
     }
 
     private void showSavedTextItemActions(com.openterface.AOS.model.SavedTextItem item) {
-        String[] actions = new String[]{"加载到编辑器", "直接发送", "重命名", "置顶/取消置顶", "删除"};
+        // Legacy entry point kept for forward-compat with any external callers.
+        // The new saved texts overlay handles row actions via popup menus inside the fragment.
+        if (item == null) return;
         new android.app.AlertDialog.Builder(this)
             .setTitle(item.title != null ? item.title : "(untitled)")
-            .setItems(actions, (dialog, which) -> {
+            .setItems(new String[]{"加载到编辑器", "直接发送", "重命名", "置顶/取消置顶", "删除"}, (dialog, which) -> {
                 switch (which) {
-                    case 0: // Load to editor
+                    case 0:
                         if (imeTextInput != null && item.content != null) {
                             imeTextInput.setText(item.content);
                             imeTextInput.setSelection(item.content.length());
+                            undoSnapshot = null;
+                            undoClearEligible = false;
+                            updateClearButtonIcon();
                         }
                         break;
-                    case 1: // Send directly
+                    case 1:
                         if (!isSendingText && item.content != null) {
                             startSend(item.content);
                         }
                         break;
-                    case 2: // Rename
+                    case 2:
                         EditText input = new EditText(this);
-                        input.setText(item.title != null ? item.title : "");
                         new android.app.AlertDialog.Builder(this)
                             .setTitle("重命名")
                             .setView(input)

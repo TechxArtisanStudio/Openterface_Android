@@ -317,5 +317,22 @@
     <string name="target_os_linux">Linux (Super键)</string>
     <string name="target_os_current">当前: %s</string>
     <string name="target_os_setting_title">目标操作系统</string>
+
+    <!-- IME Saved Texts -->
+    <string name="ime_saved_text_title">已保存的文本</string>
+    <string name="ime_saved_text_close">关闭</string>
+    <string name="ime_saved_text_empty">暂无保存的文本\n\n点击输入框下方的 \'Save\' 按钮保存文本</string>
+    <string name="ime_saved_text_pin">置顶</string>
+    <string name="ime_saved_text_unpin">取消置顶</string>
+    <string name="ime_saved_text_rename">重命名</string>
+    <string name="ime_saved_text_delete">删除</string>
+    <string name="ime_saved_text_rename_title">重命名</string>
+    <string name="ime_saved_text_delete_confirm_title">删除确认</string>
+    <string name="ime_saved_text_delete_confirm_message">确定要删除这个文本吗?</string>
+    <string name="ime_saved_text_preview_cd">预览</string>
+    <string name="ime_saved_text_load_cd">加载到编辑器</string>
+    <string name="ime_saved_text_send_cd">直接发送</string>
+    <string name="ime_saved_text_more">更多操作</string>
+    <string name="ime_saved_text_select_first">请先选择一个文本</string>
     <string name="target_os_setting_desc">切换Win/Cmd/Super键标签</string>
 </resources>
