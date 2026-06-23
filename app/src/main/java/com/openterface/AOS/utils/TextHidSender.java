@@ -7,6 +7,7 @@ import com.openterface.AOS.serial.UsbDeviceManager;
 import com.openterface.AOS.target.CH9329MSKBMap;
 import com.openterface.AOS.target.KeyBoardManager;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -44,6 +45,13 @@ public final class TextHidSender {
      * Returns null if no mapping exists.
      */
     private static String charToKeyName(char c) {
+        // Special printable characters: use their map key names
+        switch (c) {
+            case ' ':  return "SPACE";
+            case '\n': return "ENTER";
+            case '\t': return "TAB";
+            case '\r': return "ENTER";
+        }
         // Letters: use the character directly (A-Z, a-z are all in the map)
         if (Character.isLetter(c)) {
             return String.valueOf(c);
@@ -54,8 +62,11 @@ public final class TextHidSender {
         }
         // Special characters: use the character itself
         // CH9329MSKBMap has entries for: ! @ # $ % ^ & * ( ) ` ~ - _ + = [ ] { } | \ ; : ' " , < . > / ?
-        String keyName = String.valueOf(c);
-        return keyName;
+        if (c >= 32 && c <= 126) {
+            return String.valueOf(c);
+        }
+        // Non-printable or non-ASCII: no mapping
+        return null;
     }
 
     /** Returns true if the character needs Shift modifier. */
@@ -154,63 +165,88 @@ public final class TextHidSender {
 
     /**
      * Send a single key press+release synchronously on background thread.
-     * Uses KeyBoardManager to get the current key code map (handles language).
+     * Both press and release packets are sent via UsbDeviceManager.writeKeyboardData()
+     * which auto-routes to FE0C bulk transfer (1A86:FE0C, Mini-KVM v2) or
+     * serial port.write() (7523, Mini-KVM v1).
+     *
+     * Matches the proven KeyCMD pattern (KeyboardHidTransport.sendKeyReport) exactly:
+     *   57 AB 00 02 08 <mod> 00 <key0> 00 00 00 00 00 <checksum>
      */
     private static void sendKey(String modifier, String keyName) throws InterruptedException {
         try {
-            // Get the current key code map from KeyBoardManager
-            java.util.Map<Object, String> keyCodeMap = CH9329MSKBMap.getKeyCodeMap();
-
-            // Get the scan code for this key
-            String keyCode = keyCodeMap.get(keyName);
+            // Resolve the scan code for this key (respects language-specific layouts)
+            String keyCode = KeyBoardManager.getCurrentKeyCodeMap().get(keyName);
             if (keyCode == null) {
-                Log.w(TAG, "No keyCode for keyName: " + keyName);
+                Log.e(TAG, "❌ No keyCode found for keyName: '" + keyName + "'");
                 return;
             }
 
-            // Build the HID press command (same as sendKeyboardRequest)
-            // Format: prefix1(2) + prefix2(2) + address(2) + cmd(2) + len(2) + modifier(2) + null(2) + keycode(2) + 5*null(2*5)
-            String sendKBData = keyCodeMap.get("prefix1")
-                    + keyCodeMap.get("prefix2")
-                    + keyCodeMap.get("address")
-                    + CH9329MSKBMap.CmdData().get("CmdKB_HID")
-                    + CH9329MSKBMap.DataLen().get("DataLenKB")
-                    + modifier
-                    + CH9329MSKBMap.DataNull().get("DataNull")
-                    + keyCode
-                    + CH9329MSKBMap.DataNull().get("DataNull")
-                    + CH9329MSKBMap.DataNull().get("DataNull")
-                    + CH9329MSKBMap.DataNull().get("DataNull")
-                    + CH9329MSKBMap.DataNull().get("DataNull")
-                    + CH9329MSKBMap.DataNull().get("DataNull");
+            // Build the PRESS packet (matches KeyCMD's KeyboardHidTransport.sendKeyReport exactly):
+            //   57 AB 00 02 08 <mod> 00 <key[0]> 00 00 00 00 00
+            //   = header(5) + mod(1) + reserved(1) + key0(1) + key1..key5(5) = 13 bytes
+            //   + checksum(1) = 14 bytes total
+            String pressData = String.format(
+                    "57AB000208%02X00%s0000000000",
+                    Integer.parseInt(modifier, 16),
+                    keyCode);
+            pressData = pressData + CH9329Function.makeChecksum(pressData);
+            byte[] pressBytes = CH9329Function.hexStringToByteArray(pressData);
 
-            // Add checksum
-            sendKBData = sendKBData + CH9329Function.makeChecksum(sendKBData);
-            byte[] pressBytes = CH9329Function.hexStringToByteArray(sendKBData);
+            // Build the RELEASE packet (matches KeyCMD's sendAllKeysReleased exactly):
+            //   57 AB 00 02 08 00 00 00 00 00 00 00 <0C = checksum>
+            String releaseData = "57AB00020800000000000000000C";
+            byte[] releaseBytes = CH9329Function.hexStringToByteArray(releaseData);
 
-            // Send press
-            if (UsbDeviceManager.port != null && UsbDeviceManager.port.isOpen()) {
-                UsbDeviceManager.port.write(pressBytes, 100);
+            // Use UsbDeviceManager that auto-routes FE0C vs 7523 — fallback to direct port if missing
+            com.openterface.AOS.serial.UsbDeviceManager mgr = KeyBoardManager.getUsbDeviceManager();
+            boolean canRouteViaManager = (mgr != null);
+
+            Log.d(TAG, "📤 Press key='" + keyName + "' mod=0x" + modifier +
+                  " keyCode=" + keyCode + " packet=" + pressData +
+                  " viaManager=" + canRouteViaManager);
+
+            // Send PRESS via proper device-aware write path
+            boolean pressOk = false;
+            if (canRouteViaManager) {
+                pressOk = mgr.writeKeyboardData(pressBytes, 50);
+            } else if (UsbDeviceManager.port != null && UsbDeviceManager.port.isOpen()) {
+                UsbDeviceManager.port.write(pressBytes, 50);
+                pressOk = true;
+            } else {
+                Log.e(TAG, "❌ No write path available (neither UsbDeviceManager nor port)");
+                return;
+            }
+            if (!pressOk) {
+                Log.e(TAG, "❌ PRESS write returned false for key='" + keyName + "'");
+                return;
             }
 
-            // Hold the key briefly so target registers it
-            Thread.sleep(50);
+            // Brief hold so CH9329 registers the press
+            Thread.sleep(15);
 
-            // Send release (same as EmptyKeyboard)
-            String releaseKBData = keyCodeMap.get("release");
-            if (releaseKBData != null) {
-                CH9329Function.ReleaseSendLogData(releaseKBData);
-                byte[] releaseBytes = CH9329Function.hexStringToByteArray(releaseKBData);
-                if (UsbDeviceManager.port != null && UsbDeviceManager.port.isOpen()) {
-                    UsbDeviceManager.port.write(releaseBytes, 100);
-                }
+            Log.d(TAG, "🔼 Release key='" + keyName + "' packet=" + releaseData);
+
+            // Send RELEASE via same path
+            boolean releaseOk;
+            if (canRouteViaManager) {
+                releaseOk = mgr.writeKeyboardData(releaseBytes, 50);
+            } else {
+                UsbDeviceManager.port.write(releaseBytes, 50);
+                releaseOk = true;
+            }
+            if (!releaseOk) {
+                Log.e(TAG, "❌ RELEASE write returned false for key='" + keyName + "'");
             }
 
-            // Small gap between keys
+            // Brief gap before the next key
             Thread.sleep(20);
 
+            Log.d(TAG, "✅ Done key='" + keyName + "'");
+
+        } catch (IOException e) {
+            Log.e(TAG, "❌ IO Error: " + e.getMessage(), e);
         } catch (Exception e) {
-            Log.e(TAG, "Error sending key '" + keyName + "': " + e.getMessage());
+            Log.e(TAG, "❌ Error: " + e.getMessage(), e);
         }
     }
 

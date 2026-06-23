@@ -26,9 +26,12 @@ package com.openterface.AOS.serial;
 
 import android.graphics.Matrix;
 import android.os.Handler;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.TextView;
 
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -436,7 +439,8 @@ public class CustomTouchListener implements View.OnTouchListener {
             Matrix matrix = new Matrix();
             float pivotX = viewWidth / 2f;
             float pivotY = viewHeight / 2f;
-            matrix.setScale(mPortraitZoomScale, mPortraitZoomScale, pivotX, pivotY);
+            float scale = mPortraitZoomScale;
+            matrix.setScale(scale, scale, pivotX, pivotY);
             matrix.postTranslate(mPortraitTranslateX, mPortraitTranslateY);
             textureView.setTransform(matrix);
             textureView.invalidate();
@@ -940,7 +944,8 @@ public class CustomTouchListener implements View.OnTouchListener {
     }
 
     /**
-     * Apply zoom using TextureView.setTransform(Matrix) for GPU-quality scaling
+     * Apply zoom using TextureView.setTransform(Matrix) for GPU-quality scaling.
+     * When zoomed in, the TextureView's physical height is expanded to show more vertical content.
      */
     private void applyPortraitZoomTransform() {
         if (activity == null || activity.mBinding == null || activity.mBinding.viewMainPreview == null) {
@@ -955,16 +960,20 @@ public class CustomTouchListener implements View.OnTouchListener {
             return;
         }
 
+        // When zoomed in, expand the TextureView's physical height to show more content
+        expandTextureViewHeightIfNeeded();
+
         // Create transform matrix
         Matrix matrix = new Matrix();
 
-        // Apply scale around center pivot using pre-concatenation
-        // The correct order: translate to center -> scale -> translate back -> apply panning
+        // Apply scale around center pivot
         float pivotX = viewWidth / 2f;
         float pivotY = viewHeight / 2f;
 
-        // Start with identity, then apply transformations in correct order
-        matrix.setScale(mPortraitZoomScale, mPortraitZoomScale, pivotX, pivotY);
+        // Uniform scaling (scaleX == scaleY)
+        float scale = mPortraitZoomScale;
+
+        matrix.setScale(scale, scale, pivotX, pivotY);
         matrix.postTranslate(mPortraitTranslateX, mPortraitTranslateY);
 
         // Apply the matrix to TextureView (GPU-accelerated, bilinear filtering)
@@ -973,14 +982,81 @@ public class CustomTouchListener implements View.OnTouchListener {
 
         // Sync the PiP indicator with the main view's zoom/pan state
         ZoomLayoutDeal.updateIndicatorFromMainView(
-            mPortraitZoomScale,
+            scale,
             mPortraitTranslateX,
             mPortraitTranslateY
         );
 
-        Log.d(TAG, "Portrait zoom applied: scale=" + mPortraitZoomScale +
+        Log.d(TAG, "Portrait zoom applied: scale=" + scale +
               " translateX=" + mPortraitTranslateX +
               " translateY=" + mPortraitTranslateY);
+    }
+
+    /**
+     * Expand TextureView's physical height when zoomed in, so more vertical content is visible.
+     * The height increases with zoom scale, capped at MAX_HEIGHT_RATIO of screen height.
+     */
+    private void expandTextureViewHeightIfNeeded() {
+        if (activity == null || activity.mBinding == null || activity.mBinding.viewMainPreview == null) {
+            return;
+        }
+
+        AspectRatioTextureView textureView = activity.mBinding.viewMainPreview;
+        View container = activity.mBinding.videoAreaContainer;
+
+        if (container == null) return;
+
+        // Get screen height
+        WindowManager wm = (WindowManager) activity.getSystemService("window");
+        if (wm == null) return;
+        DisplayMetrics metrics = new DisplayMetrics();
+        wm.getDefaultDisplay().getRealMetrics(metrics);
+        int screenHeight = metrics.heightPixels;
+
+        // Get original container height (when not zoomed)
+        int containerHeight = container.getHeight();
+        if (containerHeight <= 0) return;
+
+        // Calculate expanded height based on zoom scale
+        // scale = 1.0 → height = containerHeight (original)
+        // scale = MAX_SCALE → height = MAX_HEIGHT_RATIO * screenHeight
+        // Linear interpolation between these two points
+        final float MAX_SCALE = 3.0f;
+        final float MAX_HEIGHT_RATIO = 0.85f;  // Cap at 85% of screen height
+
+        int maxHeight = (int) (screenHeight * MAX_HEIGHT_RATIO);
+        int minHeight = containerHeight;
+
+        float scale = mPortraitZoomScale;
+        float t = (scale - 1.0f) / (MAX_SCALE - 1.0f);  // 0 to 1 as scale goes from 1.0 to MAX_SCALE
+        t = Math.max(0f, Math.min(1f, t));
+
+        int targetHeight = minHeight + (int) ((maxHeight - minHeight) * t);
+
+        // Update LayoutParams if height changed
+        ViewGroup.LayoutParams params = textureView.getLayoutParams();
+        if (params.height != targetHeight) {
+            params.height = targetHeight;
+            textureView.setLayoutParams(params);
+            Log.d(TAG, "Expanded TextureView height: " + targetHeight + " (scale=" + scale + ")");
+        }
+    }
+
+    /**
+     * Reset TextureView's height back to match_parent when zoomed out.
+     */
+    private void resetTextureViewHeight() {
+        if (activity == null || activity.mBinding == null || activity.mBinding.viewMainPreview == null) {
+            return;
+        }
+
+        AspectRatioTextureView textureView = activity.mBinding.viewMainPreview;
+        ViewGroup.LayoutParams params = textureView.getLayoutParams();
+        if (params.height != ViewGroup.LayoutParams.MATCH_PARENT) {
+            params.height = ViewGroup.LayoutParams.MATCH_PARENT;
+            textureView.setLayoutParams(params);
+            Log.d(TAG, "Reset TextureView height to MATCH_PARENT");
+        }
     }
 
     // Method to apply zoom to your view
@@ -1011,6 +1087,7 @@ public class CustomTouchListener implements View.OnTouchListener {
                 mPortraitTranslateX = 0f;
                 mPortraitTranslateY = 0f;
                 ZoomLayoutDeal.zoomOut();
+                resetTextureViewHeight();  // Reset TextureView height when zoomed out
             } else {
                 // Show PiP when zoomed in
                 ZoomLayoutDeal.enlargeView();
