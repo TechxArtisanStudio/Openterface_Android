@@ -9,44 +9,51 @@ import java.util.Map;
 /**
  * Character alternatives mapping for long-press functionality
  * Maps each letter to its possible alternatives (uppercase, symbols, etc.)
+ *
+ * Row 1 (Q-P): [Uppercase, Number, Symbol] - 3 alternates
+ * Row 2 (A-L): [Lowercase, Uppercase, Symbol]  - 3 alternates
+ * Row 3 (Z-M): [Lowercase, Uppercase, Symbol]  - 3 alternates
+ * / key:       [Symbol, Shifted Symbol]         - 2 alternates
  */
 public class CharacterAlternates {
 
     private static final Map<Integer, List<String>> ALTERNATES_MAP = new HashMap<>();
 
     static {
-        // Row 1: Q-P - Format: [uppercase, number, symbol] - NO lowercase
-        ALTERNATES_MAP.put(0x14, Arrays.asList("Q", "1", "!")); // q
-        ALTERNATES_MAP.put(0x1A, Arrays.asList("W", "2", "@")); // w
-        ALTERNATES_MAP.put(0x08, Arrays.asList("E", "3", "#")); // e
-        ALTERNATES_MAP.put(0x15, Arrays.asList("R", "4", "$")); // r
-        ALTERNATES_MAP.put(0x17, Arrays.asList("T", "5", "%")); // t
-        ALTERNATES_MAP.put(0x1C, Arrays.asList("Y", "6", "^")); // y
-        ALTERNATES_MAP.put(0x18, Arrays.asList("U", "7", "&")); // u
-        ALTERNATES_MAP.put(0x0C, Arrays.asList("I", "8", "*")); // i
-        ALTERNATES_MAP.put(0x12, Arrays.asList("O", "9", "(")); // o
-        ALTERNATES_MAP.put(0x13, Arrays.asList("P", "0", ")")); // p
+        // Row 1: Q-P (long press → number, symbol, uppercase)
+        ALTERNATES_MAP.put(0x14, Arrays.asList("1", "!", "Q")); // q
+        ALTERNATES_MAP.put(0x1A, Arrays.asList("2", "@", "W")); // w
+        ALTERNATES_MAP.put(0x08, Arrays.asList("3", "#", "E")); // e
+        ALTERNATES_MAP.put(0x15, Arrays.asList("4", "$", "R")); // r
+        ALTERNATES_MAP.put(0x17, Arrays.asList("5", "%", "T")); // t
+        ALTERNATES_MAP.put(0x1C, Arrays.asList("6", "^", "Y")); // y
+        ALTERNATES_MAP.put(0x18, Arrays.asList("7", "&", "U")); // u
+        ALTERNATES_MAP.put(0x0C, Arrays.asList("8", "*", "I")); // i
+        ALTERNATES_MAP.put(0x12, Arrays.asList("9", "(", "O")); // o
+        ALTERNATES_MAP.put(0x13, Arrays.asList("0", ")", "P")); // p
 
-        // Row 2: A-L - Format: [uppercase, symbol]
-        ALTERNATES_MAP.put(0x04, Arrays.asList("A", "@")); // a
-        ALTERNATES_MAP.put(0x16, Arrays.asList("S", "#")); // s
-        ALTERNATES_MAP.put(0x07, Arrays.asList("D", "$")); // d
-        ALTERNATES_MAP.put(0x09, Arrays.asList("F", "%")); // f
-        ALTERNATES_MAP.put(0x0A, Arrays.asList("G", "^")); // g
-        ALTERNATES_MAP.put(0x0B, Arrays.asList("H", "&")); // h
-        ALTERNATES_MAP.put(0x0D, Arrays.asList("J", "*")); // j
-        ALTERNATES_MAP.put(0x0E, Arrays.asList("K", "(")); // k
-        ALTERNATES_MAP.put(0x0F, Arrays.asList("L", ")")); // l
+        // Row 2: A-L (long press → symbol, uppercase)
+        ALTERNATES_MAP.put(0x04, Arrays.asList("@", "A"));  // a
+        ALTERNATES_MAP.put(0x16, Arrays.asList("#", "S"));  // s
+        ALTERNATES_MAP.put(0x07, Arrays.asList("$", "D"));  // d
+        ALTERNATES_MAP.put(0x09, Arrays.asList("%", "F"));  // f
+        ALTERNATES_MAP.put(0x0A, Arrays.asList("^", "G"));  // g
+        ALTERNATES_MAP.put(0x0B, Arrays.asList("&", "H"));  // h
+        ALTERNATES_MAP.put(0x0D, Arrays.asList("*", "J"));  // j
+        ALTERNATES_MAP.put(0x0E, Arrays.asList("(", "K"));  // k
+        ALTERNATES_MAP.put(0x0F, Arrays.asList(")", "L"));  // l
 
-        // Row 3: Z-M, / - Format: [uppercase, symbol]
-        ALTERNATES_MAP.put(0x1D, Arrays.asList("Z", "!")); // z
-        ALTERNATES_MAP.put(0x1B, Arrays.asList("X", "=")); // x
-        ALTERNATES_MAP.put(0x06, Arrays.asList("C", "+")); // c
-        ALTERNATES_MAP.put(0x19, Arrays.asList("V", "-")); // v
-        ALTERNATES_MAP.put(0x05, Arrays.asList("B", "_")); // b
-        ALTERNATES_MAP.put(0x11, Arrays.asList("N", "[")); // n
-        ALTERNATES_MAP.put(0x10, Arrays.asList("M", "]")); // m
-        ALTERNATES_MAP.put(0x38, Arrays.asList("?", "\\")); // /
+        // Row 3: Z-M (long press → symbol, uppercase)
+        ALTERNATES_MAP.put(0x1D, Arrays.asList("!", "Z"));  // z
+        ALTERNATES_MAP.put(0x1B, Arrays.asList("=", "X"));  // x
+        ALTERNATES_MAP.put(0x06, Arrays.asList("+", "C"));  // c
+        ALTERNATES_MAP.put(0x19, Arrays.asList("-", "V"));  // v
+        ALTERNATES_MAP.put(0x05, Arrays.asList("_", "B"));  // b
+        ALTERNATES_MAP.put(0x11, Arrays.asList("[", "N"));  // n
+        ALTERNATES_MAP.put(0x10, Arrays.asList("]", "M"));  // m
+
+        // / key (long press → "/", "?")
+        ALTERNATES_MAP.put(0x38, Arrays.asList("/", "?"));       // /
     }
 
     /**
@@ -70,17 +77,16 @@ public class CharacterAlternates {
     /**
      * Get the corner hint text for a key (number/symbol only, not uppercase)
      * For letter keys q-p, returns the number (e.g., "1" for q)
-     * For other keys, returns the first symbol (e.g., "@" for a)
+     * For other letter keys, returns the symbol (e.g., "@" for a)
      * @param hidUsageCode HID usage code
      * @return hint string or null
      */
     public static String getCornerHint(int hidUsageCode) {
         List<String> alternates = ALTERNATES_MAP.get(hidUsageCode);
         if (alternates == null || alternates.isEmpty()) return null;
-        // Skip the first item (uppercase letter), return the next one
-        if (alternates.size() > 1) {
-            return alternates.get(1);
-        }
-        return null;
+        // Row 1 format: [number, symbol, uppercase] → index 0 (number)
+        // Row 2/3 format: [symbol, uppercase] → index 0 (symbol)
+        // / key format: [symbol, shifted] → index 0
+        return alternates.get(0);
     }
 }
