@@ -1000,6 +1000,14 @@ public class KeyBoardSystem {
             case '{': keyName = "["; needsShift = true; break;
             case '}': keyName = "]"; needsShift = true; break;
 
+            // Unicode currency symbols (not available on standard US keyboard)
+            // These need special handling - for now we skip them
+            case '¥':
+            case '£':
+            case '€':
+                Log.w("KeyBoardSystem", "Currency symbol not supported via HID: " + c);
+                return;
+
             default:
                 Log.e("KeyBoardSystem", "No key mapping for character: " + c);
                 return;

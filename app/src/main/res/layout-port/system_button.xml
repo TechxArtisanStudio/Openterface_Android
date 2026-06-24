@@ -2,7 +2,9 @@
 <!-- Portrait Mode Keyboard - System Panel
      All letter keys wrapped in FrameLayout with corner hint TextView (top-right).
      All letter keys have weight=1, function keys compressed to 0.5.
-     Row totals: Row1=10, Row2=10, Row3=10 → letter keys same width across all rows. -->
+     Row totals: Row1=10, Row2=10, Row3=10 → letter keys same width across all rows.
+     CRITICAL: Letter buttons use elevation="0dp" + stateListAnimator="@null" to prevent
+     Material elevation from hiding the sibling corner-hint TextViews. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/Fragment_KeyBoard_System"
@@ -14,8 +16,8 @@
     android:visibility="visible">
 
     <!-- Row 1: Q W E R T Y U I O P
-         10 letters × weight=1 with 2dp margins (4dp gaps between keys).
-         Corner hints show long-press alternatives (numbers 1-0). -->
+         10 letters × weight=1 with margins.
+         Corner hints show long-press symbols (KeyCMD reference). -->
     <LinearLayout
         android:id="@+id/keyboard_row1"
         android:layout_width="match_parent"
@@ -31,7 +33,7 @@
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:text="@string/Q_Button"
                 android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
+                android:elevation="0dp" android:stateListAnimator="@null"
                 android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
                 android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
             <TextView android:id="@+id/Q_Button_hint"
@@ -40,7 +42,8 @@
                 android:paddingTop="2dp" android:paddingEnd="4dp"
                 android:textSize="9sp" android:textColor="@color/text_on_surface"
                 android:alpha="0.5" android:includeFontPadding="false"
-                android:text="1!"/>
+                android:elevation="1dp"
+                android:text="!"/>
         </FrameLayout>
 
         <FrameLayout
@@ -51,7 +54,7 @@
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:text="@string/W_Button"
                 android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
+                android:elevation="0dp" android:stateListAnimator="@null"
                 android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
                 android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
             <TextView android:id="@+id/W_Button_hint"
@@ -60,7 +63,8 @@
                 android:paddingTop="2dp" android:paddingEnd="4dp"
                 android:textSize="9sp" android:textColor="@color/text_on_surface"
                 android:alpha="0.5" android:includeFontPadding="false"
-                android:text="2@"/>
+                android:elevation="1dp"
+                android:text="@"/>
         </FrameLayout>
 
         <FrameLayout
@@ -71,7 +75,7 @@
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:text="@string/E_Button"
                 android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
+                android:elevation="0dp" android:stateListAnimator="@null"
                 android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
                 android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
             <TextView android:id="@+id/E_Button_hint"
@@ -80,7 +84,8 @@
                 android:paddingTop="2dp" android:paddingEnd="4dp"
                 android:textSize="9sp" android:textColor="@color/text_on_surface"
                 android:alpha="0.5" android:includeFontPadding="false"
-                android:text="3#"/>
+                android:elevation="1dp"
+                android:text="#"/>
         </FrameLayout>
 
         <FrameLayout
@@ -91,7 +96,7 @@
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:text="@string/R_Button"
                 android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
+                android:elevation="0dp" android:stateListAnimator="@null"
                 android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
                 android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
             <TextView android:id="@+id/R_Button_hint"
@@ -100,7 +105,8 @@
                 android:paddingTop="2dp" android:paddingEnd="4dp"
                 android:textSize="9sp" android:textColor="@color/text_on_surface"
                 android:alpha="0.5" android:includeFontPadding="false"
-                android:text="4$"/>
+                android:elevation="1dp"
+                android:text="$"/>
         </FrameLayout>
 
         <FrameLayout
@@ -111,7 +117,7 @@
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:text="@string/T_Button"
                 android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
+                android:elevation="0dp" android:stateListAnimator="@null"
                 android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
                 android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
             <TextView android:id="@+id/T_Button_hint"
@@ -120,7 +126,8 @@
                 android:paddingTop="2dp" android:paddingEnd="4dp"
                 android:textSize="9sp" android:textColor="@color/text_on_surface"
                 android:alpha="0.5" android:includeFontPadding="false"
-                android:text="5%"/>
+                android:elevation="1dp"
+                android:text="%"/>
         </FrameLayout>
 
         <FrameLayout
@@ -131,7 +138,7 @@
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:text="@string/Y_Button"
                 android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
+                android:elevation="0dp" android:stateListAnimator="@null"
                 android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
                 android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
             <TextView android:id="@+id/Y_Button_hint"
@@ -140,7 +147,8 @@
                 android:paddingTop="2dp" android:paddingEnd="4dp"
                 android:textSize="9sp" android:textColor="@color/text_on_surface"
                 android:alpha="0.5" android:includeFontPadding="false"
-                android:text="6^"/>
+                android:elevation="1dp"
+                android:text="^"/>
         </FrameLayout>
 
         <FrameLayout
@@ -151,7 +159,7 @@
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:text="@string/U_Button"
                 android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
+                android:elevation="0dp" android:stateListAnimator="@null"
                 android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
                 android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
             <TextView android:id="@+id/U_Button_hint"
@@ -160,7 +168,8 @@
                 android:paddingTop="2dp" android:paddingEnd="4dp"
                 android:textSize="9sp" android:textColor="@color/text_on_surface"
                 android:alpha="0.5" android:includeFontPadding="false"
-                android:text="7&amp;"/>
+                android:elevation="1dp"
+                android:text="&amp;"/>
         </FrameLayout>
 
         <FrameLayout
@@ -171,7 +180,7 @@
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:text="@string/I_Button"
                 android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
+                android:elevation="0dp" android:stateListAnimator="@null"
                 android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
                 android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
             <TextView android:id="@+id/I_Button_hint"
@@ -180,7 +189,8 @@
                 android:paddingTop="2dp" android:paddingEnd="4dp"
                 android:textSize="9sp" android:textColor="@color/text_on_surface"
                 android:alpha="0.5" android:includeFontPadding="false"
-                android:text="8*"/>
+                android:elevation="1dp"
+                android:text="*"/>
         </FrameLayout>
 
         <FrameLayout
@@ -191,7 +201,7 @@
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:text="@string/O_Button"
                 android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
+                android:elevation="0dp" android:stateListAnimator="@null"
                 android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
                 android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
             <TextView android:id="@+id/O_Button_hint"
@@ -200,7 +210,8 @@
                 android:paddingTop="2dp" android:paddingEnd="4dp"
                 android:textSize="9sp" android:textColor="@color/text_on_surface"
                 android:alpha="0.5" android:includeFontPadding="false"
-                android:text="9("/>
+                android:elevation="1dp"
+                android:text=","/>
         </FrameLayout>
 
         <FrameLayout
@@ -211,7 +222,7 @@
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:text="@string/P_Button"
                 android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
+                android:elevation="0dp" android:stateListAnimator="@null"
                 android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
                 android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
             <TextView android:id="@+id/P_Button_hint"
@@ -220,7 +231,8 @@
                 android:paddingTop="2dp" android:paddingEnd="4dp"
                 android:textSize="9sp" android:textColor="@color/text_on_surface"
                 android:alpha="0.5" android:includeFontPadding="false"
-                android:text="0)"/>
+                android:elevation="1dp"
+                android:text="."/>
         </FrameLayout>
     </LinearLayout>
 
@@ -249,7 +261,7 @@
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:text="@string/A_Button"
                 android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
+                android:elevation="0dp" android:stateListAnimator="@null"
                 android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
                 android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
             <TextView android:id="@+id/A_Button_hint"
@@ -258,7 +270,8 @@
                 android:paddingTop="2dp" android:paddingEnd="4dp"
                 android:textSize="9sp" android:textColor="@color/text_on_surface"
                 android:alpha="0.5" android:includeFontPadding="false"
-                android:text="\@"/>
+                android:elevation="1dp"
+                android:text="¥"/>
         </FrameLayout>
 
         <FrameLayout
@@ -269,7 +282,7 @@
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:text="@string/S_Button"
                 android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
+                android:elevation="0dp" android:stateListAnimator="@null"
                 android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
                 android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
             <TextView android:id="@+id/S_Button_hint"
@@ -278,7 +291,8 @@
                 android:paddingTop="2dp" android:paddingEnd="4dp"
                 android:textSize="9sp" android:textColor="@color/text_on_surface"
                 android:alpha="0.5" android:includeFontPadding="false"
-                android:text="#"/>
+                android:elevation="1dp"
+                android:text="`"/>
         </FrameLayout>
 
         <FrameLayout
@@ -289,7 +303,7 @@
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:text="@string/D_Button"
                 android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
+                android:elevation="0dp" android:stateListAnimator="@null"
                 android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
                 android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
             <TextView android:id="@+id/D_Button_hint"
@@ -298,7 +312,8 @@
                 android:paddingTop="2dp" android:paddingEnd="4dp"
                 android:textSize="9sp" android:textColor="@color/text_on_surface"
                 android:alpha="0.5" android:includeFontPadding="false"
-                android:text="$"/>
+                android:elevation="1dp"
+                android:text="-"/>
         </FrameLayout>
 
         <FrameLayout
@@ -309,7 +324,7 @@
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:text="@string/F_Button"
                 android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
+                android:elevation="0dp" android:stateListAnimator="@null"
                 android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
                 android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
             <TextView android:id="@+id/F_Button_hint"
@@ -318,7 +333,8 @@
                 android:paddingTop="2dp" android:paddingEnd="4dp"
                 android:textSize="9sp" android:textColor="@color/text_on_surface"
                 android:alpha="0.5" android:includeFontPadding="false"
-                android:text="%"/>
+                android:elevation="1dp"
+                android:text="+"/>
         </FrameLayout>
 
         <FrameLayout
@@ -329,7 +345,7 @@
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:text="@string/G_Button"
                 android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
+                android:elevation="0dp" android:stateListAnimator="@null"
                 android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
                 android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
             <TextView android:id="@+id/G_Button_hint"
@@ -338,7 +354,8 @@
                 android:paddingTop="2dp" android:paddingEnd="4dp"
                 android:textSize="9sp" android:textColor="@color/text_on_surface"
                 android:alpha="0.5" android:includeFontPadding="false"
-                android:text="^"/>
+                android:elevation="1dp"
+                android:text="/"/>
         </FrameLayout>
 
         <FrameLayout
@@ -349,7 +366,7 @@
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:text="@string/H_Button"
                 android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
+                android:elevation="0dp" android:stateListAnimator="@null"
                 android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
                 android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
             <TextView android:id="@+id/H_Button_hint"
@@ -358,7 +375,8 @@
                 android:paddingTop="2dp" android:paddingEnd="4dp"
                 android:textSize="9sp" android:textColor="@color/text_on_surface"
                 android:alpha="0.5" android:includeFontPadding="false"
-                android:text="&amp;"/>
+                android:elevation="1dp"
+                android:text="&lt;"/>
         </FrameLayout>
 
         <FrameLayout
@@ -369,7 +387,7 @@
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:text="@string/J_Button"
                 android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
+                android:elevation="0dp" android:stateListAnimator="@null"
                 android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
                 android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
             <TextView android:id="@+id/J_Button_hint"
@@ -378,7 +396,8 @@
                 android:paddingTop="2dp" android:paddingEnd="4dp"
                 android:textSize="9sp" android:textColor="@color/text_on_surface"
                 android:alpha="0.5" android:includeFontPadding="false"
-                android:text="*"/>
+                android:elevation="1dp"
+                android:text="["/>
         </FrameLayout>
 
         <FrameLayout
@@ -389,7 +408,7 @@
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:text="@string/K_Button"
                 android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
+                android:elevation="0dp" android:stateListAnimator="@null"
                 android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
                 android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
             <TextView android:id="@+id/K_Button_hint"
@@ -398,7 +417,8 @@
                 android:paddingTop="2dp" android:paddingEnd="4dp"
                 android:textSize="9sp" android:textColor="@color/text_on_surface"
                 android:alpha="0.5" android:includeFontPadding="false"
-                android:text="("/>
+                android:elevation="1dp"
+                android:text="{"/>
         </FrameLayout>
 
         <FrameLayout
@@ -409,7 +429,7 @@
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:text="@string/L_Button"
                 android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
+                android:elevation="0dp" android:stateListAnimator="@null"
                 android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
                 android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
             <TextView android:id="@+id/L_Button_hint"
@@ -418,7 +438,8 @@
                 android:paddingTop="2dp" android:paddingEnd="4dp"
                 android:textSize="9sp" android:textColor="@color/text_on_surface"
                 android:alpha="0.5" android:includeFontPadding="false"
-                android:text=")"/>
+                android:elevation="1dp"
+                android:text="("/>
         </FrameLayout>
 
         <ImageButton android:id="@+id/Key_Backspace"
@@ -455,7 +476,7 @@
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:text="@string/Z_Button"
                 android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
+                android:elevation="0dp" android:stateListAnimator="@null"
                 android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
                 android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
             <TextView android:id="@+id/Z_Button_hint"
@@ -464,7 +485,8 @@
                 android:paddingTop="2dp" android:paddingEnd="4dp"
                 android:textSize="9sp" android:textColor="@color/text_on_surface"
                 android:alpha="0.5" android:includeFontPadding="false"
-                android:text="!"/>
+                android:elevation="1dp"
+                android:text="'"/>
         </FrameLayout>
 
         <FrameLayout
@@ -475,7 +497,7 @@
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:text="@string/X_Button"
                 android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
+                android:elevation="0dp" android:stateListAnimator="@null"
                 android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
                 android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
             <TextView android:id="@+id/X_Button_hint"
@@ -484,7 +506,8 @@
                 android:paddingTop="2dp" android:paddingEnd="4dp"
                 android:textSize="9sp" android:textColor="@color/text_on_surface"
                 android:alpha="0.5" android:includeFontPadding="false"
-                android:text="="/>
+                android:elevation="1dp"
+                android:text="&quot;"/>
         </FrameLayout>
 
         <FrameLayout
@@ -495,7 +518,7 @@
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:text="@string/C_Button"
                 android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
+                android:elevation="0dp" android:stateListAnimator="@null"
                 android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
                 android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
             <TextView android:id="@+id/C_Button_hint"
@@ -504,7 +527,8 @@
                 android:paddingTop="2dp" android:paddingEnd="4dp"
                 android:textSize="9sp" android:textColor="@color/text_on_surface"
                 android:alpha="0.5" android:includeFontPadding="false"
-                android:text="+"/>
+                android:elevation="1dp"
+                android:text=";"/>
         </FrameLayout>
 
         <FrameLayout
@@ -515,7 +539,7 @@
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:text="@string/V_Button"
                 android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
+                android:elevation="0dp" android:stateListAnimator="@null"
                 android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
                 android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
             <TextView android:id="@+id/V_Button_hint"
@@ -524,7 +548,8 @@
                 android:paddingTop="2dp" android:paddingEnd="4dp"
                 android:textSize="9sp" android:textColor="@color/text_on_surface"
                 android:alpha="0.5" android:includeFontPadding="false"
-                android:text="-"/>
+                android:elevation="1dp"
+                android:text=":"/>
         </FrameLayout>
 
         <FrameLayout
@@ -535,7 +560,7 @@
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:text="@string/B_Button"
                 android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
+                android:elevation="0dp" android:stateListAnimator="@null"
                 android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
                 android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
             <TextView android:id="@+id/B_Button_hint"
@@ -544,7 +569,8 @@
                 android:paddingTop="2dp" android:paddingEnd="4dp"
                 android:textSize="9sp" android:textColor="@color/text_on_surface"
                 android:alpha="0.5" android:includeFontPadding="false"
-                android:text="_"/>
+                android:elevation="1dp"
+                android:text="/"/>
         </FrameLayout>
 
         <FrameLayout
@@ -555,7 +581,7 @@
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:text="@string/N_Button"
                 android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
+                android:elevation="0dp" android:stateListAnimator="@null"
                 android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
                 android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
             <TextView android:id="@+id/N_Button_hint"
@@ -564,7 +590,8 @@
                 android:paddingTop="2dp" android:paddingEnd="4dp"
                 android:textSize="9sp" android:textColor="@color/text_on_surface"
                 android:alpha="0.5" android:includeFontPadding="false"
-                android:text="["/>
+                android:elevation="1dp"
+                android:text="|"/>
         </FrameLayout>
 
         <FrameLayout
@@ -575,7 +602,7 @@
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:text="@string/M_Button"
                 android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
+                android:elevation="0dp" android:stateListAnimator="@null"
                 android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
                 android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
             <TextView android:id="@+id/M_Button_hint"
@@ -584,7 +611,8 @@
                 android:paddingTop="2dp" android:paddingEnd="4dp"
                 android:textSize="9sp" android:textColor="@color/text_on_surface"
                 android:alpha="0.5" android:includeFontPadding="false"
-                android:text="]"/>
+                android:elevation="1dp"
+                android:text="\\"/>
         </FrameLayout>
 
         <FrameLayout
@@ -595,7 +623,7 @@
                 android:layout_width="match_parent" android:layout_height="match_parent"
                 android:text="@string/Key_Slash"
                 android:textColor="@color/text_on_surface" android:background="@drawable/button_background"
-                android:theme="@style/ButtonTheme"
+                android:elevation="0dp" android:stateListAnimator="@null"
                 android:autoSizeTextType="uniform" android:autoSizeMinTextSize="5sp"
                 android:autoSizeMaxTextSize="12sp" tools:ignore="UnusedAttribute"/>
             <TextView android:id="@+id/Key_Slash_hint"
@@ -604,7 +632,8 @@
                 android:paddingTop="2dp" android:paddingEnd="4dp"
                 android:textSize="9sp" android:textColor="@color/text_on_surface"
                 android:alpha="0.5" android:includeFontPadding="false"
-                android:text="\?"/>
+                android:elevation="1dp"
+                android:text="?"/>
         </FrameLayout>
 
         <ImageButton android:id="@+id/Enter_Button"
