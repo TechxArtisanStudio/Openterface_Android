@@ -335,4 +335,11 @@
     <string name="ime_saved_text_more">更多操作</string>
     <string name="ime_saved_text_select_first">请先选择一个文本</string>
     <string name="target_os_setting_desc">切换Win/Cmd/Super键标签</string>
+
+    <!-- Permission Dialog Strings -->
+    <string name="permission_required_title">权限请求</string>
+    <string name="permission_explanation_message">为了连接和使用 Openterface 设备，需要以下权限：\n\n1. 相机权限 - 用于视频流显示\n2. USB 设备权限 - 用于与设备通信\n\n请允许这些权限以继续使用。</string>
+    <string name="permission_continue">继续</string>
+    <string name="permission_cancel">取消</string>
+    <string name="permission_camera_denied">相机权限被拒绝，无法显示视频流</string>
 </resources>

@@ -1303,29 +1303,69 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
             return;
         }
 
+        // Show permission explanation dialog first to improve UX
+        showPermissionExplanationDialog(() -> {
+            // After user acknowledges, request CAMERA permission
+            requestCameraPermissionAndConnect(device);
+        });
+    }
+
+    /**
+     * Show a dialog explaining why permissions are needed.
+     * This improves UX by preparing the user for multiple permission requests.
+     */
+    private void showPermissionExplanationDialog(Runnable onContinue) {
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(R.string.permission_required_title)
+            .setMessage(R.string.permission_explanation_message)
+            .setPositiveButton(R.string.permission_continue, (dialog, which) -> {
+                onContinue.run();
+            })
+            .setNegativeButton(R.string.permission_cancel, null)
+            .setCancelable(false)
+            .show();
+    }
+
+    /**
+     * Request CAMERA permission and connect to device.
+     * Separated from selectDevice for clearer code flow.
+     */
+    private void requestCameraPermissionAndConnect(UsbDevice device) {
         XXPermissions.with(this)
                 .permission(Manifest.permission.CAMERA)
                 .request((permissions, all) -> {
-                    Log.d(TAG, "selectDevice: CAMERA permission granted, connecting camera");
-                    mIsCameraConnected = false;
-                    updateUIControls();
-
-                    if (mCameraHelper != null) {
-                        // get usb device
-                        Log.d(TAG, "selectDevice: calling mCameraHelper.selectDevice()");
-                        mCameraHelper.selectDevice(device);
-
-                        // Guard against landscape-only views in portrait mode
-                        if (action_device_drawable != null && action_device != null) {
-                            action_device_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
-                            action_device.setTextColor(getResources().getColor(android.R.color.holo_red_light));
-                        }
-                        if (action_safely_eject_drawable != null && action_safely_eject != null) {
-                            action_safely_eject_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
-                            action_safely_eject.setTextColor(getResources().getColor(android.R.color.white));
-                        }
+                    if (all) {
+                        Log.d(TAG, "selectDevice: CAMERA permission granted, connecting camera");
+                        connectCamera(device);
+                    } else {
+                        Log.w(TAG, "selectDevice: CAMERA permission denied");
+                        Toast.makeText(this, R.string.permission_camera_denied, Toast.LENGTH_LONG).show();
                     }
                 });
+    }
+
+    /**
+     * Connect to camera after permissions are granted.
+     */
+    private void connectCamera(UsbDevice device) {
+        mIsCameraConnected = false;
+        updateUIControls();
+
+        if (mCameraHelper != null) {
+            // get usb device
+            Log.d(TAG, "selectDevice: calling mCameraHelper.selectDevice()");
+            mCameraHelper.selectDevice(device);
+
+            // Guard against landscape-only views in portrait mode
+            if (action_device_drawable != null && action_device != null) {
+                action_device_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+                action_device.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+            }
+            if (action_safely_eject_drawable != null && action_safely_eject != null) {
+                action_safely_eject_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                action_safely_eject.setTextColor(getResources().getColor(android.R.color.white));
+            }
+        }
     }
 
     private class MyCameraHelperCallback implements ICameraHelper.StateCallback {
@@ -1390,6 +1430,15 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                         && mBinding.cameraViewSecond.getHolder().getSurface().isValid()) {
                     mCameraHelper.addSurface(mBinding.cameraViewSecond.getHolder().getSurface(), false);
                 }
+
+                // Immediately show the view after surface is added to prevent black screen
+                runOnUiThread(() -> {
+                    if (mBinding != null && mBinding.viewMainPreview != null) {
+                        mBinding.viewMainPreview.setVisibility(View.VISIBLE);
+                        mBinding.viewMainPreview.setKeepScreenOn(true);
+                        Log.d(TAG, "onCameraOpen: viewMainPreview set VISIBLE after adding surface");
+                    }
+                });
             }
 
             mIsCameraConnected = true;
@@ -2943,11 +2992,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                     return;
                 }
                 String text = imeTextInput.getText().toString();
-                if (text.isEmpty()) {
-                    Toast.makeText(this, "请输入要发送的文本", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                startSend(text);
+                validateAndSend(text);
             });
         }
 
@@ -3070,6 +3115,56 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
             imeRestoreButton.setEnabled(hasSnapshot);
             imeRestoreButton.setAlpha(hasSnapshot ? 1.0f : 0.4f);
         }
+    }
+
+    /**
+     * Validate text and device connection before sending.
+     * Based on KeyCMD's ImeComposeSendGate validation logic.
+     *
+     * @param text The text to send
+     */
+    private void validateAndSend(String text) {
+        if (isSendingText) return;
+
+        // Check device connection
+        boolean isConnected = usbDeviceManager != null && usbDeviceManager.isConnected();
+        if (!isConnected) {
+            Toast.makeText(this, "No device connected", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Check if text is empty
+        if (text == null || text.isEmpty()) {
+            Toast.makeText(this, "Text is empty", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Check if text contains non-ASCII characters (warning)
+        boolean hasNonAscii = com.openterface.AOS.utils.TextValidator.hasNonAscii(text);
+        if (hasNonAscii) {
+            new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Non-ASCII Characters")
+                .setMessage("Text contains non-ASCII characters. These may not be sent correctly.")
+                .setPositiveButton("Continue", (dialog, which) -> startSend(text))
+                .setNegativeButton("Cancel", null)
+                .show();
+            return;
+        }
+
+        // Check if text is too long (warning)
+        boolean isTooLong = com.openterface.AOS.utils.TextValidator.isTooLong(text);
+        if (isTooLong) {
+            new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Long Text")
+                .setMessage("Text is very long (" + text.length() + " chars). Sending may take a while.")
+                .setPositiveButton("Continue", (dialog, which) -> startSend(text))
+                .setNegativeButton("Cancel", null)
+                .show();
+            return;
+        }
+
+        // All validations passed, send directly
+        startSend(text);
     }
 
     private void startSend(String text) {
@@ -3242,7 +3337,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
             @Override
             public void onSendSavedText(@NonNull String content) {
                 if (isSendingText || content == null) return;
-                startSend(content);
+                validateAndSend(content);
             }
         };
     }
@@ -3266,7 +3361,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                         break;
                     case 1:
                         if (!isSendingText && item.content != null) {
-                            startSend(item.content);
+                            validateAndSend(item.content);
                         }
                         break;
                     case 2:
