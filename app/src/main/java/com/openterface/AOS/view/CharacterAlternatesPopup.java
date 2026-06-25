@@ -184,21 +184,30 @@ public class CharacterAlternatesPopup {
     public void handleMove(float rawX, float rawY) {
         if (optionViews == null || optionViews.isEmpty()) return;
 
+        // 使用更大的容错区域，确保滑选更容易命中
+        int hitX = (int) rawX;
+        int hitY = (int) rawY;
+        boolean foundMatch = false;
+
         for (int i = 0; i < optionViews.size(); i++) {
             TextView optionView = optionViews.get(i);
-            Rect rect = new Rect();
-            optionView.getGlobalVisibleRect(rect);
+            int[] location = new int[2];
+            optionView.getLocationOnScreen(location);
 
-            if (rect.contains((int) rawX, (int) rawY)) {
+            int left = location[0];
+            int top = location[1];
+            int right = left + optionView.getWidth();
+            int bottom = top + optionView.getHeight();
+
+            if (hitX >= left && hitX <= right && hitY >= top && hitY <= bottom) {
                 updateSelection(i);
-                return;
+                foundMatch = true;
+                break;
             }
         }
-        // Finger is outside all options - keep default selection (first option)
-        // Don't clear selection, just keep the default
-        if (selectedPosition < 0 || selectedPosition >= optionViews.size()) {
-            updateSelection(0);
-        }
+
+        // 如果没有找到匹配项，保持当前选择（不重置为0）
+        // 这样可以让用户更容易选中相邻的选项
     }
 
     /**

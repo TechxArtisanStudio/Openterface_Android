@@ -79,6 +79,47 @@
             android:layout_centerInParent="true"
             app:srcCompat="@drawable/content_dark_eng"
             tools:ignore="ContentDescription" />
+
+        <!-- PiP 缩略图容器 - landscape aspect ratio to match video -->
+        <RelativeLayout
+            android:id="@+id/thumbnail_container"
+            android:layout_width="200dp"
+            android:layout_height="113dp"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="16dp"
+            android:visibility="gone"
+            android:background="@drawable/pip_background"
+            android:elevation="8dp">
+
+            <com.serenegiant.widget.AspectRatioSurfaceView
+                android:id="@+id/cameraViewSecond"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <View
+                android:id="@+id/view_indicator"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="#6600ff00"
+                android:layout_centerInParent="true"/>
+        </RelativeLayout>
+
+        <!-- PiP 拖动按钮 -->
+        <ImageButton
+            android:id="@+id/drag_button"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="140dp"
+            android:background="@drawable/pip_drag_button"
+            android:src="@drawable/three_dots"
+            android:visibility="gone"
+            android:elevation="9dp"
+            android:contentDescription="拖动 PiP 窗口"/>
     </RelativeLayout>
 
     <!-- Zone 3: Module Drawer (below video, not overlay) -->

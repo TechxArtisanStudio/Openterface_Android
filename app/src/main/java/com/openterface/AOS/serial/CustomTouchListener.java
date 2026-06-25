@@ -24,10 +24,14 @@
  */
 package com.openterface.AOS.serial;
 
+import android.graphics.Matrix;
 import android.os.Handler;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.TextView;
 
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -36,7 +40,7 @@ import com.openterface.AOS.R;
 import com.openterface.AOS.activity.MainActivity;
 import com.openterface.AOS.drawerLayout.ZoomLayoutDeal;
 import com.openterface.AOS.target.HidManager;
-// import com.openterface.AOS.target.MouseManager;
+import com.serenegiant.widget.AspectRatioTextureView;
 
 /**
  * CustomTouchListener — handles touch events on the full screen (pointer mode).
@@ -58,7 +62,7 @@ public class CustomTouchListener implements View.OnTouchListener {
     private Handler handler = new Handler();
     private Runnable twoFingerPressRunnable;
     private final TextView floatingLabel;
-    private final MainActivity activity;
+    private static MainActivity activity;
 
     //Event processing time
     private static final long DOUBLE_CLICK_TIME_DELTA = 300;
@@ -155,9 +159,9 @@ public class CustomTouchListener implements View.OnTouchListener {
 
     public CustomTouchListener(MainActivity activity, UsbDeviceManager usbDeviceManager) {
         CustomTouchListener.usbDeviceManager = usbDeviceManager;
+        CustomTouchListener.activity = activity;
         floatingLabel = activity.findViewById(R.id.floating_label);
         drawerLayout = activity.findViewById(R.id.drawer_layout);
-        this.activity = activity;
         // Detect portrait mode: portrait layout has module_selector_bar, landscape doesn't
         isPortraitMode = (activity.findViewById(R.id.module_selector_bar) != null);
         Log.d(TAG, "CustomTouchListener: isPortraitMode=" + isPortraitMode);
@@ -399,22 +403,55 @@ public class CustomTouchListener implements View.OnTouchListener {
     }
 
     // Portrait zoom tracking
-    private float mPortraitZoomScale = 1.0f;
-    private float mPortraitTranslateX = 0f;
-    private float mPortraitTranslateY = 0f;
+    private static float mPortraitZoomScale = 1.0f;
+    private static float mPortraitTranslateX = 0f;
+    private static float mPortraitTranslateY = 0f;
+
+    /**
+     * Get current portrait zoom scale (called by ZoomLayoutDeal)
+     */
+    public static float getPortraitZoomScale() {
+        return mPortraitZoomScale;
+    }
+
+    /**
+     * Set portrait pan translation from external source (e.g., PiP indicator drag)
+     * Called by ZoomLayoutDeal.syncMainViewPosition
+     */
+    public static void setPortraitPan(float translateX, float translateY) {
+        mPortraitTranslateX = translateX;
+        mPortraitTranslateY = translateY;
+    }
+
+    /**
+     * Apply the current portrait zoom transform to the view
+     * Called by ZoomLayoutDeal after updating pan values
+     */
+    public static void applyCurrentPortraitTransform() {
+        if (mPortraitZoomScale > 1.0f && activity != null && activity.mBinding != null
+            && activity.mBinding.viewMainPreview != null) {
+            AspectRatioTextureView textureView = activity.mBinding.viewMainPreview;
+            float viewWidth = textureView.getWidth();
+            float viewHeight = textureView.getHeight();
+
+            if (viewWidth <= 0 || viewHeight <= 0) return;
+
+            Matrix matrix = new Matrix();
+            float pivotX = viewWidth / 2f;
+            float pivotY = viewHeight / 2f;
+            float scale = mPortraitZoomScale;
+            matrix.setScale(scale, scale, pivotX, pivotY);
+            matrix.postTranslate(mPortraitTranslateX, mPortraitTranslateY);
+            textureView.setTransform(matrix);
+            textureView.invalidate();
+        }
+    }
 
     /**
      * Normal mouse move (no button pressed)
      * In portrait zoom mode: auto-pan view to keep mouse centered
      */
     private void handleNormalMove(float x, float y) {
-        // In portrait mode with zoom, auto-pan view to keep mouse centered
-        // Also check dynamically in case layout changed
-        boolean isPortrait = activity != null && activity.findViewById(R.id.module_selector_bar) != null;
-        if (isPortrait && mPortraitZoomScale > 1.0f && activity.mBinding != null) {
-            autoPanToKeepMouseCentered(x, y);
-        }
-
         if (KeyMouse_state) {
             HidManager.sendHexAbsData(x, y);
         } else {
@@ -429,12 +466,6 @@ public class CustomTouchListener implements View.OnTouchListener {
      * In portrait zoom mode: auto-pan view to keep mouse centered
      */
     private void handleDragMove(float x, float y) {
-        // In portrait mode with zoom, auto-pan view to keep mouse centered
-        boolean isPortrait = activity != null && activity.findViewById(R.id.module_selector_bar) != null;
-        if (isPortrait && mPortraitZoomScale > 1.0f && activity.mBinding != null) {
-            autoPanToKeepMouseCentered(x, y);
-        }
-
         if (KeyMouse_state) {
             // In drag mode with absolute: send with left button pressed
             HidManager.sendHexAbsButtonClickData("SecLeftData", x, y);
@@ -447,58 +478,13 @@ public class CustomTouchListener implements View.OnTouchListener {
     }
 
     /**
-     * Auto-pan the video view horizontally to keep mouse cursor at screen center.
-     * Only pans horizontally (left/right), vertical panning is disabled.
-     *
-     * Key insight: event.getX() returns coordinates in the view's own system,
-     * but when scaled > 1, the visible content on screen is a different region.
-     * We must convert touch coordinates to the visible content coordinate system.
-     */
-    private void autoPanToKeepMouseCentered(float mouseX, float mouseY) {
-        if (activity == null || activity.mBinding == null || activity.mBinding.viewMainPreview == null) {
-            return;
-        }
-
-        View videoView = activity.mBinding.viewMainPreview;
-        int viewWidth = videoView.getWidth();
-        int containerWidth = viewWidth; // container is match_parent
-        float maxTranslate = (viewWidth * mPortraitZoomScale - containerWidth) / 2f;
-
-        if (maxTranslate <= 0) return;
-
-        // Convert touch X from view coordinates to visible content coordinates.
-        // When scaled, the view's left edge is at (center - scaledWidth/2 + translateX)
-        // in container coordinates. The offset between view origin and visible origin:
-        //   offset = maxTranslate - mPortraitTranslateX
-        // So a touch at view coordinate mouseX corresponds to content coordinate:
-        //   viewCoord = mouseX + offset
-        float offset = maxTranslate - mPortraitTranslateX;
-        float viewCoord = mouseX + offset;
-
-        // Target: move the view so this content point ends up at screen center.
-        float target = maxTranslate - viewCoord;
-        target = Math.max(-maxTranslate, Math.min(maxTranslate, target));
-
-        if (Math.abs(target - mPortraitTranslateX) > 1f) {
-            mPortraitTranslateX = target;
-            videoView.setTranslationX(mPortraitTranslateX);
-            videoView.setTranslationY(0f);
-        }
-    }
-
-    /**
      * Reset portrait zoom and pan state
      */
     private void resetPortraitZoom() {
         mPortraitZoomScale = 1.0f;
         mPortraitTranslateX = 0f;
         mPortraitTranslateY = 0f;
-        if (activity != null && activity.mBinding != null && activity.mBinding.viewMainPreview != null) {
-            activity.mBinding.viewMainPreview.setScaleX(1.0f);
-            activity.mBinding.viewMainPreview.setScaleY(1.0f);
-            activity.mBinding.viewMainPreview.setTranslationX(0f);
-            activity.mBinding.viewMainPreview.setTranslationY(0f);  // Always reset Y to 0
-        }
+        applyPortraitZoomTransform();
     }
 
     /**
@@ -957,9 +943,125 @@ public class CustomTouchListener implements View.OnTouchListener {
         return (float) Math.sqrt(dx * dx + dy * dy);
     }
 
+    /**
+     * Apply zoom using TextureView.setTransform(Matrix) for GPU-quality scaling.
+     * When zoomed in, the TextureView's physical height is expanded to show more vertical content.
+     */
+    private void applyPortraitZoomTransform() {
+        if (activity == null || activity.mBinding == null || activity.mBinding.viewMainPreview == null) {
+            return;
+        }
+
+        AspectRatioTextureView textureView = activity.mBinding.viewMainPreview;
+        float viewWidth = textureView.getWidth();
+        float viewHeight = textureView.getHeight();
+
+        if (viewWidth <= 0 || viewHeight <= 0) {
+            return;
+        }
+
+        // When zoomed in, expand the TextureView's physical height to show more content
+        expandTextureViewHeightIfNeeded();
+
+        // Create transform matrix
+        Matrix matrix = new Matrix();
+
+        // Apply scale around center pivot
+        float pivotX = viewWidth / 2f;
+        float pivotY = viewHeight / 2f;
+
+        // Uniform scaling (scaleX == scaleY)
+        float scale = mPortraitZoomScale;
+
+        matrix.setScale(scale, scale, pivotX, pivotY);
+        matrix.postTranslate(mPortraitTranslateX, mPortraitTranslateY);
+
+        // Apply the matrix to TextureView (GPU-accelerated, bilinear filtering)
+        textureView.setTransform(matrix);
+        textureView.invalidate();
+
+        // Sync the PiP indicator with the main view's zoom/pan state
+        ZoomLayoutDeal.updateIndicatorFromMainView(
+            scale,
+            mPortraitTranslateX,
+            mPortraitTranslateY
+        );
+
+        Log.d(TAG, "Portrait zoom applied: scale=" + scale +
+              " translateX=" + mPortraitTranslateX +
+              " translateY=" + mPortraitTranslateY);
+    }
+
+    /**
+     * Expand TextureView's physical height when zoomed in, so more vertical content is visible.
+     * The height increases with zoom scale, capped at MAX_HEIGHT_RATIO of screen height.
+     */
+    private void expandTextureViewHeightIfNeeded() {
+        if (activity == null || activity.mBinding == null || activity.mBinding.viewMainPreview == null) {
+            return;
+        }
+
+        AspectRatioTextureView textureView = activity.mBinding.viewMainPreview;
+        View container = activity.mBinding.videoAreaContainer;
+
+        if (container == null) return;
+
+        // Get screen height
+        WindowManager wm = (WindowManager) activity.getSystemService("window");
+        if (wm == null) return;
+        DisplayMetrics metrics = new DisplayMetrics();
+        wm.getDefaultDisplay().getRealMetrics(metrics);
+        int screenHeight = metrics.heightPixels;
+
+        // Get original container height (when not zoomed)
+        int containerHeight = container.getHeight();
+        if (containerHeight <= 0) return;
+
+        // Calculate expanded height based on zoom scale
+        // scale = 1.0 → height = containerHeight (original)
+        // scale = MAX_SCALE → height = MAX_HEIGHT_RATIO * screenHeight
+        // Linear interpolation between these two points
+        final float MAX_SCALE = 3.0f;
+        final float MAX_HEIGHT_RATIO = 0.85f;  // Cap at 85% of screen height
+
+        int maxHeight = (int) (screenHeight * MAX_HEIGHT_RATIO);
+        int minHeight = containerHeight;
+
+        float scale = mPortraitZoomScale;
+        float t = (scale - 1.0f) / (MAX_SCALE - 1.0f);  // 0 to 1 as scale goes from 1.0 to MAX_SCALE
+        t = Math.max(0f, Math.min(1f, t));
+
+        int targetHeight = minHeight + (int) ((maxHeight - minHeight) * t);
+
+        // Update LayoutParams if height changed
+        ViewGroup.LayoutParams params = textureView.getLayoutParams();
+        if (params.height != targetHeight) {
+            params.height = targetHeight;
+            textureView.setLayoutParams(params);
+            Log.d(TAG, "Expanded TextureView height: " + targetHeight + " (scale=" + scale + ")");
+        }
+    }
+
+    /**
+     * Reset TextureView's height back to match_parent when zoomed out.
+     */
+    private void resetTextureViewHeight() {
+        if (activity == null || activity.mBinding == null || activity.mBinding.viewMainPreview == null) {
+            return;
+        }
+
+        AspectRatioTextureView textureView = activity.mBinding.viewMainPreview;
+        ViewGroup.LayoutParams params = textureView.getLayoutParams();
+        if (params.height != ViewGroup.LayoutParams.MATCH_PARENT) {
+            params.height = ViewGroup.LayoutParams.MATCH_PARENT;
+            textureView.setLayoutParams(params);
+            Log.d(TAG, "Reset TextureView height to MATCH_PARENT");
+        }
+    }
+
     // Method to apply zoom to your view
     private void adjustZoom(float zoomFactor) {
-        // In portrait mode, scale the viewMainPreview directly
+        // In portrait mode, use TextureView.setTransform(Matrix) for quality scaling
         if (isPortraitMode) {
             if (activity == null || activity.mBinding == null || activity.mBinding.viewMainPreview == null) {
                 return;
@@ -969,8 +1071,7 @@ public class CustomTouchListener implements View.OnTouchListener {
             float MIN_SCALE = 1f;
             float MAX_SCALE = 3.0f;
 
-            // Get current scale
-            View zoomView = activity.mBinding.viewMainPreview;
+            // Calculate new scale
             float currentScale = mPortraitZoomScale;
             float newScale = currentScale * zoomFactor;
 
@@ -981,25 +1082,23 @@ public class CustomTouchListener implements View.OnTouchListener {
             // Store scale for auto-pan calculation
             mPortraitZoomScale = newScale;
 
-            // Apply scale with centered pivot
-            zoomView.setScaleX(newScale);
-            zoomView.setScaleY(newScale);
-            zoomView.setPivotX(zoomView.getWidth() / 2f);
-            zoomView.setPivotY(zoomView.getHeight() / 2f);
-
-            // If zooming out, reset translation
+            // If zooming out to minimum, hide PiP and reset translation
             if (newScale <= MIN_SCALE) {
                 mPortraitTranslateX = 0f;
                 mPortraitTranslateY = 0f;
-                zoomView.setTranslationX(0f);
-                zoomView.setTranslationY(0f);  // Always keep Y at 0
+                ZoomLayoutDeal.zoomOut();
+                resetTextureViewHeight();  // Reset TextureView height when zoomed out
             } else {
-                // Re-apply current translation after zoom (horizontal only)
-                zoomView.setTranslationX(mPortraitTranslateX);
-                zoomView.setTranslationY(0f);  // Always keep Y at 0
+                // Show PiP when zoomed in
+                ZoomLayoutDeal.enlargeView();
             }
 
-            Log.d(TAG, "Portrait zoom adjusted: newScale=" + newScale + " translateX=" + mPortraitTranslateX);
+            // Apply transform using Matrix (GPU-quality scaling)
+            applyPortraitZoomTransform();
+
+            Log.d(TAG, "Portrait zoom adjusted: newScale=" + newScale +
+                  " translateX=" + mPortraitTranslateX +
+                  " translateY=" + mPortraitTranslateY);
             return;
         }
 

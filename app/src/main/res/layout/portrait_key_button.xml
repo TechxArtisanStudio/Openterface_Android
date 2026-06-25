@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Portrait Two-Part Key Layout
+     主字母 TextView + 右上角 corner hint TextView（数字/符号）
+     参考 KeyCMD BasicPhysicalKeyboardView 的 basic_key_button.xml 结构 -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="0dp"
+    android:layout_height="match_parent"
+    android:layout_weight="1"
+    android:background="@drawable/button_background"
+    android:theme="@style/ButtonTheme"
+    android:clickable="false"
+    android:focusable="false">
+
+    <!-- 右上角提示（数字/符号，小字体，灰色） -->
+    <TextView
+        android:id="@+id/key_corner_hint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:paddingTop="3dp"
+        android:paddingEnd="5dp"
+        android:textSize="10sp"
+        android:includeFontPadding="false"
+        android:textColor="@color/text_on_surface"
+        android:alpha="0.5"
+        android:duplicateParentState="true"
+        android:visibility="visible" />
+
+    <!-- 主字母 TextView，垂直居中 -->
+    <TextView
+        android:id="@+id/key_main_label"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_on_surface"
+        android:duplicateParentState="true" />
+</FrameLayout>

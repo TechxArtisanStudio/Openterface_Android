@@ -59,6 +59,14 @@ public class KeyBoardManager {
         usbDeviceManager = manager;
     }
 
+    /**
+     * Get the static UsbDeviceManager reference for callers that need
+     * device-aware writes (FE0C bulk transfer vs 7523 serial port).
+     */
+    public static UsbDeviceManager getUsbDeviceManager() {
+        return usbDeviceManager;
+    }
+
     public static void setKeyBoardLanguage() {
         String currentLang = Locale.getDefault().getLanguage();
         if (currentLang.equals("de")) {
@@ -70,6 +78,14 @@ public class KeyBoardManager {
 //            KeyBoardSystem.setKeyboardLanguage("us");
             Log.d("setKeyBoardLanguage", "language is us");
         }
+    }
+
+    /**
+     * Get the current key code map (supports language-specific layouts)
+     * @return current key code map
+     */
+    public static Map<Object, String> getCurrentKeyCodeMap() {
+        return currentKeyCodeMap;
     }
 
     public static String getFunctionKey(KeyEvent event, int keyCode) {

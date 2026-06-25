@@ -2140,14 +2140,40 @@ public class UsbDeviceManager {
     public boolean writeData(byte[] data) {
         return writeData(data, WRITE_WAIT_MILLIS);
     }
-    
+
+    /**
+     * Write keyboard data with proper device routing.
+     * Routes to FE0C bulk transfer for FE0C devices, serial port for 7523.
+     * @param data keyboard command bytes
+     * @param timeout write timeout in milliseconds
+     * @return true if write successful
+     */
+    public boolean writeKeyboardData(byte[] data, int timeout) {
+        if (data == null || data.length == 0) {
+            return false;
+        }
+        // Route to FE0C bulk transfer if available
+        if (fe0cConnection != null && fe0cInterface != null) {
+            return writeFE0CData(data, timeout);
+        }
+        // Fallback to serial port for 7523 devices
+        return writeData(data, timeout);
+    }
+
+    /**
+     * Write keyboard data with default timeout
+     */
+    public boolean writeKeyboardData(byte[] data) {
+        return writeKeyboardData(data, WRITE_WAIT_MILLIS);
+    }
+
     /**
      * Write data to the serial port with custom timeout
-     * 
+     *
      * This method sends commands to both device types:
      * - 1A86:FE0C (Mini-KVM v2): Commands only, no replies expected
      * - 1A86:7523 (Mini-KVM v1): Commands with possible replies (but not required)
-     * 
+     *
      * @param data byte array to write
      * @param timeout timeout in milliseconds
      * @return true if write successful, false otherwise
