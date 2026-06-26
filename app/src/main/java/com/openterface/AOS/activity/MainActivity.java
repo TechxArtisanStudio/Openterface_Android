@@ -150,6 +150,8 @@ import android.widget.Spinner;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.RadioGroup;
+import android.widget.RadioButton;
 
 import java.io.File;
 import java.text.DecimalFormat;
@@ -215,6 +217,12 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
 
     private boolean mIsRecording = false;
     private boolean mIsCameraConnected = false;
+    // Track whether the main preview surface has been added to camera pipeline
+    private boolean mMainSurfaceAdded = false;
+    // Track which SurfaceTexture we've already configured the preview for, to prevent
+    // duplicate setPreviewDisplay + startPreview calls when both onCameraOpen and
+    // onSurfaceTextureAvailable fire for the same surface (e.g. after unplug/replug)
+    private SurfaceTexture mCurrentPreviewSurfaceTexture = null;
 
     private CameraControlsDialogFragment mControlsDialog;
     private DeviceListDialogFragment mDeviceListDialog;
@@ -369,6 +377,10 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
 
         // Initialize the mouse event worker thread
         HidManager.initMouse();
+
+        // Load saved mouse speed multiplier (default 50 → 1.0x)
+        int initialMouseSpeed = getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).getInt(KEY_MOUSE_SPEED, 50);
+        HidManager.setMouseSpeedMultiplier(progressToMouseSpeed(initialMouseSpeed));
 
         // Initialize VNC server components
         vncConfig = new VncServerConfig(this);
@@ -983,19 +995,14 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
         Log.d(TAG, "reloadLayoutForOrientation: camera view and language set");
 
         // Reconnect camera surfaces after layout reload if camera is connected
+        // Note: We DON'T try to set up the preview here immediately after inflation because
+        // the new TextureView's SurfaceTexture is not available yet. It will be set up
+        // asynchronously in onSurfaceTextureAvailable when the surface becomes available.
         if (mCameraHelper != null && mIsCameraConnected) {
-            Log.d(TAG, "Reconnecting camera surfaces after orientation change");
-            // Wait for surface to be available before reconnecting
-            if (mBinding.viewMainPreview != null && mBinding.viewMainPreview.getSurfaceTexture() != null) {
-                mCameraHelper.addSurface(mBinding.viewMainPreview.getSurfaceTexture(), false);
-                Log.d(TAG, "reloadLayoutForOrientation: main preview surface reconnected");
-            }
-            // Add secondary camera surface (landscape only)
-            if (mBinding.cameraViewSecond != null && mBinding.cameraViewSecond.getHolder() != null
-                    && mBinding.cameraViewSecond.getHolder().getSurface() != null) {
-                mCameraHelper.addSurface(mBinding.cameraViewSecond.getHolder().getSurface(), false);
-                Log.d(TAG, "reloadLayoutForOrientation: secondary camera surface reconnected");
-            }
+            Log.d(TAG, "Camera is connected, waiting for onSurfaceTextureAvailable to reconnect preview");
+            // Reset tracking - the preview will be set up in onSurfaceTextureAvailable
+            mCurrentPreviewSurfaceTexture = null;
+            mMainSurfaceAdded = false;
         }
 
         // Update UI controls to reflect current state
@@ -1225,40 +1232,105 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
             @Override
             public void onSurfaceTextureAvailable(@NonNull SurfaceTexture surface, int width, int height) {
                 HidManager.width_height(width, height);
-                Log.d(TAG, "onSurfaceTextureAvailable: width=" + width + " height=" + height + " mIsCameraConnected=" + mIsCameraConnected);
-                // Set buffer size to chip resolution for better zoom quality
-                setSurfaceTextureBufferSize(surface, mPreviewWidth, mPreviewHeight);
-                if (mCameraHelper != null) {
-                    // Add the new surface to camera pipeline
-                    mCameraHelper.addSurface(surface, false);
+                Log.d(TAG, "onSurfaceTextureAvailable: width=" + width + " height=" + height + " mIsCameraConnected=" + mIsCameraConnected + " mMainSurfaceAdded=" + mMainSurfaceAdded);
+                if (mCameraHelper != null && mIsCameraConnected && !mMainSurfaceAdded) {
+                    // Camera is already connected but surface hasn't been added yet.
+                    // This happens when app launches in portrait and onCameraOpen fired
+                    // before the TextureView surface was ready (the Runnable in onCameraOpen
+                    // exited early because getSurfaceTexture() returned null at that time).
+                    Log.d(TAG, "onSurfaceTextureAvailable: camera connected, connecting surface now");
 
-                    // If camera already connected & previewing, reconnect the new surface
-                    if (mIsCameraConnected) {
-                        Log.d(TAG, "Camera already connected, reconnecting surface after orientation/creation change");
-                        // Make view visible after surface is ready
-                        runOnUiThread(() -> {
-                            if (mBinding != null && mBinding.viewMainPreview != null) {
-                                mBinding.viewMainPreview.setVisibility(View.VISIBLE);
-                                mBinding.viewMainPreview.setKeepScreenOn(true);
-                                // Re-apply aspect ratio for the new surface dimensions
-                                mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
-                            }
-                        });
+                    // CRITICAL: Get the ACTUAL camera preview size here, not from
+                    // mPreviewWidth/mPreviewHeight which may still be DEFAULT (640×480)
+                    // if the Runnable in onCameraOpen hasn't updated them yet.
+                    Size cameraSize = mCameraHelper.getPreviewSize();
+                    if (cameraSize != null && cameraSize.width > 0 && cameraSize.height > 0) {
+                        mPreviewWidth = cameraSize.width;
+                        mPreviewHeight = cameraSize.height;
+                        Log.d(TAG, "onSurfaceTextureAvailable: updated mPreviewWidth=" + mPreviewWidth + " mPreviewHeight=" + mPreviewHeight);
                     }
+
+                    // IMPORTANT: Set buffer size BEFORE creating the Surface.
+                    // setAspectRatio uses post() to defer requestLayout(), so onSurfaceTextureSizeChanged
+                    // fires AFTER this method returns. Setting the buffer here ensures the Surface
+                    // is created with the correct camera resolution.
+                    setSurfaceTextureBufferSize(surface, mPreviewWidth, mPreviewHeight);
+                    mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
+
+                    // Create Surface from SurfaceTexture
+                    android.view.Surface previewSurface = new android.view.Surface(surface);
+                    // Use RendererHolder pipeline to enable frame distribution to multiple surfaces (including PIP)
+                    mCameraHelper.addSurface(previewSurface, false);
+                    mCurrentPreviewSurfaceTexture = surface;
+                    mMainSurfaceAdded = true;
+                    Log.d(TAG, "onSurfaceTextureAvailable: addSurface called (RendererHolder pipeline), preview=" + mPreviewWidth + "x" + mPreviewHeight);
+                    // Restart preview to trigger frame output to the new surface
+                    mCameraHelper.startPreview();
+                    Log.d(TAG, "onSurfaceTextureAvailable: startPreview called");
+                    // Make view visible after surface is ready
+                    runOnUiThread(() -> {
+                        if (mBinding != null && mBinding.viewMainPreview != null) {
+                            mBinding.viewMainPreview.setVisibility(View.VISIBLE);
+                            mBinding.viewMainPreview.setKeepScreenOn(true);
+                        }
+                    });
+                } else if (mIsCameraConnected && surface == mCurrentPreviewSurfaceTexture) {
+                    Log.d(TAG, "onSurfaceTextureAvailable: surface already configured by onCameraOpen, skipping duplicate setup");
+                } else if (mIsCameraConnected && mMainSurfaceAdded && surface != mCurrentPreviewSurfaceTexture) {
+                    // Surface changed (e.g. TextureView was recreated) — reconnect with new surface
+                    Log.d(TAG, "onSurfaceTextureAvailable: reconnecting with new surface after orientation/creation change");
+
+                    // Get the actual camera size before creating the Surface
+                    Size cameraSize = mCameraHelper != null ? mCameraHelper.getPreviewSize() : null;
+                    if (cameraSize != null && cameraSize.width > 0 && cameraSize.height > 0) {
+                        mPreviewWidth = cameraSize.width;
+                        mPreviewHeight = cameraSize.height;
+                    }
+
+                    // Set buffer size BEFORE creating Surface - ensures Surface uses camera resolution
+                    setSurfaceTextureBufferSize(surface, mPreviewWidth, mPreviewHeight);
+                    mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
+                    android.view.Surface previewSurface = new android.view.Surface(surface);
+                    // Use RendererHolder pipeline to enable frame distribution to multiple surfaces (including PIP)
+                    mCameraHelper.addSurface(previewSurface, false);
+                    mCurrentPreviewSurfaceTexture = surface;
+                    mMainSurfaceAdded = true;
+                    mCameraHelper.startPreview();
+                    Log.d(TAG, "onSurfaceTextureAvailable: reconnected surface, preview=" + mPreviewWidth + "x" + mPreviewHeight);
+                    runOnUiThread(() -> {
+                        if (mBinding != null && mBinding.viewMainPreview != null) {
+                            mBinding.viewMainPreview.setVisibility(View.VISIBLE);
+                            mBinding.viewMainPreview.setKeepScreenOn(true);
+                        }
+                    });
                 }
             }
 
             @Override
             public void onSurfaceTextureSizeChanged(@NonNull SurfaceTexture surface, int width, int height) {
-                // Re-set buffer to chip resolution after view resize to maintain zoom quality
-                setSurfaceTextureBufferSize(surface, mPreviewWidth, mPreviewHeight);
+                // Re-set buffer to chip resolution after view resize to maintain zoom quality.
+                // IMPORTANT: This callback fires when the TextureView's size changes, which happens
+                // AFTER setAspectRatio()'s deferred requestLayout(). Since it fires asynchronously,
+                // the Surface may have already been created by onCameraOpen's Runnable with the
+                // correct buffer size. Setting the buffer here to the view's dimensions (which may
+                // differ from camera resolution) would be ineffective (Surface already created) but
+                // harmless. We update the buffer only if no Surface has been created yet.
+                if (!mMainSurfaceAdded) {
+                    setSurfaceTextureBufferSize(surface, mPreviewWidth, mPreviewHeight);
+                }
+                // Reset the surface added flag when size changes, as we need to re-add surface
+                mMainSurfaceAdded = false;
             }
 
             @Override
             public boolean onSurfaceTextureDestroyed(@NonNull SurfaceTexture surface) {
+                Log.d(TAG, "onSurfaceTextureDestroyed: resetting surface tracking flags");
                 if (mCameraHelper != null) {
                     mCameraHelper.removeSurface(surface);
                 }
+                // Reset the flags so surface can be added again when recreated
+                mMainSurfaceAdded = false;
+                mCurrentPreviewSurfaceTexture = null;
                 return false;
             }
 
@@ -1303,29 +1375,80 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
             return;
         }
 
+        // Check if CAMERA permission is already granted
+        boolean hasCameraPermission = ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                == android.content.pm.PackageManager.PERMISSION_GRANTED;
+
+        if (hasCameraPermission) {
+            // Already have camera permission, skip the explanation dialog and go straight to connecting
+            // This is the common case when replugging a device that was previously connected
+            Log.d(TAG, "selectDevice: CAMERA permission already granted, connecting directly");
+            connectCamera(device);
+        } else {
+            // Show permission explanation dialog first to improve UX
+            showPermissionExplanationDialog(() -> {
+                // After user acknowledges, request CAMERA permission
+                requestCameraPermissionAndConnect(device);
+            });
+        }
+    }
+
+    /**
+     * Show a dialog explaining why permissions are needed.
+     * This improves UX by preparing the user for multiple permission requests.
+     */
+    private void showPermissionExplanationDialog(Runnable onContinue) {
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle(R.string.permission_required_title)
+            .setMessage(R.string.permission_explanation_message)
+            .setPositiveButton(R.string.permission_continue, (dialog, which) -> {
+                onContinue.run();
+            })
+            .setNegativeButton(R.string.permission_cancel, null)
+            .setCancelable(false)
+            .show();
+    }
+
+    /**
+     * Request CAMERA permission and connect to device.
+     * Separated from selectDevice for clearer code flow.
+     */
+    private void requestCameraPermissionAndConnect(UsbDevice device) {
         XXPermissions.with(this)
                 .permission(Manifest.permission.CAMERA)
                 .request((permissions, all) -> {
-                    Log.d(TAG, "selectDevice: CAMERA permission granted, connecting camera");
-                    mIsCameraConnected = false;
-                    updateUIControls();
-
-                    if (mCameraHelper != null) {
-                        // get usb device
-                        Log.d(TAG, "selectDevice: calling mCameraHelper.selectDevice()");
-                        mCameraHelper.selectDevice(device);
-
-                        // Guard against landscape-only views in portrait mode
-                        if (action_device_drawable != null && action_device != null) {
-                            action_device_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
-                            action_device.setTextColor(getResources().getColor(android.R.color.holo_red_light));
-                        }
-                        if (action_safely_eject_drawable != null && action_safely_eject != null) {
-                            action_safely_eject_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
-                            action_safely_eject.setTextColor(getResources().getColor(android.R.color.white));
-                        }
+                    if (all) {
+                        Log.d(TAG, "selectDevice: CAMERA permission granted, connecting camera");
+                        connectCamera(device);
+                    } else {
+                        Log.w(TAG, "selectDevice: CAMERA permission denied");
+                        Toast.makeText(this, R.string.permission_camera_denied, Toast.LENGTH_LONG).show();
                     }
                 });
+    }
+
+    /**
+     * Connect to camera after permissions are granted.
+     */
+    private void connectCamera(UsbDevice device) {
+        mIsCameraConnected = false;
+        updateUIControls();
+
+        if (mCameraHelper != null) {
+            // get usb device
+            Log.d(TAG, "selectDevice: calling mCameraHelper.selectDevice()");
+            mCameraHelper.selectDevice(device);
+
+            // Guard against landscape-only views in portrait mode
+            if (action_device_drawable != null && action_device != null) {
+                action_device_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+                action_device.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+            }
+            if (action_safely_eject_drawable != null && action_safely_eject != null) {
+                action_safely_eject_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                action_safely_eject.setTextColor(getResources().getColor(android.R.color.white));
+            }
+        }
     }
 
     private class MyCameraHelperCallback implements ICameraHelper.StateCallback {
@@ -1367,30 +1490,96 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                 // Preview will be set up when surface becomes available
                 return;
             }
-            mCameraHelper.startPreview();
-            Log.d(TAG, "onCameraOpen: startPreview called");
-            // After connecting to the camera, you can get preview size of the camera
-            Size size = mCameraHelper.getPreviewSize();
-            if (size != null) {
-                Log.d(TAG, "onCameraOpen: preview size=" + size.width + "x" + size.height);
-                resizePreviewView(size);
-//                cameraViewSecond.setAspectRatio(640, 480);
-
-            } else {
-                Log.w(TAG, "onCameraOpen: preview size is null");
-            }
 
             boolean hasSurfaceTexture = (mBinding.viewMainPreview.getSurfaceTexture() != null);
             Log.d(TAG, "onCameraOpen: hasSurfaceTexture=" + hasSurfaceTexture);
-            if (hasSurfaceTexture) {
-                mCameraHelper.addSurface(mBinding.viewMainPreview.getSurfaceTexture(), false);
+
+            // Check if we have a surface texture before proceeding
+            if (!hasSurfaceTexture) {
+                Log.w(TAG, "onCameraOpen: no surface texture available yet, waiting for onSurfaceTextureAvailable");
+                // Don't call startPreview() without surface - it may cause black screen
+                // We'll handle this in onSurfaceTextureAvailable when surface becomes available
+                mIsCameraConnected = true;
+                // Don't call updateUIControls yet - wait until we have surface
+                return;
+            }
+
+            // Make the view visible FIRST to ensure TextureView can properly initialize its SurfaceTexture
+            // This is especially important in portrait mode where the layout might not be fully initialized yet
+            runOnUiThread(() -> {
+                if (mBinding != null && mBinding.viewMainPreview != null) {
+                    mBinding.viewMainPreview.setVisibility(View.VISIBLE);
+                    mBinding.viewMainPreview.setKeepScreenOn(true);
+                    Log.d(TAG, "onCameraOpen: viewMainPreview set VISIBLE BEFORE creating surface");
+                }
+            });
+
+            // Create Surface from SurfaceTexture in main thread to avoid threading issues.
+            // Post to ensure the view has completed its layout pass.
+            //
+            // IMPORTANT: resizePreviewView is called INSIDE the Runnable (not outside) to ensure:
+            // 1. mPreviewWidth/mPreviewHeight are updated BEFORE creating the Surface
+            // 2. setSurfaceTextureBufferSize is called BEFORE creating the Surface
+            //    (changing buffer size AFTER Surface creation is ignored on some Android versions)
+            // 3. The Runnable and Surface creation are atomic on the main thread,
+            //    preventing race conditions with onSurfaceTextureSizeChanged
+            mBinding.viewMainPreview.post(() -> {
+                if (mBinding == null || mBinding.viewMainPreview == null) return;
+
+                // Guard: if onSurfaceTextureAvailable already set up the surface
+                // (race condition where callback fires before this Runnable), skip
+                if (mMainSurfaceAdded) {
+                    Log.d(TAG, "onCameraOpen runnable: surface already added by onSurfaceTextureAvailable, skipping");
+                    return;
+                }
+
+                SurfaceTexture currentSurfaceTexture = mBinding.viewMainPreview.getSurfaceTexture();
+                if (currentSurfaceTexture == null) {
+                    Log.w(TAG, "onCameraOpen: SurfaceTexture is null after layout, waiting for onSurfaceTextureAvailable");
+                    return;
+                }
+
+                // Step 1: Update preview dimensions from camera.
+                // This must happen BEFORE creating the Surface, so that
+                // mPreviewWidth/mPreviewHeight reflect the actual camera resolution.
+                Size previewSize = mCameraHelper != null ? mCameraHelper.getPreviewSize() : null;
+                if (previewSize != null && previewSize.width > 0 && previewSize.height > 0) {
+                    mPreviewWidth = previewSize.width;
+                    mPreviewHeight = previewSize.height;
+                    Log.d(TAG, "onCameraOpen runnable: preview size=" + mPreviewWidth + "x" + mPreviewHeight);
+                }
+
+                // Step 2: Set aspect ratio on the view (controls how the view is measured)
+                mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
+
+                // Step 3: Set SurfaceTexture buffer size to camera resolution BEFORE creating
+                // the Surface. This is the critical step - the buffer size is read by
+                // SurfaceTexture when the Surface is created, so it MUST be set first.
+                setSurfaceTextureBufferSize(currentSurfaceTexture, mPreviewWidth, mPreviewHeight);
+
+                // Step 4: Create Surface from SurfaceTexture with the correct buffer size
+                android.view.Surface previewSurface = new android.view.Surface(currentSurfaceTexture);
+                // Use RendererHolder pipeline instead of direct preview to enable frame distribution
+                // to multiple surfaces (including PIP/cameraViewSecond).
+                // addSurface() adds this as a slave surface to RendererHolder, which receives
+                // frames from the camera and distributes them to all registered surfaces.
+                mCameraHelper.addSurface(previewSurface, false);
+                mCurrentPreviewSurfaceTexture = currentSurfaceTexture;
+                mMainSurfaceAdded = true;
+                Log.d(TAG, "onCameraOpen: addSurface called for main preview (RendererHolder pipeline)");
+
                 // Guard against landscape-only cameraViewSecond in portrait mode
                 if (mBinding.cameraViewSecond != null && mBinding.cameraViewSecond.getHolder() != null
                         && mBinding.cameraViewSecond.getHolder().getSurface() != null
                         && mBinding.cameraViewSecond.getHolder().getSurface().isValid()) {
                     mCameraHelper.addSurface(mBinding.cameraViewSecond.getHolder().getSurface(), false);
+                    Log.d(TAG, "onCameraOpen: addSurface called for cameraViewSecond (PIP)");
                 }
-            }
+
+                // Start preview after adding surfaces to ensure frames flow correctly
+                mCameraHelper.startPreview();
+                Log.d(TAG, "onCameraOpen: startPreview called after adding surfaces, preview=" + mPreviewWidth + "x" + mPreviewHeight);
+            });
 
             mIsCameraConnected = true;
             updateUIControls();
@@ -1437,6 +1626,10 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                     mCameraHelper.removeSurface(cameraViewSecond.getHolder().getSurface());
                 }
             }
+
+            // Reset the surface tracking flags when camera closes
+            mMainSurfaceAdded = false;
+            mCurrentPreviewSurfaceTexture = null;
 
             mIsCameraConnected = false;
             updateUIControls();
@@ -1495,12 +1688,19 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                 mPreviewHeight = metrics.heightPixels;
             }
         }
-        Log.d(TAG, "resizePreviewView: " + mPreviewWidth + "x" + mPreviewHeight);
+        Log.d(TAG, "resizePreviewView: " + mPreviewWidth + "x" + mPreviewHeight + " (mMainSurfaceAdded=" + mMainSurfaceAdded + ")");
         // Set the aspect ratio of TextureView to match the aspect ratio of the camera
         mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
-        // Update SurfaceTexture buffer to chip resolution for better zoom quality
-        if (mBinding.viewMainPreview.getSurfaceTexture() != null) {
+        // Update SurfaceTexture buffer to chip resolution for better zoom quality.
+        // IMPORTANT: Only update buffer size if no Surface has been created from this
+        // SurfaceTexture yet. Once a Surface is created (mMainSurfaceAdded=true), the
+        // buffer size is locked to what was set at Surface creation time. Changing it
+        // here would either be ignored or cause the camera to render at the wrong
+        // resolution, resulting in a black screen on first portrait launch.
+        if (!mMainSurfaceAdded && mBinding.viewMainPreview.getSurfaceTexture() != null) {
             setSurfaceTextureBufferSize(mBinding.viewMainPreview.getSurfaceTexture(), mPreviewWidth, mPreviewHeight);
+        } else {
+            Log.d(TAG, "resizePreviewView: skipping buffer size update (surface already added)");
         }
     }
 
@@ -2943,11 +3143,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                     return;
                 }
                 String text = imeTextInput.getText().toString();
-                if (text.isEmpty()) {
-                    Toast.makeText(this, "请输入要发送的文本", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                startSend(text);
+                validateAndSend(text);
             });
         }
 
@@ -3070,6 +3266,56 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
             imeRestoreButton.setEnabled(hasSnapshot);
             imeRestoreButton.setAlpha(hasSnapshot ? 1.0f : 0.4f);
         }
+    }
+
+    /**
+     * Validate text and device connection before sending.
+     * Based on KeyCMD's ImeComposeSendGate validation logic.
+     *
+     * @param text The text to send
+     */
+    private void validateAndSend(String text) {
+        if (isSendingText) return;
+
+        // Check device connection
+        boolean isConnected = usbDeviceManager != null && usbDeviceManager.isConnected();
+        if (!isConnected) {
+            Toast.makeText(this, "No device connected", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Check if text is empty
+        if (text == null || text.isEmpty()) {
+            Toast.makeText(this, "Text is empty", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Check if text contains non-ASCII characters (warning)
+        boolean hasNonAscii = com.openterface.AOS.utils.TextValidator.hasNonAscii(text);
+        if (hasNonAscii) {
+            new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Non-ASCII Characters")
+                .setMessage("Text contains non-ASCII characters. These may not be sent correctly.")
+                .setPositiveButton("Continue", (dialog, which) -> startSend(text))
+                .setNegativeButton("Cancel", null)
+                .show();
+            return;
+        }
+
+        // Check if text is too long (warning)
+        boolean isTooLong = com.openterface.AOS.utils.TextValidator.isTooLong(text);
+        if (isTooLong) {
+            new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Long Text")
+                .setMessage("Text is very long (" + text.length() + " chars). Sending may take a while.")
+                .setPositiveButton("Continue", (dialog, which) -> startSend(text))
+                .setNegativeButton("Cancel", null)
+                .show();
+            return;
+        }
+
+        // All validations passed, send directly
+        startSend(text);
     }
 
     private void startSend(String text) {
@@ -3242,7 +3488,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
             @Override
             public void onSendSavedText(@NonNull String content) {
                 if (isSendingText || content == null) return;
-                startSend(content);
+                validateAndSend(content);
             }
         };
     }
@@ -3266,7 +3512,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                         break;
                     case 1:
                         if (!isSendingText && item.content != null) {
-                            startSend(item.content);
+                            validateAndSend(item.content);
                         }
                         break;
                     case 2:
@@ -3587,6 +3833,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
     private final String KEY_VIBRATE_ENABLED = "key_vibrate_enabled";
     private final String KEY_VIBRATE_INTENSITY = "key_vibrate_intensity";
     private final String KEY_SCROLL_SPEED = "scroll_speed";
+    private final String KEY_MOUSE_SPEED = "mouse_speed";
     private final String KEY_PRE_VALIDATE = "pre_validate_enabled";
     private final String KEY_AUTO_SAVE = "auto_save_enabled";
 
@@ -3605,6 +3852,8 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
         // === Mouse Settings ===
         SeekBar scrollSpeedSeekbar = view.findViewById(R.id.settings_scroll_speed_seekbar);
         TextView scrollSpeedValue = view.findViewById(R.id.settings_scroll_speed_value);
+        SeekBar mouseSpeedSeekbar = view.findViewById(R.id.settings_mouse_speed_seekbar);
+        TextView mouseSpeedValue = view.findViewById(R.id.settings_mouse_speed_value);
 
         // === IME Settings ===
         androidx.appcompat.widget.SwitchCompat preValidateSwitch = view.findViewById(R.id.settings_pre_validate_switch);
@@ -3616,6 +3865,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
         boolean vibrateEnabled = prefs.getBoolean(KEY_VIBRATE_ENABLED, true);
         int vibrateIntensity = prefs.getInt(KEY_VIBRATE_INTENSITY, 60);
         int scrollSpeed = prefs.getInt(KEY_SCROLL_SPEED, 50);
+        int mouseSpeed = prefs.getInt(KEY_MOUSE_SPEED, 50);
         boolean preValidate = prefs.getBoolean(KEY_PRE_VALIDATE, true);
         boolean autoSave = prefs.getBoolean(KEY_AUTO_SAVE, false);
 
@@ -3628,6 +3878,10 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
         if (vibrateIntensityLayout != null) vibrateIntensityLayout.setVisibility(vibrateEnabled ? View.VISIBLE : View.GONE);
         if (scrollSpeedSeekbar != null) scrollSpeedSeekbar.setProgress(scrollSpeed);
         if (scrollSpeedValue != null) scrollSpeedValue.setText(getScrollSpeedLabel(scrollSpeed));
+        if (mouseSpeedSeekbar != null) mouseSpeedSeekbar.setProgress(mouseSpeed);
+        if (mouseSpeedValue != null) mouseSpeedValue.setText(getMouseSpeedLabel(mouseSpeed));
+        // Apply saved mouse speed multiplier to both Java and Core mouse implementations
+        com.openterface.AOS.target.HidManager.setMouseSpeedMultiplier(progressToMouseSpeed(mouseSpeed));
         if (preValidateSwitch != null) preValidateSwitch.setChecked(preValidate);
         if (autoSaveSwitch != null) autoSaveSwitch.setChecked(autoSave);
 
@@ -3677,6 +3931,23 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                     if (fromUser) {
                         prefs.edit().putInt(KEY_SCROLL_SPEED, progress).apply();
                         if (scrollSpeedValue != null) scrollSpeedValue.setText(getScrollSpeedLabel(progress));
+                    }
+                }
+                @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+            });
+        }
+
+        // === Mouse Move Speed ===
+        if (mouseSpeedSeekbar != null) {
+            mouseSpeedSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    if (fromUser) {
+                        prefs.edit().putInt(KEY_MOUSE_SPEED, progress).apply();
+                        if (mouseSpeedValue != null) mouseSpeedValue.setText(getMouseSpeedLabel(progress));
+                        // Apply multiplier immediately so it takes effect on next movement
+                        com.openterface.AOS.target.HidManager.setMouseSpeedMultiplier(progressToMouseSpeed(progress));
                     }
                 }
                 @Override public void onStartTrackingTouch(SeekBar seekBar) {}
@@ -3741,6 +4012,96 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                 showThemeModeDialog();
             });
         }
+
+        // === Device Connection ===
+        LinearLayout deviceConnectLayout = view.findViewById(R.id.settings_device_connect_layout);
+        TextView deviceStatus = view.findViewById(R.id.settings_device_status);
+        if (deviceConnectLayout != null) {
+            updateDeviceStatus(deviceStatus);
+            deviceConnectLayout.setOnClickListener(v -> {
+                showDeviceListDialog();
+                if (currentModule == ModuleType.SETTINGS) {
+                    toggleModule(ModuleType.NONE);
+                }
+            });
+        }
+
+        // === Device Disconnect ===
+        LinearLayout deviceDisconnectLayout = view.findViewById(R.id.settings_device_disconnect_layout);
+        if (deviceDisconnectLayout != null) {
+            deviceDisconnectLayout.setOnClickListener(v -> {
+                safelyEject();
+                updateDeviceStatus(deviceStatus);
+            });
+        }
+
+        // === Baud Rate ===
+        LinearLayout baudrateLayout = view.findViewById(R.id.settings_baudrate_layout);
+        TextView baudrateValue = view.findViewById(R.id.settings_baudrate_value);
+        if (baudrateLayout != null && baudrateValue != null) {
+            int currentBaudrate = usbDeviceManager != null ? usbDeviceManager.getCurrentBaudrate() : 0;
+            baudrateValue.setText(String.valueOf(currentBaudrate > 0 ? currentBaudrate : 115200));
+            baudrateLayout.setOnClickListener(v -> showBaudrateDialogInPortrait(baudrateValue));
+        }
+
+        // === Video Format ===
+        LinearLayout videoFormatLayout = view.findViewById(R.id.settings_video_format_layout);
+        if (videoFormatLayout != null) {
+            videoFormatLayout.setOnClickListener(v -> {
+                showVideoFormatDialog();
+                if (currentModule == ModuleType.SETTINGS) toggleModule(ModuleType.NONE);
+            });
+        }
+
+        // === Camera Controls ===
+        LinearLayout videoControlLayout = view.findViewById(R.id.settings_video_control_layout);
+        if (videoControlLayout != null) {
+            videoControlLayout.setOnClickListener(v -> {
+                showCameraControlsDialog();
+                if (currentModule == ModuleType.SETTINGS) toggleModule(ModuleType.NONE);
+            });
+        }
+
+        // === Screenshot ===
+        LinearLayout screenshotLayout = view.findViewById(R.id.settings_screenshot_layout);
+        if (screenshotLayout != null) {
+            screenshotLayout.setOnClickListener(v -> takePicture());
+        }
+
+        // === Video Recording ===
+        LinearLayout videoRecordLayout = view.findViewById(R.id.settings_video_record_layout);
+        TextView videoRecordText = view.findViewById(R.id.settings_video_record_text);
+        ImageView videoRecordIcon = view.findViewById(R.id.settings_video_record_icon);
+        if (videoRecordLayout != null) {
+            updateRecordingStatus(videoRecordText, videoRecordIcon);
+            videoRecordLayout.setOnClickListener(v -> {
+                toggleVideoRecord(!mIsRecording);
+                mIsRecording = !mIsRecording;
+                updateRecordingStatus(videoRecordText, videoRecordIcon);
+            });
+        }
+
+        // === VNC Server ===
+        LinearLayout vncServerLayout = view.findViewById(R.id.settings_vnc_server_layout);
+        TextView vncStatus = view.findViewById(R.id.settings_vnc_status);
+        if (vncServerLayout != null) {
+            updateVncStatus(vncStatus);
+            vncServerLayout.setOnClickListener(v -> {
+                showVncServerDialog();
+                if (currentModule == ModuleType.SETTINGS) toggleModule(ModuleType.NONE);
+            });
+        }
+
+        // === WebRTC Server ===
+        LinearLayout webrtcServerLayout = view.findViewById(R.id.settings_webrtc_server_layout);
+        TextView webrtcStatus = view.findViewById(R.id.settings_webrtc_status);
+        if (webrtcServerLayout != null) {
+            updateWebrtcStatus(webrtcStatus);
+            webrtcServerLayout.setOnClickListener(v -> {
+                showWebRtcDialog();
+                if (currentModule == ModuleType.SETTINGS) toggleModule(ModuleType.NONE);
+            });
+        }
     }
 
     private String getScrollSpeedLabel(int progress) {
@@ -3749,6 +4110,125 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
         if (progress <= 60) return "中等";
         if (progress <= 80) return "快";
         return "很快";
+    }
+
+    /**
+     * Convert SeekBar progress (0-100) to mouse speed multiplier (0.25x-3.0x).
+     * Uses piecewise linear mapping:
+     *   0-50   → 0.25x to 1.0x  (slow range, finer control)
+     *   50-100 → 1.0x to 3.0x   (fast range, wider spread)
+     * Default progress=50 maps to multiplier=1.0x.
+     */
+    private float progressToMouseSpeed(int progress) {
+        if (progress <= 50) {
+            return 0.25f + (progress / 50f) * 0.75f;
+        } else {
+            return 1.0f + ((progress - 50) / 50f) * 2.0f;
+        }
+    }
+
+    private String getMouseSpeedLabel(int progress) {
+        float multiplier = progressToMouseSpeed(progress);
+        String speed;
+        if (progress <= 15) speed = "很慢";
+        else if (progress <= 35) speed = "慢";
+        else if (progress <= 65) speed = "正常";
+        else if (progress <= 85) speed = "快";
+        else speed = "很快";
+        return speed + " " + String.format("%.1f", multiplier) + "x";
+    }
+
+    /**
+     * Update device connection status in portrait settings
+     */
+    private void updateDeviceStatus(TextView statusView) {
+        if (statusView == null) return;
+        if (mIsCameraConnected) {
+            statusView.setText(R.string.settings_connected);
+            statusView.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+        } else {
+            statusView.setText(R.string.settings_disconnected);
+            statusView.setTextColor(getResources().getColor(R.color.text_secondary));
+        }
+    }
+
+    /**
+     * Update recording status in portrait settings
+     */
+    private void updateRecordingStatus(TextView textView, ImageView iconView) {
+        if (textView != null) {
+            textView.setText(mIsRecording ? R.string.settings_stop_recording : R.string.settings_start_recording);
+        }
+        if (iconView != null) {
+            int color = mIsRecording ? android.R.color.holo_red_light : R.color.text_primary;
+            iconView.setColorFilter(getResources().getColor(color));
+        }
+    }
+
+    /**
+     * Update VNC server status in portrait settings
+     */
+    private void updateVncStatus(TextView statusView) {
+        if (statusView == null) return;
+        boolean running = vncService != null && vncService.isRunning();
+        statusView.setText(running ? R.string.settings_running : R.string.settings_stopped);
+        statusView.setTextColor(running ?
+            getResources().getColor(android.R.color.holo_green_dark) :
+            getResources().getColor(R.color.text_secondary));
+    }
+
+    /**
+     * Update WebRTC server status in portrait settings
+     */
+    private void updateWebrtcStatus(TextView statusView) {
+        if (statusView == null) return;
+        boolean running = webRtcService != null && webRtcService.isRunning();
+        statusView.setText(running ? R.string.settings_running : R.string.settings_stopped);
+        statusView.setTextColor(running ?
+            getResources().getColor(android.R.color.holo_green_dark) :
+            getResources().getColor(R.color.text_secondary));
+    }
+
+    /**
+     * Show baudrate selection dialog in portrait mode
+     */
+    private void showBaudrateDialogInPortrait(TextView baudrateValueView) {
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_baudrate_selection, null);
+
+        RadioGroup radioGroup = dialogView.findViewById(R.id.baudrate_radio_group);
+        RadioButton radio115200 = dialogView.findViewById(R.id.radio_115200);
+        RadioButton radio9600 = dialogView.findViewById(R.id.radio_9600);
+        TextView currentBaudrateText = dialogView.findViewById(R.id.current_baudrate_text);
+
+        int currentBaudrate = usbDeviceManager != null ? usbDeviceManager.getCurrentBaudrate() : 0;
+        currentBaudrateText.setText(currentBaudrate > 0
+            ? getString(R.string.baudrate_current, String.valueOf(currentBaudrate))
+            : "Current: Not connected");
+
+        int preferredBaudrate = usbDeviceManager != null ? usbDeviceManager.getPreferredBaudrate() : 115200;
+        if (preferredBaudrate == 9600) radio9600.setChecked(true);
+        else radio115200.setChecked(true);
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogView)
+                .setCancelable(true)
+                .create();
+
+        dialogView.findViewById(R.id.button_ok).setOnClickListener(v -> {
+            int newBaudrate = radioGroup.getCheckedRadioButtonId() == R.id.radio_9600 ? 9600 : 115200;
+            if (newBaudrate != preferredBaudrate) {
+                if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                    usbDeviceManager.reconnectWithBaudrate(newBaudrate);
+                } else if (usbDeviceManager != null) {
+                    usbDeviceManager.setPreferredBaudrate(newBaudrate);
+                }
+                if (baudrateValueView != null) baudrateValueView.setText(String.valueOf(newBaudrate));
+            }
+            dialog.dismiss();
+        });
+
+        dialogView.findViewById(R.id.button_cancel).setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
     }
 
     public boolean isSoundEnabled() {
@@ -3769,6 +4249,10 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
 
     public int getScrollSpeed() {
         return getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).getInt(KEY_SCROLL_SPEED, 50);
+    }
+
+    public int getMouseSpeed() {
+        return getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).getInt(KEY_MOUSE_SPEED, 50);
     }
 
     // ============================================================
@@ -3816,6 +4300,12 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
     @Override
     public void setScrollSpeed(int speed) {
         getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).edit().putInt(KEY_SCROLL_SPEED, speed).apply();
+    }
+
+    @Override
+    public void setMouseSpeed(int speed) {
+        getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).edit().putInt(KEY_MOUSE_SPEED, speed).apply();
+        HidManager.setMouseSpeedMultiplier(progressToMouseSpeed(speed));
     }
 
     /**

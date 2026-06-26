@@ -189,6 +189,18 @@ public class HidManager {
         KeyBoardManager.setUsbDeviceManager(manager);
     }
 
+    /**
+     * Set mouse movement speed multiplier for relative mode.
+     * Does NOT change the number of packets sent — only scales the delta values.
+     * Applied to BOTH Java and Core implementations so the setting is preserved
+     * when switching between them.
+     * @param multiplier 0.25f to 3.0f (1.0f = normal speed)
+     */
+    public static void setMouseSpeedMultiplier(float multiplier) {
+        MouseManager.setMouseSpeedMultiplier(multiplier);
+        MouseManagerCore.setMouseSpeedMultiplier(multiplier);
+    }
+
     public static void width_height(int width, int height) {
         if (useCoreImplementation && coreLibraryLoaded) {
             MouseManagerCore.width_height(width, height);

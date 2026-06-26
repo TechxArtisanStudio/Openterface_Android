@@ -36,6 +36,24 @@ public class MouseManager {
     private static UsbDeviceManager usbDeviceManager;
     public static int screenWidth, screenHeight;
 
+    // Mouse speed multiplier (default 1.0 = normal speed).
+    // Applied to relative movement deltas only — does NOT increase packet rate.
+    // Range: 0.25 (very slow) to 3.0 (very fast).
+    private static volatile float mouseSpeedMultiplier = 1.0f;
+
+    /**
+     * Set mouse movement speed multiplier for relative mode.
+     * Does NOT change the number of packets sent — only scales the delta values.
+     * @param multiplier 0.25f to 3.0f (1.0f = normal speed)
+     */
+    public static void setMouseSpeedMultiplier(float multiplier) {
+        mouseSpeedMultiplier = Math.max(0.25f, Math.min(3.0f, multiplier));
+    }
+
+    public static float getMouseSpeedMultiplier() {
+        return mouseSpeedMultiplier;
+    }
+
     // Single worker thread for all mouse events — avoids thread-per-event overhead
     private static HandlerThread sWorkerThread;
     private static MouseHandler sHandler;
@@ -387,8 +405,9 @@ public class MouseManager {
 
     private static void doSendHexRelData(String mouseClick, float startMoveMSX, float startMoveMSY,
                                           float lastMoveMSX, float lastMoveMSY) {
-        int xMovement = (int) (startMoveMSX - lastMoveMSX);
-        int yMovement = (int) (startMoveMSY - lastMoveMSY);
+        // Apply speed multiplier to deltas (not to positions) — same packet count, scaled movement
+        int xMovement = (int) ((startMoveMSX - lastMoveMSX) * mouseSpeedMultiplier);
+        int yMovement = (int) ((startMoveMSY - lastMoveMSY) * mouseSpeedMultiplier);
 
         String xByte;
         if (xMovement == 0 || lastMoveMSX == 0) {
