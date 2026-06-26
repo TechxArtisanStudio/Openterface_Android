@@ -31,6 +31,13 @@ public interface ICameraHelper {
 
     void setPreviewSize(Size size);
 
+    /**
+     * Set the surface for camera preview display directly.
+     * This bypasses the RendererHolder and directly outputs camera frames to the surface.
+     * @param surface SurfaceTexture, Surface, or SurfaceHolder for preview display
+     */
+    void setPreviewDisplay(Object surface);
+
     void addSurface(Object surface, boolean isRecordable);
 
     void removeSurface(Object surface);

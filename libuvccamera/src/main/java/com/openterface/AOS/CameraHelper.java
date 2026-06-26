@@ -321,6 +321,20 @@ public class CameraHelper implements ICameraHelper {
     }
 
     @Override
+    public void setPreviewDisplay(final Object surface) {
+        if (DEBUG) Log.d(TAG, "setPreviewDisplay:surface=" + surface);
+        mAsyncHandler.post(() -> {
+            if (mService != null && mUsbDevice != null) {
+                try {
+                    mService.setPreviewDisplay(mUsbDevice, surface);
+                } catch (final Exception e) {
+                    if (DEBUG) Log.e(TAG, "setPreviewDisplay:", e);
+                }
+            }
+        });
+    }
+
+    @Override
     public UVCControl getUVCControl() {
         if (DEBUG) Log.d(TAG, "getUVCControl:");
         if (mService != null && mUsbDevice != null) {

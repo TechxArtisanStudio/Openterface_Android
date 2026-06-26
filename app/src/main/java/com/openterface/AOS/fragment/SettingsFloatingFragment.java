@@ -141,10 +141,12 @@ public class SettingsFloatingFragment extends DialogFragment {
         boolean isVibrateEnabled();
         int getVibrateIntensity();
         int getScrollSpeed();
+        int getMouseSpeed();
         void setSoundEnabled(boolean enabled);
         void setSoundVolume(int volume);
         void setVibrateEnabled(boolean enabled);
         void setVibrateIntensity(int intensity);
         void setScrollSpeed(int speed);
+        void setMouseSpeed(int speed);
     }
 }

@@ -209,6 +209,7 @@ final class CameraInternal implements ICameraInternal {
                 mUVCCamera = null;
             }
             mRendererHolder.removeSlaveSurfaceAll();
+            releaseDirectPreviewSurface();
         }
     }
 
@@ -310,7 +311,31 @@ final class CameraInternal implements ICameraInternal {
                 updateRendererSize(size.width, size.height);
             }
 
-            mUVCCamera.setPreviewDisplay(mRendererHolder.getPrimarySurface());
+            // Stop preview first if already running, to cleanly switch surfaces
+            if (mIsPreviewing) {
+                mUVCCamera.stopPreview();
+                Log.d(TAG, "startPreview: stopped existing preview before setting new surface");
+            }
+
+            // Use direct preview surface if set, otherwise use RendererHolder's primary surface
+            if (mDirectPreviewSurfaceObject != null) {
+                mUVCCamera.setPreviewDisplay(mDirectPreviewSurfaceObject);
+                Log.d(TAG, "startPreview: using pre-converted Surface from SurfaceTexture");
+            } else if (mDirectPreviewSurface instanceof android.view.Surface) {
+                mUVCCamera.setPreviewDisplay((android.view.Surface) mDirectPreviewSurface);
+                Log.d(TAG, "startPreview: using Surface directly");
+            } else if (mDirectPreviewSurface instanceof android.view.SurfaceHolder) {
+                mUVCCamera.setPreviewDisplay((android.view.SurfaceHolder) mDirectPreviewSurface);
+                Log.d(TAG, "startPreview: using SurfaceHolder");
+            } else if (mDirectPreviewSurface instanceof android.graphics.SurfaceTexture) {
+                android.view.Surface surface = new android.view.Surface((android.graphics.SurfaceTexture) mDirectPreviewSurface);
+                mUVCCamera.setPreviewDisplay(surface);
+                // Keep reference to prevent garbage collection
+                mDirectPreviewSurfaceObject = surface;
+                Log.d(TAG, "startPreview: using Surface from SurfaceTexture (created in startPreview)");
+            } else {
+                mUVCCamera.setPreviewDisplay(mRendererHolder.getPrimarySurface());
+            }
             mUVCCamera.startPreview();
 
             mIsPreviewing = true;
@@ -327,6 +352,54 @@ final class CameraInternal implements ICameraInternal {
 
             mIsPreviewing = false;
         }
+    }
+
+    /**
+     * Direct preview surface - if set, startPreview() will use this instead of RendererHolder's primary surface
+     */
+    private Object mDirectPreviewSurface = null;
+
+    /**
+     * Converted Surface object (from SurfaceTexture) - kept as field to prevent garbage collection
+     */
+    private android.view.Surface mDirectPreviewSurfaceObject = null;
+
+    /**
+     * Set preview surface directly (bypassing RendererHolder)
+     * This method allows setting the preview surface directly, bypassing the RendererHolder
+     * rendering pipeline which may not work correctly in all cases.
+     *
+     * @param surface SurfaceTexture, Surface, or SurfaceHolder for preview display
+     */
+    public void setPreviewDisplay(Object surface) {
+        if (DEBUG) Log.d(TAG, "setPreviewDisplay: " + this + " surface=" + surface);
+
+        // Release the old Surface before replacing, to prevent resource leaks
+        // and stale references in native code
+        releaseDirectPreviewSurface();
+
+        mDirectPreviewSurface = surface;
+
+        // If it's a SurfaceTexture, convert to Surface and keep reference
+        if (surface instanceof android.graphics.SurfaceTexture) {
+            mDirectPreviewSurfaceObject = new android.view.Surface((android.graphics.SurfaceTexture) surface);
+            if (DEBUG) Log.d(TAG, "setPreviewDisplay: created Surface from SurfaceTexture");
+        } else {
+            mDirectPreviewSurfaceObject = null;
+        }
+    }
+
+    /**
+     * Release the direct preview surface and any associated Surface objects.
+     * Call this before setting a new surface or when cleaning up.
+     */
+    private void releaseDirectPreviewSurface() {
+        if (mDirectPreviewSurfaceObject != null) {
+            if (DEBUG) Log.d(TAG, "releaseDirectPreviewSurface: releasing old Surface");
+            mDirectPreviewSurfaceObject.release();
+            mDirectPreviewSurfaceObject = null;
+        }
+        mDirectPreviewSurface = null;
     }
 
     @Override

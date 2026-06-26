@@ -342,4 +342,33 @@
     <string name="permission_continue">继续</string>
     <string name="permission_cancel">取消</string>
     <string name="permission_camera_denied">相机权限被拒绝，无法显示视频流</string>
+
+    <!-- Settings: Device Connection -->
+    <string name="settings_device_connection">Device Connection</string>
+    <string name="settings_connect_device">Connect Device</string>
+    <string name="settings_disconnect_device">Disconnect Device</string>
+    <string name="settings_baudrate">Baud Rate</string>
+    <string name="settings_connected">Connected</string>
+    <string name="settings_disconnected">Disconnected</string>
+
+    <!-- Settings: Video Settings -->
+    <string name="settings_video_settings">Video Settings</string>
+    <string name="settings_video_format">Video Format</string>
+    <string name="settings_camera_controls">Camera Controls</string>
+
+    <!-- Settings: Mouse -->
+    <string name="settings_mouse_speed">Mouse Speed</string>
+
+    <!-- Settings: Media Capture -->
+    <string name="settings_media_capture">Media Capture</string>
+    <string name="settings_screenshot">Screenshot</string>
+    <string name="settings_start_recording">Start Recording</string>
+    <string name="settings_stop_recording">Stop Recording</string>
+
+    <!-- Settings: Remote Access -->
+    <string name="settings_remote_access">Remote Access</string>
+    <string name="settings_vnc_server">VNC Server</string>
+    <string name="settings_webrtc_server">WebRTC Server</string>
+    <string name="settings_running">Running</string>
+    <string name="settings_stopped">Stopped</string>
 </resources>

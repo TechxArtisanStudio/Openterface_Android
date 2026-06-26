@@ -361,6 +361,22 @@ class CameraConnectionService {
             cameraInternal.stopPreview();
         }
 
+        /**
+         * Set preview surface directly (bypassing RendererHolder)
+         *
+         * @param device
+         * @param surface SurfaceTexture, Surface, or SurfaceHolder for preview display
+         */
+        @Override
+        public void setPreviewDisplay(final UsbDevice device, final Object surface) {
+            if (DEBUG) Log.d(TAG, LOG_PREFIX + "setPreviewDisplay:surface=" + surface);
+            final CameraInternal cameraInternal = getCamera(device);
+            if (cameraInternal == null) {
+                throw new IllegalArgumentException("invalid device");
+            }
+            cameraInternal.setPreviewDisplay(surface);
+        }
+
         @Override
         public UVCControl getUVCControl(UsbDevice device) {
             final CameraInternal cameraInternal = getCamera(device);

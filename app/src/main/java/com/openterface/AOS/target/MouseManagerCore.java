@@ -38,6 +38,18 @@ public class MouseManagerCore {
     private static UsbDeviceManager usbDeviceManager;
     public static int screenWidth, screenHeight;
 
+    // Mouse speed multiplier — mirrors MouseManager.mouseSpeedMultiplier.
+    // Applied to relative deltas; does NOT increase packet rate.
+    private static volatile float mouseSpeedMultiplier = 1.0f;
+
+    public static void setMouseSpeedMultiplier(float multiplier) {
+        mouseSpeedMultiplier = Math.max(0.25f, Math.min(3.0f, multiplier));
+    }
+
+    public static float getMouseSpeedMultiplier() {
+        return mouseSpeedMultiplier;
+    }
+
     // Single worker thread for all mouse events
     private static HandlerThread sWorkerThread;
     private static MouseHandler sHandler;
@@ -169,8 +181,9 @@ public class MouseManagerCore {
     }
 
     private static void doSendHexRelData(String mouseClick, float sx, float sy, float lx, float ly) {
-        int xMovement = (int) (sx - lx);
-        int yMovement = (int) (sy - ly);
+        // Apply speed multiplier to deltas — same packet count, scaled movement
+        int xMovement = (int) ((sx - lx) * mouseSpeedMultiplier);
+        int yMovement = (int) ((sy - ly) * mouseSpeedMultiplier);
 
         // Clamp to signed byte range
         int dx = Math.max(-128, Math.min(127, xMovement));

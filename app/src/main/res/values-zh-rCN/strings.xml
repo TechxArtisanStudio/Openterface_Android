@@ -189,4 +189,33 @@
     <string name="KeyMouse_Abs_Drag_Ctrl">拖动\n模式</string>
     <string name="KeyMouse_Drag">拖动</string>
     <string name="KeyMouse_Rel_Ctrl">指针\n模式</string>
+
+    <!-- 竖屏设置 -->
+    <string name="settings_device_connection">设备连接</string>
+    <string name="settings_connect_device">连接设备</string>
+    <string name="settings_disconnect_device">断开设备</string>
+    <string name="settings_baudrate">波特率</string>
+    <string name="settings_connected">已连接</string>
+    <string name="settings_disconnected">未连接</string>
+
+    <!-- 视频设置 -->
+    <string name="settings_video_settings">视频设置</string>
+    <string name="settings_video_format">视频格式</string>
+    <string name="settings_camera_controls">摄像头控制</string>
+
+    <!-- 鼠标设置 -->
+    <string name="settings_mouse_speed">鼠标移动速度</string>
+
+    <!-- 媒体捕获 -->
+    <string name="settings_media_capture">媒体捕获</string>
+    <string name="settings_screenshot">截图</string>
+    <string name="settings_start_recording">开始录制</string>
+    <string name="settings_stop_recording">停止录制</string>
+
+    <!-- 远程访问 -->
+    <string name="settings_remote_access">远程访问</string>
+    <string name="settings_vnc_server">VNC 服务器</string>
+    <string name="settings_webrtc_server">WebRTC 服务器</string>
+    <string name="settings_running">运行中</string>
+    <string name="settings_stopped">已停止</string>
 </resources>

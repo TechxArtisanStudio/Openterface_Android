@@ -53,6 +53,8 @@ interface ICameraConnection {
 
     void stopPreview(UsbDevice device);
 
+    void setPreviewDisplay(UsbDevice device, Object surface);
+
     UVCControl getUVCControl(UsbDevice device);
 
     void takePicture(UsbDevice device,

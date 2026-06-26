@@ -36,7 +36,7 @@
                     android:layout_height="wrap_content"
                     android:layout_alignWithParentIfMissing="true"
                     android:layout_centerInParent="true"
-                    android:visibility="invisible" />
+                    android:visibility="visible" />
 
                 <ImageView
                     android:id="@+id/tvConnectUSBCameraTip"
