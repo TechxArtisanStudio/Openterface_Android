@@ -52,12 +52,14 @@ import com.hoho.android.usbserial.driver.UsbSerialProber;
 import com.hoho.android.usbserial.driver.Ch34xSerialDriver;
 import com.hoho.android.usbserial.driver.ProbeTable;
 import android.hardware.usb.UsbDeviceConnection;
+import android.hardware.usb.UsbEndpoint;
+import android.hardware.usb.UsbConstants;
 import android.widget.TextView;
 import android.os.Build;
 import android.view.KeyEvent;
 
 public class UsbDeviceManager {
-    private static final String TAG = UsbDeviceManager.class.getSimpleName();
+    private static final String TAG = "OP-SERIAL";
 
     private UsbManager usbManager;
     public static UsbSerialPort port;
@@ -71,6 +73,11 @@ public class UsbDeviceManager {
     private int preferredBaudrate = DEFAULT_BAUDRATE;
     private UsbDevice pendingDevice; // Device waiting for connection
     private volatile boolean isConnecting = false; // Prevents double-connect from fallback + onDeviceOpen
+    private volatile long isConnectingTimestamp = 0; // Tracks when isConnecting was set — used to detect stuck state
+
+    // Stored for bulkTransfer fallback when port.write()'s testConnection fails on CH340
+    private UsbDeviceConnection serialConnection;
+    private UsbEndpoint outEndpoint;
 
     private static final int WRITE_WAIT_MILLIS = 2000;
     private static final int READ_WAIT_MILLIS = 2000;
@@ -105,34 +112,50 @@ public class UsbDeviceManager {
 
     
     /**
-     * Scan all connected USB devices and find Openterface devices by VID/PID
+     * Known UVC composite device VID/PIDs — these devices have both UVC camera
+     * and serial interfaces on the same USB device. We detect them by checking
+     * for a serial interface in addition to the UVC interface.
+     */
+    private static final int[][] COMPOSITE_DEVICE_IDS = {
+        {0x345F, 0x2109},  // KVMGO-VGA (MS2109S) — UVC + serial composite
+        {0x345F, 0x2132},  // KVMGO — UVC + serial composite
+        {0x534D, 0x2109},  // Openterface Mini-KVM v1 UVC — UVC + serial composite
+    };
+
+    /**
+     * Scan all connected USB devices and find Openterface devices by VID/PID.
+     * First tries known serial devices (CH340), then checks composite devices
+     * (UVC + serial on same VID/PID, like MS2109S).
      * @return UsbDevice if found, null otherwise
      */
     private UsbDevice detectOpenterfaceDevice() {
         HashMap<String, UsbDevice> deviceList = usbManager.getDeviceList();
         Log.d(TAG, "Scanning " + deviceList.size() + " connected USB devices for Openterface devices");
-        
-        // Define only the two supported serial port devices
-        int[][] supportedIds = {
+
+        // Known dedicated serial port devices (CH340 chips)
+        int[][] serialIds = {
             {0x1A86, 0x7523},  // Openterface Mini-KVM v1 Serial (supports 9600 and 115200)
             {0x1A86, 0xFE0C}   // Openterface Mini-KVM v2 Serial (supports 115200 only)
         };
-        
+
         // Log supported device types
         Log.d(TAG, "Supported Openterface Serial Devices:");
         Log.d(TAG, "  - 1A86:7523 (Mini-KVM v1 - supports 9600 and 115200 baud)");
         Log.d(TAG, "  - 1A86:FE0C (Mini-KVM v2 - supports 115200 baud only)");
-        
+        Log.d(TAG, "  - Composite UVC+serial devices (345F:2109, 345F:2132, 534D:2109)");
+
+        UsbDevice compositeCandidate = null;
+
         // Scan for supported devices
         for (UsbDevice device : deviceList.values()) {
             int vid = device.getVendorId();
             int pid = device.getProductId();
-            
+
             // Safely get device info without requiring permissions
             String productName = device.getProductName() != null ? device.getProductName() : "Unknown";
             String manufacturerName = device.getManufacturerName() != null ? device.getManufacturerName() : "Unknown";
             String serialNumber = "Permission required";
-            
+
             try {
                 // Only try to get serial number if we have permission
                 if (usbManager.hasPermission(device)) {
@@ -142,32 +165,62 @@ public class UsbDeviceManager {
                 Log.w(TAG, "Permission denied for device " + device.getDeviceName() + ": " + e.getMessage());
                 serialNumber = "Permission denied";
             }
-            
-            Log.d(TAG, "Checking device: " + String.format("VID:PID=%04X:%04X", vid, pid) + 
-                ", Product=" + productName + 
+
+            // Log interface details for diagnostics
+            StringBuilder ifaces = new StringBuilder();
+            for (int i = 0; i < device.getInterfaceCount(); i++) {
+                UsbInterface intf = device.getInterface(i);
+                ifaces.append(String.format(" [class=%d,subclass=%d,prot=%d]",
+                    intf.getInterfaceClass(), intf.getInterfaceSubclass(), intf.getInterfaceProtocol()));
+            }
+            Log.d(TAG, "Checking device: " + String.format("VID:PID=%04X:%04X", vid, pid) +
+                ", Product=" + productName +
                 ", Manufacturer=" + manufacturerName +
-                ", SerialNumber=" + serialNumber);
-            
-            // Check if this device matches any of our supported VID/PID combinations
-            for (int[] ids : supportedIds) {
+                ", SerialNumber=" + serialNumber +
+                ", Interfaces(" + device.getInterfaceCount() + ")=" + ifaces);
+
+            // Priority 1: Check known serial VID/PID (CH340 dedicated serial chips)
+            for (int[] ids : serialIds) {
                 if (vid == ids[0] && pid == ids[1]) {
-                    Log.i(TAG, "✅ Found supported Openterface device: " + 
+                    Log.i(TAG, "✅ Found supported Openterface serial device: " +
                         String.format("%04X:%04X", vid, pid) + " - " + productName);
-                    
-                    // Check permissions
                     boolean hasPermission = usbManager.hasPermission(device);
                     Log.d(TAG, "Permission status for " + String.format("%04X:%04X", vid, pid) + ": " + hasPermission);
-                    
                     return device;
                 }
             }
+
+            // Priority 2: Check composite UVC+serial devices (same VID/PID for both)
+            for (int[] ids : COMPOSITE_DEVICE_IDS) {
+                if (vid == ids[0] && pid == ids[1]) {
+                    Log.d(TAG, "Found composite device candidate: " +
+                        String.format("%04X:%04X", vid, pid) + " - " + productName);
+                    if (hasSerialInterface(device)) {
+                        Log.i(TAG, "✅ Composite device has serial interface, will use for HID");
+                        compositeCandidate = device;
+                    } else {
+                        Log.w(TAG, "⚠️ Composite device " + String.format("%04X:%04X", vid, pid) +
+                            " has no serial interface — keyboard/mouse may not work");
+                    }
+                    break;
+                }
+            }
         }
-        
+
+        // Return composite device if found (lower priority than dedicated serial)
+        if (compositeCandidate != null) {
+            Log.i(TAG, "Using composite device " +
+                String.format("%04X:%04X", compositeCandidate.getVendorId(), compositeCandidate.getProductId()) +
+                " for serial/HID communication");
+            return compositeCandidate;
+        }
+
         Log.w(TAG, "❌ No compatible USB serial devices found");
         Log.d(TAG, "Expected VID/PID combinations:");
         Log.d(TAG, "  - 1A86:7523 (Mini-KVM v1 - supports 9600 and 115200 baud)");
         Log.d(TAG, "  - 1A86:FE0C (Mini-KVM v2 - supports 115200 baud only)");
-        
+        Log.d(TAG, "  - 345F:2109 (KVMGO-VGA / MS2109S - composite UVC+serial)");
+
         return null;
     }
     
@@ -198,6 +251,36 @@ public class UsbDeviceManager {
     }
 
     /**
+     * Store the USB connection and find the bulk OUT endpoint for direct bulkTransfer fallback.
+     * This is needed because port.write() internally calls testConnection() which fails on
+     * some CH340 chips (returns rc=-1). By storing the connection and endpoint, we can write
+     * data directly via bulkTransfer when port.write() fails.
+     */
+    private void storeBulkTransferResources(UsbDeviceConnection connection, UsbDevice device) {
+        serialConnection = connection;
+        // Find the bulk OUT endpoint on the serial interface (class 255 / CDC / CDC-data)
+        for (int i = 0; i < device.getInterfaceCount(); i++) {
+            UsbInterface intf = device.getInterface(i);
+            int intfClass = intf.getInterfaceClass();
+            if (intfClass == 255 || intfClass == 2 || intfClass == 10) {
+                for (int j = 0; j < intf.getEndpointCount(); j++) {
+                    UsbEndpoint ep = intf.getEndpoint(j);
+                    if (ep.getDirection() == UsbConstants.USB_DIR_OUT
+                        && ep.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK) {
+                        outEndpoint = ep;
+                        Log.d(TAG, "Found OUT endpoint: addr=0x" +
+                            Integer.toHexString(ep.getAddress()) +
+                            " maxPacket=" + ep.getMaxPacketSize() +
+                            " on interface class=" + intfClass);
+                        return;
+                    }
+                }
+            }
+        }
+        Log.w(TAG, "No bulk OUT endpoint found — bulkTransfer fallback unavailable");
+    }
+
+    /**
      * Attempt to configure serial port with specified baudrate
      * @param connection the USB device connection
      * @param baudrate the baudrate to try
@@ -206,7 +289,7 @@ public class UsbDeviceManager {
     private boolean trySerialConfiguration(UsbDeviceConnection connection, int baudrate) {
         try {
             Log.d(TAG, "Attempting to configure port with baudrate: " + baudrate);
-            
+
             // Check if driver is valid
             if (driver == null || driver.getPorts().isEmpty()) {
                 Log.e(TAG, "Driver is null or has no ports");
@@ -215,15 +298,15 @@ public class UsbDeviceManager {
                 }
                 return false;
             }
-            
+
             // Get the first port
             port = driver.getPorts().get(0); // Most devices have just one port (port 0)
-            
+
             // Special handling for CH340 devices (1A86 vendor ID)
             UsbDevice device = driver.getDevice();
             boolean is7523Device = (device.getVendorId() == 0x1A86 && device.getProductId() == 0x7523);
             boolean isFE0CDevice = (device.getVendorId() == 0x1A86 && device.getProductId() == 0xFE0C);
-            
+
             if (is7523Device) {
                 Log.d(TAG, "Detected 7523 CH340 device - using standard CH340 initialization");
                 return initializeCH340Port(connection, baudrate);
@@ -234,7 +317,7 @@ public class UsbDeviceManager {
                 Log.d(TAG, "Using standard initialization for non-CH340 device");
                 return initializeStandardPort(connection, baudrate);
             }
-            
+
         } catch (Exception e) {
             Log.e(TAG, "❌ Failed to configure serial port with baudrate " + baudrate + ": " + e.getMessage(), e);
             // Close port if it was opened but configuration failed
@@ -1234,10 +1317,10 @@ public class UsbDeviceManager {
             fe0cConnection = connection;
             fe0cInterface = dataInterface;
             currentBaudrate = baudrate;
-            
+
             // Set up port reference (we still need this for compatibility)
             port = driver.getPorts().get(0);
-            
+
             Log.d(TAG, "Testing FE0C communication capability...");
             
             // Test with a simple reset command that FE0C should handle
@@ -1546,12 +1629,35 @@ public class UsbDeviceManager {
             if (ACTION_USB_PERMISSION.equals(action)) {
                 synchronized (this) {
                     UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
-                    
-                    if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
+
+                    // Safety net: if the Intent extras are missing (e.g. FLAG_IMMUTABLE was
+                    // used by mistake), fall back to the pendingDevice stored in
+                    // requestPermissionAndConnect().
+                    if (device == null && pendingDevice != null) {
+                        Log.w(TAG, "Permission broadcast has null device — " +
+                            "falling back to pendingDevice " +
+                            String.format("%04X:%04X", pendingDevice.getVendorId(),
+                                pendingDevice.getProductId()));
+                        device = pendingDevice;
+                    }
+
+                    boolean granted = intent.getBooleanExtra(
+                        UsbManager.EXTRA_PERMISSION_GRANTED, false);
+
+                    // If the extras are missing (granted=false, device was null),
+                    // check hasPermission() directly — the system may have granted
+                    // permission without setting the extra properly.
+                    if (!granted && device != null && usbManager.hasPermission(device)) {
+                        Log.w(TAG, "Permission broadcast extras missing, but hasPermission() " +
+                            "returns true — proceeding with connection");
+                        granted = true;
+                    }
+
+                    if (granted) {
                         if (device != null) {
-                            Log.d(TAG, "✅ USB permission granted for device: " + 
+                            Log.d(TAG, "✅ USB permission granted for device: " +
                                 String.format("%04X:%04X", device.getVendorId(), device.getProductId()));
-                            
+
                             // Use standard connection method for all devices
                             connectWithPermission(device);
                         } else {
@@ -1561,7 +1667,7 @@ public class UsbDeviceManager {
                             }
                         }
                     } else {
-                        Log.w(TAG, "❌ USB permission denied for device: " + 
+                        Log.w(TAG, "❌ USB permission denied for device: " +
                             (device != null ? String.format("%04X:%04X", device.getVendorId(), device.getProductId()) : "null"));
                         if (onConnectionStatusListener != null) {
                             onConnectionStatusListener.onError("USB permission denied by user");
@@ -1573,10 +1679,37 @@ public class UsbDeviceManager {
                 detectDeviceOnly();
             } else if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
                 UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
-                if (device != null && driver != null && driver.getDevice().equals(device)) {
-                    Log.d(TAG, "Openterface device detached");
-                    if (onConnectionStatusListener != null) {
-                        onConnectionStatusListener.onDisconnected();
+                if (device != null) {
+                    // Check if the detached device is the one we're using (or trying to use)
+                    boolean isOurDevice = false;
+                    if (driver != null && driver.getDevice().equals(device)) {
+                        isOurDevice = true;
+                    }
+                    if (pendingDevice != null && pendingDevice.equals(device)) {
+                        isOurDevice = true;
+                    }
+                    // Also check by VID/PID in case driver object is stale
+                    if (!isOurDevice && pendingDevice == null && driver == null) {
+                        int vid = device.getVendorId();
+                        int pid = device.getProductId();
+                        if ((vid == 0x1A86 && (pid == 0x7523 || pid == 0xFE0C))
+                            || (vid == 0x345F && (pid == 0x2109 || pid == 0x2132))
+                            || (vid == 0x534D && pid == 0x2109)) {
+                            isOurDevice = true;
+                        }
+                    }
+
+                    if (isOurDevice) {
+                        Log.i(TAG, "Openterface device detached — cleaning up connection state");
+                        if (onConnectionStatusListener != null) {
+                            onConnectionStatusListener.onDisconnected();
+                        }
+                        closeDevice();
+                        // Reset all device-related state so a fresh connect is possible
+                        driver = null;
+                        pendingDevice = null;
+                        port = null;
+                        Log.d(TAG, "Device state fully reset, ready for reconnection");
                     }
                 }
             }
@@ -1613,6 +1746,7 @@ public class UsbDeviceManager {
         IntentFilter filter = new IntentFilter();
         filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
         filter.addAction(UsbManager.ACTION_USB_DEVICE_DETACHED);
+        filter.addAction(ACTION_USB_PERMISSION);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.registerReceiver(usbReceiver, filter, Context.RECEIVER_EXPORTED);
         } else {
@@ -1644,44 +1778,90 @@ public class UsbDeviceManager {
                 Log.w(TAG, "No Openterface serial devices detected");
                 Log.d(TAG, "Please ensure your Openterface device is connected and powered");
                 if (onConnectionStatusListener != null) {
-                    onConnectionStatusListener.onError("No Openterface devices found (VID:PID should be 1A86:7523 or 1A86:FE0C)");
+                    onConnectionStatusListener.onError("No Openterface devices found (VID:PID should be 1A86:7523, 1A86:FE0C, or a UVC+serial composite device)");
                 }
                 return;
             }
 
             int vid = openterfaceDevice.getVendorId();
             int pid = openterfaceDevice.getProductId();
-            String deviceType = (pid == 0xFE0C) ? "Mini-KVM v2" : (pid == 0x7523) ? "Mini-KVM v1" : "Unknown";
+            String deviceType;
+            if (vid == 0x1A86 && pid == 0xFE0C) deviceType = "Mini-KVM v2";
+            else if (vid == 0x1A86 && pid == 0x7523) deviceType = "Mini-KVM v1";
+            else if (vid == 0x345F && pid == 0x2109) deviceType = "KVMGO-VGA (MS2109S)";
+            else if (vid == 0x345F && pid == 0x2132) deviceType = "KVMGO";
+            else if (vid == 0x534D && pid == 0x2109) deviceType = "Mini-KVM v1 UVC";
+            else deviceType = "Unknown (VID:" + String.format("%04X", vid) + ")";
 
             Log.i(TAG, "Found Openterface device: " +
                 String.format("%04X:%04X", vid, pid) + " (" + deviceType + ")" +
                 " - " + openterfaceDevice.getProductName());
 
-            // Get a driver for this device (needed for later connection)
-            ProbeTable customTable = new ProbeTable();
-            customTable.addProduct(vid, pid, Ch34xSerialDriver.class);
-            UsbSerialProber prober = new UsbSerialProber(customTable);
-            List<UsbSerialDriver> availableDrivers = prober.findAllDrivers(usbManager);
-
-            if (availableDrivers.isEmpty()) {
+            // For CH340 devices (1A86), use Ch34xSerialDriver first.
+            // For composite devices (non-1A86), try default prober first (may find CDC-ACM),
+            // then fall back to Ch34xSerialDriver.
+            List<UsbSerialDriver> availableDrivers;
+            if (vid == 0x1A86) {
+                // CH340 device — use Ch34xSerialDriver
+                ProbeTable customTable = new ProbeTable();
+                customTable.addProduct(vid, pid, Ch34xSerialDriver.class);
+                UsbSerialProber prober = new UsbSerialProber(customTable);
+                availableDrivers = prober.findAllDrivers(usbManager);
+            } else {
+                // Composite device — try default prober first (CDC-ACM, FTDI, etc.)
                 availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(usbManager);
                 availableDrivers = availableDrivers.stream()
                     .filter(d -> d.getDevice().getVendorId() == vid && d.getDevice().getProductId() == pid)
                     .collect(java.util.stream.Collectors.toList());
+
+                if (availableDrivers.isEmpty()) {
+                    // Fall back to Ch34xSerialDriver
+                    Log.d(TAG, "Default prober found no driver for composite device, trying Ch34xSerialDriver...");
+                    ProbeTable customTable = new ProbeTable();
+                    customTable.addProduct(vid, pid, Ch34xSerialDriver.class);
+                    UsbSerialProber prober = new UsbSerialProber(customTable);
+                    availableDrivers = prober.findAllDrivers(usbManager);
+                }
             }
 
             if (availableDrivers.isEmpty()) {
                 Log.e(TAG, "No compatible driver found for Openterface device " +
-                    String.format("%04X:%04X", vid, pid));
+                    String.format("%04X:%04X", vid, pid) +
+                    ". This device may not have a serial interface — keyboard/mouse may not work.");
                 return;
             }
 
             driver = availableDrivers.get(0);
+            Log.i(TAG, "Using driver: " + driver.getClass().getSimpleName() +
+                " for device " + String.format("%04X:%04X", vid, pid));
             applyDeviceSpecificConfig(driver.getDevice());
 
             // Store the device for later connection - do NOT connect yet
             pendingDevice = driver.getDevice();
             Log.i(TAG, "Device detected and stored, waiting for camera to connect first");
+
+            // Schedule a connect() after 500ms as a fallback.
+            // If the camera is already open, onDeviceOpen() will also trigger connect()
+            // but it has guards (isConnecting/isConnected) so double-calls are safe.
+            // This ensures serial connects promptly even if onDeviceOpen() doesn't fire
+            // (e.g. camera already open from previous session).
+            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                if (!isConnecting && !isConnected()) {
+                    Log.d(TAG, "detectDeviceOnly: 500ms fallback — connecting serial now");
+                    connect();
+                } else if (isConnecting && !isConnected()) {
+                    // isConnecting is true but connection hasn't completed — it may be stuck
+                    // (e.g. ACTION_USB_PERMISSION broadcast was lost). If it's been stuck
+                    // for more than 3 seconds, reset and retry.
+                    long elapsed = System.currentTimeMillis() - isConnectingTimestamp;
+                    if (elapsed > 3000) {
+                        Log.w(TAG, "detectDeviceOnly: isConnecting has been stuck for " + elapsed +
+                            "ms — resetting and retrying...");
+                        isConnecting = false;
+                        connect();
+                    }
+                }
+            }, 500);
         });
     }
 
@@ -1699,31 +1879,88 @@ public class UsbDeviceManager {
             return;
         }
         isConnecting = true;
+        isConnectingTimestamp = System.currentTimeMillis();
 
         Log.d(TAG, "connect() - connecting serial after camera is open");
         mSerialAsyncHandler.post(() -> {
             UsbDevice device = pendingDevice;
+
+            // Validate that the pending device actually has a serial interface.
+            // This is critical for setups where the UVC camera (534D:2109) and
+            // the serial chip (1A86:7523) are SEPARATE USB devices.  If
+            // detectDeviceOnly() ran before the serial chip was enumerated,
+            // pendingDevice could be the UVC camera which has no serial port.
+            if (device != null && !hasSerialInterface(device)) {
+                Log.w(TAG, "Pending device " + String.format("%04X:%04X",
+                    device.getVendorId(), device.getProductId()) +
+                    " has no serial interface — re-scanning for serial device...");
+                device = detectOpenterfaceDevice();
+                if (device != null && !hasSerialInterface(device)) {
+                    Log.w(TAG, "Re-scanned device also has no serial interface — " +
+                        "scheduling retry in 2s (serial chip may still be enumerating)...");
+                    isConnecting = false;
+                    pendingDevice = device;
+                    // Schedule a retry — the serial chip on composite devices can take
+                    // a few seconds to enumerate after the UVC camera appears.
+                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                        if (!isConnecting && !isConnected()) {
+                            Log.d(TAG, "Retry: re-scanning for serial device...");
+                            detectDeviceOnly();
+                            // Try connect again after a short delay for detection to complete
+                            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                                connect();
+                            }, 500);
+                        }
+                    }, 2000);
+                    return;
+                }
+                // Got a valid serial device — update pendingDevice and driver
+                pendingDevice = device;
+                driver = null; // Force driver re-creation for the new device
+            }
+
             if (device == null) {
                 Log.w(TAG, "connect() called but no device detected yet, re-scanning...");
                 device = detectOpenterfaceDevice();
                 if (device == null) {
-                    Log.w(TAG, "No Openterface device found during connect()");
-                    isConnecting = false; // Allow retry
+                    Log.w(TAG, "No Openterface device found during connect() — " +
+                        "scheduling retry in 2s...");
+                    isConnecting = false;
+                    // Schedule a retry — the device may still be enumerating
+                    new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                        if (!isConnecting && !isConnected()) {
+                            Log.d(TAG, "Retry: re-detecting device...");
+                            detectDeviceOnly();
+                            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                                connect();
+                            }, 500);
+                        }
+                    }, 2000);
                     return;
                 }
 
-                // Get driver
+                // Get driver — for CH340 devices use Ch34xSerialDriver first;
+                // for composite devices try default prober first (CDC-ACM), then Ch34x
                 int vid = device.getVendorId();
                 int pid = device.getProductId();
-                ProbeTable customTable = new ProbeTable();
-                customTable.addProduct(vid, pid, Ch34xSerialDriver.class);
-                UsbSerialProber prober = new UsbSerialProber(customTable);
-                List<UsbSerialDriver> availableDrivers = prober.findAllDrivers(usbManager);
-                if (availableDrivers.isEmpty()) {
+                List<UsbSerialDriver> availableDrivers;
+                if (vid == 0x1A86) {
+                    ProbeTable customTable = new ProbeTable();
+                    customTable.addProduct(vid, pid, Ch34xSerialDriver.class);
+                    UsbSerialProber prober = new UsbSerialProber(customTable);
+                    availableDrivers = prober.findAllDrivers(usbManager);
+                } else {
                     availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(usbManager);
                     availableDrivers = availableDrivers.stream()
                         .filter(d -> d.getDevice().getVendorId() == vid && d.getDevice().getProductId() == pid)
                         .collect(java.util.stream.Collectors.toList());
+                    if (availableDrivers.isEmpty()) {
+                        Log.d(TAG, "Default prober found no driver, trying Ch34xSerialDriver for composite device...");
+                        ProbeTable customTable = new ProbeTable();
+                        customTable.addProduct(vid, pid, Ch34xSerialDriver.class);
+                        UsbSerialProber prober = new UsbSerialProber(customTable);
+                        availableDrivers = prober.findAllDrivers(usbManager);
+                    }
                 }
                 if (!availableDrivers.isEmpty()) {
                     driver = availableDrivers.get(0);
@@ -1754,44 +1991,57 @@ public class UsbDeviceManager {
     private void applyDeviceSpecificConfig(UsbDevice device) {
         int vid = device.getVendorId();
         int pid = device.getProductId();
-        
+
         Log.d(TAG, "Applying configuration for device " + String.format("%04X:%04X", vid, pid));
-        
-        // CH340/CH341 based devices - only two supported devices
+
         if (vid == 0x1A86) {
+            // CH340/CH341 based devices
             if (pid == 0xFE0C) {
-                // Mini-KVM v2: Only supports 115200
                 preferredBaudrate = BAUDRATE_HIGHSPEED;
                 Log.d(TAG, "Device 1A86:FE0C - Mini-KVM v2: Default to 115200 baud");
             } else if (pid == 0x7523) {
-                // Mini-KVM v1: Default to 9600
                 preferredBaudrate = BAUDRATE_LOWSPEED;
                 Log.d(TAG, "Device 1A86:7523 - Mini-KVM v1: Default to 9600 baud");
             } else {
                 Log.w(TAG, "Unknown 1A86 device PID: " + String.format("%04X", pid));
-                preferredBaudrate = DEFAULT_BAUDRATE; // Use default baudrate for unknown devices
+                preferredBaudrate = DEFAULT_BAUDRATE;
             }
-        } else {
-            Log.w(TAG, "Unsupported device VID: " + String.format("%04X", vid));
-            preferredBaudrate = DEFAULT_BAUDRATE; // Use default baudrate for unsupported devices
-        }
-        
-        Log.d(TAG, "Preferred baudrate set to: " + preferredBaudrate);
-        
-        // Additional device-specific configuration
-        // For CH340 devices, we might need to set specific DTR/RTS states later
-        if (vid == 0x1A86) {
             Log.d(TAG, "Will configure CH340 flow control after connection");
+        } else if (vid == 0x345F && pid == 0x2109) {
+            // KVMGO-VGA (MS2109S) — composite UVC+serial device
+            preferredBaudrate = BAUDRATE_HIGHSPEED;
+            Log.d(TAG, "Device 345F:2109 - KVMGO-VGA (MS2109S): Default to 115200 baud");
+        } else if (vid == 0x345F && pid == 0x2132) {
+            // KVMGO — composite UVC+serial device
+            preferredBaudrate = BAUDRATE_HIGHSPEED;
+            Log.d(TAG, "Device 345F:2132 - KVMGO: Default to 115200 baud");
+        } else if (vid == 0x534D && pid == 0x2109) {
+            // Mini-KVM v1 UVC interface — composite UVC+serial device
+            preferredBaudrate = BAUDRATE_HIGHSPEED;
+            Log.d(TAG, "Device 534D:2109 - Mini-KVM v1 UVC: Default to 115200 baud");
+        } else {
+            Log.w(TAG, "Non-standard device VID: " + String.format("%04X", vid) + " — using default baudrate");
+            preferredBaudrate = DEFAULT_BAUDRATE;
         }
+
+        Log.d(TAG, "Preferred baudrate set to: " + preferredBaudrate);
     }
     
     /**
      * Request permission and connect when granted
      */
     private void requestPermissionAndConnect(UsbDevice device) {
+        // Must use FLAG_MUTABLE so the USB service can add EXTRA_DEVICE and
+        // EXTRA_PERMISSION_GRANTED to the Intent before delivering the broadcast.
+        // FLAG_IMMUTABLE would silently drop those extras, causing device=null.
+        int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            flags |= PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT;
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            flags |= PendingIntent.FLAG_MUTABLE;
+        }
         PendingIntent permissionIntent = PendingIntent.getBroadcast(
-            context, 0, new Intent(ACTION_USB_PERMISSION), 
-            PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+            context, 0, new Intent(ACTION_USB_PERMISSION), flags);
         
         // Store device for later use in broadcast receiver
         pendingDevice = device;
@@ -1805,61 +2055,60 @@ public class UsbDeviceManager {
      * Connect to device (assumes permission is already granted)
      */
     private void connectWithPermission(UsbDevice device) {
-        Log.d(TAG, "Connecting to device with permission: " + String.format("%04X:%04X", 
+        Log.d(TAG, "Connecting to device with permission: " + String.format("%04X:%04X",
             device.getVendorId(), device.getProductId()));
-        
+
         // Extract device info for later use
         int vid = device.getVendorId();
         int pid = device.getProductId();
-        String deviceType = (pid == 0xFE0C) ? "Mini-KVM v2" : (pid == 0x7523) ? "Mini-KVM v1" : "Unknown";
-        
-        // Create custom driver for this specific device
+        String deviceType;
+        if (vid == 0x1A86 && pid == 0xFE0C) deviceType = "Mini-KVM v2";
+        else if (vid == 0x1A86 && pid == 0x7523) deviceType = "Mini-KVM v1";
+        else if (vid == 0x345F && pid == 0x2109) deviceType = "KVMGO-VGA (MS2109S)";
+        else if (vid == 0x345F && pid == 0x2132) deviceType = "KVMGO";
+        else if (vid == 0x534D && pid == 0x2109) deviceType = "Mini-KVM v1 UVC";
+        else deviceType = "Unknown (VID:" + String.format("%04X", vid) + ")";
+
+        // Reuse the driver already found by detectDeviceOnly() if available,
+        // otherwise create a new one.
         try {
-            Log.d(TAG, "Creating custom driver for device...");
-            ProbeTable customTable = new ProbeTable();
-            
-            // Add device to probe table with different potential drivers
-            customTable.addProduct(device.getVendorId(), device.getProductId(), Ch34xSerialDriver.class);
-            
-            UsbSerialProber prober = new UsbSerialProber(customTable);
-            List<UsbSerialDriver> availableDrivers = prober.findAllDrivers(usbManager);
-            
-            if (availableDrivers.isEmpty()) {
-                Log.w(TAG, "No drivers found with custom prober, trying default prober...");
-                
-                // Try default prober as fallback
-                availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(usbManager);
-                
+            if (driver == null || !driver.getDevice().equals(device)) {
+                Log.d(TAG, "No pre-existing driver found, creating new one...");
+                ProbeTable customTable = new ProbeTable();
+                customTable.addProduct(device.getVendorId(), device.getProductId(), Ch34xSerialDriver.class);
+                UsbSerialProber prober = new UsbSerialProber(customTable);
+                List<UsbSerialDriver> availableDrivers = prober.findAllDrivers(usbManager);
+
                 if (availableDrivers.isEmpty()) {
-                    Log.e(TAG, "❌ No compatible drivers found for device");
+                    Log.w(TAG, "No drivers found with Ch34x prober, trying default prober...");
+                    availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(usbManager);
+                }
+
+                UsbSerialDriver matchingDriver = null;
+                for (UsbSerialDriver d : availableDrivers) {
+                    if (d.getDevice().equals(device)) {
+                        matchingDriver = d;
+                        break;
+                    }
+                }
+
+                if (matchingDriver != null) {
+                    driver = matchingDriver;
+                    Log.d(TAG, "Using driver: " + driver.getClass().getSimpleName());
+                } else {
+                    Log.e(TAG, "❌ No matching driver available for device");
+                    isConnecting = false; // Allow retry
                     if (onConnectionStatusListener != null) {
-                        onConnectionStatusListener.onError("No compatible serial drivers for this device");
+                        onConnectionStatusListener.onError("No matching driver for detected device");
                     }
                     return;
                 }
-            }
-            
-            // Find our device in the available drivers
-            UsbSerialDriver matchingDriver = null;
-            for (UsbSerialDriver driver : availableDrivers) {
-                if (driver.getDevice().equals(device)) {
-                    matchingDriver = driver;
-                    break;
-                }
-            }
-            
-            if (matchingDriver != null) {
-                driver = matchingDriver;
-                Log.d(TAG, "Using driver: " + driver.getClass().getSimpleName());
             } else {
-                Log.e(TAG, "❌ Device found but no matching driver available");
-                if (onConnectionStatusListener != null) {
-                    onConnectionStatusListener.onError("No matching driver for detected device");
-                }
-                return;
+                Log.d(TAG, "Reusing pre-detected driver: " + driver.getClass().getSimpleName());
             }
         } catch (Exception e) {
             Log.e(TAG, "❌ Error creating driver: " + e.getMessage(), e);
+            isConnecting = false; // Allow retry
             if (onConnectionStatusListener != null) {
                 onConnectionStatusListener.onError("Error creating driver: " + e.getMessage());
             }
@@ -1869,6 +2118,7 @@ public class UsbDeviceManager {
         UsbDeviceConnection connection = usbManager.openDevice(device);
         if (connection == null) {
             Log.e(TAG, "Failed to open device connection");
+            isConnecting = false; // Allow retry
             if (onConnectionStatusListener != null) {
                 onConnectionStatusListener.onError("Failed to open USB connection");
             }
@@ -1911,6 +2161,7 @@ public class UsbDeviceManager {
             Log.d(TAG, "User has set preferred baudrate: " + preferredBaudrate + ", trying first");
             if (trySerialConfiguration(connection, preferredBaudrate)) {
                 Log.i(TAG, "✅ Successfully connected at preferred baudrate: " + preferredBaudrate + " baud");
+                storeBulkTransferResources(connection, device);
                 if (onConnectionStatusListener != null) {
                     onConnectionStatusListener.onConnected(preferredBaudrate);
                 }
@@ -1932,6 +2183,7 @@ public class UsbDeviceManager {
             if (trySerialConfiguration(connection, baudrate)) {
                 Log.i(TAG, "✅ Successfully connected at " + baudrate + " baud");
                 connected = true;
+                storeBulkTransferResources(connection, device);
                 if (onConnectionStatusListener != null) {
                     onConnectionStatusListener.onConnected(baudrate);
                 }
@@ -1962,6 +2214,7 @@ public class UsbDeviceManager {
             // Try advanced recovery
             Log.d(TAG, "Attempting advanced recovery for device " + String.format("%04X:%04X", vid, pid));
             advancedSerialRecovery(device);
+            isConnecting = false; // Allow retry after recovery
         }
     }
     
@@ -2046,6 +2299,9 @@ public class UsbDeviceManager {
         } finally {
             currentBaudrate = -1; // Reset tracked baudrate
             isConnecting = false;  // Allow reconnect
+            isReading = false;     // Stop reading loop
+            serialConnection = null;
+            outEndpoint = null;
         }
     }
 
@@ -2068,9 +2324,14 @@ public class UsbDeviceManager {
         }
         
         Log.d(TAG, "Permission not granted, requesting permission from user");
-        PendingIntent permissionIntent = PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), PendingIntent.FLAG_IMMUTABLE);
-        IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
-        context.registerReceiver(usbReceiver, filter, Context.RECEIVER_EXPORTED);
+        int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            flags |= PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT;
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            flags |= PendingIntent.FLAG_MUTABLE;
+        }
+        PendingIntent permissionIntent = PendingIntent.getBroadcast(context, 0, new Intent(ACTION_USB_PERMISSION), flags);
+        // usbReceiver is already registered for ACTION_USB_PERMISSION in init()
         usbManager.requestPermission(serialDevice, permissionIntent);
     }
     
@@ -2110,6 +2371,13 @@ public class UsbDeviceManager {
     }
 
     private void startReading() {
+        // FE0C uses direct bulk transfer for writing and doesn't send back data.
+        // Skip reading to avoid "Connection closed" errors from unopened port.
+        if (fe0cConnection != null && fe0cInterface != null) {
+            Log.d(TAG, "FE0C device: skipping reading loop (command-only mode)");
+            return;
+        }
+
         isReading = true;
         mSerialAsyncHandler.post(() -> {
             byte[] buffer = new byte[1024];
@@ -2306,9 +2574,24 @@ public class UsbDeviceManager {
             }
             
             long startTime = System.currentTimeMillis();
-            port.write(data, timeout);
+            try {
+                port.write(data, timeout);
+            } catch (IOException writeEx) {
+                // CH340's testConnection() can fail (rc=-1) even when the port is open.
+                // Fall back to direct bulkTransfer which bypasses the test.
+                if (serialConnection != null && outEndpoint != null) {
+                    Log.w(TAG, "port.write() failed (testConnection rc=-1?), " +
+                        "trying direct bulkTransfer fallback: " + writeEx.getMessage());
+                    int written = serialConnection.bulkTransfer(outEndpoint, data, data.length, timeout);
+                    if (written < 0) {
+                        throw new IOException("bulkTransfer also failed, rc=" + written, writeEx);
+                    }
+                } else {
+                    throw writeEx;
+                }
+            }
             long endTime = System.currentTimeMillis();
-            
+
             Log.d(TAG, "✅ Successfully wrote " + data.length + " bytes in " + (endTime - startTime) + "ms");
             return true;
         } catch (IOException e) {
