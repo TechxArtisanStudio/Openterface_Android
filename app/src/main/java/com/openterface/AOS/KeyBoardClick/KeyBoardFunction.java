@@ -43,6 +43,7 @@ import java.util.Locale;
 import java.util.Map;
 
 public class KeyBoardFunction {
+    private static final String TAG = "OP-KB";
     private final Button KeyBoard_ShortCut;
     private final Button KeyBoard_Function;
     private final ImageButton KeyBoard_System;
@@ -145,7 +146,7 @@ public class KeyBoardFunction {
                 if (currentLang.equals("de")) {
 
                     String key = getKey(R.id.Left_Than_Button);
-                    Log.d("KeyBoardSystem", "German Button Pressed: " + key);
+                    Log.d(TAG, "German Button Pressed: " + key);
                     handleShortcut(key);
                 } else if (currentLang.equals("us")) {
 
@@ -175,7 +176,7 @@ public class KeyBoardFunction {
                     case android.view.MotionEvent.ACTION_DOWN:
                         // Only send key press if not already pressed (prevent repeat ACTION_DOWN)
                         if (!isKeyPressed[0]) {
-                            Log.d("KeyBoardFunction", "Function Button PRESSED: " + functionButtonId);
+                            Log.d(TAG, "Function Button PRESSED: " + functionButtonId);
                             handleKeyPress(functionButtonId);
                             isKeyPressed[0] = true;
                         }
@@ -185,7 +186,7 @@ public class KeyBoardFunction {
                     case android.view.MotionEvent.ACTION_CANCEL:
                         // Only send release if key was pressed
                         if (isKeyPressed[0]) {
-                            Log.d("KeyBoardFunction", "Function Button RELEASED: " + functionButtonId);
+                            Log.d(TAG, "Function Button RELEASED: " + functionButtonId);
                             handleKeyRelease();
                             isKeyPressed[0] = false;
                         }
@@ -217,7 +218,7 @@ public class KeyBoardFunction {
 //            FunctionKeyCtrlPress = "ShortCutKeyNull";
 //            HidManager.sendKeyBoardFunction(FunctionKeyCtrlPress, Function_buttonId);
 //        }
-//        System.out.println("Shift State: " + KeyBoard_ShIft_Press_state);
+//        Log.d(TAG, "Shift State: " + KeyBoard_ShIft_Press_state);
 
         String FunctionKeyCtrlPress;
         String FunctionKeyShiftPress;
@@ -247,7 +248,7 @@ public class KeyBoardFunction {
             FunctionKeyWinPress = "ShortCutKeyWinNull";
         }
         HidManager.sendKeyBoardFunction(FunctionKeyCtrlPress, FunctionKeyShiftPress, FunctionKeyAltPress, FunctionKeyWinPress, Function_buttonId);
-        System.out.println("Shift State: " + KeyBoard_ShIft_Press_state);
+        Log.d(TAG, "Shift State: " + KeyBoard_ShIft_Press_state);
 
     }
 
@@ -286,7 +287,7 @@ public class KeyBoardFunction {
         
         // Send key press without automatic release
         HidManager.sendKeyBoardFunctionPress(FunctionKeyCtrlPress, FunctionKeyShiftPress, FunctionKeyAltPress, FunctionKeyWinPress, Function_buttonId);
-        Log.d("KeyBoardFunction", "Key press sent - Shift State: " + KeyBoard_ShIft_Press_state);
+        Log.d(TAG, "Key press sent - Shift State: " + KeyBoard_ShIft_Press_state);
     }
 
     /**
@@ -294,7 +295,7 @@ public class KeyBoardFunction {
      */
     private void handleKeyRelease() {
         HidManager.sendKeyBoardRelease();
-        Log.d("KeyBoardFunction", "Key released");
+        Log.d(TAG, "Key released");
     }
 
     public void setFunctionButtonsClickColor(){

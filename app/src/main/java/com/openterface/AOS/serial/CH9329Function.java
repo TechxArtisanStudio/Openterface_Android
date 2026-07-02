@@ -27,7 +27,7 @@ package com.openterface.AOS.serial;
 import android.util.Log;
 
 public class CH9329Function {
-    private static final String TAG = CH9329Function.class.getSimpleName();
+    private static final String TAG = "OP-SERIAL";
     private static UsbDeviceManager usbDeviceManager;
 
     public static String makeChecksum(String data) {

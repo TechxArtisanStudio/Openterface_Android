@@ -20,7 +20,7 @@ import java.util.List;
  * Supports CRUD operations, JSON import/export, and active profile switching.
  */
 public class ShortcutProfileManager {
-    private static final String TAG = "ShortcutProfileManager";
+    private static final String TAG = "OP-SHORTCUT";
     private static final String PREFS_NAME = "ShortcutProfiles";
     private static final String KEY_PROFILES = "profiles_list";
     private static final String KEY_ACTIVE_PROFILE = "active_profile_id";

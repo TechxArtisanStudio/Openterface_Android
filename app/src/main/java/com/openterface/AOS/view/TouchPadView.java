@@ -47,7 +47,7 @@ import android.view.View;
  */
 public class TouchPadView extends View {
 
-    private static final String TAG = "TouchPadView";
+    private static final String TAG = "OP-MOUSE";
 
     // Thresholds — mirror KeyCmd defaults
     private static final long   TAP_DELAY_MS       = 150;   // wait before confirming single tap

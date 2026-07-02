@@ -32,7 +32,7 @@ import androidx.core.app.NotificationCompat;
  * Uses JNI to interface with libvncserver.
  */
 public class VncServerService extends Service {
-    private static final String TAG = "VncServerService";
+    private static final String TAG = "OP-VNC";
     private static final int NOTIFICATION_ID = 1001;
     private static final String CHANNEL_ID = "vnc_server_channel";
 

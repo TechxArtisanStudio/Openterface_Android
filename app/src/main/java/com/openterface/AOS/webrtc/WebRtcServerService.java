@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * Sets up peer connection, signaling server, and handles video/input data flow.
  */
 public class WebRtcServerService extends Service {
-    private static final String TAG = "WebRtcServerService";
+    private static final String TAG = "OP-WEBRTC";
     private static final int NOTIFICATION_ID = 1002;
     private static final String CHANNEL_ID = "webrtc_server_channel";
 

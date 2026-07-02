@@ -37,7 +37,7 @@ import java.util.concurrent.Executors;
  * Replaces the original Java implementation with the C library.
  */
 public class KeyBoardManagerCore {
-    private static final String TAG = KeyBoardManagerCore.class.getSimpleName();
+    private static final String TAG = "OP-KB";
     private static Context context;
     private static UsbDeviceManager usbDeviceManager;
 

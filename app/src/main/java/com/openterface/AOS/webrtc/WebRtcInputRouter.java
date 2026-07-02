@@ -13,6 +13,7 @@ import com.openterface.AOS.vnc.VncKeyMap;
  * can be unit-tested with pure JVM tests.
  */
 public class WebRtcInputRouter {
+    private static final String TAG = "OP-WEBRTC";
 
     private final HidInputSender hidSender;
     private final KeyboardSender keyboardSender;
@@ -90,11 +91,11 @@ public class WebRtcInputRouter {
      * @param down   true = key pressed, false = key released
      */
     public void onKeyboardEvent(int keysym, boolean down) {
-        System.out.println("[WebRtcInputRouter] onKeyboardEvent: keysym=" + keysym + ", down=" + down);
+        System.out.println("[" + TAG + "] onKeyboardEvent: keysym=" + keysym + ", down=" + down);
         String keyName = VncKeyMap.vncKeysymToKeyName(keysym);
-        System.out.println("[WebRtcInputRouter] keyName=" + keyName);
+        System.out.println("[" + TAG + "] keyName=" + keyName);
         if (keyName == null) {
-            System.out.println("[WebRtcInputRouter] Unknown keysym: " + keysym);
+            System.out.println("[" + TAG + "] Unknown keysym: " + keysym);
             return; // Unknown keysym, silently ignore
         }
 

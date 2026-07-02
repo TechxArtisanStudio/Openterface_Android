@@ -48,7 +48,7 @@ import com.openterface.AOS.serial.UsbDeviceManager;
 import java.util.HashMap;
 
 public class SerialDebugActivity extends Activity {
-    private static final String TAG = "SerialDebugActivity";
+    private static final String TAG = "OP-DEBUG";
     private static final String ACTION_USB_PERMISSION = "com.openterface.AOS.USB_PERMISSION";
     
     private UsbDeviceManager serialManager;

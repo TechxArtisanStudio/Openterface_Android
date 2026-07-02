@@ -17,7 +17,7 @@ import java.nio.ByteBuffer;
  * VideoCapturer pipeline instead of raw RGBX push.
  */
 public class WebRtcFrameCapture {
-    private static final String TAG = "WebRtcFrameCapture";
+    private static final String TAG = "OP-WEBRTC";
 
     private final int targetFps;
     private final long frameIntervalNs;

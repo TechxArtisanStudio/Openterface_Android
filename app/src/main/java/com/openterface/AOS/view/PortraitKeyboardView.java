@@ -17,7 +17,7 @@ import com.openterface.AOS.R;
  */
 public class PortraitKeyboardView extends LinearLayout {
 
-    private static final String TAG = "PortraitKeyboardView";
+    private static final String TAG = "OP-UI";
 
     // Keyboard panels
     private View systemPanel;    // QWERTY keyboard (5 rows)

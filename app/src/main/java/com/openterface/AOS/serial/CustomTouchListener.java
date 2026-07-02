@@ -54,7 +54,7 @@ import com.serenegiant.widget.AspectRatioTextureView;
  */
 public class CustomTouchListener implements View.OnTouchListener {
 
-    private static final String TAG = CustomTouchListener.class.getSimpleName();
+    private static final String TAG = "OP-MOUSE";
     private static boolean KeyMouse_state, keyMouseAbsCtrl;
 
     //system module
@@ -171,7 +171,7 @@ public class CustomTouchListener implements View.OnTouchListener {
         if (event.getAction() == MotionEvent.ACTION_SCROLL) {
             float scrollAmount = event.getAxisValue(MotionEvent.AXIS_VSCROLL);
             if (scrollAmount != 0) {
-                Log.d("MouseEvent", "Scroll amount: " + scrollAmount);
+                Log.d(TAG, "Scroll amount: " + scrollAmount);
                 HidManager.handleTwoFingerPanSlideUpDown(scrollAmount);
             }
             return true;
@@ -760,19 +760,19 @@ public class CustomTouchListener implements View.OnTouchListener {
         int buttonState = event.getButtonState();
         if ((buttonState & MotionEvent.BUTTON_PRIMARY) != 0) {
             mouseLeftClick = true;
-            Log.d("MouseEvent", "Left button pressed");
+            Log.d(TAG, "Left button pressed");
         }
         if ((buttonState & MotionEvent.BUTTON_SECONDARY) != 0) {
             mouseRightClick = true;
-            Log.d("MouseEvent", "Right button pressed");
+            Log.d(TAG, "Right button pressed");
         }
         if ((buttonState & MotionEvent.BUTTON_TERTIARY) != 0) {
             mouseScrollClick = true;
-            Log.d("MouseEvent", "Middle button pressed");
+            Log.d(TAG, "Middle button pressed");
         }
 
         if (KeyMouse_state){
-            Log.d("handActionDownMouse", "KeyMouse_state");
+            Log.d(TAG, "KeyMouse_state");
             HidManager.sendHexAbsData(startMoveMSX, startMoveMSY);
         }
     }
@@ -784,7 +784,7 @@ public class CustomTouchListener implements View.OnTouchListener {
                 && Math.abs(event.getX() - firstClickX) < CLICK_RADIUS
                 && Math.abs(event.getY() - firstClickY) < CLICK_RADIUS) {
             isDoubleClickPhase = true;
-            Log.d("detectDoubleClick", "this is isDoubleClickPhase");
+            Log.d(TAG, "this is isDoubleClickPhase");
         } else {
             firstClickTime = currentTime;
             firstClickX = event.getX();
@@ -827,7 +827,7 @@ public class CustomTouchListener implements View.OnTouchListener {
             if (!hasEnteredDragMode){
                 dragModeStartTime = System.currentTimeMillis();
                 hasEnteredDragMode = true;
-                Log.d("handActionMoveMouse", "dragModeStartTime: " + dragModeStartTime);
+                Log.d(TAG, "dragModeStartTime: " + dragModeStartTime);
             }
             startMoveMSX = event.getX();
             startMoveMSY = event.getY();
@@ -914,13 +914,13 @@ public class CustomTouchListener implements View.OnTouchListener {
                         }
                     } else {
                         if (mouseLeftClick){
-                            Log.d("mouse", "mouse left click");
+                            Log.d(TAG, "mouse left click");
                             HidManager.sendHexAbsButtonClickData("SecLeftData", startMoveMSX, startMoveMSY);
                         }else if (mouseRightClick){
-                            Log.d("mouse", "mouse right click");
+                            Log.d(TAG, "mouse right click");
                             HidManager.sendHexAbsButtonClickData("SecRightData", startMoveMSX, startMoveMSY);
                         } else if (mouseScrollClick) {
-                            Log.d("mouse", "mouse scroll click");
+                            Log.d(TAG, "mouse scroll click");
                             HidManager.sendHexAbsButtonClickData("SecMiddleData", startMoveMSX, startMoveMSY);
                         }else {
                             HidManager.sendHexAbsData(startMoveMSX, startMoveMSY);

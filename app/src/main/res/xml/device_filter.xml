@@ -17,4 +17,11 @@
     <!-- Openterface Mini KVM devices (composite USB devices with serial + UVC camera) -->
     <usb-device vendor-id="6790" product-id="29987" />  <!-- 1A86:7523 - Mini KVM v1 -->
     <usb-device vendor-id="6790" product-id="65036" />  <!-- 1A86:FE0C - Mini KVM v2 -->
+
+    <!-- MS2109S / KVMGO-VGA UVC capture devices -->
+    <usb-device vendor-id="13407" product-id="8457" />  <!-- 345F:2109 - MS2109S / KVMGO-VGA -->
+    <usb-device vendor-id="13407" product-id="8498" />  <!-- 345F:2132 - KVMGO -->
+
+    <!-- Openterface Mini-KVM v1 UVC interface -->
+    <usb-device vendor-id="21325" product-id="8457" />  <!-- 534D:2109 - Mini KVM v1 UVC -->
 </resources>

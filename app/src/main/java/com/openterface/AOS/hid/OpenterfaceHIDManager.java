@@ -32,7 +32,7 @@ import android.util.Log;
 import java.util.HashMap;
 
 public class OpenterfaceHIDManager {
-    private static final String TAG = "OpenterfaceHIDManager";
+    private static final String TAG = "OP-HID";
     
     // Openterface HID device VID/PID combinations
     private static final int[][] OPENTERFACE_HID_DEVICES = {

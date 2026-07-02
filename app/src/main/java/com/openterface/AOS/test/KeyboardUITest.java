@@ -13,7 +13,7 @@ import com.openterface.AOS.view.PortraitKeyboardView;
  * Tests the UI display and basic functionality of the keyboard module
  */
 public class KeyboardUITest {
-    private static final String TAG = "KeyboardUITest";
+    private static final String TAG = "OP-UI";
 
     private Context context;
     private PortraitKeyboardView keyboardView;

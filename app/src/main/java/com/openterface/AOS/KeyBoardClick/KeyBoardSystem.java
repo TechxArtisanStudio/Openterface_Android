@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 
 public class KeyBoardSystem {
+    private static final String TAG = "OP-KB";
 
     private final Button KeyBoard_ShortCut;
     private final Button KeyBoard_Function;
@@ -221,7 +222,7 @@ public class KeyBoardSystem {
         TargetOsManager manager = TargetOsManager.getInstance();
         TargetOsManager.TargetOS os = manager.getCurrentOs();
         winButton.setText(os.getKeyLabel());
-        Log.d("KeyBoardSystem", "Applied Target OS: " + os.getName() + ", Win label: " + os.getKeyLabel());
+        Log.d(TAG, "Applied Target OS: " + os.getName() + ", Win label: " + os.getKeyLabel());
     }
 
     /**
@@ -399,7 +400,7 @@ public class KeyBoardSystem {
 
                             // Schedule long-press check for alternates popup
                             longPressHandler.postDelayed(() -> {
-                                Log.d("KeyBoardSystem", "Long press fired for " + systemButtonId);
+                                Log.d(TAG, "Long press fired for " + systemButtonId);
                                 if (!longPressFired[0]) {
                                     longPressFired[0] = true;
 
@@ -407,7 +408,7 @@ public class KeyBoardSystem {
                                     Integer hidCode = BUTTON_TO_HID_MAP.get(view.getId());
                                     if (hidCode != null && CharacterAlternates.hasAlternates(hidCode)) {
                                         List<String> alternates = CharacterAlternates.getAlternates(hidCode);
-                                        Log.d("KeyBoardSystem", "Alternates: " + alternates);
+                                        Log.d(TAG, "Alternates: " + alternates);
 
                                         // Dismiss normal key preview
                                         if (keyPreviewPopup != null) {
@@ -418,7 +419,7 @@ public class KeyBoardSystem {
                                         if (alternatesPopup != null) {
                                             alternatesPopup.show(v, alternates);
                                             alternatesShown[0] = true;
-                                            Log.d("KeyBoardSystem", "Alternates popup shown");
+                                            Log.d(TAG, "Alternates popup shown");
                                         }
                                     } else {
                                         // No alternates — send key on long press
@@ -440,7 +441,7 @@ public class KeyBoardSystem {
 
                         case MotionEvent.ACTION_UP:
                         case MotionEvent.ACTION_CANCEL:
-                            Log.d("KeyBoardSystem", "ACTION_UP: longPressFired=" + longPressFired[0] + ", alternatesShown=" + alternatesShown[0]);
+                            Log.d(TAG, "ACTION_UP: longPressFired=" + longPressFired[0] + ", alternatesShown=" + alternatesShown[0]);
                             longPressHandler.removeCallbacksAndMessages(null);
 
                             if (alternatesShown[0]) {
@@ -448,7 +449,7 @@ public class KeyBoardSystem {
                                 // Confirm the selected character and send it
                                 if (alternatesPopup != null && alternatesPopup.isShowing()) {
                                     String selected = alternatesPopup.getSelectedCharacter();
-                                    Log.d("KeyBoardSystem", "Selected character: " + selected);
+                                    Log.d(TAG, "Selected character: " + selected);
                                     if (selected != null && !selected.isEmpty()) {
                                         sendAlternateCharacter(selected);
                                     }
@@ -861,7 +862,7 @@ public class KeyBoardSystem {
             SystemKeyWinPress = "ShortCutKeyWinNull";
         }
         HidManager.sendKeyBoardFunction(SystemKeyCtrlPress, SystemKeyShiftPress, SystemKeyAltPress, SystemKeyWinPress, System_buttonId);
-        System.out.println("Shift State: " + KeyBoard_ShIft_Press_state);
+        Log.d(TAG, "Shift State: " + KeyBoard_ShIft_Press_state);
 
     }
 
@@ -869,7 +870,7 @@ public class KeyBoardSystem {
      * Handle key press event - send key press without auto-release
      */
     private void handleKeyPress(String System_buttonId) {
-        Log.e("KeyBoardSystem", "🟢 handleKeyPress called for: " + System_buttonId);
+        Log.e(TAG, "🟢 handleKeyPress called for: " + System_buttonId);
         
         String SystemKeyCtrlPress;
         String SystemKeyShiftPress;
@@ -900,23 +901,23 @@ public class KeyBoardSystem {
             SystemKeyWinPress = "ShortCutKeyWinNull";
         }
         
-        Log.e("KeyBoardSystem", "🟢 Modifiers - Ctrl:" + SystemKeyCtrlPress + 
+        Log.e(TAG, "🟢 Modifiers - Ctrl:" + SystemKeyCtrlPress + 
               ", Shift:" + SystemKeyShiftPress + 
               ", Alt:" + SystemKeyAltPress + 
               ", Win:" + SystemKeyWinPress);
         
         // Send key press without automatic release
         HidManager.sendKeyBoardFunctionPress(SystemKeyCtrlPress, SystemKeyShiftPress, SystemKeyAltPress, SystemKeyWinPress, System_buttonId);
-        Log.e("KeyBoardSystem", "🟢 Key press command sent - Shift State: " + KeyBoard_ShIft_Press_state);
+        Log.e(TAG, "🟢 Key press command sent - Shift State: " + KeyBoard_ShIft_Press_state);
     }
 
     /**
      * Handle key release event - send key release command
      */
     private void handleKeyRelease() {
-        Log.e("KeyBoardSystem", "🔴 handleKeyRelease called");
+        Log.e(TAG, "🔴 handleKeyRelease called");
         HidManager.sendKeyBoardRelease();
-        Log.e("KeyBoardSystem", "🔴 Key release command sent");
+        Log.e(TAG, "🔴 Key release command sent");
     }
 
     /**
@@ -1005,11 +1006,11 @@ public class KeyBoardSystem {
             case '¥':
             case '£':
             case '€':
-                Log.w("KeyBoardSystem", "Currency symbol not supported via HID: " + c);
+                Log.w(TAG, "Currency symbol not supported via HID: " + c);
                 return;
 
             default:
-                Log.e("KeyBoardSystem", "No key mapping for character: " + c);
+                Log.e(TAG, "No key mapping for character: " + c);
                 return;
         }
 

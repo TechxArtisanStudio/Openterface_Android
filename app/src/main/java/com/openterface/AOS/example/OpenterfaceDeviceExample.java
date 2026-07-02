@@ -33,7 +33,7 @@ import android.widget.Toast;
 import com.openterface.AOS.device.OpenterfaceDeviceManager;
 
 public class OpenterfaceDeviceExample extends Activity {
-    private static final String TAG = "OpenterfaceExample";
+    private static final String TAG = "OP-SERIAL";
     
     private OpenterfaceDeviceManager deviceManager;
     

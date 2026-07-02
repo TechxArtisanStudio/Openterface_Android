@@ -1,12 +1,17 @@
 LOCAL_PATH := $(call my-dir)
 LIBVNCROOT := $(LOCAL_PATH)/../libvnc
 LIBJPEG_ROOT := $(LOCAL_PATH)/../../../../../libuvccamera/src/main/jni/libjpeg-turbo
+CONFIG_INCLUDE := $(LOCAL_PATH)/config_include
 
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := vncserver
 
+# NOTE: CONFIG_INCLUDE is listed first so our hand-crafted rfbconfig.h
+# takes precedence over anything the libvnc submodule might provide
+# (upstream .gitignores rfbconfig.h, so it is absent on a fresh clone).
 LOCAL_C_INCLUDES := \
+    $(CONFIG_INCLUDE) \
     $(LIBVNCROOT)/include \
     $(LIBVNCROOT)/src/common \
     $(LIBVNCROOT)/src/libvncserver \
@@ -121,6 +126,7 @@ LOCAL_CFLAGS := \
     -std=gnu99 \
     -D__ANDROID__ \
     -DLIBVNCSERVER_ALLOW=1 \
+    -DLIBVNCSERVER_HAVE_LIBJPEG=1 \
     -DHAVE_LIBPTHREAD=1 \
     -DHAVE_PTHREAD_H=1 \
     -DHAVE_SYS_SYSMACROS_H=0 \

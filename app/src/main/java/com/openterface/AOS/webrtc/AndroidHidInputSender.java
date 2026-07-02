@@ -10,7 +10,7 @@ import android.util.Log;
  * Core JNI or Java implementation based on configuration.
  */
 public class AndroidHidInputSender implements HidInputSender {
-    private static final String TAG = "AndroidHidInputSender";
+    private static final String TAG = "OP-WEBRTC";
 
     @Override
     public void setMouseDimensions(int width, int height) {

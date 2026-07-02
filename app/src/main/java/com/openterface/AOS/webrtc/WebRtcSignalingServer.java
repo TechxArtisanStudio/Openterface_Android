@@ -29,7 +29,7 @@ import fi.iki.elonen.NanoHTTPD;
  * POST /ice   - Submit ICE candidates
  */
 public class WebRtcSignalingServer extends NanoHTTPD {
-    private static final String TAG = "WebRtcSignalingServer";
+    private static final String TAG = "OP-WEBRTC";
 
     public interface SignalingCallback {
         void onOfferReceived(String sdp);

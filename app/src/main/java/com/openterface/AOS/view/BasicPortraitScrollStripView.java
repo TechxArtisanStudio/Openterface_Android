@@ -22,7 +22,7 @@ import com.openterface.AOS.target.MouseManager;
  */
 public class BasicPortraitScrollStripView extends View {
 
-    private static final String TAG = "BasicPortraitScrollStripView";
+    private static final String TAG = "OP-UI";
 
     // Pixels of finger travel per one wheel unit accumulated
     private static final float STRIP_PIXELS_PER_WHEEL_UNIT = 5f;

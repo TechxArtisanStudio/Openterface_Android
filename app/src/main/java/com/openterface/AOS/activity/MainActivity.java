@@ -171,7 +171,7 @@ import android.content.IntentFilter;
 
 public class MainActivity extends AppCompatActivity implements SettingsFloatingFragment.SettingsCallback {
 
-    private static final String TAG = MainActivity.class.getSimpleName();
+    private static final String TAG = "OP-UI";
     private static final boolean DEBUG = true;
 
     public ActivityMainBinding mBinding;
@@ -223,6 +223,10 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
     // duplicate setPreviewDisplay + startPreview calls when both onCameraOpen and
     // onSurfaceTextureAvailable fire for the same surface (e.g. after unplug/replug)
     private SurfaceTexture mCurrentPreviewSurfaceTexture = null;
+    // Track the Surface object added to CameraHelper/RendererHolder so we can remove it
+    // before adding a new one (e.g. in onSurfaceTextureSizeChanged). Without this, the
+    // RendererHolder accumulates stale surfaces which can cause black screen in portrait.
+    private android.view.Surface mCurrentPreviewSurface = null;
 
     private CameraControlsDialogFragment mControlsDialog;
     private DeviceListDialogFragment mDeviceListDialog;
@@ -601,7 +605,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
             KeyBoardSystem.setKeyboardLanguage("us");
             KeyBoardFunction.setKeyboardLanguage("us");
         } else if (currentLang.equals("de")) {
-            Log.d("KeyBoardSystem", "German Button Pressed: ");
+            Log.d(TAG, "German Button Pressed: ");
 
             KeyBoardSystem.setKeyboardLanguage("de");
             KeyBoardFunction.setKeyboardLanguage("de");
@@ -653,10 +657,10 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
         String functionKey = HidManager.getFunctionKey(event, keyCode);
         if (event.getAction() == KeyEvent.ACTION_MULTIPLE && event.getCharacters() != null) {
             String characters = event.getCharacters();
-            System.out.println("in this keycode: " + keyCode);
-            System.out.println("in this count: " + count);
-            System.out.println("in this event: " + event);
-            System.out.println("Characters: " + characters);
+            Log.d(TAG, "in this keycode: " + keyCode);
+            Log.d(TAG, "in this count: " + count);
+            Log.d(TAG, "in this event: " + event);
+            Log.d(TAG, "Characters: " + characters);
 
             for (char Multiple_key : characters.toCharArray()) {
                 characterQueue.add(Multiple_key);
@@ -1002,6 +1006,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
             Log.d(TAG, "Camera is connected, waiting for onSurfaceTextureAvailable to reconnect preview");
             // Reset tracking - the preview will be set up in onSurfaceTextureAvailable
             mCurrentPreviewSurfaceTexture = null;
+            mCurrentPreviewSurface = null;
             mMainSurfaceAdded = false;
         }
 
@@ -1052,7 +1057,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                     keyBoardView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
                         @Override
                         public void onGlobalLayout() {
-                            Log.d("keyBoardView","keyBoardView.getWidth():"+keyBoardView.getWidth() + "keyBoardView.getHeight():"+keyBoardView.getHeight());
+                            Log.d(TAG,"keyBoardView.getWidth():"+keyBoardView.getWidth() + "keyBoardView.getHeight():"+keyBoardView.getHeight());
                             ZoomLayoutDeal.getViewWidthHeight(keyBoardView.getWidth(), keyBoardView.getHeight());
                         }
                     });
@@ -1114,7 +1119,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
 
         //Determine whether to open the video
         if (mCameraHelper == null || !mIsCameraConnected) {
-            Log.e("MainActivity", "Camera not connected");
+            Log.e(TAG, "Camera not connected");
             return;
         }
 
@@ -1262,6 +1267,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                     // Use RendererHolder pipeline to enable frame distribution to multiple surfaces (including PIP)
                     mCameraHelper.addSurface(previewSurface, false);
                     mCurrentPreviewSurfaceTexture = surface;
+                    mCurrentPreviewSurface = previewSurface;
                     mMainSurfaceAdded = true;
                     Log.d(TAG, "onSurfaceTextureAvailable: addSurface called (RendererHolder pipeline), preview=" + mPreviewWidth + "x" + mPreviewHeight);
                     // Restart preview to trigger frame output to the new surface
@@ -1294,6 +1300,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                     // Use RendererHolder pipeline to enable frame distribution to multiple surfaces (including PIP)
                     mCameraHelper.addSurface(previewSurface, false);
                     mCurrentPreviewSurfaceTexture = surface;
+                    mCurrentPreviewSurface = previewSurface;
                     mMainSurfaceAdded = true;
                     mCameraHelper.startPreview();
                     Log.d(TAG, "onSurfaceTextureAvailable: reconnected surface, preview=" + mPreviewWidth + "x" + mPreviewHeight);
@@ -1313,17 +1320,24 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
 
                 if (mMainSurfaceAdded && mCameraHelper != null && mIsCameraConnected) {
                     // Surface was already added by onCameraOpen, but the view size changed
-                    // (e.g. portrait mode where AspectRatioTextureView starts with match_parent
-                    // then onMeasure adjusts it to the camera aspect ratio).
-                    // We need to re-create the Surface with the correct buffer size.
-                    // Simply resetting mMainSurfaceAdded=false without re-adding would
-                    // leave the preview broken (black screen).
-                    Log.d(TAG, "onSurfaceTextureSizeChanged: re-adding surface with new buffer size");
+                    // (e.g. portrait mode where AspectRatioTextureView's setAspectRatio
+                    // triggers onMeasure which changes the view dimensions).
+                    // CRITICAL: Remove the OLD Surface from RendererHolder BEFORE adding
+                    // a new one. Without removing first, the RendererHolder accumulates
+                    // stale Surface objects which causes the preview to render to the
+                    // wrong surface (black screen).
+                    // Both removeSurface and addSurface post to the same async handler,
+                    // so they execute in order: remove first, then add.
+                    Log.d(TAG, "onSurfaceTextureSizeChanged: removing old surface and re-adding with new buffer size");
+                    if (mCurrentPreviewSurface != null) {
+                        mCameraHelper.removeSurface(mCurrentPreviewSurface);
+                    }
                     setSurfaceTextureBufferSize(surface, mPreviewWidth, mPreviewHeight);
                     mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
                     android.view.Surface previewSurface = new android.view.Surface(surface);
                     mCameraHelper.addSurface(previewSurface, false);
                     mCurrentPreviewSurfaceTexture = surface;
+                    mCurrentPreviewSurface = previewSurface;
                     mCameraHelper.startPreview();
                     // Keep mMainSurfaceAdded = true — we just re-added it
                 } else {
@@ -1334,6 +1348,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                     // Reset the flag so onSurfaceTextureAvailable will re-add the surface
                     // when the TextureView is fully recreated
                     mMainSurfaceAdded = false;
+                    mCurrentPreviewSurface = null;
                 }
             }
 
@@ -1346,6 +1361,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                 // Reset the flags so surface can be added again when recreated
                 mMainSurfaceAdded = false;
                 mCurrentPreviewSurfaceTexture = null;
+                mCurrentPreviewSurface = null;
                 return false;
             }
 
@@ -1588,6 +1604,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                 // frames from the camera and distributes them to all registered surfaces.
                 mCameraHelper.addSurface(previewSurface, false);
                 mCurrentPreviewSurfaceTexture = currentSurfaceTexture;
+                mCurrentPreviewSurface = previewSurface;
                 mMainSurfaceAdded = true;
                 Log.d(TAG, "onCameraOpen: addSurface called for main preview (RendererHolder pipeline)");
 
@@ -1653,6 +1670,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
             // Reset the surface tracking flags when camera closes
             mMainSurfaceAdded = false;
             mCurrentPreviewSurfaceTexture = null;
+            mCurrentPreviewSurface = null;
 
             mIsCameraConnected = false;
             updateUIControls();
@@ -2760,7 +2778,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
         boolean alt = (shortcut.modifiers & ShortcutProfile.MOD_ALT) != 0;
         boolean win = (shortcut.modifiers & ShortcutProfile.MOD_WIN) != 0;
 
-        Log.d("MainActivity", "Executing shortcut: ctrl=" + ctrl + " shift=" + shift +
+        Log.d(TAG, "Executing shortcut: ctrl=" + ctrl + " shift=" + shift +
                 " alt=" + alt + " win=" + win + " key=" + key);
 
         // Use HidManager to support both Java and Core implementations
@@ -3181,7 +3199,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                 undoClearEligible = true;
                 imeTextInput.setText("");
                 updateClearButtonIcon();
-                android.util.Log.d("MainActivity_IME", "Clear: undoSnapshot saved, len=" + current.length() + ", Restore visible");
+                android.util.Log.d(TAG, "Clear: undoSnapshot saved, len=" + current.length() + ", Restore visible");
             });
         }
 

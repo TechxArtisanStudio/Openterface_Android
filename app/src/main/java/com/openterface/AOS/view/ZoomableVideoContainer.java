@@ -39,7 +39,7 @@ import android.widget.FrameLayout;
  * Two-finger pinch events are handled by this container for zooming.
  */
 public class ZoomableVideoContainer extends FrameLayout {
-    private static final String TAG = "ZoomableVideoContainer";
+    private static final String TAG = "OP-UI";
     private static final float MIN_SCALE = 1.0f;
     private static final float MAX_SCALE = 5.0f;
 

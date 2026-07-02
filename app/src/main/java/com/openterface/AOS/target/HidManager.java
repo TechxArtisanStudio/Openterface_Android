@@ -9,7 +9,7 @@ import com.openterface.AOS.serial.UsbDeviceManager;
  * Unified HID Manager that can switch between Java and Core implementations.
  */
 public class HidManager {
-    private static final String TAG = "HidManager";
+    private static final String TAG = "OP-HID";
 
     // Feature flag to enable/disable Core integration
     private static boolean useCoreImplementation = false;

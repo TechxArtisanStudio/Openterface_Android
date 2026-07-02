@@ -22,7 +22,7 @@ import java.util.List;
  * For testing portrait keyboard UI display and functionality
  */
 public class KeyboardTestActivity extends AppCompatActivity {
-    private static final String TAG = "KeyboardTestActivity";
+    private static final String TAG = "OP-UI";
 
     private LinearLayout testContainer;
     private TextView resultTextView;

@@ -34,7 +34,7 @@ import com.openterface.AOS.serial.UsbDeviceManager;
  * Replaces the original Java implementation with the C library.
  */
 public class MouseManagerCore {
-    private static final String TAG = MouseManagerCore.class.getSimpleName();
+    private static final String TAG = "OP-MOUSE";
     private static UsbDeviceManager usbDeviceManager;
     public static int screenWidth, screenHeight;
 

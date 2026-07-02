@@ -58,7 +58,7 @@ public class ShortcutHubFloatingFragment extends AppCompatDialogFragment
                    HubShortcutAdapter.OnShortcutActionListener,
                    CreateShortcutDialogFragment.OnShortcutCreatedListener {
 
-    private static final String TAG = "ShortcutHubFloating";
+    private static final String TAG = "OP-SHORTCUT";
     private static final int TAB_FAVORITES_INDEX = 0;
 
     // Views

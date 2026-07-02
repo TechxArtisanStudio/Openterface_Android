@@ -23,7 +23,7 @@ import com.openterface.AOS.target.HidManager;
  */
 public class MouseControlStripView extends LinearLayout {
 
-    private static final String TAG = "MouseControlStripView";
+    private static final String TAG = "OP-MOUSE";
 
     // Button mask constants (kept compatible with CH9329 protocol)
     public static final int BTN_LEFT = 0x01;

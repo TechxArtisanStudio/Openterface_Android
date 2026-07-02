@@ -32,6 +32,7 @@ import com.openterface.AOS.serial.UsbDeviceManager;
 import com.openterface.AOS.vnc.VncServerConfig;
 
 public class DrawerLayoutDeal extends Fragment {
+    private static final String TAG = "OP-UI";
     private final MainActivity activity;
     private final Context context;
     private Bundle savedInstanceState;
@@ -210,7 +211,7 @@ public class DrawerLayoutDeal extends Fragment {
         Rel_ctrl_button.setOnClickListener(v -> {
 
             if (Rel_ctrl_button_drawable != null) {
-                System.out.println("in this rel button");
+                Log.d(TAG,"in this rel button");
                 Rel_ctrl_button_drawable.setColorFilter(context.getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
                 Rel_ctrl_button.setTextColor(context.getResources().getColor(android.R.color.holo_red_light));
 
@@ -254,7 +255,7 @@ public class DrawerLayoutDeal extends Fragment {
                 activity.toggleVideoRecord(!mIsRecording);
                 mIsRecording = !mIsRecording;
             } else if (id == R.id.Close_DrawLayout) {
-                Log.d("DrawerLayoutDeal", "Close_DrawLayout");
+                Log.d(TAG, "Close_DrawLayout");
                 drawer_layout_setup.setVisibility(View.GONE);
 //                    if (drawer_layout.isDrawerOpen(GravityCompat.END)) {
 //                        drawer_layout.closeDrawer(GravityCompat.END);
@@ -349,7 +350,7 @@ public class DrawerLayoutDeal extends Fragment {
             
             // Apply the new baudrate setting
             if (newBaudrate != preferredBaudrate) {
-                Log.d("BaudrateDialog", "Changing baudrate from " + preferredBaudrate + " to " + newBaudrate);
+                Log.d(TAG, "Changing baudrate from " + preferredBaudrate + " to " + newBaudrate);
                 
                 if (usbManager.isConnected()) {
                     // If connected, reconnect with new baudrate

@@ -13,7 +13,7 @@ import android.util.Log;
  * Manages keyboard settings including sound and vibration feedback
  */
 public class KeyboardSettingsManager {
-    private static final String TAG = "KeyboardSettingsManager";
+    private static final String TAG = "OP-KB";
     private static final String PREF_NAME = "keyboard_settings";
     private static final String KEY_SOUND_ENABLED = "sound_enabled";
     private static final String KEY_SOUND_VOLUME = "sound_volume";

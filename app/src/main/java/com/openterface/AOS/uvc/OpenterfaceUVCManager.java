@@ -34,7 +34,7 @@ import com.serenegiant.usb.UVCControl;
 import com.serenegiant.usb.USBVendorId;
 
 public class OpenterfaceUVCManager {
-    private static final String TAG = "OpenterfaceUVCManager";
+    private static final String TAG = "OP-CAMERA";
     
     // Openterface UVC device VID/PID combinations
     private static final int[][] OPENTERFACE_UVC_DEVICES = {

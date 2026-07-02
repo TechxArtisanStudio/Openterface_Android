@@ -28,7 +28,7 @@ import java.util.List;
  */
 public class WebRtcDialogFragment extends DialogFragment {
 
-    private static final String TAG = "WebRtcDialog";
+    private static final String TAG = "OP-WEBRTC";
 
     private WebRtcConfig config;
     private WebRtcServerService webRtcService;

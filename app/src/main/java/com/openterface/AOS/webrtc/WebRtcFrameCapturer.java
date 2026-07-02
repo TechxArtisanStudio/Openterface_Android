@@ -17,7 +17,7 @@ import java.nio.ByteBuffer;
  * WebRTC's internal encoder (MediaCodec H264) handles the rest automatically.
  */
 public class WebRtcFrameCapturer implements VideoCapturer {
-    private static final String TAG = "WebRtcFrameCapturer";
+    private static final String TAG = "OP-WEBRTC";
 
     private CapturerObserver capturerObserver;
     private SurfaceTextureHelper surfaceTextureHelper;

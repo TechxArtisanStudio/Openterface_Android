@@ -35,7 +35,7 @@ import com.openterface.AOS.hid.OpenterfaceHIDManager;
 import com.serenegiant.usb.UVCControl;
 
 public class OpenterfaceDeviceManager {
-    private static final String TAG = "OpenterfaceDeviceManager";
+    private static final String TAG = "OP-SERIAL";
     
     // Define all Openterface device configurations
     public static class OpenterfaceDevice {

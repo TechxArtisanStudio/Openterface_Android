@@ -51,6 +51,7 @@ import com.openterface.AOS.target.HidManager;
 import com.serenegiant.widget.AspectRatioSurfaceView;
 
 public class ZoomLayoutDeal {
+    private static final String TAG = "OP-UI";
     private static MainActivity activity;
     private static DrawerLayout drawerLayout;
     private static View thumbnailContainer;
@@ -105,7 +106,7 @@ public class ZoomLayoutDeal {
 
         // Skip initialization if essential views are missing
         if (cameraViewSecond == null || thumbnailContainer == null || dragButton == null) {
-            Log.d("ZoomLayoutDeal", "Essential views not found, skipping zoom setup");
+            Log.d(TAG, "Essential views not found, skipping zoom setup");
             return;
         }
 
@@ -114,7 +115,7 @@ public class ZoomLayoutDeal {
         screenWidth = displayMetrics.widthPixels;
         screenHeight = displayMetrics.heightPixels;
 
-        Log.d("initViews", "screenWidth: " + screenWidth + " screenHeight: " + screenHeight);
+        Log.d(TAG, "screenWidth: " + screenWidth + " screenHeight: " + screenHeight);
 
         if (isPortraitMode) {
             // Portrait mode: PiP window with chip's aspect ratio
@@ -177,7 +178,7 @@ public class ZoomLayoutDeal {
     
     private void setupKeyboardZoomButton() {
         keyBoardZoomInOutButton.setOnClickListener(v -> {
-            Log.d("keyBoard", "setupKeyboardZoomButton: " + originalWidth + " " + originalHeight);
+            Log.d(TAG, "setupKeyboardZoomButton: " + originalWidth + " " + originalHeight);
             FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) keyBoardView.getLayoutParams();
             if (isKeyboardScaled){
                 params.width = ViewGroup.LayoutParams.MATCH_PARENT;
@@ -191,7 +192,7 @@ public class ZoomLayoutDeal {
                 keyBoardZoomInOutButton.setImageResource(R.drawable.arrows_angle_expand);
                 isKeyboardScaled = true;
             }
-            Log.d("keyBoard", "setupKeyboardZoomButton: " + params.width + " " + params.height);
+            Log.d(TAG, "setupKeyboardZoomButton: " + params.width + " " + params.height);
             keyBoardView.setLayoutParams(params);
         });
     }
@@ -225,7 +226,7 @@ public class ZoomLayoutDeal {
     public static void enlargeView(){
         // Guard against missing views
         if (thumbnailContainer == null || dragButton == null || activity == null) {
-            Log.d("ZoomLayoutDeal", "enlargeView: views not initialized, skipping");
+            Log.d(TAG, "enlargeView: views not initialized, skipping");
             return;
         }
 
@@ -252,7 +253,7 @@ public class ZoomLayoutDeal {
 
         // Now try to add surface if available
         if (activity.mBinding == null || activity.mBinding.cameraViewSecond == null) {
-            Log.d("ZoomLayoutDeal", "enlargeView: cameraViewSecond not available");
+            Log.d(TAG, "enlargeView: cameraViewSecond not available");
             return;
         }
 
@@ -269,7 +270,7 @@ public class ZoomLayoutDeal {
     public static void zoomOut(){
         // Guard against missing views
         if (thumbnailContainer == null || dragButton == null || activity == null) {
-            Log.d("ZoomLayoutDeal", "zoomOut: views not initialized, skipping");
+            Log.d(TAG, "zoomOut: views not initialized, skipping");
             return;
         }
         // Reset drawer layout if it exists (landscape mode)
@@ -344,7 +345,7 @@ public class ZoomLayoutDeal {
     private static void resetIndicatorToCenter() {
         // Guard against null views
         if (activity == null || activity.cameraViewSecond == null || indicatorView == null) {
-            Log.d("ZoomLayoutDeal", "resetIndicatorToCenter: views not available, skipping");
+            Log.d(TAG, "resetIndicatorToCenter: views not available, skipping");
             return;
         }
 
@@ -359,13 +360,13 @@ public class ZoomLayoutDeal {
         // Sync main view to match the centered indicator
         syncMainViewPosition(centerX + indicatorView.getWidth() / 2f, centerY + indicatorView.getHeight() / 2f);
 
-        Log.d("ZoomLayoutDeal", "Indicator reset to center: x=" + indicatorView.getX() + ", y=" + indicatorView.getY());
+        Log.d(TAG, "Indicator reset to center: x=" + indicatorView.getX() + ", y=" + indicatorView.getY());
     }
 
     private static void showThumbnailWindow() {
         // Guard against null views before calling sub-methods
         if (activity == null || activity.mBinding == null || activity.mBinding.viewMainPreview == null) {
-            Log.d("ZoomLayoutDeal", "showThumbnailWindow: views not available, skipping");
+            Log.d(TAG, "showThumbnailWindow: views not available, skipping");
             return;
         }
 
@@ -381,23 +382,23 @@ public class ZoomLayoutDeal {
 
     private static void generateThumbnail() {
         if (activity == null || activity.mBinding == null || activity.mBinding.viewMainPreview == null) {
-            Log.e("generateThumbnail", "TextureView is not available");
+            Log.e(TAG, "TextureView is not available");
             return;
         }
 
         if (!activity.mBinding.viewMainPreview.isAvailable()) {
-            Log.e("generateThumbnail", "TextureView is not available");
+            Log.e(TAG, "TextureView is not available");
             return;
         }
 
         try {
             Bitmap mainBitmap = activity.mBinding.viewMainPreview.getBitmap();
             if (mainBitmap == null) {
-                Log.e("generateThumbnail", "Failed to get bitmap from TextureView");
+                Log.e(TAG, "Failed to get bitmap from TextureView");
                 return;
             }
         } catch (Exception e) {
-            Log.e("generateThumbnail", "Exception getting bitmap: " + e.getMessage());
+            Log.e(TAG, "Exception getting bitmap: " + e.getMessage());
         }
     }
 
@@ -442,7 +443,7 @@ public class ZoomLayoutDeal {
     private static void setupThumbnailDrag() {
         // Guard against null views
         if (activity == null || activity.cameraViewSecond == null) {
-            Log.d("ZoomLayoutDeal", "setupThumbnailDrag: cameraViewSecond not available, skipping");
+            Log.d(TAG, "setupThumbnailDrag: cameraViewSecond not available, skipping");
             return;
         }
 
@@ -484,7 +485,7 @@ public class ZoomLayoutDeal {
         float mouseLocationX = (float)setMaxViewX + screenWidth/2.0f;
         float mouseLocationY = (float)setMaxViewY + screenHeight/2.0f;
         HidManager.sendHexAbsData(mouseLocationX, mouseLocationY);
-        Log.d("setMouseLocation", "mouseLocationX: " + mouseLocationX + " mouseLocationY: " + mouseLocationY);
+        Log.d(TAG, "mouseLocationX: " + mouseLocationX + " mouseLocationY: " + mouseLocationY);
     }
 
     private static void updateIndicatorPosition(float x, float y) {
@@ -601,7 +602,7 @@ public class ZoomLayoutDeal {
         if (indicatorView == null || thumbnailContainer == null || activity == null ||
             activity.mBinding == null || activity.mBinding.viewMainPreview == null ||
             activity.cameraViewSecond == null) {
-            Log.d("ZoomLayoutDeal", "syncMainViewPosition: views not available, skipping");
+            Log.d(TAG, "syncMainViewPosition: views not available, skipping");
             return;
         }
 
@@ -615,13 +616,13 @@ public class ZoomLayoutDeal {
         float centerX = location[0] - containerLocation[0] + indicatorView.getWidth() / 2f;
         float centerY = location[1] - containerLocation[1] + indicatorView.getHeight() / 2f;
 
-        Log.d("Center Coordinates", "X: " + centerX + ", Y: " + centerY);
+        Log.d(TAG, "X: " + centerX + ", Y: " + centerY);
 
-        Log.d("syncMainViewPosition", "sizeThumbX: " + thumbX + " sizeThumbY: " + thumbY);
+        Log.d(TAG, "sizeThumbX: " + thumbX + " sizeThumbY: " + thumbY);
         // Calculate where the main view should scroll to
         ratioX = (float) (activity.mBinding.viewMainPreview.getWidth()) / activity.cameraViewSecond.getWidth();
         ratioY = (float) (activity.mBinding.viewMainPreview.getHeight()) / activity.cameraViewSecond.getHeight();
-        Log.d("syncMainViewPosition", "ratioX: " + ratioX + ", ratioY: " + ratioY);
+        Log.d(TAG, "ratioX: " + ratioX + ", ratioY: " + ratioY);
 
         float mainX = thumbX * ratioX;
         float mainY = thumbY * ratioY;
@@ -629,13 +630,13 @@ public class ZoomLayoutDeal {
         // In landscape mode, use drawerLayout to scroll the main view
         if (drawerLayout != null) {
             float currentScale = drawerLayout.getScaleX();
-            Log.d("syncMainViewPosition", "currentScale: " + currentScale);
-            Log.d("Center Coordinates", "ratioX: " + ratioX + ", ratioY: " + ratioY);
+            Log.d(TAG, "currentScale: " + currentScale);
+            Log.d(TAG, "ratioX: " + ratioX + ", ratioY: " + ratioY);
 
-            Log.d("syncMainViewPosition", "mainX: " + mainX + " mainY: " + mainY);
+            Log.d(TAG, "mainX: " + mainX + " mainY: " + mainY);
             // Update the main view location
-            Log.d("syncMainViewPosition", "mainX - drawerLayout.getWidth()/2f: " + (mainX - drawerLayout.getWidth()/2f));
-            Log.d("syncMainViewPosition", "mainY - drawerLayout.getHeight()/2f: " + (mainY - drawerLayout.getHeight()/2f));
+            Log.d(TAG, "mainX - drawerLayout.getWidth()/2f: " + (mainX - drawerLayout.getWidth()/2f));
+            Log.d(TAG, "mainY - drawerLayout.getHeight()/2f: " + (mainY - drawerLayout.getHeight()/2f));
             if((mainX - drawerLayout.getWidth()/2f) < -(drawerLayout.getWidth()/ ratioX)){
                 setMaxViewX = (int)(-(drawerLayout.getWidth()/ ratioX));
             } else if ((mainX - drawerLayout.getWidth()/2f) > (drawerLayout.getWidth()/ ratioX)) {
@@ -651,7 +652,7 @@ public class ZoomLayoutDeal {
             }else {
                 setMaxViewY = (int)(mainY - drawerLayout.getHeight()/2f);
             }
-            Log.d("syncMainViewPosition", "setMaxViewX: " + setMaxViewX + " setMaxViewY: " + setMaxViewY);
+            Log.d(TAG, "setMaxViewX: " + setMaxViewX + " setMaxViewY: " + setMaxViewY);
             drawerLayout.scrollTo(
                     (setMaxViewX),
                     (setMaxViewY)
@@ -713,7 +714,7 @@ public class ZoomLayoutDeal {
             setMaxViewX = (int) newTranslateX;
             setMaxViewY = (int) newTranslateY;
 
-            Log.d("syncMainViewPosition", "Portrait mode: normalizedX=" + normalizedX + " normalizedY=" + normalizedY
+            Log.d(TAG, "Portrait mode: normalizedX=" + normalizedX + " normalizedY=" + normalizedY
                 + " translateX=" + newTranslateX + " translateY=" + newTranslateY
                 + " viewWidth=" + viewWidth + " viewHeight=" + viewHeight);
         }

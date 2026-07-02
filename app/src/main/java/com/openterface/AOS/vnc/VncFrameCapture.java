@@ -14,7 +14,7 @@ import java.nio.ByteBuffer;
  * and pushes them to VncServerService.
  */
 public class VncFrameCapture {
-    private static final String TAG = "VncFrameCapture";
+    private static final String TAG = "OP-VNC";
 
     private final int targetFps;
     private final long frameIntervalNs;

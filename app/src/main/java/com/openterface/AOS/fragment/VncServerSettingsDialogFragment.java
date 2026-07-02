@@ -30,7 +30,7 @@ import java.util.List;
  */
 public class VncServerSettingsDialogFragment extends DialogFragment {
 
-    private static final String TAG = "VncSettingsDialog";
+    private static final String TAG = "OP-VNC";
 
     private VncServerConfig config;
     private VncServerService vncService;

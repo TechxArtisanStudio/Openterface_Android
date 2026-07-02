@@ -40,7 +40,7 @@ import com.hoho.android.usbserial.driver.Ch34xSerialDriver;
 import com.hoho.android.usbserial.driver.ProbeTable;
 
 public class SerialDebugUtils {
-    private static final String TAG = "SerialDebug";
+    private static final String TAG = "OP-DEBUG";
     
     // Common USB issues and solutions
     private static final String[] COMMON_ISSUES = {

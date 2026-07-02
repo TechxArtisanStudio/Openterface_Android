@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
  */
 public final class TextHidSender {
 
-    private static final String TAG = "TextHidSender";
+    private static final String TAG = "OP-KB";
     private static final String MOD_NONE = "00";
     private static final String MOD_SHIFT = "02";
 
@@ -197,25 +197,22 @@ public final class TextHidSender {
             String releaseData = "57AB00020800000000000000000C";
             byte[] releaseBytes = CH9329Function.hexStringToByteArray(releaseData);
 
-            // Use UsbDeviceManager that auto-routes FE0C vs 7523 — fallback to direct port if missing
+            // Use UsbDeviceManager.writeKeyboardData() for all writes — it auto-routes
+            // to FE0C bulk transfer (1A86:FE0C) or CH340 with bulkTransfer fallback (1A86:7523).
+            // Direct port.write() is NOT used because testConnection() fails on some CH340 chips.
             com.openterface.AOS.serial.UsbDeviceManager mgr = KeyBoardManager.getUsbDeviceManager();
-            boolean canRouteViaManager = (mgr != null);
 
             Log.d(TAG, "📤 Press key='" + keyName + "' mod=0x" + modifier +
                   " keyCode=" + keyCode + " packet=" + pressData +
-                  " viaManager=" + canRouteViaManager);
+                  " viaManager=" + (mgr != null));
 
-            // Send PRESS via proper device-aware write path
-            boolean pressOk = false;
-            if (canRouteViaManager) {
-                pressOk = mgr.writeKeyboardData(pressBytes, 50);
-            } else if (UsbDeviceManager.port != null && UsbDeviceManager.port.isOpen()) {
-                UsbDeviceManager.port.write(pressBytes, 50);
-                pressOk = true;
-            } else {
-                Log.e(TAG, "❌ No write path available (neither UsbDeviceManager nor port)");
+            if (mgr == null) {
+                Log.e(TAG, "❌ UsbDeviceManager is null — cannot send key press");
                 return;
             }
+
+            // Send PRESS via proper device-aware write path
+            boolean pressOk = mgr.writeKeyboardData(pressBytes, 50);
             if (!pressOk) {
                 Log.e(TAG, "❌ PRESS write returned false for key='" + keyName + "'");
                 return;
@@ -227,13 +224,7 @@ public final class TextHidSender {
             Log.d(TAG, "🔼 Release key='" + keyName + "' packet=" + releaseData);
 
             // Send RELEASE via same path
-            boolean releaseOk;
-            if (canRouteViaManager) {
-                releaseOk = mgr.writeKeyboardData(releaseBytes, 50);
-            } else {
-                UsbDeviceManager.port.write(releaseBytes, 50);
-                releaseOk = true;
-            }
+            boolean releaseOk = mgr.writeKeyboardData(releaseBytes, 50);
             if (!releaseOk) {
                 Log.e(TAG, "❌ RELEASE write returned false for key='" + keyName + "'");
             }
@@ -243,8 +234,6 @@ public final class TextHidSender {
 
             Log.d(TAG, "✅ Done key='" + keyName + "'");
 
-        } catch (IOException e) {
-            Log.e(TAG, "❌ IO Error: " + e.getMessage(), e);
         } catch (Exception e) {
             Log.e(TAG, "❌ Error: " + e.getMessage(), e);
         }

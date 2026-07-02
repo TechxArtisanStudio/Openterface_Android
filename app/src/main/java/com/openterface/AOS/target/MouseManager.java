@@ -32,7 +32,7 @@ import com.openterface.AOS.serial.CH9329Function;
 import com.openterface.AOS.serial.UsbDeviceManager;
 
 public class MouseManager {
-    private static final String TAG = MouseManager.class.getSimpleName();
+    private static final String TAG = "OP-MOUSE";
     private static UsbDeviceManager usbDeviceManager;
     public static int screenWidth, screenHeight;
 

@@ -42,7 +42,7 @@ import java.util.Locale;
 import java.util.Map;
 
 public class KeyBoardManager {
-    private static final String TAG = KeyBoardManager.class.getSimpleName();
+    private static final String TAG = "OP-KB";
     private static Context context;
     private static Map<Object, String> currentKeyCodeMap;
     private static UsbDeviceManager usbDeviceManager; // Add static reference for enhanced FE0C support
@@ -72,11 +72,11 @@ public class KeyBoardManager {
         if (currentLang.equals("de")) {
             currentKeyCodeMap = KeyMapConfig_De.getKeyCodeMap();
 //            KeyBoardSystem.setKeyboardLanguage("de");
-            Log.d("setKeyBoardLanguage", "language is de");
+            Log.d(TAG, "language is de");
         }else {
             currentKeyCodeMap = CH9329MSKBMap.getKeyCodeMap();
 //            KeyBoardSystem.setKeyboardLanguage("us");
-            Log.d("setKeyBoardLanguage", "language is us");
+            Log.d(TAG, "language is us");
         }
     }
 
@@ -237,14 +237,8 @@ public class KeyBoardManager {
         
         new Thread(() -> {
             try {
-                if (UsbDeviceManager.port == null){
-                    Log.e(TAG, "❌ sendKeyBoardPress port is null");
-                    return;
-                }
-
-                // Check if port is actually open before trying to write
-                if (!UsbDeviceManager.port.isOpen()) {
-                    Log.e(TAG, "❌ sendKeyBoardPress: port is not open");
+                if (usbDeviceManager == null || !usbDeviceManager.isConnected()) {
+                    Log.e(TAG, "❌ sendKeyBoardPress USB device not connected");
                     return;
                 }
 
@@ -271,11 +265,15 @@ public class KeyBoardManager {
 
                 try {
                     long startTime = System.currentTimeMillis();
-                    UsbDeviceManager.port.write(sendKBDataBytes, 100);
+                    boolean result = usbDeviceManager.writeData(sendKBDataBytes);
                     long endTime = System.currentTimeMillis();
-                    Log.e(TAG, "✅ Key press sent successfully in " + (endTime - startTime) + "ms (no auto-release)");
-                } catch (IOException e) {
-                    Log.e(TAG, "❌ Error writing key press to port: " + e.getMessage(), e);
+                    if (result) {
+                        Log.e(TAG, "✅ Key press sent successfully in " + (endTime - startTime) + "ms (no auto-release)");
+                    } else {
+                        Log.e(TAG, "❌ Key press write returned false");
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "❌ Error writing key press: " + e.getMessage(), e);
                 }
 
             } catch (Exception e) {
@@ -408,13 +406,8 @@ public class KeyBoardManager {
      */
     private static boolean sendKeyBoardPressSync(String functionKey, String keyName) {
         try {
-            if (UsbDeviceManager.port == null){
-                Log.e(TAG, "❌ sendKeyBoardPressSync: port is null");
-                return false;
-            }
-
-            if (!UsbDeviceManager.port.isOpen()) {
-                Log.e(TAG, "❌ sendKeyBoardPressSync: port is not open");
+            if (usbDeviceManager == null || !usbDeviceManager.isConnected()) {
+                Log.e(TAG, "❌ sendKeyBoardPressSync: USB device not connected");
                 return false;
             }
 
@@ -439,10 +432,14 @@ public class KeyBoardManager {
             byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendKBData);
 
             long writeStart = System.currentTimeMillis();
-            UsbDeviceManager.port.write(sendKBDataBytes, 200);
+            boolean result = usbDeviceManager.writeData(sendKBDataBytes);
             long writeEnd = System.currentTimeMillis();
-            Log.e(TAG, "✅ Sync press sent in " + (writeEnd - writeStart) + "ms");
-            return true;
+            if (result) {
+                Log.e(TAG, "✅ Sync press sent in " + (writeEnd - writeStart) + "ms");
+            } else {
+                Log.e(TAG, "❌ Sync press write returned false");
+            }
+            return result;
 
         } catch (Exception e) {
             Log.e(TAG, "❌ Exception in sendKeyBoardPressSync: " + e.getMessage(), e);
@@ -465,14 +462,18 @@ public class KeyBoardManager {
 
             byte[] releaseKBDataBytes = CH9329Function.hexStringToByteArray(releaseKBData);
 
-            // Use direct port write for consistency with press
-            if (UsbDeviceManager.port != null && UsbDeviceManager.port.isOpen()) {
+            // Use usbDeviceManager for proper device routing (serial/FE0C)
+            if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
                 long writeStart = System.currentTimeMillis();
-                UsbDeviceManager.port.write(releaseKBDataBytes, 200);
+                boolean result = usbDeviceManager.writeData(releaseKBDataBytes);
                 long writeEnd = System.currentTimeMillis();
-                Log.e(TAG, "✅ Sync release sent in " + (writeEnd - writeStart) + "ms");
+                if (result) {
+                    Log.e(TAG, "✅ Sync release sent in " + (writeEnd - writeStart) + "ms");
+                } else {
+                    Log.e(TAG, "❌ Sync release write returned false");
+                }
             } else {
-                Log.e(TAG, "❌ sendKeyBoardReleaseSync: port not available");
+                Log.e(TAG, "❌ sendKeyBoardReleaseSync: USB device not connected");
             }
         } catch (Exception e) {
             Log.e(TAG, "❌ Exception in sendKeyBoardReleaseSync: " + e.getMessage(), e);
@@ -570,8 +571,8 @@ public class KeyBoardManager {
             @Override
             public void run() {
                 try {
-                    if (UsbDeviceManager.port == null){
-                        Log.d(TAG, "sendKeyBoardFunction port is null");
+                    if (usbDeviceManager == null || !usbDeviceManager.isConnected()) {
+                        Log.d(TAG, "sendKeyBoardShortCut USB device not connected");
                         return;
                     }
 
@@ -599,10 +600,13 @@ public class KeyBoardManager {
                     byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendKBData);
 
                     try {
-                        UsbDeviceManager.port.write(sendKBDataBytes, 200);
+                        boolean result = usbDeviceManager.writeData(sendKBDataBytes);
+                        if (!result) {
+                            Log.e(TAG, "Failed to write shortcut key data");
+                        }
                         EmptyKeyboard();
-                    } catch (IOException e) {
-                        Log.e(TAG, "Error writing to port: " + e.getMessage());
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error writing shortcut key: " + e.getMessage());
                     }
 
                 } catch (Exception e) {
@@ -703,7 +707,7 @@ public class KeyBoardManager {
                             CH9329MSKBMap.DataNull().get("DataNull") +
                             CH9329MSKBMap.DataNull().get("DataNull") +
                             CH9329MSKBMap.DataNull().get("DataNull");
-                    System.out.println("FunctionKeyPress: " + CH9329MSKBMap.KBShortCutKey().get(combinationFunctionKey));
+                    Log.d(TAG, "FunctionKeyPress: " + CH9329MSKBMap.KBShortCutKey().get(combinationFunctionKey));
                     Log.e(TAG, "successful send keyboard data: " + keyName);
                     Log.e(TAG, "successful send keyboard data currentKeyCodeMap: " + currentKeyCodeMap);
                     sendKBData = sendKBData + CH9329Function.makeChecksum(sendKBData);
@@ -813,16 +817,16 @@ public class KeyBoardManager {
             @Override
             public void run() {
                 try {
-                    if (UsbDeviceManager.port == null){
-                        Log.d(TAG, "sendKeyboardRequest port is null");
+                    if (usbDeviceManager == null || !usbDeviceManager.isConnected()) {
+                        Log.d(TAG, "sendKeyboardRequest USB device not connected");
                         return;
                     }
 
-                    System.out.println("keyName: " + keyName);
-                    System.out.println("currentKeyCodeMap class: " + currentKeyCodeMap.getClass().getName());
-                    System.out.println("currentKeyCodeMap size: " + currentKeyCodeMap.size());
+                    Log.d(TAG, "keyName: " + keyName);
+                    Log.d(TAG, "currentKeyCodeMap class: " + currentKeyCodeMap.getClass().getName());
+                    Log.d(TAG, "currentKeyCodeMap size: " + currentKeyCodeMap.size());
                     String lookedUpCode = currentKeyCodeMap.get(keyName);
-                    System.out.println("lookedUpCode for '" + keyName + "': " + lookedUpCode);
+                    Log.d(TAG, "lookedUpCode for '" + keyName + "': " + lookedUpCode);
 
                     String sendKBData = "";
                     sendKBData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
@@ -846,21 +850,24 @@ public class KeyBoardManager {
                     byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendKBData);
 
                     try {
-                        // Use direct port write for reliable key press at any baudrate
-                        UsbDeviceManager.port.write(sendKBDataBytes, 10);
-                        Log.d(TAG, "Key press sent successfully");
-                        
+                        boolean result = usbDeviceManager.writeData(sendKBDataBytes);
+                        if (result) {
+                            Log.d(TAG, "Key press sent successfully");
+                        } else {
+                            Log.e(TAG, "Key press write returned false");
+                        }
+
                         // Add small delay before releasing key to ensure proper key press registration
                         try {
                             Thread.sleep(10);
                         } catch (InterruptedException ie) {
                             Thread.currentThread().interrupt();
                         }
-                        
+
                         // Release the key immediately after
                         KeyBoardManager.EmptyKeyboard();
-                    } catch (IOException e) {
-                        Log.e(TAG, "Error writing to port: " + e.getMessage());
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error writing key data: " + e.getMessage());
                     }
 
                 } catch (Exception e) {
@@ -880,7 +887,7 @@ public class KeyBoardManager {
                         return;
                     }
 
-                    System.out.println("keyName: " + keyName);
+                    Log.d(TAG, "keyName: " + keyName);
 
                     String sendKBData = "";
                     sendKBData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
@@ -964,49 +971,10 @@ public class KeyBoardManager {
             }
             return;
         }
-        
-        // Fallback to direct port access
-        Log.e(TAG, "🔴 Falling back to UsbDeviceManager.port direct access");
-        
-        // For 7523 devices at 9600 baud, use direct port access for reliable key release
-        if (UsbDeviceManager.port == null) {
-            Log.e(TAG, "❌ EmptyKeyboard: port is null");
-            return;
-        }
 
-        // Check if port is actually open before trying to write
-        if (!UsbDeviceManager.port.isOpen()) {
-            Log.e(TAG, "❌ EmptyKeyboard: port is not open, skipping release");
-            return;
-        }
-
-        String releaseKBData = CH9329MSKBMap.getKeyCodeMap().get("release");
-        if (releaseKBData == null) {
-            Log.e(TAG, "❌ EmptyKeyboard: releaseKBData is null");
-            return;
-        }
-
-        Log.e(TAG, "🔴 EmptyKeyboard: Release command: " + releaseKBData);
-        CH9329Function.ReleaseSendLogData(releaseKBData);
-
-        byte[] releaseKBDataBytes = CH9329Function.hexStringToByteArray(releaseKBData);
-        if (releaseKBDataBytes == null || releaseKBDataBytes.length == 0) {
-            Log.e(TAG, "❌ EmptyKeyboard: releaseKBDataBytes is null or empty");
-            return;
-        }
-
-        Log.e(TAG, "🔴 EmptyKeyboard: Writing " + releaseKBDataBytes.length + " bytes: " + Arrays.toString(releaseKBDataBytes));
-
-        try {
-            long startTime = System.currentTimeMillis();
-            // Direct port write for all devices - most reliable method
-            UsbDeviceManager.port.write(releaseKBDataBytes, 200);
-            long endTime = System.currentTimeMillis();
-            Log.e(TAG, "✅ EmptyKeyboard: Key release sent successfully via port.write() in " + (endTime - startTime) + "ms");
-        } catch (IOException e) {
-            Log.e(TAG, "❌ EmptyKeyboard: IOException while writing to port: " + e.getMessage(), e);
-            // Only show toast for critical errors, not for transient port issues
-            // Most likely the port is just busy or in a temporary state
-        }
+        // No fallback to direct port access — UsbDeviceManager.port is a static reference
+        // that may not reflect the actual connection state, and port.write() uses
+        // testConnection() which fails on some CH340 chips.
+        Log.e(TAG, "❌ EmptyKeyboard: usbDeviceManager is null or not connected, cannot send key release");
     }
 }
