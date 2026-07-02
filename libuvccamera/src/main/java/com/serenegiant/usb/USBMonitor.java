@@ -238,9 +238,9 @@ public final class USBMonitor {
                     context.registerReceiver(mUsbReceiver, filter);
                 }
             }
-            // start connection check
+            // start connection check - run immediately first, then periodically
             mDetectedDeviceKeys.clear();
-            mAsyncHandler.postDelayed(mDeviceCheckRunnable, CHECK_DEVICE_RUNNABLE_DELAY);
+            mAsyncHandler.post(mDeviceCheckRunnable);
         }
     }
 

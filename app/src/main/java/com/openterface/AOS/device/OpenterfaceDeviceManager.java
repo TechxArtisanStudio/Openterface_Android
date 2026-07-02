@@ -190,14 +190,23 @@ public class OpenterfaceDeviceManager {
     public void initialize() {
         Log.d(TAG, "Initializing Openterface Device Manager");
         logSupportedDevices();
-        
+
         // Initialize all managers
+        // Serial detects only — call connect() after UVC has had a chance to claim its interfaces
         serialManager.init();
         uvcManager.initialize();
         hidManager.initialize();
-        
+
         // Initial connection status check
         updateConnectionStatus();
+    }
+
+    /**
+     * Call this after the UVC camera has opened, to connect the serial port.
+     * This ensures camera claims its UVC interfaces before serial claims the serial interfaces.
+     */
+    public void connectSerialAfterCamera() {
+        serialManager.connect();
     }
     
     private void logSupportedDevices() {

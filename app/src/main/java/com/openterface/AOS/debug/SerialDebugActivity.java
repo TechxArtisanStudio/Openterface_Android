@@ -187,10 +187,12 @@ public class SerialDebugActivity extends Activity {
     private void connectToDevice() {
         appendLog("Attempting to connect to Openterface device...");
         updateStatus("🔄 Connecting...");
-        
+
         // Try to connect in background thread
+        // SerialDebugActivity is serial-only (no camera), so detect + connect immediately
         new Thread(() -> {
-            serialManager.init();
+            serialManager.detectDeviceOnly();
+            serialManager.connect();
         }).start();
     }
     
