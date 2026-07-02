@@ -1308,18 +1308,33 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
 
             @Override
             public void onSurfaceTextureSizeChanged(@NonNull SurfaceTexture surface, int width, int height) {
-                // Re-set buffer to chip resolution after view resize to maintain zoom quality.
-                // IMPORTANT: This callback fires when the TextureView's size changes, which happens
-                // AFTER setAspectRatio()'s deferred requestLayout(). Since it fires asynchronously,
-                // the Surface may have already been created by onCameraOpen's Runnable with the
-                // correct buffer size. Setting the buffer here to the view's dimensions (which may
-                // differ from camera resolution) would be ineffective (Surface already created) but
-                // harmless. We update the buffer only if no Surface has been created yet.
-                if (!mMainSurfaceAdded) {
+                Log.d(TAG, "onSurfaceTextureSizeChanged: " + width + "x" + height +
+                    " mMainSurfaceAdded=" + mMainSurfaceAdded + " mIsCameraConnected=" + mIsCameraConnected);
+
+                if (mMainSurfaceAdded && mCameraHelper != null && mIsCameraConnected) {
+                    // Surface was already added by onCameraOpen, but the view size changed
+                    // (e.g. portrait mode where AspectRatioTextureView starts with match_parent
+                    // then onMeasure adjusts it to the camera aspect ratio).
+                    // We need to re-create the Surface with the correct buffer size.
+                    // Simply resetting mMainSurfaceAdded=false without re-adding would
+                    // leave the preview broken (black screen).
+                    Log.d(TAG, "onSurfaceTextureSizeChanged: re-adding surface with new buffer size");
                     setSurfaceTextureBufferSize(surface, mPreviewWidth, mPreviewHeight);
+                    mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
+                    android.view.Surface previewSurface = new android.view.Surface(surface);
+                    mCameraHelper.addSurface(previewSurface, false);
+                    mCurrentPreviewSurfaceTexture = surface;
+                    mCameraHelper.startPreview();
+                    // Keep mMainSurfaceAdded = true — we just re-added it
+                } else {
+                    // First time or surface was destroyed — set buffer size for later
+                    if (!mMainSurfaceAdded) {
+                        setSurfaceTextureBufferSize(surface, mPreviewWidth, mPreviewHeight);
+                    }
+                    // Reset the flag so onSurfaceTextureAvailable will re-add the surface
+                    // when the TextureView is fully recreated
+                    mMainSurfaceAdded = false;
                 }
-                // Reset the surface added flag when size changes, as we need to re-add surface
-                mMainSurfaceAdded = false;
             }
 
             @Override
@@ -1476,7 +1491,15 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                 }
             });
 
-            usbDeviceManager.init();
+            // IMPORTANT: Connect serial AFTER the camera has opened and claimed its UVC
+            // interfaces. Previously, serial connected first and claimed interfaces on the
+            // composite device, which prevented the camera from claiming the video streaming
+            // interface. Now camera goes first → serial follows.
+            // Small delay to ensure camera has time to claim its interfaces before serial
+            // opens its own connection and claims the serial interfaces.
+            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+                usbDeviceManager.connect();
+            }, 500);
         }
 
         @Override

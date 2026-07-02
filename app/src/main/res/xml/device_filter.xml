@@ -3,14 +3,18 @@
     <!-- Generic USB Video Class (UVC) devices -->
     <usb-device class="14" subclass="1" protocol="0" />
     <usb-device class="14" subclass="2" protocol="0" />
-    
+
     <!-- Common UVC camera vendor IDs -->
     <!-- Add specific vendor/product IDs if needed -->
     <usb-device vendor-id="1133" />  <!-- Logitech -->
     <usb-device vendor-id="1452" />  <!-- Apple -->
     <usb-device vendor-id="1118" />  <!-- Microsoft -->
     <usb-device vendor-id="1155" />  <!-- Chicony -->
-    
+
     <!-- Generic catch-all for video devices -->
     <usb-device class="14" />
+
+    <!-- Openterface Mini KVM devices (composite USB devices with serial + UVC camera) -->
+    <usb-device vendor-id="6790" product-id="29987" />  <!-- 1A86:7523 - Mini KVM v1 -->
+    <usb-device vendor-id="6790" product-id="65036" />  <!-- 1A86:FE0C - Mini KVM v2 -->
 </resources>

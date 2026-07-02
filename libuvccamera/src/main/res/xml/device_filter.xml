@@ -28,4 +28,7 @@
 	<usb-device class="14"/>
 	<!-- Interface Descriptors Base Class EFh (Miscellaneous), i.e. all other UVC devices -->
 	<usb-device class="239" subclass="2" />
+	<!-- Openterface Mini KVM devices (composite USB devices with serial + UVC camera) -->
+	<usb-device vendor-id="6790" product-id="29987" />	<!-- 1A86:7523 - Mini KVM v1 -->
+	<usb-device vendor-id="6790" product-id="65036" />	<!-- 1A86:FE0C - Mini KVM v2 -->
 </usb>

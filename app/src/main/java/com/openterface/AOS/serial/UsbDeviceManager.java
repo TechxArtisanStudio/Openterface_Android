@@ -69,7 +69,8 @@ public class UsbDeviceManager {
     private TextView tvReceivedData;
     private int currentBaudrate = -1; // Track the working baudrate
     private int preferredBaudrate = DEFAULT_BAUDRATE;
-    private UsbDevice pendingDevice; // Device waiting for permission
+    private UsbDevice pendingDevice; // Device waiting for connection
+    private volatile boolean isConnecting = false; // Prevents double-connect from fallback + onDeviceOpen
 
     private static final int WRITE_WAIT_MILLIS = 2000;
     private static final int READ_WAIT_MILLIS = 2000;
@@ -1568,8 +1569,8 @@ public class UsbDeviceManager {
                     }
                 }
             } else if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(action)) {
-                Log.d(TAG, "USB device attached - reinitializing");
-                init();
+                Log.d(TAG, "USB device attached - re-detecting (camera connects first)");
+                detectDeviceOnly();
             } else if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
                 UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
                 if (device != null && driver != null && driver.getDevice().equals(device)) {
@@ -1584,8 +1585,8 @@ public class UsbDeviceManager {
 
     public void handleUsbDevice(Intent intent) {
         if ("android.hardware.usb.action.USB_DEVICE_ATTACHED".equals(intent.getAction())) {
-            Log.d(TAG, "handleUsbDevice data successful");
-            init();
+            Log.d(TAG, "handleUsbDevice - detecting device (camera connects first)");
+            detectDeviceOnly();
         }
     }
 
@@ -1597,79 +1598,17 @@ public class UsbDeviceManager {
         mSerialAsyncHandler = new Handler(mSerialThread.getLooper());
     }
 
+    /**
+     * Initialize serial: detect device and register receivers, but do NOT auto-connect.
+     * This allows the camera to connect first (and claim UVC interfaces) before serial
+     * claims the serial interfaces. Call {@link #connect()} after the camera is open.
+     *
+     * A 3-second safety fallback will auto-connect serial if the camera doesn't connect
+     * in time (e.g. camera permission denied, or no UVC interface on the device).
+     */
     public void init() {
-        Log.d(TAG, "Initializing UsbDeviceManager - scanning for Openterface devices");
-        mSerialAsyncHandler.post(() -> {
-            // First, scan ALL USB devices to find Openterface devices
-            UsbDevice openterfaceDevice = detectOpenterfaceDevice();
-            
-            if (openterfaceDevice == null) {
-                Log.w(TAG, "No Openterface serial devices detected");
-                Log.d(TAG, "Please ensure your Openterface device is connected and powered");
-                if (onConnectionStatusListener != null) {
-                    onConnectionStatusListener.onError("No Openterface devices found (VID:PID should be 1A86:7523 or 1A86:FE0C)");
-                }
-                return;
-            }
-            
-            int vid = openterfaceDevice.getVendorId();
-            int pid = openterfaceDevice.getProductId();
-            String deviceType = (pid == 0xFE0C) ? "Mini-KVM v2" : (pid == 0x7523) ? "Mini-KVM v1" : "Unknown";
-            
-            Log.i(TAG, "Found Openterface device: " + 
-                String.format("%04X:%04X", vid, pid) + " (" + deviceType + ")" +
-                " - " + openterfaceDevice.getProductName());
-            
-            // Now try to get a driver for this specific device with enhanced probing
-            ProbeTable customTable = new ProbeTable();
-            customTable.addProduct(vid, pid, Ch34xSerialDriver.class);
-            
-            // Create custom prober with our device support
-            UsbSerialProber prober = new UsbSerialProber(customTable);
-            List<UsbSerialDriver> availableDrivers = prober.findAllDrivers(usbManager);
-            
-            // If custom probing fails, try default prober as fallback
-            if (availableDrivers.isEmpty()) {
-                Log.w(TAG, "Custom prober failed, trying default prober...");
-                availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(usbManager);
-                
-                // Filter to only include our device
-                availableDrivers = availableDrivers.stream()
-                    .filter(d -> d.getDevice().getVendorId() == vid && d.getDevice().getProductId() == pid)
-                    .collect(java.util.stream.Collectors.toList());
-            }
-            
-            if (availableDrivers.isEmpty()) {
-                Log.e(TAG, "No compatible driver found for Openterface device " + 
-                    String.format("%04X:%04X", vid, pid));
-                Log.e(TAG, "This may indicate a driver compatibility issue or USB subsystem problem");
-                if (onConnectionStatusListener != null) {
-                    onConnectionStatusListener.onError("No compatible serial driver for detected device. Device: " + 
-                        String.format("%04X:%04X", vid, pid) + " (" + deviceType + ")");
-                }
-                return;
-            }
-            
-            driver = availableDrivers.get(0);
-            UsbDevice device = driver.getDevice();
-            
-            Log.d(TAG, "Successfully created driver for device: " + 
-                String.format("%04X:%04X", device.getVendorId(), device.getProductId()));
-            Log.d(TAG, "Driver class: " + driver.getClass().getSimpleName());
-            Log.d(TAG, "Available ports: " + driver.getPorts().size());
-            
-            // Apply device-specific configuration
-            applyDeviceSpecificConfig(device);
-            
-            // Check permission before attempting connection
-            if (!usbManager.hasPermission(device)) {
-                Log.d(TAG, "No permission for device, requesting permission...");
-                requestPermissionAndConnect(device);
-            } else {
-                Log.d(TAG, "Device already has permission, connecting directly...");
-                connectWithPermission(device);
-            }
-        });
+        Log.d(TAG, "Initializing UsbDeviceManager - detect only (camera connects first)");
+        detectDeviceOnly();
 
         IntentFilter filter = new IntentFilter();
         filter.addAction(UsbManager.ACTION_USB_DEVICE_ATTACHED);
@@ -1679,6 +1618,134 @@ public class UsbDeviceManager {
         } else {
             context.registerReceiver(usbReceiver, filter);
         }
+
+        // Safety fallback: if camera doesn't connect within 3 seconds, connect serial anyway
+        // so the user at least gets keyboard/mouse even if camera fails
+        new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
+            if (!isConnected()) {
+                Log.w(TAG, "init: 3s timeout — camera didn't connect, connecting serial anyway");
+                connect();
+            } else {
+                Log.d(TAG, "init: serial already connected or camera connected first");
+            }
+        }, 3000);
+    }
+
+    /**
+     * Detect the Openterface device and store it, but do NOT open or connect.
+     * Call {@link #connect()} after the camera has opened to avoid interface conflicts.
+     */
+    public void detectDeviceOnly() {
+        Log.d(TAG, "detectDeviceOnly - scanning for Openterface devices");
+        mSerialAsyncHandler.post(() -> {
+            UsbDevice openterfaceDevice = detectOpenterfaceDevice();
+
+            if (openterfaceDevice == null) {
+                Log.w(TAG, "No Openterface serial devices detected");
+                Log.d(TAG, "Please ensure your Openterface device is connected and powered");
+                if (onConnectionStatusListener != null) {
+                    onConnectionStatusListener.onError("No Openterface devices found (VID:PID should be 1A86:7523 or 1A86:FE0C)");
+                }
+                return;
+            }
+
+            int vid = openterfaceDevice.getVendorId();
+            int pid = openterfaceDevice.getProductId();
+            String deviceType = (pid == 0xFE0C) ? "Mini-KVM v2" : (pid == 0x7523) ? "Mini-KVM v1" : "Unknown";
+
+            Log.i(TAG, "Found Openterface device: " +
+                String.format("%04X:%04X", vid, pid) + " (" + deviceType + ")" +
+                " - " + openterfaceDevice.getProductName());
+
+            // Get a driver for this device (needed for later connection)
+            ProbeTable customTable = new ProbeTable();
+            customTable.addProduct(vid, pid, Ch34xSerialDriver.class);
+            UsbSerialProber prober = new UsbSerialProber(customTable);
+            List<UsbSerialDriver> availableDrivers = prober.findAllDrivers(usbManager);
+
+            if (availableDrivers.isEmpty()) {
+                availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(usbManager);
+                availableDrivers = availableDrivers.stream()
+                    .filter(d -> d.getDevice().getVendorId() == vid && d.getDevice().getProductId() == pid)
+                    .collect(java.util.stream.Collectors.toList());
+            }
+
+            if (availableDrivers.isEmpty()) {
+                Log.e(TAG, "No compatible driver found for Openterface device " +
+                    String.format("%04X:%04X", vid, pid));
+                return;
+            }
+
+            driver = availableDrivers.get(0);
+            applyDeviceSpecificConfig(driver.getDevice());
+
+            // Store the device for later connection - do NOT connect yet
+            pendingDevice = driver.getDevice();
+            Log.i(TAG, "Device detected and stored, waiting for camera to connect first");
+        });
+    }
+
+    /**
+     * Connect to the previously detected device. Call this AFTER the camera has
+     * opened and claimed its UVC interfaces, so that serial only claims the
+     * serial-specific interfaces without conflict.
+     *
+     * Safe to call multiple times — only the first call does anything.
+     */
+    public void connect() {
+        // Prevent double-connect (e.g. 3-second fallback + onDeviceOpen both firing)
+        if (isConnecting || isConnected()) {
+            Log.d(TAG, "connect() skipped: isConnecting=" + isConnecting + " isConnected=" + isConnected());
+            return;
+        }
+        isConnecting = true;
+
+        Log.d(TAG, "connect() - connecting serial after camera is open");
+        mSerialAsyncHandler.post(() -> {
+            UsbDevice device = pendingDevice;
+            if (device == null) {
+                Log.w(TAG, "connect() called but no device detected yet, re-scanning...");
+                device = detectOpenterfaceDevice();
+                if (device == null) {
+                    Log.w(TAG, "No Openterface device found during connect()");
+                    isConnecting = false; // Allow retry
+                    return;
+                }
+
+                // Get driver
+                int vid = device.getVendorId();
+                int pid = device.getProductId();
+                ProbeTable customTable = new ProbeTable();
+                customTable.addProduct(vid, pid, Ch34xSerialDriver.class);
+                UsbSerialProber prober = new UsbSerialProber(customTable);
+                List<UsbSerialDriver> availableDrivers = prober.findAllDrivers(usbManager);
+                if (availableDrivers.isEmpty()) {
+                    availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(usbManager);
+                    availableDrivers = availableDrivers.stream()
+                        .filter(d -> d.getDevice().getVendorId() == vid && d.getDevice().getProductId() == pid)
+                        .collect(java.util.stream.Collectors.toList());
+                }
+                if (!availableDrivers.isEmpty()) {
+                    driver = availableDrivers.get(0);
+                    applyDeviceSpecificConfig(device);
+                } else {
+                    Log.e(TAG, "No compatible driver found during connect()");
+                    isConnecting = false; // Allow retry
+                    return;
+                }
+            }
+            pendingDevice = null; // Clear so we don't connect twice
+
+            if (!usbManager.hasPermission(device)) {
+                Log.d(TAG, "No permission for device, requesting permission...");
+                requestPermissionAndConnect(device);
+                // isConnecting stays true — reset in closeDevice() on disconnect
+            } else {
+                Log.d(TAG, "Device already has permission, connecting directly...");
+                connectWithPermission(device);
+                // isConnecting stays true — reset in closeDevice() on disconnect
+            }
+        });
     }
     
     /**
@@ -1968,7 +2035,7 @@ public class UsbDeviceManager {
                 fe0cConnection = null;
                 fe0cInterface = null;
             }
-            
+
             // Clean up regular serial port
             if (port != null && port.isOpen()) {
                 port.close();
@@ -1978,6 +2045,7 @@ public class UsbDeviceManager {
             Log.d(TAG, "port close failed ", e);
         } finally {
             currentBaudrate = -1; // Reset tracked baudrate
+            isConnecting = false;  // Allow reconnect
         }
     }
 
@@ -2126,9 +2194,10 @@ public class UsbDeviceManager {
             }
         }
         
-        // Set the preferred baudrate and reinitialize
+        // Set the preferred baudrate and reconnect
+        // Camera is already open at this point, so we can connect serial immediately
         setPreferredBaudrate(baudrate);
-        init();
+        connect();
         return true;
     }
     
