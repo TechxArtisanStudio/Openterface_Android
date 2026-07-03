@@ -332,6 +332,18 @@
                             android:text="@string/KeyMouse_Abs_Drag_Ctrl"
                             android:textColor="@color/white" />
 
+                        <android.widget.Button
+                            android:id="@+id/Abs_ctrl_trackpad_button"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginHorizontal="5dp"
+                            android:background="@android:color/transparent"
+                            android:drawableTop="@drawable/baseline_touch_app_24"
+                            android:theme="@style/FontStyle"
+                            android:text="@string/KeyMouse_Trackpad_Ctrl"
+                            android:textColor="@color/white" />
+
                     </LinearLayout>
 
                     <android.widget.Button

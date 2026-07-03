@@ -40,6 +40,7 @@ import com.openterface.AOS.R;
 import com.openterface.AOS.activity.MainActivity;
 import com.openterface.AOS.drawerLayout.ZoomLayoutDeal;
 import com.openterface.AOS.target.HidManager;
+import com.openterface.AOS.target.MouseManager;
 import com.serenegiant.widget.AspectRatioTextureView;
 
 /**
@@ -56,12 +57,36 @@ public class CustomTouchListener implements View.OnTouchListener {
 
     private static final String TAG = "OP-MOUSE";
     private static boolean KeyMouse_state, keyMouseAbsCtrl;
+    private static boolean virtualTrackpadMode = false;
+
+    /**
+     * Set mouse control mode.
+     * @param keyMouseState true = absolute mode, false = relative/trackpad
+     * @param keyMouseAbsCtrlState true = absolute drag mode
+     */
+    public static void KeyMouse_state(boolean keyMouseState, boolean keyMouseAbsCtrlState) {
+        KeyMouse_state = keyMouseState;
+        keyMouseAbsCtrl = keyMouseAbsCtrlState;
+    }
+
+    /**
+     * Enable/disable virtual trackpad mode.
+     * When enabled, all drags send relative movements (like a laptop trackpad),
+     * and sensitivity is scaled by 1/zoomScale for precise control when zoomed in.
+     */
+    public static void setVirtualTrackpadMode(boolean enabled) {
+        virtualTrackpadMode = enabled;
+    }
+
+    public static boolean isVirtualTrackpadMode() {
+        return virtualTrackpadMode;
+    }
 
     //system module
     private static UsbDeviceManager usbDeviceManager;
     private Handler handler = new Handler();
     private Runnable twoFingerPressRunnable;
-    private final TextView floatingLabel;
+    private TextView floatingLabel;
     private static MainActivity activity;
 
     //Event processing time
@@ -100,7 +125,7 @@ public class CustomTouchListener implements View.OnTouchListener {
 
     //zoom set
     private final DrawerLayout drawerLayout;
-    private final boolean isPortraitMode;
+    private static boolean isPortraitMode;
 
     private long rightClickCurrentTime;
     private long rightReleaseCurrentTime;
@@ -128,6 +153,11 @@ public class CustomTouchListener implements View.OnTouchListener {
     // Gesture phase tracking — prevents single-click from firing after two-finger gesture
     private boolean inTwoFingerSequence = false;
 
+    // Pending initial absolute position send — delayed to allow 2-finger gesture detection
+    // so we don't send mouse data when the user intends to pan/scroll the view
+    private Runnable pendingInitialAbsDown = null;
+    private boolean initialAbsDownSent = false;
+
     // Two-finger right-click button state
     private boolean rightButtonPressed = false;      // 右键当前是否按下
     private boolean isTwoFingerClick = false;      // 是否为点击模式(未拖动)
@@ -151,11 +181,6 @@ public class CustomTouchListener implements View.OnTouchListener {
     // Drag mode state
     private boolean isDragMode = false;      // Long-press drag mode (left button held until tap)
     private Runnable longPressRunnable = null;
-
-    public static void KeyMouse_state(boolean keyMouseState, boolean keyMouseAbsCtrlState) {
-        KeyMouse_state = keyMouseState;
-        keyMouseAbsCtrl = keyMouseAbsCtrlState;
-    }
 
     public CustomTouchListener(MainActivity activity, UsbDeviceManager usbDeviceManager) {
         CustomTouchListener.usbDeviceManager = usbDeviceManager;
@@ -185,14 +210,22 @@ public class CustomTouchListener implements View.OnTouchListener {
                 int toolType = event.getToolType(i);
                 switch (toolType) {
                     case MotionEvent.TOOL_TYPE_MOUSE:
-                        if(KeyMouse_state){
+                        if(KeyMouse_state && !virtualTrackpadMode){
+                            // Map touch coords to content coords (viewport-aware)
+                            float[] content = mapToContentCoords(cursorX, cursorY,
+                                    getTouchViewWidth(), getTouchViewHeight());
                             if(keyMouseAbsCtrl){
-                                HidManager.sendHexAbsDragData(cursorX, cursorY);
+                                HidManager.sendHexAbsDragData(content[0], content[1]);
                             }else {
-                                HidManager.sendHexAbsData(cursorX, cursorY);
+                                HidManager.sendHexAbsData(content[0], content[1]);
                             }
                         }else {
-                            HidManager.sendHexRelData("SecNullData", cursorX, cursorY, lastMoveMSX, lastMoveMSY);
+                            // Feature 2: Apply zoom-aware sensitivity scaling to deltas
+                            float zoomScale = getEffectiveZoomScale();
+                            float effectiveDeltaScale = 1.0f / zoomScale;
+                            float adjX = lastMoveMSX + (cursorX - lastMoveMSX) * effectiveDeltaScale;
+                            float adjY = lastMoveMSY + (cursorY - lastMoveMSY) * effectiveDeltaScale;
+                            HidManager.sendHexRelData("SecNullData", adjX, adjY, lastMoveMSX, lastMoveMSY);
                             lastMoveMSX = cursorX;
                             lastMoveMSY = cursorY;
                         }
@@ -218,6 +251,10 @@ public class CustomTouchListener implements View.OnTouchListener {
         // final ACTION_UP (or ACTION_CANCEL) is "last finger lifts".
         if (action == MotionEvent.ACTION_POINTER_DOWN || pointerCount == 2) {
             inTwoFingerSequence = true;
+            // User is starting a 2-finger gesture (scroll/pinch) — cancel any pending
+            // initial absolute position from the first finger so we don't send mouse data
+            // when the user's intent is to move the viewpoint
+            cancelPendingInitialAbsDown();
         }
 
         if (inTwoFingerSequence) {
@@ -255,6 +292,7 @@ public class CustomTouchListener implements View.OnTouchListener {
                 tapDownTime = event.getEventTime();
                 tapCancelled = false;
                 suppressSingleTapFromDoubleTap = false;
+                initialAbsDownSent = false;
 
                 // Cancel any pending long press
                 if (longPressRunnable != null) {
@@ -264,7 +302,24 @@ public class CustomTouchListener implements View.OnTouchListener {
 
                 detectDoubleClick(event);
                 initHandActionDownMouse(event);
-                handActionDownMouse(event);
+                // Track button state but DON'T send absolute position yet — delay it
+                // so we can cancel if a second finger comes down (2-finger scroll/pan)
+                trackButtonState(event);
+
+                // Schedule delayed initial abs down — fires only if no 2nd finger arrives
+                pendingInitialAbsDown = () -> {
+                    if (!initialAbsDownSent && KeyMouse_state && !virtualTrackpadMode) {
+                        try {
+                            float[] content = mapToContentCoords(startMoveMSX, startMoveMSY,
+                                    getTouchViewWidth(), getTouchViewHeight());
+                            HidManager.sendHexAbsData(content[0], content[1]);
+                        } catch (Exception e) {
+                            Log.e(TAG, "pendingInitialAbsDown error: " + e.getMessage(), e);
+                        }
+                        initialAbsDownSent = true;
+                    }
+                };
+                handler.postDelayed(pendingInitialAbsDown, 80);
 
                 // Schedule long press detection for drag mode (KeyCmd-style: toggle drag on long press)
                 longPressRunnable = () -> {
@@ -314,6 +369,9 @@ public class CustomTouchListener implements View.OnTouchListener {
                     handler.removeCallbacks(longPressRunnable);
                     longPressRunnable = null;
                 }
+
+                // Cancel pending initial abs down
+                cancelPendingInitialAbsDown();
 
                 long duration = event.getEventTime() - tapDownTime;
                 float distLifted = dist(x, y, tapDownX, tapDownY);
@@ -386,6 +444,7 @@ public class CustomTouchListener implements View.OnTouchListener {
                     handler.removeCallbacks(longPressRunnable);
                     longPressRunnable = null;
                 }
+                cancelPendingInitialAbsDown();
                 cancelPendingSingleTap();
                 if (isDragMode) {
                     releaseMouseAndReset();
@@ -448,14 +507,56 @@ public class CustomTouchListener implements View.OnTouchListener {
     }
 
     /**
+     * Move the mouse cursor to the center of the currently visible viewport.
+     * Used after two-finger pan ends or PiP indicator drag ends, so the mouse follows the view.
+     *
+     * How it works: Uses mapToContentCoords to inverse-transform the viewport center
+     * (viewWidth/2, viewHeight/2) back to content coordinates, then scales to HID coordinates.
+     */
+    public static void moveMouseToViewportCenter() {
+        if (activity == null || activity.mBinding == null
+            || activity.mBinding.viewMainPreview == null) {
+            return;
+        }
+
+        float viewWidth = activity.mBinding.viewMainPreview.getWidth();
+        float viewHeight = activity.mBinding.viewMainPreview.getHeight();
+        if (viewWidth <= 0 || viewHeight <= 0) return;
+
+        // Use mapToContentCoords to inverse-transform the viewport center to content coordinates
+        float[] content = mapToContentCoords(viewWidth / 2f, viewHeight / 2f, viewWidth, viewHeight);
+
+        // Content coords are in range [0, viewWidth] x [0, viewHeight]
+        // HidManager.sendHexAbsData expects HID reference coordinates
+        // Scale proportionally to convert
+        int hidWidth = HidManager.getScreenWidth();
+        int hidHeight = HidManager.getScreenHeight();
+        float hidX = content[0] / viewWidth * hidWidth;
+        float hidY = content[1] / viewHeight * hidHeight;
+
+        HidManager.sendHexAbsData(hidX, hidY);
+        Log.d(TAG, "moveMouseToViewportCenter: content=(" + content[0] + "," + content[1]
+            + ") hid=(" + hidX + "," + hidY + ")");
+    }
+
+    /**
      * Normal mouse move (no button pressed)
-     * In portrait zoom mode: auto-pan view to keep mouse centered
+     * Feature 2: Applies zoom-aware sensitivity scaling to relative mode deltas.
+     * Feature 3: In virtual trackpad mode, uses relative movement regardless of mode.
      */
     private void handleNormalMove(float x, float y) {
-        if (KeyMouse_state) {
-            HidManager.sendHexAbsData(x, y);
+        if (KeyMouse_state && !virtualTrackpadMode) {
+            // Absolute mode: map touch coords to content coords (viewport-aware)
+            firePendingInitialAbsDown();
+            float[] content = mapToContentCoords(x, y, getTouchViewWidth(), getTouchViewHeight());
+            HidManager.sendHexAbsData(content[0], content[1]);
         } else {
-            HidManager.sendHexRelData("SecNullData", x, y, lastMoveMSX, lastMoveMSY);
+            // Relative mode or virtual trackpad mode: apply zoom-aware scaling
+            float zoomScale = getEffectiveZoomScale();
+            float effectiveDeltaScale = 1.0f / zoomScale;
+            float adjX = lastMoveMSX + (x - lastMoveMSX) * effectiveDeltaScale;
+            float adjY = lastMoveMSY + (y - lastMoveMSY) * effectiveDeltaScale;
+            HidManager.sendHexRelData("SecNullData", adjX, adjY, lastMoveMSX, lastMoveMSY);
             lastMoveMSX = x;
             lastMoveMSY = y;
         }
@@ -463,17 +564,168 @@ public class CustomTouchListener implements View.OnTouchListener {
 
     /**
      * Drag mode mouse move (left button held)
-     * In portrait zoom mode: auto-pan view to keep mouse centered
+     * Feature 2: Applies zoom-aware sensitivity scaling to relative mode deltas.
+     * Feature 3: In virtual trackpad mode, uses relative movement regardless of mode.
      */
     private void handleDragMove(float x, float y) {
-        if (KeyMouse_state) {
-            // In drag mode with absolute: send with left button pressed
-            HidManager.sendHexAbsButtonClickData("SecLeftData", x, y);
+        if (KeyMouse_state && !virtualTrackpadMode) {
+            // In drag mode with absolute: map touch coords to content coords (viewport-aware)
+            firePendingInitialAbsDown();
+            float[] content = mapToContentCoords(x, y, getTouchViewWidth(), getTouchViewHeight());
+            HidManager.sendHexAbsButtonClickData("SecLeftData", content[0], content[1]);
         } else {
-            // In drag mode with relative: send with left button pressed
-            HidManager.sendHexRelData("SecLeftData", x, y, lastMoveMSX, lastMoveMSY);
+            // In drag mode with relative or virtual trackpad: apply zoom-aware scaling
+            float zoomScale = getEffectiveZoomScale();
+            float effectiveDeltaScale = 1.0f / zoomScale;
+            float adjX = lastMoveMSX + (x - lastMoveMSX) * effectiveDeltaScale;
+            float adjY = lastMoveMSY + (y - lastMoveMSY) * effectiveDeltaScale;
+            HidManager.sendHexRelData("SecLeftData", adjX, adjY, lastMoveMSX, lastMoveMSY);
             lastMoveMSX = x;
             lastMoveMSY = y;
+        }
+    }
+
+    /**
+     * Get the effective zoom scale (portrait or landscape, whichever is active).
+     * Returns >= 1.0f. Used for dynamic sensitivity scaling (Feature 2).
+     */
+    private static float getEffectiveZoomScale() {
+        if (isPortraitMode) {
+            return Math.max(1.0f, mPortraitZoomScale);
+        } else if (activity != null) {
+            View drawer = activity.findViewById(R.id.drawer_layout);
+            if (drawer != null) {
+                return Math.max(1.0f, drawer.getScaleX());
+            }
+        }
+        return 1.0f;
+    }
+
+    /**
+     * Map touch coordinates (view space) to camera content coordinates.
+     *
+     * Key insight: The camera content fills the TextureView's measured layout bounds
+     * (aspect ratio is maintained by AspectRatioTextureView's onMeasure). The zoom
+     * Matrix transform (scale around center pivot + translate) visually scales the
+     * content — to map a touch position back to the original content space, we apply
+     * the INVERSE transform.
+     *
+     * The viewport center on screen and the HID cursor position represent the same
+     * point on the target screen.
+     *
+     * Returns coordinates in [0, viewWidth] × [0, viewHeight] range (matches the
+     * camera content space), which MouseManager then converts to HID [0, 4095].
+     */
+    private static float[] mapToContentCoords(float touchX, float touchY,
+                                                float viewWidth, float viewHeight) {
+        float contentX = touchX;
+        float contentY = touchY;
+
+        if (isPortraitMode) {
+            // Apply inverse viewport transform:
+            //   viewX = (contentX - pivotX) * zoomScale + pivotX + translateX
+            //   → contentX = (viewX - translateX - pivotX) / zoomScale + pivotX
+            float zoomScale = Math.max(1.0f, mPortraitZoomScale);
+            if (zoomScale > 1.0f) {
+                float pivotX = viewWidth / 2f;
+                float pivotY = viewHeight / 2f;
+                contentX = (touchX - mPortraitTranslateX - pivotX) / zoomScale + pivotX;
+                contentY = (touchY - mPortraitTranslateY - pivotY) / zoomScale + pivotY;
+            }
+        } else if (activity != null) {
+            // Landscape mode: drawerLayout uses scaleX (pivot at 0,0) + scrollTo
+            View drawer = activity.findViewById(R.id.drawer_layout);
+            if (drawer != null) {
+                float scaleX = Math.max(1.0f, drawer.getScaleX());
+                if (scaleX > 1.0f) {
+                    float scrollX = drawer.getScrollX();
+                    float scrollY = drawer.getScrollY();
+                    contentX = (touchX + scrollX) / scaleX;
+                    contentY = (touchY + scrollY) / scaleX;
+                }
+            }
+        }
+
+        // Clamp to valid content range
+        contentX = Math.max(0, Math.min(contentX, viewWidth));
+        contentY = Math.max(0, Math.min(contentY, viewHeight));
+
+        return new float[]{contentX, contentY};
+    }
+
+    /**
+     * Get the touch target view width (main preview TextureView).
+     */
+    private static float getTouchViewWidth() {
+        if (activity != null && activity.mBinding != null
+            && activity.mBinding.viewMainPreview != null) {
+            float w = activity.mBinding.viewMainPreview.getWidth();
+            if (w > 0) return w;
+        }
+        return MouseManager.screenWidth;
+    }
+
+    /**
+     * Get the touch target view height (main preview TextureView).
+     */
+    private static float getTouchViewHeight() {
+        if (activity != null && activity.mBinding != null
+            && activity.mBinding.viewMainPreview != null) {
+            float h = activity.mBinding.viewMainPreview.getHeight();
+            if (h > 0) return h;
+        }
+        return MouseManager.screenHeight;
+    }
+
+    /**
+     * Get the floating label view, re-fetching if null.
+     * The view reference can become stale after layout reload (e.g., orientation change).
+     */
+    private TextView getFloatingLabel() {
+        if (floatingLabel == null && activity != null) {
+            floatingLabel = activity.findViewById(R.id.floating_label);
+        }
+        return floatingLabel;
+    }
+
+    /**
+     * Fire the pending initial absolute position immediately (if not already sent).
+     * Called before sending move/click data in absolute mode to ensure the cursor
+     * is at the correct position.
+     */
+    private void firePendingInitialAbsDown() {
+        if (!initialAbsDownSent && pendingInitialAbsDown != null) {
+            handler.removeCallbacks(pendingInitialAbsDown);
+            pendingInitialAbsDown.run();
+        }
+    }
+
+    /**
+     * Cancel the pending initial absolute position send.
+     * Called when a 2-finger gesture is detected so we don't send mouse data
+     * when the user is trying to move the viewpoint.
+     */
+    private void cancelPendingInitialAbsDown() {
+        if (pendingInitialAbsDown != null) {
+            handler.removeCallbacks(pendingInitialAbsDown);
+            pendingInitialAbsDown = null;
+        }
+    }
+
+    /**
+     * Track external mouse button state without sending absolute position.
+     * The position send is delayed to avoid sending data during 2-finger gestures.
+     */
+    private void trackButtonState(MotionEvent event) {
+        int buttonState = event.getButtonState();
+        if ((buttonState & MotionEvent.BUTTON_PRIMARY) != 0) {
+            mouseLeftClick = true;
+        }
+        if ((buttonState & MotionEvent.BUTTON_SECONDARY) != 0) {
+            mouseRightClick = true;
+        }
+        if ((buttonState & MotionEvent.BUTTON_TERTIARY) != 0) {
+            mouseScrollClick = true;
         }
     }
 
@@ -632,9 +884,11 @@ public class CustomTouchListener implements View.OnTouchListener {
                     Log.d(TAG, "First finger lifted during drag/pinch — no right click");
                 } else if (isTwoFingerClick) {
                     // Still in tap mode — send RIGHT CLICK
-                    if (KeyMouse_state) {
-                        HidManager.sendHexAbsButtonClickData("SecRightData", twoFingerDownCenterX, twoFingerDownCenterY);
-                        HidManager.sendHexAbsData(twoFingerDownCenterX, twoFingerDownCenterY);
+                    if (KeyMouse_state && !virtualTrackpadMode) {
+                        float[] content = mapToContentCoords(twoFingerDownCenterX, twoFingerDownCenterY,
+                                getTouchViewWidth(), getTouchViewHeight());
+                        HidManager.sendHexAbsButtonClickData("SecRightData", content[0], content[1]);
+                        HidManager.sendHexAbsData(content[0], content[1]);
                     } else {
                         HidManager.sendHexRelData("SecRightData",
                                 twoFingerDownCenterX, twoFingerDownCenterY, 0, 0);
@@ -663,9 +917,11 @@ public class CustomTouchListener implements View.OnTouchListener {
                 // Only send right click if drag/pinch was never confirmed
                 if (!twoFingerDragConfirmed) {
                     // Confirmed tap — send RIGHT CLICK
-                    if (KeyMouse_state) {
-                        HidManager.sendHexAbsButtonClickData("SecRightData", twoFingerDownCenterX, twoFingerDownCenterY);
-                        HidManager.sendHexAbsData(twoFingerDownCenterX, twoFingerDownCenterY);
+                    if (KeyMouse_state && !virtualTrackpadMode) {
+                        float[] content = mapToContentCoords(twoFingerDownCenterX, twoFingerDownCenterY,
+                                getTouchViewWidth(), getTouchViewHeight());
+                        HidManager.sendHexAbsButtonClickData("SecRightData", content[0], content[1]);
+                        HidManager.sendHexAbsData(content[0], content[1]);
                     } else {
                         HidManager.sendHexRelData("SecRightData",
                                 twoFingerDownCenterX, twoFingerDownCenterY, 0, 0);
@@ -673,6 +929,11 @@ public class CustomTouchListener implements View.OnTouchListener {
                     }
                     Log.d(TAG, "Two-finger final lift → RIGHT CLICK");
                 } else {
+                    // Two-finger drag ended — if zoomed in, move cursor to viewport center
+                    if (isPortraitMode && mPortraitZoomScale > 1.0f
+                        && KeyMouse_state && !virtualTrackpadMode) {
+                        moveMouseToViewportCenter();
+                    }
                     Log.d(TAG, "Two-finger drag/pinch ended — no right click");
                 }
 
@@ -694,8 +955,10 @@ public class CustomTouchListener implements View.OnTouchListener {
      * Release right button — sends release command for both abs and rel modes.
      */
     private void releaseRightButton() {
-        if (KeyMouse_state) {
-            HidManager.sendHexAbsData(lastMoveMSX, lastMoveMSY);
+        if (KeyMouse_state && !virtualTrackpadMode) {
+            float[] content = mapToContentCoords(lastMoveMSX, lastMoveMSY,
+                    getTouchViewWidth(), getTouchViewHeight());
+            HidManager.sendHexAbsData(content[0], content[1]);
         } else {
             HidManager.releaseMSRelData();
         }
@@ -703,11 +966,27 @@ public class CustomTouchListener implements View.OnTouchListener {
 
     private void handleSingleClick(float x, float y) {
         Log.d(TAG, "Single click at (" + x + "," + y + ")");
-        if (KeyMouse_state) {
-            HidManager.sendHexAbsButtonClickData("SecLeftData", x, y);
-            handler.postDelayed(() -> HidManager.sendHexAbsData(x, y), 50);
+        if (KeyMouse_state && !virtualTrackpadMode) {
+            // Absolute mode: map coords to content space (viewport-aware), click at touched position
+            firePendingInitialAbsDown();
+            float[] content = mapToContentCoords(x, y, getTouchViewWidth(), getTouchViewHeight());
+            Log.d(TAG, "handleSingleClick: content=(" + content[0] + "," + content[1] + ")");
+            try {
+                HidManager.sendHexAbsButtonClickData("SecLeftData", content[0], content[1]);
+                final float cx = content[0], cy = content[1];
+                handler.postDelayed(() -> {
+                    try {
+                        HidManager.sendHexAbsData(cx, cy);
+                    } catch (Exception e) {
+                        Log.e(TAG, "handleSingleClick release error: " + e.getMessage());
+                    }
+                }, 50);
+            } catch (Exception e) {
+                Log.e(TAG, "handleSingleClick error: " + e.getMessage(), e);
+            }
         } else {
-            HidManager.sendHexRelData("SecLeftData", x, y, lastMoveMSX, lastMoveMSY);
+            // Relative mode or virtual trackpad: send 0-delta click at cursor's current position
+            HidManager.sendHexRelData("SecLeftData", lastMoveMSX, lastMoveMSY, lastMoveMSX, lastMoveMSY);
             handler.postDelayed(() -> HidManager.releaseMSRelData(), 50);
         }
     }
@@ -716,8 +995,14 @@ public class CustomTouchListener implements View.OnTouchListener {
         Log.d(TAG, "Double click!");
         // KeyCmd-style: suppress single-tap after double-tap
         suppressSingleTapFromDoubleTap = true;
-        if (KeyMouse_state) {
-            HidManager.handleDoubleClickAbs(startMoveMSX, startMoveMSY);
+        if (KeyMouse_state && !virtualTrackpadMode) {
+            try {
+                float[] content = mapToContentCoords(startMoveMSX, startMoveMSY,
+                        getTouchViewWidth(), getTouchViewHeight());
+                HidManager.handleDoubleClickAbs(content[0], content[1]);
+            } catch (Exception e) {
+                Log.e(TAG, "handleDoubleClick error: " + e.getMessage(), e);
+            }
         } else {
             HidManager.handleDoubleClickRel();
         }
@@ -740,12 +1025,13 @@ public class CustomTouchListener implements View.OnTouchListener {
      * Release mouse state — sends appropriate release command for both abs and rel modes.
      */
     private void releaseMouseAndReset() {
-        if (KeyMouse_state) {
-            // In absolute mode: send a move to current position with no buttons pressed
-            // We use the last known position to avoid cursor jump
-            HidManager.sendHexAbsData(lastMoveMSX, lastMoveMSY);
+        if (KeyMouse_state && !virtualTrackpadMode) {
+            // In absolute mode: map coords to content space, send move to current position
+            float[] content = mapToContentCoords(lastMoveMSX, lastMoveMSY,
+                    getTouchViewWidth(), getTouchViewHeight());
+            HidManager.sendHexAbsData(content[0], content[1]);
         } else {
-            // In relative mode: just release buttons, no movement
+            // In relative mode or virtual trackpad: just release buttons, no movement
             HidManager.releaseMSRelData();
         }
     }
@@ -771,9 +1057,14 @@ public class CustomTouchListener implements View.OnTouchListener {
             Log.d(TAG, "Middle button pressed");
         }
 
-        if (KeyMouse_state){
-            Log.d(TAG, "KeyMouse_state");
-            HidManager.sendHexAbsData(startMoveMSX, startMoveMSY);
+        if (KeyMouse_state && !virtualTrackpadMode){
+            try {
+                float[] content = mapToContentCoords(startMoveMSX, startMoveMSY,
+                        getTouchViewWidth(), getTouchViewHeight());
+                HidManager.sendHexAbsData(content[0], content[1]);
+            } catch (Exception e) {
+                Log.e(TAG, "handActionDownMouse error: " + e.getMessage(), e);
+            }
         }
     }
 
@@ -832,16 +1123,25 @@ public class CustomTouchListener implements View.OnTouchListener {
             startMoveMSX = event.getX();
             startMoveMSY = event.getY();
 
-            if (KeyMouse_state) {
-                HidManager.sendHexAbsDragData(startMoveMSX, startMoveMSY);
+            if (KeyMouse_state && !virtualTrackpadMode) {
+                // Map to content coords (viewport-aware) for all absolute sends in this block
+                float[] content = mapToContentCoords(startMoveMSX, startMoveMSY,
+                        getTouchViewWidth(), getTouchViewHeight());
+                HidManager.sendHexAbsDragData(content[0], content[1]);
             } else {
-                HidManager.sendHexRelData("SecLeftData", startMoveMSX, startMoveMSY, lastMoveMSX, lastMoveMSY);
+                // Relative mode or virtual trackpad: apply zoom-aware scaling
+                float zoomScale = getEffectiveZoomScale();
+                float effectiveDeltaScale = 1.0f / zoomScale;
+                float adjX = lastMoveMSX + (startMoveMSX - lastMoveMSX) * effectiveDeltaScale;
+                float adjY = lastMoveMSY + (startMoveMSY - lastMoveMSY) * effectiveDeltaScale;
+                HidManager.sendHexRelData("SecLeftData", adjX, adjY, lastMoveMSX, lastMoveMSY);
                 lastMoveMSX = startMoveMSX;
                 lastMoveMSY = startMoveMSY;
             }
 
-            if (floatingLabel != null) {
-                floatingLabel.setVisibility(View.VISIBLE);
+            TextView label = getFloatingLabel();
+            if (label != null) {
+                label.setVisibility(View.VISIBLE);
             }
 
             return;
@@ -893,43 +1193,59 @@ public class CustomTouchListener implements View.OnTouchListener {
                 return;
             }
 
-            if (KeyMouse_state) {
+            if (KeyMouse_state && !virtualTrackpadMode) {
+                // Map to content coords (viewport-aware) for all absolute sends below
+                float[] absContent = mapToContentCoords(startMoveMSX, startMoveMSY,
+                        getTouchViewWidth(), getTouchViewHeight());
+                float absX = absContent[0], absY = absContent[1];
+
                 if (keyMouseAbsCtrl){
-                    HidManager.sendHexAbsDragData(startMoveMSX, startMoveMSY);
-                    floatingLabel.setVisibility(View.VISIBLE);
+                    HidManager.sendHexAbsDragData(absX, absY);
+                    TextView label = getFloatingLabel();
+                    if (label != null) {
+                        label.setVisibility(View.VISIBLE);
+                    }
                 }else {
                     if (DrawMode && currentTime - longPressStartTime >= 2000 && distance < 30){
                         HidManager.handleTwoPress();
-                        floatingLabel.setVisibility(View.GONE);
+                        TextView label = getFloatingLabel();
+                        if (label != null) {
+                            label.setVisibility(View.GONE);
+                        }
                         return;
                     } else if (DrawMode) {
-                        HidManager.sendHexAbsDragData(startMoveMSX, startMoveMSY);
+                        HidManager.sendHexAbsDragData(absX, absY);
                         return;
                     }
 
                     if (distance < 30) {
                         if (currentTime - longPressStartTime >= 1000){
-                            HidManager.sendHexAbsDragData(startMoveMSX, startMoveMSY);
+                            HidManager.sendHexAbsDragData(absX, absY);
                             DrawMode = true;
                         }
                     } else {
                         if (mouseLeftClick){
                             Log.d(TAG, "mouse left click");
-                            HidManager.sendHexAbsButtonClickData("SecLeftData", startMoveMSX, startMoveMSY);
+                            HidManager.sendHexAbsButtonClickData("SecLeftData", absX, absY);
                         }else if (mouseRightClick){
                             Log.d(TAG, "mouse right click");
-                            HidManager.sendHexAbsButtonClickData("SecRightData", startMoveMSX, startMoveMSY);
+                            HidManager.sendHexAbsButtonClickData("SecRightData", absX, absY);
                         } else if (mouseScrollClick) {
                             Log.d(TAG, "mouse scroll click");
-                            HidManager.sendHexAbsButtonClickData("SecMiddleData", startMoveMSX, startMoveMSY);
+                            HidManager.sendHexAbsButtonClickData("SecMiddleData", absX, absY);
                         }else {
-                            HidManager.sendHexAbsData(startMoveMSX, startMoveMSY);
+                            HidManager.sendHexAbsData(absX, absY);
                         }
                         longPressStartTime = currentTime;
                     }
                 }
             } else {
-                HidManager.sendHexRelData("SecNullData", startMoveMSX, startMoveMSY, lastMoveMSX, lastMoveMSY);
+                // Relative mode or virtual trackpad: apply zoom-aware scaling
+                float zoomScale = getEffectiveZoomScale();
+                float effectiveDeltaScale = 1.0f / zoomScale;
+                float adjX = lastMoveMSX + (startMoveMSX - lastMoveMSX) * effectiveDeltaScale;
+                float adjY = lastMoveMSY + (startMoveMSY - lastMoveMSY) * effectiveDeltaScale;
+                HidManager.sendHexRelData("SecNullData", adjX, adjY, lastMoveMSX, lastMoveMSY);
                 lastMoveMSX = startMoveMSX;
                 lastMoveMSY = startMoveMSY;
             }
@@ -1163,17 +1479,23 @@ public class CustomTouchListener implements View.OnTouchListener {
     }
 
     private void handActionUpMouse(MotionEvent event){
+        // Map to content coords once for all absolute sends below (viewport-aware)
+        float[] upContent = mapToContentCoords(startMoveMSX, startMoveMSY,
+                getTouchViewWidth(), getTouchViewHeight());
+        float upX = upContent[0], upY = upContent[1];
+
         // double-click end processing
         dragModeEndTime = System.currentTimeMillis();
         if (isDoubleClickPhase && ( dragModeEndTime - dragModeStartTime) > 500) {
-            if (KeyMouse_state){
-                HidManager.sendHexAbsData(startMoveMSX, startMoveMSY);//release abs state
+            if (KeyMouse_state && !virtualTrackpadMode){
+                HidManager.sendHexAbsData(upX, upY);//release abs state
             }else {
                 HidManager.sendHexRelData("SecNullData", startMoveMSX, startMoveMSY, lastMoveMSX, lastMoveMSY);
             }
             isDoubleClickPhase = false;
-            if (floatingLabel != null) {
-                floatingLabel.setVisibility(View.GONE);
+            TextView label = getFloatingLabel();
+            if (label != null) {
+                label.setVisibility(View.GONE);
             }
             hasEnteredDragMode = false;
             lastMoveMSX = 0;
@@ -1185,21 +1507,24 @@ public class CustomTouchListener implements View.OnTouchListener {
         if (clickTime - lastClickTime <= DOUBLE_CLICK_TIME_DELTA) {
             Log.d(TAG, "Double click at the same position");
 
-            if (KeyMouse_state) {
-                HidManager.handleDoubleClickAbs(startMoveMSX, startMoveMSY);
+            if (KeyMouse_state && !virtualTrackpadMode) {
+                HidManager.handleDoubleClickAbs(upX, upY);
             } else {
                 HidManager.handleDoubleClickRel();
             }
 
         }
 
-        if (KeyMouse_state) {
-            HidManager.sendHexAbsData(startMoveMSX, startMoveMSY);
+        if (KeyMouse_state && !virtualTrackpadMode) {
+            HidManager.sendHexAbsData(upX, upY);
         }else{
             HidManager.sendHexRelData("SecNullData", startMoveMSX, startMoveMSY, lastMoveMSX, lastMoveMSY);
         }
         DrawMode = false;
-        floatingLabel.setVisibility(View.GONE);
+        TextView label = getFloatingLabel();
+        if (label != null) {
+            label.setVisibility(View.GONE);
+        }
         longPressStartTime = 0;
         lastMoveMSX = 0;
         lastMoveMSY = 0;
