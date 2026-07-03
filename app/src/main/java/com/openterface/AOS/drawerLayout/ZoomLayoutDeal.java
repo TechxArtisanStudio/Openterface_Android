@@ -482,10 +482,9 @@ public class ZoomLayoutDeal {
     }
 
     private static void setMouseLocation(int setMaxViewX, int setMaxViewY) {
-        float mouseLocationX = (float)setMaxViewX + screenWidth/2.0f;
-        float mouseLocationY = (float)setMaxViewY + screenHeight/2.0f;
-        HidManager.sendHexAbsData(mouseLocationX, mouseLocationY);
-        Log.d(TAG, "mouseLocationX: " + mouseLocationX + " mouseLocationY: " + mouseLocationY);
+        // Delegate to CustomTouchListener to calculate viewport center based on current zoom/pan state
+        com.openterface.AOS.serial.CustomTouchListener.moveMouseToViewportCenter();
+        Log.d(TAG, "setMouseLocation: moved to viewport center");
     }
 
     private static void updateIndicatorPosition(float x, float y) {

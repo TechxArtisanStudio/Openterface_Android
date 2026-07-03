@@ -226,6 +226,7 @@
     <string name="KeyMouse_Abs_Drag_Ctrl">Drag\nMode</string>
     <string name="KeyMouse_Drag">Dragging</string>
     <string name="KeyMouse_Rel_Ctrl">Pointer\nMode</string>
+    <string name="KeyMouse_Trackpad_Ctrl">Trackpad\nMode</string>
     
     <!-- Baudrate Setting Dialog -->
     <string name="baudrate_dialog_title">Select Baudrate</string>

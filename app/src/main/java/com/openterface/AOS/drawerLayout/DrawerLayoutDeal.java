@@ -45,6 +45,8 @@ public class DrawerLayoutDeal extends Fragment {
 
     private final Drawable Rel_ctrl_button_drawable;
 
+    private final Drawable Abs_ctrl_trackpad_button_drawable;
+
     private boolean KeyMouse_state = false;
     private boolean keyMouseAbsCtrlState = false;
     private boolean mIsRecording;
@@ -52,6 +54,7 @@ public class DrawerLayoutDeal extends Fragment {
     private final Button Abs_ctrl_default_button;
     private final Button Abs_ctrl_drag_button;
     private final Button Rel_ctrl_button;
+    private final Button Abs_ctrl_trackpad_button;
     private final Button action_device;
     private final Button action_safely_eject;
     private final Button action_control;
@@ -90,6 +93,8 @@ public class DrawerLayoutDeal extends Fragment {
         Abs_ctrl_drag_button_drawable = Abs_ctrl_drag_button.getCompoundDrawables()[1];
         Rel_ctrl_button = activity.findViewById(R.id.Rel_ctrl_button);
         Rel_ctrl_button_drawable = Rel_ctrl_button.getCompoundDrawables()[1];
+        Abs_ctrl_trackpad_button = activity.findViewById(R.id.Abs_ctrl_trackpad_button);
+        Abs_ctrl_trackpad_button_drawable = Abs_ctrl_trackpad_button.getCompoundDrawables()[1];
 
         Rel_ctrl_button_drawable.setColorFilter(context.getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
         Rel_ctrl_button.setTextColor(context.getResources().getColor(android.R.color.holo_red_light));
@@ -181,9 +186,13 @@ public class DrawerLayoutDeal extends Fragment {
                 Rel_ctrl_button_drawable.setColorFilter(context.getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
                 Rel_ctrl_button.setTextColor(context.getResources().getColor(android.R.color.white));
 
+                Abs_ctrl_trackpad_button_drawable.setColorFilter(context.getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                Abs_ctrl_trackpad_button.setTextColor(context.getResources().getColor(android.R.color.white));
+
                 KeyMouse_state = true;
                 keyMouseAbsCtrlState = false;
                 CustomTouchListener.KeyMouse_state(KeyMouse_state, keyMouseAbsCtrlState);
+                CustomTouchListener.setVirtualTrackpadMode(false);
 
             }
         });
@@ -201,9 +210,13 @@ public class DrawerLayoutDeal extends Fragment {
                 Rel_ctrl_button_drawable.setColorFilter(context.getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
                 Rel_ctrl_button.setTextColor(context.getResources().getColor(android.R.color.white));
 
+                Abs_ctrl_trackpad_button_drawable.setColorFilter(context.getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                Abs_ctrl_trackpad_button.setTextColor(context.getResources().getColor(android.R.color.white));
+
                 KeyMouse_state = true;
                 keyMouseAbsCtrlState = true;
                 CustomTouchListener.KeyMouse_state(KeyMouse_state, keyMouseAbsCtrlState);
+                CustomTouchListener.setVirtualTrackpadMode(false);
 
             }
         });
@@ -221,9 +234,36 @@ public class DrawerLayoutDeal extends Fragment {
                 Abs_ctrl_default_button_drawable.setColorFilter(context.getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
                 Abs_ctrl_default_button.setTextColor(context.getResources().getColor(android.R.color.white));
 
+                Abs_ctrl_trackpad_button_drawable.setColorFilter(context.getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                Abs_ctrl_trackpad_button.setTextColor(context.getResources().getColor(android.R.color.white));
+
                 KeyMouse_state = false;
                 keyMouseAbsCtrlState = false;
                 CustomTouchListener.KeyMouse_state(KeyMouse_state, keyMouseAbsCtrlState);
+                CustomTouchListener.setVirtualTrackpadMode(false);
+            }
+        });
+
+        Abs_ctrl_trackpad_button.setOnClickListener(v -> {
+
+            if (Abs_ctrl_trackpad_button_drawable != null) {
+                Log.d(TAG,"in this trackpad button");
+                Abs_ctrl_trackpad_button_drawable.setColorFilter(context.getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+                Abs_ctrl_trackpad_button.setTextColor(context.getResources().getColor(android.R.color.holo_red_light));
+
+                Abs_ctrl_default_button_drawable.setColorFilter(context.getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                Abs_ctrl_default_button.setTextColor(context.getResources().getColor(android.R.color.white));
+
+                Abs_ctrl_drag_button_drawable.setColorFilter(context.getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                Abs_ctrl_drag_button.setTextColor(context.getResources().getColor(android.R.color.white));
+
+                Rel_ctrl_button_drawable.setColorFilter(context.getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
+                Rel_ctrl_button.setTextColor(context.getResources().getColor(android.R.color.white));
+
+                KeyMouse_state = false;
+                keyMouseAbsCtrlState = false;
+                CustomTouchListener.KeyMouse_state(KeyMouse_state, keyMouseAbsCtrlState);
+                CustomTouchListener.setVirtualTrackpadMode(true);
             }
         });
     }
