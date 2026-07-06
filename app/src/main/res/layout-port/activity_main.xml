@@ -62,6 +62,8 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
+        android:clipChildren="true"
+        android:clipToPadding="true"
         android:background="@color/black">
 
         <!-- Video preview - centered and preserving aspect ratio -->
