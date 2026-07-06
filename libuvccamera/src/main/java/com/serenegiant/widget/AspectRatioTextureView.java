@@ -46,6 +46,7 @@ public class AspectRatioTextureView extends TextureView    // API >= 14
     private static final String TAG = AspectRatioTextureView.class.getSimpleName();
 
     private double mRequestedAspect = -1.0;
+    private boolean mAspectRatioEnabled = true;  // 新增：控制是否强制宽高比
     private CameraViewInterface.Callback mCallback;
 
     public AspectRatioTextureView(final Context context) {
@@ -85,10 +86,26 @@ public class AspectRatioTextureView extends TextureView    // API >= 14
         return mRequestedAspect;
     }
 
+    /**
+     * 临时禁用/启用宽高比约束。
+     * 竖屏放大时需要禁用，让外部设置的 height 生效；
+     * 缩回时恢复，让 onMeasure 重新按摄像头比例计算尺寸。
+     *
+     * 注意：此方法不触发 requestLayout()，调用方需自行通过 setLayoutParams() 触发布局。
+     */
+    public void setAspectRatioEnabled(boolean enabled) {
+        mAspectRatioEnabled = enabled;
+    }
+
+    public boolean isAspectRatioEnabled() {
+        return mAspectRatioEnabled;
+    }
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 
-        if (mRequestedAspect > 0) {
+        // 竖屏放大时禁用宽高比约束，让外部设置的高度直接生效
+        if (mRequestedAspect > 0 && mAspectRatioEnabled) {
             int initialWidth = MeasureSpec.getSize(widthMeasureSpec);
             int initialHeight = MeasureSpec.getSize(heightMeasureSpec);
 

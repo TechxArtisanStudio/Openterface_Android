@@ -547,11 +547,17 @@ public class ZoomLayoutDeal {
         indicatorWidth = Math.max(20f, Math.min(indicatorWidth, pipWidth));
         indicatorHeight = Math.max(20f, Math.min(indicatorHeight, pipHeight));
 
-        // Update indicator size
+        // Update indicator size only when changed significantly (avoid layout thrash during pinch)
+        final int INDICATOR_SIZE_THRESHOLD = 3;
         ViewGroup.LayoutParams params = indicatorView.getLayoutParams();
-        params.width = (int) indicatorWidth;
-        params.height = (int) indicatorHeight;
-        indicatorView.setLayoutParams(params);
+        int newWidth = (int) indicatorWidth;
+        int newHeight = (int) indicatorHeight;
+        if (Math.abs(params.width - newWidth) > INDICATOR_SIZE_THRESHOLD
+                || Math.abs(params.height - newHeight) > INDICATOR_SIZE_THRESHOLD) {
+            params.width = newWidth;
+            params.height = newHeight;
+            indicatorView.setLayoutParams(params);
+        }
 
         if (zoomScale <= 1.0f) {
             // Not zoomed, center the indicator
@@ -691,10 +697,21 @@ public class ZoomLayoutDeal {
             normalizedX = Math.max(0, Math.min(normalizedX, 1));
             normalizedY = Math.max(0, Math.min(normalizedY, 1));
 
+            // Calculate actual content dimensions after stretch correction.
+            // Stretch correction fills viewWidth, maintains buffer aspect ratio,
+            // so contentHeight = viewWidth / bufferAspect (may be < viewHeight).
+            float bufferWidth = activity.getPreviewWidth();
+            float bufferHeight = activity.getPreviewHeight();
+            float contentWidth = viewWidth;
+            float contentHeight = viewWidth * bufferHeight / bufferWidth;
+            // Clamp: if content is larger than view, cap at view size
+            if (contentHeight > viewHeight) contentHeight = viewHeight;
+            if (contentWidth > viewWidth) contentWidth = viewWidth;
+
             // Convert normalized position to main view translation
-            // Use view's display dimensions for max translation calculation
-            float maxTranslateX = (viewWidth * (currentZoomScale - 1f)) / 2f;
-            float maxTranslateY = (viewHeight * (currentZoomScale - 1f)) / 2f;
+            // Use corrected content dimensions for accurate edge-to-edge mapping
+            float maxTranslateX = (contentWidth * (currentZoomScale - 1f)) / 2f;
+            float maxTranslateY = (contentHeight * (currentZoomScale - 1f)) / 2f;
 
             // normalizedX=0 → translateX=+max (left edge visible)
             // normalizedX=1 → translateX=-max (right edge visible)
