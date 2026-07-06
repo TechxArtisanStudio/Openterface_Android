@@ -90,12 +90,11 @@ public class AspectRatioTextureView extends TextureView    // API >= 14
      * 临时禁用/启用宽高比约束。
      * 竖屏放大时需要禁用，让外部设置的 height 生效；
      * 缩回时恢复，让 onMeasure 重新按摄像头比例计算尺寸。
+     *
+     * 注意：此方法不触发 requestLayout()，调用方需自行通过 setLayoutParams() 触发布局。
      */
     public void setAspectRatioEnabled(boolean enabled) {
-        if (mAspectRatioEnabled != enabled) {
-            mAspectRatioEnabled = enabled;
-            requestLayout();
-        }
+        mAspectRatioEnabled = enabled;
     }
 
     public boolean isAspectRatioEnabled() {

@@ -227,6 +227,8 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
     // before adding a new one (e.g. in onSurfaceTextureSizeChanged). Without this, the
     // RendererHolder accumulates stale surfaces which can cause black screen in portrait.
     private android.view.Surface mCurrentPreviewSurface = null;
+    // Reference to touch/zoom controller in portrait mode, used to update Matrix on surface ready/size change
+    private CustomTouchListener mCustomTouchListener = null;
 
     private CameraControlsDialogFragment mControlsDialog;
     private DeviceListDialogFragment mDeviceListDialog;
@@ -407,9 +409,9 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
         getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
 
         //deal mouse click and button ,you can jump CustomTouchListener java
-        CustomTouchListener customTouchListener = new CustomTouchListener(this, usbDeviceManager);
+        mCustomTouchListener = new CustomTouchListener(this, usbDeviceManager);
 
-        mBinding.viewMainPreview.setOnTouchListener(customTouchListener);
+        mBinding.viewMainPreview.setOnTouchListener(mCustomTouchListener);
 
         // Setting up the gesture detector
         gestureDetector = new GestureDetector(this, new GestureListener());
@@ -924,8 +926,8 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
         Log.d(TAG, "reloadLayoutForOrientation: views initialized");
 
         // Re-attach CustomTouchListener to the new preview view after layout re-inflation
-        CustomTouchListener customTouchListener = new CustomTouchListener(this, usbDeviceManager);
-        mBinding.viewMainPreview.setOnTouchListener(customTouchListener);
+        mCustomTouchListener = new CustomTouchListener(this, usbDeviceManager);
+        mBinding.viewMainPreview.setOnTouchListener(mCustomTouchListener);
 
         // Re-setup DrawerLayoutDeal for new layout (only in landscape)
         if (!nowPortrait) {
@@ -1231,8 +1233,18 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
             Log.w(TAG, "initPreviewView: mBinding or viewMainPreview is null, skipping");
             return;
         }
-        mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
-        Log.d(TAG, "initPreviewView: mPreviewWidth=" + mPreviewWidth + " mPreviewHeight=" + mPreviewHeight);
+        // Portrait mode: disable aspect ratio constraint, TextureView fills container, Matrix handles display transform
+        // Landscape mode: keep original aspect ratio constraint behavior
+        if (!isPortraitMode) {
+            mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
+        } else {
+            mBinding.viewMainPreview.setAspectRatioEnabled(false);
+            ViewGroup.LayoutParams lp = mBinding.viewMainPreview.getLayoutParams();
+            lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
+            lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
+            mBinding.viewMainPreview.setLayoutParams(lp);
+        }
+        Log.d(TAG, "initPreviewView: mPreviewWidth=" + mPreviewWidth + " mPreviewHeight=" + mPreviewHeight + " isPortrait=" + isPortraitMode);
         mBinding.viewMainPreview.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
             @Override
             public void onSurfaceTextureAvailable(@NonNull SurfaceTexture surface, int width, int height) {
@@ -1260,7 +1272,10 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                     // fires AFTER this method returns. Setting the buffer here ensures the Surface
                     // is created with the correct camera resolution.
                     setSurfaceTextureBufferSize(surface, mPreviewWidth, mPreviewHeight);
-                    mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
+                    // Portrait mode: skip setAspectRatio, Matrix handles display transform
+                    if (!isPortraitMode) {
+                        mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
+                    }
 
                     // Create Surface from SurfaceTexture
                     android.view.Surface previewSurface = new android.view.Surface(surface);
@@ -1280,6 +1295,10 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                             mBinding.viewMainPreview.setKeepScreenOn(true);
                         }
                     });
+                    // Portrait mode: apply Matrix to correct stretch after surface is ready
+                    if (isPortraitMode && mCustomTouchListener != null) {
+                        mBinding.viewMainPreview.post(() -> mCustomTouchListener.applyPortraitZoomTransform());
+                    }
                 } else if (mIsCameraConnected && surface == mCurrentPreviewSurfaceTexture) {
                     Log.d(TAG, "onSurfaceTextureAvailable: surface already configured by onCameraOpen, skipping duplicate setup");
                 } else if (mIsCameraConnected && mMainSurfaceAdded && surface != mCurrentPreviewSurfaceTexture) {
@@ -1295,7 +1314,10 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
 
                     // Set buffer size BEFORE creating Surface - ensures Surface uses camera resolution
                     setSurfaceTextureBufferSize(surface, mPreviewWidth, mPreviewHeight);
-                    mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
+                    // Portrait mode: skip setAspectRatio, Matrix handles display transform
+                    if (!isPortraitMode) {
+                        mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
+                    }
                     android.view.Surface previewSurface = new android.view.Surface(surface);
                     // Use RendererHolder pipeline to enable frame distribution to multiple surfaces (including PIP)
                     mCameraHelper.addSurface(previewSurface, false);
@@ -1310,36 +1332,54 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                             mBinding.viewMainPreview.setKeepScreenOn(true);
                         }
                     });
+                    // Portrait mode: apply Matrix to correct stretch after surface reconnection
+                    if (isPortraitMode && mCustomTouchListener != null) {
+                        mBinding.viewMainPreview.post(() -> mCustomTouchListener.applyPortraitZoomTransform());
+                    }
                 }
             }
 
             @Override
             public void onSurfaceTextureSizeChanged(@NonNull SurfaceTexture surface, int width, int height) {
                 Log.d(TAG, "onSurfaceTextureSizeChanged: " + width + "x" + height +
-                    " mMainSurfaceAdded=" + mMainSurfaceAdded + " mIsCameraConnected=" + mIsCameraConnected);
+                    " mMainSurfaceAdded=" + mMainSurfaceAdded + " mIsCameraConnected=" + mIsCameraConnected +
+                    " isPortrait=" + isPortraitMode);
 
                 if (mMainSurfaceAdded && mCameraHelper != null && mIsCameraConnected) {
-                    // Surface was already added by onCameraOpen, but the view size changed
-                    // (e.g. portrait mode where AspectRatioTextureView's setAspectRatio
-                    // triggers onMeasure which changes the view dimensions).
-                    // CRITICAL: Remove the OLD Surface from RendererHolder BEFORE adding
-                    // a new one. Without removing first, the RendererHolder accumulates
-                    // stale Surface objects which causes the preview to render to the
-                    // wrong surface (black screen).
-                    // Both removeSurface and addSurface post to the same async handler,
-                    // so they execute in order: remove first, then add.
-                    Log.d(TAG, "onSurfaceTextureSizeChanged: removing old surface and re-adding with new buffer size");
-                    if (mCurrentPreviewSurface != null) {
-                        mCameraHelper.removeSurface(mCurrentPreviewSurface);
+                    // In portrait mode, TextureView is always MATCH_PARENT, size changes only occur during screen rotation.
+                    // Skip setAspectRatio (portrait uses Matrix), avoid re-triggering onMeasure which causes flickering.
+                    if (!isPortraitMode) {
+                        // Surface was already added by onCameraOpen, but the view size changed
+                        // (e.g. landscape mode where AspectRatioTextureView's setAspectRatio
+                        // triggers onMeasure which changes the view dimensions).
+                        // CRITICAL: Remove the OLD Surface from RendererHolder BEFORE adding
+                        // a new one. Without removing first, the RendererHolder accumulates
+                        // stale Surface objects which causes the preview to render to the
+                        // wrong surface (black screen).
+                        // Both removeSurface and addSurface post to the same async handler,
+                        // so they execute in order: remove first, then add.
+                        Log.d(TAG, "onSurfaceTextureSizeChanged: removing old surface and re-adding with new buffer size");
+                        if (mCurrentPreviewSurface != null) {
+                            mCameraHelper.removeSurface(mCurrentPreviewSurface);
+                        }
+                        setSurfaceTextureBufferSize(surface, mPreviewWidth, mPreviewHeight);
+                        mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
+                        android.view.Surface previewSurface = new android.view.Surface(surface);
+                        mCameraHelper.addSurface(previewSurface, false);
+                        mCurrentPreviewSurfaceTexture = surface;
+                        mCurrentPreviewSurface = previewSurface;
+                        mCameraHelper.startPreview();
+                        // Keep mMainSurfaceAdded = true — we just re-added it
+                    } else {
+                        // Portrait mode: surface size changes frequently during keyboard animation, skip surface deletion/recreation to avoid crash.
+                        // Still need to set buffer size to camera native resolution to ensure clarity when zoomed.
+                        Log.d(TAG, "onSurfaceTextureSizeChanged: portrait mode, updating buffer size without surface recreation");
+                        setSurfaceTextureBufferSize(surface, mPreviewWidth, mPreviewHeight);
+                        // Update Matrix to recalculate stretch correction
+                        if (mCustomTouchListener != null) {
+                            mBinding.viewMainPreview.post(() -> mCustomTouchListener.applyPortraitZoomTransform());
+                        }
                     }
-                    setSurfaceTextureBufferSize(surface, mPreviewWidth, mPreviewHeight);
-                    mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
-                    android.view.Surface previewSurface = new android.view.Surface(surface);
-                    mCameraHelper.addSurface(previewSurface, false);
-                    mCurrentPreviewSurfaceTexture = surface;
-                    mCurrentPreviewSurface = previewSurface;
-                    mCameraHelper.startPreview();
-                    // Keep mMainSurfaceAdded = true — we just re-added it
                 } else {
                     // First time or surface was destroyed — set buffer size for later
                     if (!mMainSurfaceAdded) {
@@ -1589,7 +1629,10 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                 }
 
                 // Step 2: Set aspect ratio on the view (controls how the view is measured)
-                mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
+                // Portrait mode: skip setAspectRatio, Matrix handles display transform
+                if (!isPortraitMode) {
+                    mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
+                }
 
                 // Step 3: Set SurfaceTexture buffer size to camera resolution BEFORE creating
                 // the Surface. This is the critical step - the buffer size is read by
@@ -1619,6 +1662,11 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                 // Start preview after adding surfaces to ensure frames flow correctly
                 mCameraHelper.startPreview();
                 Log.d(TAG, "onCameraOpen: startPreview called after adding surfaces, preview=" + mPreviewWidth + "x" + mPreviewHeight);
+
+                // Portrait mode: apply Matrix to correct stretch after surface is ready
+                if (isPortraitMode && mCustomTouchListener != null) {
+                    mBinding.viewMainPreview.post(() -> mCustomTouchListener.applyPortraitZoomTransform());
+                }
             });
 
             mIsCameraConnected = true;
@@ -1729,9 +1777,12 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                 mPreviewHeight = metrics.heightPixels;
             }
         }
-        Log.d(TAG, "resizePreviewView: " + mPreviewWidth + "x" + mPreviewHeight + " (mMainSurfaceAdded=" + mMainSurfaceAdded + ")");
+        Log.d(TAG, "resizePreviewView: " + mPreviewWidth + "x" + mPreviewHeight + " (mMainSurfaceAdded=" + mMainSurfaceAdded + " isPortrait=" + isPortraitMode + ")");
         // Set the aspect ratio of TextureView to match the aspect ratio of the camera
-        mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
+        // Portrait mode: skip setAspectRatio, Matrix handles display transform
+        if (!isPortraitMode) {
+            mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
+        }
         // Update SurfaceTexture buffer to chip resolution for better zoom quality.
         // IMPORTANT: Only update buffer size if no Surface has been created from this
         // SurfaceTexture yet. Once a Surface is created (mMainSurfaceAdded=true), the
@@ -3417,7 +3468,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                     undoSnapshot = sendText;
                     undoClearEligible = true;
                     updateClearButtonIcon();
-                    // Do NOT clear editor after send (保留文本)
+                    // Do NOT clear editor after send (keep text)
                 }
 
                 // Reset send button

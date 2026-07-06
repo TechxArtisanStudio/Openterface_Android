@@ -159,9 +159,9 @@ public class CustomTouchListener implements View.OnTouchListener {
     private boolean initialAbsDownSent = false;
 
     // Two-finger right-click button state
-    private boolean rightButtonPressed = false;      // 右键当前是否按下
-    private boolean isTwoFingerClick = false;      // 是否为点击模式(未拖动)
-    private boolean twoFingerDragConfirmed = false;  // 已确认为拖动(不再发送右键)
+    private boolean rightButtonPressed = false;      // Whether right button is currently pressed
+    private boolean isTwoFingerClick = false;      // Whether in click mode (not dragged)
+    private boolean twoFingerDragConfirmed = false;  // Confirmed as drag (no longer send right click)
 
     // Two-finger pinch-to-zoom state
     private float twoFingerStartDist = 0f;       // Initial distance between two fingers
@@ -484,7 +484,8 @@ public class CustomTouchListener implements View.OnTouchListener {
 
     /**
      * Apply the current portrait zoom transform to the view
-     * Called by ZoomLayoutDeal after updating pan values
+     * Called by ZoomLayoutDeal after updating pan values (e.g., when PiP indicator is dragged)
+     * Includes stretch correction to prevent video distortion
      */
     public static void applyCurrentPortraitTransform() {
         if (mPortraitZoomScale > 1.0f && activity != null && activity.mBinding != null
@@ -495,12 +496,34 @@ public class CustomTouchListener implements View.OnTouchListener {
 
             if (viewWidth <= 0 || viewHeight <= 0) return;
 
+            // Get buffer dimensions for stretch correction
+            float bufferWidth = activity.getPreviewWidth();
+            float bufferHeight = activity.getPreviewHeight();
+            if (bufferWidth <= 0 || bufferHeight <= 0) return;
+
             Matrix matrix = new Matrix();
+
+            // Check if stretch correction is needed
+            float surfaceAspect = viewWidth / viewHeight;
+            float bufferAspect = bufferWidth / bufferHeight;
+            boolean needsCorrection = Math.abs(surfaceAspect - bufferAspect) > 0.01f;
+
+            if (needsCorrection) {
+                // Correct SurfaceTexture stretch: maintain aspect ratio, fill width, center vertically
+                float correctionScaleY = (bufferHeight * viewWidth) / (viewHeight * bufferWidth);
+                matrix.setScale(1.0f, correctionScaleY);
+                float correctedHeight = viewHeight * correctionScaleY;
+                float translateY = (viewHeight - correctedHeight) / 2f;
+                matrix.postTranslate(0, translateY);
+            }
+
+            // Apply zoom and pan
             float pivotX = viewWidth / 2f;
             float pivotY = viewHeight / 2f;
             float scale = mPortraitZoomScale;
-            matrix.setScale(scale, scale, pivotX, pivotY);
+            matrix.postScale(scale, scale, pivotX, pivotY);
             matrix.postTranslate(mPortraitTranslateX, mPortraitTranslateY);
+
             textureView.setTransform(matrix);
             textureView.invalidate();
         }
@@ -1261,65 +1284,105 @@ public class CustomTouchListener implements View.OnTouchListener {
 
     /**
      * Apply zoom using TextureView.setTransform(Matrix) for GPU-quality scaling.
-     * When zoomed in, the TextureView's physical size is expanded to show more vertical content.
+     *
+     * 竖屏模式下，TextureView 始终保持 MATCH_PARENT 填满 video_area_container。
+     * SurfaceTexture 的实际尺寸 = screenWidth × containerHeight，
+     * 会把 1920×1080 的 buffer 拉伸到非 16:9 比例。
+     * Matrix 负责：纠正拉伸 → 垂直居中 → 缩放 → 平移。
+     * 这样不改变 TextureView 物理尺寸，避免触发 onSurfaceTextureSizeChanged 导致崩溃。
      */
-    private void applyPortraitZoomTransform() {
+    /**
+     * 应用竖屏 Matrix 变换（纠正拉伸 + 缩放 + 平移）。
+     * 公开方法，供 MainActivity 在 surface 就绪 / 尺寸变化时调用。
+     */
+    public void applyPortraitZoomTransform() {
         if (activity == null || activity.mBinding == null || activity.mBinding.viewMainPreview == null) {
             return;
         }
 
         AspectRatioTextureView textureView = activity.mBinding.viewMainPreview;
 
-        // 先计算目标尺寸，返回 [targetWidth, targetHeight]；scale<=1 时返回 null（用 MATCH_PARENT）
-        int[] targetSize = expandTextureViewToTarget();
+        // Get actual SurfaceTexture dimensions (= TextureView visible area)
+        float surfaceWidth = textureView.getWidth();
+        float surfaceHeight = textureView.getHeight();
 
-        // 用目标尺寸作为 Matrix 的 pivot 中心（layout 是异步的，getWidth/getHeight 返回的还是旧值）
-        float pivotX, pivotY;
-        if (targetSize != null) {
-            pivotX = targetSize[0] / 2f;
-            pivotY = targetSize[1] / 2f;
-        } else {
-            // scale <= 1，回落到当前 view 尺寸（MATCH_PARENT 状态）
-            pivotX = textureView.getWidth() / 2f;
-            pivotY = textureView.getHeight() / 2f;
-        }
-
-        if (pivotX <= 0 || pivotY <= 0) {
+        if (surfaceWidth <= 0 || surfaceHeight <= 0) {
             return;
         }
 
-        // Create transform matrix
+        // Get camera buffer dimensions
+        float bufferWidth = activity.getPreviewWidth();
+        float bufferHeight = activity.getPreviewHeight();
+        if (bufferWidth <= 0 || bufferHeight <= 0) {
+            return;
+        }
+
+        // Create Matrix
         Matrix matrix = new Matrix();
 
-        // Uniform scaling (scaleX == scaleY)
-        float scale = mPortraitZoomScale;
+        // Check if stretch correction is needed:
+        // If SurfaceTexture aspect ratio ≠ buffer aspect ratio, it means the content is stretched
+        float surfaceAspect = surfaceWidth / surfaceHeight;
+        float bufferAspect = bufferWidth / bufferHeight;
+        boolean needsCorrection = Math.abs(surfaceAspect - bufferAspect) > 0.01f;
 
-        matrix.setScale(scale, scale, pivotX, pivotY);
+        if (needsCorrection) {
+            // SurfaceTexture stretches buffer (bufferWidth × bufferHeight) to surface (surfaceWidth × surfaceHeight)
+            // Stretch ratio: stretchX = surfaceWidth/bufferWidth, stretchY = surfaceHeight/bufferHeight
+            //
+            // Correction goal: Keep video at original 16:9 aspect ratio, fill surfaceWidth, calculate height proportionally, center vertically
+            //
+            // Step 1: Undo stretch → scaleX = bufferWidth/surfaceWidth, scaleY = bufferHeight/surfaceHeight
+            // Step 2: Uniform scale to fill width → scale = surfaceWidth/bufferWidth
+            // Combined:
+            //   scaleX = (bufferWidth/surfaceWidth) * (surfaceWidth/bufferWidth) = 1.0
+            //   scaleY = (bufferHeight/surfaceHeight) * (surfaceWidth/bufferWidth)
+            //          = (bufferHeight * surfaceWidth) / (surfaceHeight * bufferWidth)
+            float correctionScaleY = (bufferHeight * surfaceWidth) / (surfaceHeight * bufferWidth);
+            matrix.setScale(1.0f, correctionScaleY);
+
+            // Corrected content height
+            float correctedHeight = surfaceHeight * correctionScaleY;
+            // Vertical centering
+            float translateY = (surfaceHeight - correctedHeight) / 2f;
+            matrix.postTranslate(0, translateY);
+            // Horizontal: corrected width = surfaceWidth, already filled, no extra translation needed
+        }
+        // If no correction needed (surfaceAspect ≈ bufferAspect), Matrix starts from identity
+
+        // Zoom (pivot at SurfaceTexture center)
+        float zoomScale = mPortraitZoomScale;
+        float pivotX = surfaceWidth / 2f;
+        float pivotY = surfaceHeight / 2f;
+        matrix.postScale(zoomScale, zoomScale, pivotX, pivotY);
+
+        // Pan (user drag)
         matrix.postTranslate(mPortraitTranslateX, mPortraitTranslateY);
 
-        // Apply the matrix to TextureView (GPU-accelerated, bilinear filtering)
+        // Apply Matrix
         textureView.setTransform(matrix);
         textureView.invalidate();
 
-        // Sync the PiP indicator with the main view's zoom/pan state
+        // Sync PiP indicator
         ZoomLayoutDeal.updateIndicatorFromMainView(
-            scale,
+            zoomScale,
             mPortraitTranslateX,
             mPortraitTranslateY
         );
 
-        Log.d(TAG, "Portrait zoom applied: scale=" + scale +
-              " pivot=(" + pivotX + "," + pivotY + ")" +
+        Log.d(TAG, "Portrait zoom applied: scale=" + zoomScale +
+              " surface=" + surfaceWidth + "x" + surfaceHeight +
+              " needsCorrection=" + needsCorrection +
               " translateX=" + mPortraitTranslateX +
               " translateY=" + mPortraitTranslateY);
     }
 
     /**
-     * Expand TextureView's physical size when zoomed in, so more vertical content is visible.
-     * Both width and height are expanded proportionally to maintain the camera's aspect ratio,
-     * avoiding distortion. The parent's clipChildren clips any excess width beyond screen bounds.
+     * Ensure TextureView fills video_area_container (MATCH_PARENT) in portrait mode.
+     * No longer dynamically change TextureView size to avoid triggering onSurfaceTextureSizeChanged.
+     * All zoom/pan/stretch correction is handled by Matrix in applyPortraitZoomTransform().
      *
-     * @return int[]{targetWidth, targetHeight} if expanded, or null if scale <= 1 (reset to MATCH_PARENT).
+     * @return null (no longer returns target size since TextureView size is not changed)
      */
     private int[] expandTextureViewToTarget() {
         if (activity == null || activity.mBinding == null || activity.mBinding.viewMainPreview == null) {
@@ -1327,77 +1390,27 @@ public class CustomTouchListener implements View.OnTouchListener {
         }
 
         AspectRatioTextureView textureView = activity.mBinding.viewMainPreview;
-        View container = activity.mBinding.videoAreaContainer;
 
-        if (container == null) return null;
-
-        // Get screen dimensions
-        WindowManager wm = (WindowManager) activity.getSystemService("window");
-        if (wm == null) return null;
-        DisplayMetrics metrics = new DisplayMetrics();
-        wm.getDefaultDisplay().getRealMetrics(metrics);
-        int screenWidth = metrics.widthPixels;
-        int screenHeight = metrics.heightPixels;
-
-        // 用视频自然尺寸作为最小值（不缩放时的状态）
-        // 自然高度 = screenWidth / aspectRatio
-        int naturalHeight;
-        int naturalWidth = screenWidth;
-        if (activity.getPreviewHeight() > 0 && activity.getPreviewWidth() > 0) {
-            float aspectRatio = (float) activity.getPreviewWidth() / activity.getPreviewHeight();
-            naturalHeight = (int) (naturalWidth / aspectRatio);
-        } else {
-            // fallback：用当前 TextureView 的实际尺寸
-            naturalWidth = textureView.getWidth();
-            naturalHeight = textureView.getHeight();
-        }
-        if (naturalHeight <= 0 || naturalWidth <= 0) return null;
-
-        // Calculate expanded size based on zoom scale
-        // scale = 1.0 → size = naturalSize (original, matches camera aspect ratio)
-        // scale = MAX_SCALE → height = MAX_HEIGHT_RATIO * screenHeight, width scales proportionally
-        // Linear interpolation between these two points
-        final float MAX_SCALE = 3.0f;
-        final float MAX_HEIGHT_RATIO = 0.5f;  // Cap at 50% of screen height
-
-        int maxHeight = (int) (screenHeight * MAX_HEIGHT_RATIO);
-        int minHeight = naturalHeight;
-
-        float scale = mPortraitZoomScale;
-        float t = (scale - 1.0f) / (MAX_SCALE - 1.0f);  // 0 to 1 as scale goes from 1.0 to MAX_SCALE
-        t = Math.max(0f, Math.min(1f, t));
-
-        int targetHeight = minHeight + (int) ((maxHeight - minHeight) * t);
-        // 宽高同比扩展，保持摄像头画面的宽高比，避免拉伸变形
-        float heightScale = (float) targetHeight / naturalHeight;
-        int targetWidth = (int) (naturalWidth * heightScale);
-
-        // Update LayoutParams if size changed
-        ViewGroup.LayoutParams params = textureView.getLayoutParams();
-        // 缩放接近 1.0 时恢复宽高比约束，让 onMeasure 按摄像头比例计算尺寸
-        if (scale <= 1.01f) {
-            textureView.setAspectRatioEnabled(true);
-            if (params.height != ViewGroup.LayoutParams.MATCH_PARENT
-                    || params.width != ViewGroup.LayoutParams.MATCH_PARENT) {
-                params.height = ViewGroup.LayoutParams.MATCH_PARENT;
-                params.width = ViewGroup.LayoutParams.MATCH_PARENT;
-                textureView.setLayoutParams(params);
-                Log.d(TAG, "Reset TextureView to MATCH_PARENT (scale=1.0)");
-            }
-            return null;
-        } else if (params.height != targetHeight || params.width != targetWidth) {
-            // 放大时禁用宽高比约束，让扩展的尺寸生效
+        // Ensure TextureView is MATCH_PARENT in portrait mode, disable aspect ratio constraint
+        if (isPortraitMode && textureView.isAspectRatioEnabled()) {
             textureView.setAspectRatioEnabled(false);
-            params.height = targetHeight;
-            params.width = targetWidth;
-            textureView.setLayoutParams(params);
-            Log.d(TAG, "Expanded TextureView: " + targetWidth + "x" + targetHeight + " (scale=" + scale + ")");
+            ViewGroup.LayoutParams params = textureView.getLayoutParams();
+            if (params.width != ViewGroup.LayoutParams.MATCH_PARENT
+                    || params.height != ViewGroup.LayoutParams.MATCH_PARENT) {
+                params.width = ViewGroup.LayoutParams.MATCH_PARENT;
+                params.height = ViewGroup.LayoutParams.MATCH_PARENT;
+                textureView.setLayoutParams(params);
+                Log.d(TAG, "Set TextureView to MATCH_PARENT for portrait Matrix mode");
+            }
         }
-        return new int[]{targetWidth, targetHeight};
+
+        return null;  // No longer change size, return null
     }
 
     /**
-     * Reset TextureView's size back to match_parent when zoomed out.
+     * Reset TextureView when zoomed out.
+     * In portrait mode, TextureView always stays MATCH_PARENT, no need to restore.
+     * Only ensure aspect ratio constraint is disabled (Matrix handles all display transforms).
      */
     private void resetTextureViewHeight() {
         if (activity == null || activity.mBinding == null || activity.mBinding.viewMainPreview == null) {
@@ -1405,15 +1418,17 @@ public class CustomTouchListener implements View.OnTouchListener {
         }
 
         AspectRatioTextureView textureView = activity.mBinding.viewMainPreview;
-        // 恢复宽高比约束，让 onMeasure 重新按摄像头比例计算尺寸
-        textureView.setAspectRatioEnabled(true);
-        ViewGroup.LayoutParams params = textureView.getLayoutParams();
-        if (params.height != ViewGroup.LayoutParams.MATCH_PARENT
-                || params.width != ViewGroup.LayoutParams.MATCH_PARENT) {
-            params.height = ViewGroup.LayoutParams.MATCH_PARENT;
-            params.width = ViewGroup.LayoutParams.MATCH_PARENT;
-            textureView.setLayoutParams(params);
-            Log.d(TAG, "Reset TextureView to MATCH_PARENT and re-enabled aspect ratio");
+        // Keep aspect ratio constraint disabled in portrait mode
+        if (isPortraitMode && textureView.isAspectRatioEnabled()) {
+            textureView.setAspectRatioEnabled(false);
+            ViewGroup.LayoutParams params = textureView.getLayoutParams();
+            if (params.height != ViewGroup.LayoutParams.MATCH_PARENT
+                    || params.width != ViewGroup.LayoutParams.MATCH_PARENT) {
+                params.height = ViewGroup.LayoutParams.MATCH_PARENT;
+                params.width = ViewGroup.LayoutParams.MATCH_PARENT;
+                textureView.setLayoutParams(params);
+            }
+            Log.d(TAG, "Reset TextureView to MATCH_PARENT (portrait Matrix mode)");
         }
     }
 
@@ -1427,7 +1442,22 @@ public class CustomTouchListener implements View.OnTouchListener {
 
             // Define scale limits
             float MIN_SCALE = 1f;
-            float MAX_SCALE = 3.0f;
+            // Dynamically calculate max scale: video display height should not exceed specified percentage of screen height
+            // Video natural height = screenWidth / (bufferWidth / bufferHeight)
+            // maxScale = (screenHeight × MAX_DISPLAY_HEIGHT_RATIO) / naturalHeight
+            final float MAX_DISPLAY_HEIGHT_RATIO = 0.5f;  // Max video display height as ratio of screen height
+            float MAX_SCALE = 3.0f;  // Default value, calculated dynamically below
+            if (activity.getPreviewWidth() > 0 && activity.getPreviewHeight() > 0) {
+                android.util.DisplayMetrics metrics = new android.util.DisplayMetrics();
+                activity.getWindowManager().getDefaultDisplay().getRealMetrics(metrics);
+                float screenWidth = metrics.widthPixels;
+                float screenHeight = metrics.heightPixels;
+                float bufferAspect = (float) activity.getPreviewWidth() / activity.getPreviewHeight();
+                float naturalHeight = screenWidth / bufferAspect;
+                float maxHeight = screenHeight * MAX_DISPLAY_HEIGHT_RATIO;
+                MAX_SCALE = maxHeight / naturalHeight;
+                if (MAX_SCALE < MIN_SCALE) MAX_SCALE = MIN_SCALE;
+            }
 
             // Calculate new scale
             float currentScale = mPortraitZoomScale;
