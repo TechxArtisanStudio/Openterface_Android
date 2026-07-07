@@ -3144,6 +3144,12 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                 }
             });
         }
+
+        // Setup help button — opens touchpad help dialog
+        android.widget.ImageButton helpButton = view.findViewById(R.id.btn_mouse_help);
+        if (helpButton != null) {
+            helpButton.setOnClickListener(v -> com.openterface.AOS.view.TouchPadHelpDialog.show(MainActivity.this));
+        }
     }
 
     /**

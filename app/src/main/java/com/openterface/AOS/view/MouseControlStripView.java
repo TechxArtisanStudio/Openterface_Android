@@ -91,22 +91,23 @@ public class MouseControlStripView extends LinearLayout {
     private void createButtonLayout(Context context) {
         removeAllViews();
 
-        int buttonHeight = dpToPx(context, 52);
+        // Use MATCH_PARENT height so buttons fill the parent container
+        int buttonHeight = LayoutParams.MATCH_PARENT;
         int gap = dpToPx(context, 6);
 
         // Left button (weight 2)
-        btnLeft = new KeycapButton(context, "L", BTN_LEFT, buttonHeight);
+        btnLeft = new KeycapButton(context, "L", BTN_LEFT, dpToPx(context, 52));
         LayoutParams leftLp = new LayoutParams(0, buttonHeight, 2f);
         addView(btnLeft, leftLp);
 
         // Middle button (weight 1)
-        btnMiddle = new KeycapButton(context, "M", BTN_MIDDLE, buttonHeight);
+        btnMiddle = new KeycapButton(context, "M", BTN_MIDDLE, dpToPx(context, 52));
         LayoutParams middleLp = new LayoutParams(0, buttonHeight, 1f);
         middleLp.setMarginStart(gap);
         addView(btnMiddle, middleLp);
 
         // Right button (weight 2)
-        btnRight = new KeycapButton(context, "R", BTN_RIGHT, buttonHeight);
+        btnRight = new KeycapButton(context, "R", BTN_RIGHT, dpToPx(context, 52));
         LayoutParams rightLp = new LayoutParams(0, buttonHeight, 2f);
         rightLp.setMarginStart(gap);
         addView(btnRight, rightLp);
