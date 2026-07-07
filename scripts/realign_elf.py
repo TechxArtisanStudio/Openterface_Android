@@ -199,27 +199,34 @@ def main():
             else:
                 struct.pack_into('<I', new_data, shdr_off_new + 16, new_sh_offset)
 
-    # --- Update program headers ---
+    # --- Update ALL program headers (not just PT_LOAD) ---
+    # When we pad LOAD segments, ALL segment data that was after the padding
+    # point shifts. So non-LOAD segments (PT_DYNAMIC, PT_NOTE, etc.) also
+    # need their p_offset/p_vaddr/p_paddr updated. Only PT_LOAD needs p_align.
     for seg in phdrs:
-        if seg['p_type'] == 1:
-            new_offset = old_to_new(seg['p_offset'])
-            delta = new_offset - seg['p_offset']
-            new_vaddr = seg['p_vaddr'] + delta
+        new_offset = old_to_new(seg['p_offset'])
+        delta = new_offset - seg['p_offset']
+        new_vaddr = seg['p_vaddr'] + delta
 
-            phdr_off = seg['off']
-            if is_64:
-                struct.pack_into('<Q', new_data, phdr_off + 8, new_offset)   # p_offset
-                struct.pack_into('<Q', new_data, phdr_off + 16, new_vaddr)  # p_vaddr
-                struct.pack_into('<Q', new_data, phdr_off + 24, new_vaddr)  # p_paddr
+        phdr_off = seg['off']
+        if is_64:
+            struct.pack_into('<Q', new_data, phdr_off + 8, new_offset)   # p_offset
+            struct.pack_into('<Q', new_data, phdr_off + 16, new_vaddr)  # p_vaddr
+            struct.pack_into('<Q', new_data, phdr_off + 24, new_vaddr)  # p_paddr
+            if seg['p_type'] == 1:  # PT_LOAD only
                 struct.pack_into('<Q', new_data, phdr_off + 48, page_size)  # p_align
-            else:
-                struct.pack_into('<I', new_data, phdr_off + 4, new_offset)
-                struct.pack_into('<I', new_data, phdr_off + 8, new_vaddr)
-                struct.pack_into('<I', new_data, phdr_off + 12, new_vaddr)
+        else:
+            struct.pack_into('<I', new_data, phdr_off + 4, new_offset)
+            struct.pack_into('<I', new_data, phdr_off + 8, new_vaddr)
+            struct.pack_into('<I', new_data, phdr_off + 12, new_vaddr)
+            if seg['p_type'] == 1:
                 struct.pack_into('<I', new_data, phdr_off + 28, page_size)
 
+        if seg['p_type'] == 1:
             print(f"  LOAD #{seg['idx']}: 0x{seg['p_offset']:x}->0x{new_offset:x}, "
                   f"vaddr 0x{seg['p_vaddr']:x}->0x{new_vaddr:x}, align->0x{page_size:x}")
+        elif new_offset != seg['p_offset']:
+            print(f"  phdr #{seg['idx']} type=0x{seg['p_type']:x}: off 0x{seg['p_offset']:x}->0x{new_offset:x}")
 
     # Write
     with open(path, 'wb') as f:
