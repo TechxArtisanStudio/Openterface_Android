@@ -1442,10 +1442,11 @@ public class CustomTouchListener implements View.OnTouchListener {
 
             // Define scale limits
             float MIN_SCALE = 1f;
-            // Dynamically calculate max scale: video display height should not exceed specified percentage of screen height
+            // Dynamically calculate max scale: video display height should fill the available container height
+            // Container height = screenHeight - top_bar(52dp) - bottom_bar(56dp) ≈ screenHeight * 0.95
             // Video natural height = screenWidth / (bufferWidth / bufferHeight)
-            // maxScale = (screenHeight × MAX_DISPLAY_HEIGHT_RATIO) / naturalHeight
-            final float MAX_DISPLAY_HEIGHT_RATIO = 0.5f;  // Max video display height as ratio of screen height
+            // maxScale = containerHeight / naturalHeight
+            final float CONTAINER_HEIGHT_RATIO = 0.95f;  // Available height as ratio of screen height
             float MAX_SCALE = 3.0f;  // Default value, calculated dynamically below
             if (activity.getPreviewWidth() > 0 && activity.getPreviewHeight() > 0) {
                 android.util.DisplayMetrics metrics = new android.util.DisplayMetrics();
@@ -1454,8 +1455,8 @@ public class CustomTouchListener implements View.OnTouchListener {
                 float screenHeight = metrics.heightPixels;
                 float bufferAspect = (float) activity.getPreviewWidth() / activity.getPreviewHeight();
                 float naturalHeight = screenWidth / bufferAspect;
-                float maxHeight = screenHeight * MAX_DISPLAY_HEIGHT_RATIO;
-                MAX_SCALE = maxHeight / naturalHeight;
+                float containerHeight = screenHeight * CONTAINER_HEIGHT_RATIO;
+                MAX_SCALE = containerHeight / naturalHeight;
                 if (MAX_SCALE < MIN_SCALE) MAX_SCALE = MIN_SCALE;
             }
 
