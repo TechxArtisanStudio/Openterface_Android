@@ -129,51 +129,56 @@ tasks.whenTaskAdded { task ->
     }
 }
 
-// Task to realign pre-built .so libraries to 16 KB page boundaries.
-// Required for Android 15+ 16KB page size support (Google Play requirement Nov 2025).
-// Targets libraries we can't rebuild ourselves (e.g. libjingle_peerconnection_so.so).
-// Applies to both debug and release builds.
-// Runs AFTER stripDebugSymbols (which can undo alignment) and BEFORE packaging.
-task realignNativeLibs16KB {
-    description = 'Realigns pre-built .so files to 16KB page boundaries (debug + release)'
+// Native library packaging fix:
+// AGP's llvm-strip reorganizes ELF LOAD segments, breaking PLT code references
+// (PLT stubs in LOAD #1 reference GOT offsets that become invalid after LOAD #2 moves).
+// This causes SIGSEGV in libusb1.0.so's constructor on Android 16 (16KB page) devices.
+//
+// Workaround: After stripDebugSymbols runs, copy the original merged .so files
+// (which have correct LOAD segment layout) back to the packaging directory.
+// Trade-off: APK size is slightly larger (debug symbols not stripped), but app works.
+task fixStrippedNativeLibs {
+    description = 'Restores original .so files after llvm-strip breaks them (debug + release)'
     group = 'build'
 
-    // Run after strip tasks produce final .so files
-    dependsOn 'stripReleaseDebugSymbols', 'stripDebugDebugSymbols'
+    dependsOn 'mergeReleaseNativeLibs', 'mergeDebugNativeLibs'
 
     doLast {
-        def script = file("$rootDir/scripts/realign_elf.py")
-        // Process both release and debug stripped libs (final versions before packaging)
         ['release', 'debug'].each { variant ->
-            def libsDir = file("$buildDir/intermediates/stripped_native_libs/${variant}/out/lib")
-            if (!libsDir.exists()) {
+            def mergedDir = file("$buildDir/intermediates/merged_native_libs/${variant}/out/lib")
+            def targetDir = file("$buildDir/intermediates/stripped_native_libs/${variant}/out/lib")
+            if (!mergedDir.exists()) {
                 return
             }
             def count = 0
-            libsDir.eachFileRecurse { soFile ->
+            mergedDir.eachFileRecurse { soFile ->
                 if (soFile.name.endsWith('.so')) {
-                    def result = exec {
-                        commandLine 'python3', script, soFile.absolutePath, '--page-size', '16384'
-                        ignoreExitValue true
-                        standardOutput = new ByteArrayOutputStream()
-                        errorOutput = new ByteArrayOutputStream()
-                    }
-                    if (result.exitValue == 0) {
-                        count++
-                    }
+                    def relPath = mergedDir.toPath().relativize(soFile.toPath()).toString()
+                    def targetFile = new File(targetDir, relPath)
+                    targetFile.parentFile.mkdirs()
+                    targetFile.bytes = soFile.bytes
+                    count++
                 }
             }
             if (count > 0) {
-                println "realignNativeLibs16KB: aligned ${count} ${variant} libraries"
+                println "fixStrippedNativeLibs: restored ${count} ${variant} libraries (pre-strip)"
             }
         }
     }
 }
 
-// Wire realign BEFORE packaging (so package uses realigned files)
+afterEvaluate {
+    ['stripReleaseDebugSymbols', 'stripDebugDebugSymbols'].each { taskName ->
+        def stripTask = tasks.findByName(taskName)
+        if (stripTask) {
+            stripTask.finalizedBy fixStrippedNativeLibs
+        }
+    }
+}
+
 tasks.whenTaskAdded { task ->
     if (task.name == 'packageRelease' || task.name == 'packageDebug') {
-        task.dependsOn realignNativeLibs16KB
+        task.dependsOn fixStrippedNativeLibs
     }
 }
 

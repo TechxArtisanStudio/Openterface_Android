@@ -1,238 +1,343 @@
 #!/usr/bin/env python3
 """
-realign_elf.py — Realign ELF PT_LOAD segments to 16 KB page boundaries.
+realign_elf.py - Realign ELF PT_LOAD segments to 16KB page boundaries.
 
-Fixes program headers AND section headers so the file remains loadable.
-
-Usage:
-    python3 realign_elf.py <path-to-.so> [--page-size 16384]
+Strategy:
+1. Insert padding AFTER each non-final LOAD segment, shifting subsequent data forward.
+2. Update program headers, section headers, .dynamic entries.
+3. UPDATE RELA relocation entries' addends that point into shifted LOAD segments.
+4. UPDATE symbol table entries (st_value) that point into shifted LOAD segments.
+5. Sync PT_DYNAMIC.p_offset with .dynamic section's actual sh_offset.
 """
 
 import argparse
 import struct
 import sys
-from pathlib import Path
 
-PAGE_SIZE = 16384  # 16 KB
+# Tags in .dynamic that are virtual addresses
+DT_ADDRESS_TAGS = frozenset({
+    3, 5, 6, 7, 12, 13, 17, 23, 25, 26,
+    0x6ffffff0, 0x6ffffffc, 0x6ffffffe,
+})
 
-def align_up(value, alignment):
-    return (value + alignment - 1) & ~(alignment - 1)
+# ELF64 relocation types that have an addend as a virtual address
+R_AARCH64_RELATIVE = 0x403
+R_AARCH64_IRELATIVE = 0x407
+
+
+def get_delta_for_vaddr(vaddr, loads):
+    """Compute the vaddr delta for a given vaddr based on which LOAD it's in."""
+    for l in loads:
+        if l['vaddr'] <= vaddr < l['vaddr'] + l['memsz']:
+            return l.get('delta', 0)
+    return 0
+
 
 def main():
-    parser = argparse.ArgumentParser(description="Realign ELF LOAD segments")
+    parser = argparse.ArgumentParser(description="Realign ELF PT_LOAD segments")
     parser.add_argument("input_file", help="Path to ELF .so file")
-    parser.add_argument("--page-size", type=int, default=PAGE_SIZE, help="Target page size")
+    parser.add_argument("--page-size", type=int, default=16384, help="Target page size")
     args = parser.parse_args()
 
-    path = Path(args.input_file)
+    path = args.input_file
     page_size = args.page_size
-
-    if not path.exists():
-        print(f"Error: {path} not found", file=sys.stderr)
-        sys.exit(1)
 
     with open(path, 'rb') as f:
         data = bytearray(f.read())
 
     if data[:4] != b'\x7fELF':
-        print(f"Error: not an ELF file", file=sys.stderr)
-        sys.exit(1)
+        print(f"Not an ELF file: {path}")
+        return
 
-    is_64 = (data[4] == 2)
-    file_size_orig = len(data)
+    is64 = data[4] == 2
+    if not is64:
+        print(f"Only 64-bit ELF supported for now")
+        return
 
-    # --- Parse ELF header ---
-    if is_64:
-        e_phoff = struct.unpack_from('<Q', data, 32)[0]
-        e_shoff = struct.unpack_from('<Q', data, 40)[0]
-        e_phentsize = struct.unpack_from('<H', data, 54)[0]
-        e_phnum = struct.unpack_from('<H', data, 56)[0]
-        e_shentsize = struct.unpack_from('<H', data, 58)[0]
-        e_shnum = struct.unpack_from('<H', data, 60)[0]
-        ph_fmt = '<IIQQQQQQ'
-    else:
-        e_phoff = struct.unpack_from('<I', data, 28)[0]
-        e_shoff = struct.unpack_from('<I', data, 32)[0]
-        e_phentsize = struct.unpack_from('<H', data, 42)[0]
-        e_phnum = struct.unpack_from('<H', data, 44)[0]
-        e_shentsize = struct.unpack_from('<H', data, 46)[0]
-        e_shnum = struct.unpack_from('<H', data, 48)[0]
-        ph_fmt = '<IIIIIIII'
+    # Parse ELF header
+    e_phoff = struct.unpack_from('<Q', data, 32)[0]
+    e_shoff = struct.unpack_from('<Q', data, 40)[0]
+    e_phentsize = struct.unpack_from('<H', data, 54)[0]
+    e_phnum = struct.unpack_from('<H', data, 56)[0]
+    e_shentsize = struct.unpack_from('<H', data, 58)[0]
+    e_shnum = struct.unpack_from('<H', data, 60)[0]
+    e_shstrndx = struct.unpack_from('<H', data, 62)[0]
 
-    print(f"ELF {is_64}-bit, phoff=0x{e_phoff:x} ({e_phnum}), shoff=0x{e_shoff:x} ({e_shnum}), size=0x{file_size_orig:x}")
-
-    # --- Read program headers ---
+    # Parse program headers
     phdrs = []
     for i in range(e_phnum):
         off = e_phoff + i * e_phentsize
-        vals = struct.unpack_from(ph_fmt, data, off)
-        if is_64:
-            p_type, p_flags, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_align = vals
-        else:
-            p_type, p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_flags, p_align = vals
-        phdrs.append({
-            'idx': i, 'off': off,
-            'p_type': p_type, 'p_flags': p_flags,
-            'p_offset': p_offset, 'p_vaddr': p_vaddr, 'p_paddr': p_paddr,
-            'p_filesz': p_filesz, 'p_memsz': p_memsz, 'p_align': p_align,
-        })
+        vals = struct.unpack_from('<IIQQQQQQ', data, off)
+        p = {'type': vals[0], 'flags': vals[1], 'offset': vals[2],
+             'vaddr': vals[3], 'paddr': vals[4], 'filesz': vals[5],
+             'memsz': vals[6], 'align': vals[7], 'hdr_off': off}
+        phdrs.append(p)
 
-    load_phdrs = sorted([s for s in phdrs if s['p_type'] == 1], key=lambda s: s['p_offset'])
+    loads = sorted([p for p in phdrs if p['type'] == 1], key=lambda p: p['offset'])
 
-    if not load_phdrs:
+    if not loads:
         print("No PT_LOAD segments")
         return
 
-    already_aligned = all(
-        (s['p_offset'] % page_size) == 0 and (s['p_align'] >= page_size)
-        for s in load_phdrs
-    )
-    if already_aligned:
+    if all(l['offset'] % page_size == 0 and l['align'] >= page_size for l in loads):
         print("All PT_LOAD already aligned")
         return
 
-    # --- Build a layout map: for each old offset, compute the new offset ---
-    #
-    # File layout regions (in order):
-    #   [pre_seg1] [seg1 data] [gap1] [seg2 data] [gap2] ... [segN data] [trailer]
-    #
-    # When copying to new file:
-    #   - pre_seg1 stays at offset 0
-    #   - segK data is copied to a 16KB-aligned position
-    #   - gapK and trailer are copied as-is after the previous segment
-
-    # Build list of (old_start, old_end, region_kind, seg_idx)
-    regions = []
-    prev_end = 0
-    for seg in load_phdrs:
-        if seg['p_offset'] > prev_end:
-            regions.append((prev_end, seg['p_offset'], 'gap', -1))
-        regions.append((seg['p_offset'], seg['p_offset'] + seg['p_filesz'], 'load', seg['idx']))
-        prev_end = seg['p_offset'] + seg['p_filesz']
-    if prev_end < file_size_orig:
-        regions.append((prev_end, file_size_orig, 'trailer', -1))
-
-    # Compute new file positions
-    new_positions = []  # (old_start, old_end, new_start, kind, seg_idx)
-    for old_start, old_end, kind, seg_idx in regions:
-        if kind == 'load':
-            new_start = align_up(len(new_positions) and new_positions[-1][2] + (new_positions[-1][1] - new_positions[-1][0]) or old_start, page_size)
-            # Actually: new_start = align_up(current_new_file_pos, page_size)
-            # current_new_file_pos = sum of (new_start_i + size_i) for all previous regions
-            current_pos = 0
-            for prev in new_positions:
-                current_pos = prev[2] + (prev[1] - prev[0])
-            new_start = align_up(current_pos, page_size)
-        else:
-            # Non-LOAD: copy right after previous region
-            current_pos = 0
-            for prev in new_positions:
-                current_pos = prev[2] + (prev[1] - prev[0])
-            new_start = current_pos
-
-        new_positions.append((old_start, old_end, new_start, kind, seg_idx))
-
-    # Build a function: given old offset, return new offset
-    def old_to_new(old_off):
-        for rs, re, ns, kind, _ in new_positions:
-            if rs <= old_off < re:
-                return ns + (old_off - rs)
-        return old_off  # beyond all regions (shouldn't happen)
-
-    total_padding = 0
-    for rs, re, ns, kind, _ in new_positions:
-        if rs == 0:
-            total_padding += ns - rs  # 0
-        else:
-            total_padding += (ns - rs) - sum(1 for r in new_positions if r[0] < rs and r[3] == 'load') * 0
-            # Actually: delta for this region = ns - rs
-            pass
-
-    # Compute total padding from file size difference
-    # Simpler: sum up all padding bytes inserted
-    total_pad_bytes = 0
-    for i, (rs, re, ns, kind, _) in enumerate(new_positions):
-        if kind == 'load':
-            # padding before this segment
-            prev_end_new = new_positions[i-1][2] + (new_positions[i-1][1] - new_positions[i-1][0]) if i > 0 else 0
-            pad = ns - prev_end_new
-            if pad > 0:
-                total_pad_bytes += pad
-
-    # Build new file data
-    new_data = bytearray()
-    for old_start, old_end, new_start, kind, seg_idx in new_positions:
-        size = old_end - old_start
-        # Pad if needed to reach new_start
-        current_pos = len(new_data)
-        if current_pos < new_start:
-            new_data.extend(b'\x00' * (new_start - current_pos))
-        new_data.extend(data[old_start:old_end])
-
-    file_size_new = len(new_data)
-    print(f"File: 0x{file_size_orig:x} -> 0x{file_size_new:x} (+{file_size_new - file_size_orig})")
-
-    # --- Update section header table offset ---
-    new_shoff = old_to_new(e_shoff)
-    if is_64:
-        struct.pack_into('<Q', new_data, 40, new_shoff)
-    else:
-        struct.pack_into('<I', new_data, 32, new_shoff)
-
-    # --- Update section header sh_offset fields ---
+    # Parse section headers
+    shdrs = []
     for i in range(e_shnum):
-        shdr_off_new = new_shoff + i * e_shentsize
-        if shdr_off_new + e_shentsize > file_size_new:
+        off = e_shoff + i * e_shentsize
+        if off + e_shentsize > len(data):
             break
-        if is_64:
-            sh_offset_old = struct.unpack_from('<Q', new_data, shdr_off_new + 24)[0]
-        else:
-            sh_offset_old = struct.unpack_from('<I', new_data, shdr_off_new + 16)[0]
+        sh_name, sh_type = struct.unpack_from('<II', data, off)
+        sh_offset = struct.unpack_from('<Q', data, off + 24)[0]
+        sh_size = struct.unpack_from('<Q', data, off + 32)[0]
+        shdrs.append({'name_idx': sh_name, 'type': sh_type,
+                      'offset': sh_offset, 'size': sh_size, 'idx': i})
 
-        if sh_offset_old == 0:
+    # Get section name string table
+    shstrtab = b''
+    if e_shstrndx < len(shdrs):
+        strtab_off = shdrs[e_shstrndx]['offset']
+        strtab_size = shdrs[e_shstrndx]['size']
+        if strtab_off + strtab_size <= len(data):
+            shstrtab = bytes(data[strtab_off:strtab_off + strtab_size])
+
+    # Find .dynamic and symbol table sections
+    dyn_section_info = None
+    symtab_sections = []  # .dynsym, .symtab
+    if shstrtab:
+        for sh in shdrs:
+            name_end = shstrtab.find(b'\x00', sh['name_idx'])
+            if name_end >= 0:
+                name = shstrtab[sh['name_idx']:name_end].decode('ascii', errors='replace')
+                if name == '.dynamic':
+                    dyn_section_info = {'offset': sh['offset'], 'size': sh['size']}
+                elif name in ('.dynsym', '.symtab'):
+                    symtab_sections.append({'name': name, 'offset': sh['offset'], 'size': sh['size']})
+
+    # Build padding plan
+    padding_points = []
+    cumulative_pad = 0
+    for i in range(len(loads) - 1):
+        load_end = loads[i]['offset'] + loads[i]['filesz']
+        next_load_offset = loads[i + 1]['offset']
+        needed = (next_load_offset + cumulative_pad) % page_size
+        pad = (page_size - needed) % page_size
+        padding_points.append((load_end, pad))
+        cumulative_pad += pad
+
+    def get_new_offset(old_offset):
+        shift = 0
+        for pad_pos, pad_amt in padding_points:
+            if old_offset >= pad_pos:
+                shift += pad_amt
+        return old_offset + shift
+
+    def get_delta_for_offset(old_offset):
+        shift = 0
+        for pad_pos, pad_amt in padding_points:
+            if old_offset >= pad_pos:
+                shift += pad_amt
+        return shift
+
+    # Pre-compute LOAD deltas (for quick lookup by vaddr)
+    for l in loads:
+        l['delta'] = get_delta_for_offset(l['offset'])
+
+    # Build new file: copy data with padding inserted
+    new_data = bytearray()
+    prev_end = 0
+    for pad_pos, pad_amt in padding_points:
+        new_data.extend(data[prev_end:pad_pos])
+        if pad_amt > 0:
+            new_data.extend(b'\x00' * pad_amt)
+        prev_end = pad_pos
+    new_data.extend(data[prev_end:])
+    new_file_size = len(new_data)
+
+    # --- UPDATE ALL 8-byte aligned values in shifted LOAD segments ---
+    # These are internal data pointers (function pointers in init arrays, global
+    # pointers, etc.) that were written at link-time.
+    # MUST run BEFORE .dynamic update to avoid double-updating .dynamic entries.
+    data_updates = 0
+    for li, l in enumerate(loads):
+        if li == 0:
+            continue  # First LOAD doesn't shift
+        if l['delta'] == 0:
             continue
+        new_load_off = l['offset'] + l['delta']
+        scan_size = l['filesz']
+        for off_in_seg in range(0, scan_size - 7, 8):
+            file_off = new_load_off + off_in_seg
+            if file_off + 8 > new_file_size:
+                break
+            val = struct.unpack_from('<Q', new_data, file_off)[0]
+            for other_l in loads:
+                if other_l['delta'] != 0 and other_l['vaddr'] <= val < other_l['vaddr'] + other_l['memsz']:
+                    new_val = val + other_l['delta']
+                    struct.pack_into('<Q', new_data, file_off, new_val)
+                    data_updates += 1
+                    break
 
-        new_sh_offset = old_to_new(sh_offset_old)
-        if new_sh_offset != sh_offset_old:
-            if is_64:
-                struct.pack_into('<Q', new_data, shdr_off_new + 24, new_sh_offset)
-            else:
-                struct.pack_into('<I', new_data, shdr_off_new + 16, new_sh_offset)
+    # --- UPDATE .dynamic ENTRIES ---
+    if dyn_section_info:
+        dyn_new_offset = get_new_offset(dyn_section_info['offset'])
+        dyn_entry_size = 16  # Elf64_Dyn
+        num_entries = dyn_section_info['size'] // dyn_entry_size
+        for entry_idx in range(num_entries):
+            entry_off = dyn_new_offset + entry_idx * dyn_entry_size
+            if entry_off + dyn_entry_size > new_file_size:
+                break
+            tag, val = struct.unpack_from('<qQ', new_data, entry_off)
+            if tag == 0:
+                break
+            if tag in DT_ADDRESS_TAGS:
+                delta = get_delta_for_vaddr(val, loads)
+                if delta != 0:
+                    struct.pack_into('<Q', new_data, entry_off + 8, val + delta)
 
-    # --- Update ALL program headers (not just PT_LOAD) ---
-    # When we pad LOAD segments, ALL segment data that was after the padding
-    # point shifts. So non-LOAD segments (PT_DYNAMIC, PT_NOTE, etc.) also
-    # need their p_offset/p_vaddr/p_paddr updated. Only PT_LOAD needs p_align.
-    for seg in phdrs:
-        new_offset = old_to_new(seg['p_offset'])
-        delta = new_offset - seg['p_offset']
-        new_vaddr = seg['p_vaddr'] + delta
+    # --- UPDATE RELA entries' addends ---
+    # Find DT_RELA and DT_JMPREL in .dynamic
+    rela_info = None
+    jmprel_info = None
+    if dyn_section_info:
+        dyn_new_offset = get_new_offset(dyn_section_info['offset'])
+        dyn_entry_size = 16
+        num_entries = dyn_section_info['size'] // dyn_entry_size
+        rela_vaddr = jmprel_vaddr = rela_size = pltrel_size = None
+        for entry_idx in range(num_entries):
+            entry_off = dyn_new_offset + entry_idx * dyn_entry_size
+            if entry_off + dyn_entry_size > new_file_size:
+                break
+            tag, val = struct.unpack_from('<qQ', new_data, entry_off)
+            if tag == 0:
+                break
+            if tag == 7:   # DT_RELA
+                rela_vaddr = val
+            elif tag == 8: # DT_RELASZ
+                rela_size = val
+            elif tag == 23: # DT_JMPREL
+                jmprel_vaddr = val
+            elif tag == 2: # DT_PLTRELSZ
+                pltrel_size = val
 
-        phdr_off = seg['off']
-        if is_64:
-            struct.pack_into('<Q', new_data, phdr_off + 8, new_offset)   # p_offset
-            struct.pack_into('<Q', new_data, phdr_off + 16, new_vaddr)  # p_vaddr
-            struct.pack_into('<Q', new_data, phdr_off + 24, new_vaddr)  # p_paddr
-            if seg['p_type'] == 1:  # PT_LOAD only
-                struct.pack_into('<Q', new_data, phdr_off + 48, page_size)  # p_align
-        else:
-            struct.pack_into('<I', new_data, phdr_off + 4, new_offset)
-            struct.pack_into('<I', new_data, phdr_off + 8, new_vaddr)
-            struct.pack_into('<I', new_data, phdr_off + 12, new_vaddr)
-            if seg['p_type'] == 1:
-                struct.pack_into('<I', new_data, phdr_off + 28, page_size)
+        # Find RELA file offset (in which LOAD is it?)
+        if rela_vaddr is not None and rela_size is not None:
+            rela_file_off = None
+            for l in loads:
+                if l['vaddr'] <= rela_vaddr < l['vaddr'] + l['memsz']:
+                    rela_file_off = l['offset'] + (rela_vaddr - l['vaddr'])
+                    break
+            if rela_file_off is not None:
+                rela_info = {'file_off': rela_file_off, 'size': rela_size}
 
-        if seg['p_type'] == 1:
-            print(f"  LOAD #{seg['idx']}: 0x{seg['p_offset']:x}->0x{new_offset:x}, "
-                  f"vaddr 0x{seg['p_vaddr']:x}->0x{new_vaddr:x}, align->0x{page_size:x}")
-        elif new_offset != seg['p_offset']:
-            print(f"  phdr #{seg['idx']} type=0x{seg['p_type']:x}: off 0x{seg['p_offset']:x}->0x{new_offset:x}")
+        if jmprel_vaddr is not None and pltrel_size is not None:
+            jmprel_file_off = None
+            for l in loads:
+                if l['vaddr'] <= jmprel_vaddr < l['vaddr'] + l['memsz']:
+                    jmprel_file_off = l['offset'] + (jmprel_vaddr - l['vaddr'])
+                    break
+            if jmprel_file_off is not None:
+                jmprel_info = {'file_off': jmprel_file_off, 'size': pltrel_size}
 
-    # Write
+    # Process RELA entries
+    # r_offset always needs updating (it's always where the linker writes)
+    # r_addend only needs updating for types where it's a vaddr (RELATIVE, IRELATIVE)
+    rela_entry_size = 24  # Elf64_Rela: r_offset(8) + r_info(8) + r_addend(8)
+    rela_updates = 0
+
+    for rela_data in [rela_info, jmprel_info]:
+        if rela_data is None:
+            continue
+        num_entries = rela_data['size'] // rela_entry_size
+        for i in range(num_entries):
+            entry_off = rela_data['file_off'] + i * rela_entry_size
+            if entry_off + rela_entry_size > new_file_size:
+                break
+            r_offset, r_info, r_addend = struct.unpack_from('<QQq', new_data, entry_off)
+            r_type = r_info & 0xffffffff
+
+            # Update r_offset for ALL relocation types
+            offset_delta = get_delta_for_vaddr(r_offset, loads)
+            if offset_delta != 0:
+                struct.pack_into('<Q', new_data, entry_off, r_offset + offset_delta)
+                rela_updates += 1
+
+            # Update r_addend only for types where it's a virtual address
+            if r_type in (R_AARCH64_RELATIVE, R_AARCH64_IRELATIVE):
+                addend_delta = get_delta_for_vaddr(r_addend, loads)
+                if addend_delta != 0:
+                    struct.pack_into('<q', new_data, entry_off + 16, r_addend + addend_delta)
+                    rela_updates += 1
+
+    # --- UPDATE symbol table entries (st_value) ---
+    # Elf64_Sym: st_name(4) + st_info(1) + st_other(1) + st_shndx(2) + st_value(8) + st_size(8)
+    sym_entry_size = 24
+    sym_updates = 0
+
+    for sym_info in symtab_sections:
+        sym_file_off = get_new_offset(sym_info['offset'])
+        num_entries = sym_info['size'] // sym_entry_size
+        for i in range(num_entries):
+            entry_off = sym_file_off + i * sym_entry_size
+            if entry_off + sym_entry_size > new_file_size:
+                break
+            st_name, st_info, st_other, st_shndx = struct.unpack_from('<IBBH', new_data, entry_off)
+            st_value = struct.unpack_from('<Q', new_data, entry_off + 8)[0]
+            st_size = struct.unpack_from('<Q', new_data, entry_off + 16)[0]
+
+            delta = get_delta_for_vaddr(st_value, loads)
+            if delta != 0:
+                struct.pack_into('<Q', new_data, entry_off + 8, st_value + delta)
+                sym_updates += 1
+
+    # --- UPDATE ELF HEADER ---
+    new_e_shoff = get_new_offset(e_shoff)
+    struct.pack_into('<Q', new_data, 40, new_e_shoff)
+
+    # --- UPDATE SECTION HEADERS ---
+    for sh in shdrs:
+        new_sh_off = get_new_offset(sh['offset'])
+        sh_hdr_new_off = new_e_shoff + sh['idx'] * e_shentsize
+        if sh_hdr_new_off + e_shentsize > new_file_size:
+            continue
+        struct.pack_into('<Q', new_data, sh_hdr_new_off + 24, new_sh_off)
+
+    # --- UPDATE PROGRAM HEADERS ---
+    for p in phdrs:
+        new_offset = get_new_offset(p['offset'])
+        delta = new_offset - p['offset']
+        new_vaddr = p['vaddr'] + delta
+
+        ph_off = p['hdr_off']
+        struct.pack_into('<Q', new_data, ph_off + 8, new_offset)
+        struct.pack_into('<Q', new_data, ph_off + 16, new_vaddr)
+        struct.pack_into('<Q', new_data, ph_off + 24, new_vaddr)
+        if p['type'] == 1:
+            struct.pack_into('<Q', new_data, ph_off + 48, page_size)
+
+    # --- SYNC PT_DYNAMIC TO ACTUAL .dynamic SECTION ---
+    if dyn_section_info:
+        actual_dyn_new_offset = get_new_offset(dyn_section_info['offset'])
+        for p in phdrs:
+            if p['type'] == 2:
+                ph_off = p['hdr_off']
+                pt_dyn_new_vaddr = p['vaddr'] + get_delta_for_offset(p['offset'])
+                struct.pack_into('<Q', new_data, ph_off + 8, actual_dyn_new_offset)
+                struct.pack_into('<Q', new_data, ph_off + 16, pt_dyn_new_vaddr)
+                struct.pack_into('<Q', new_data, ph_off + 24, pt_dyn_new_vaddr)
+
     with open(path, 'wb') as f:
         f.write(new_data)
 
-    print(f"Done: {path}")
+    total_pad = sum(pp[1] for pp in padding_points)
+    print(f"Realigned: {path} (+{total_pad} bytes, RELA:{rela_updates}, SYM:{sym_updates}, DATA:{data_updates})")
+    for l in loads:
+        new_off = l['offset'] + l['delta']
+        status = "OK" if new_off % page_size == 0 else f"FAIL(0x{new_off:x})"
+        print(f"  LOAD: 0x{l['offset']:x}->0x{new_off:x} vaddr:0x{l['vaddr']:x}->0x{l['vaddr']+l['delta']:x} [{status}]")
+
 
 if __name__ == '__main__':
     main()
