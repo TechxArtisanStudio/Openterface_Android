@@ -278,6 +278,8 @@
     <string name="switch_to_portrait">Portrait</string>
     <string name="orientation_toast_portrait">Switched to Portrait mode</string>
     <string name="orientation_toast_landscape">Switched to Landscape mode</string>
+    <string name="rotation_lock_locked">Screen rotation locked</string>
+    <string name="rotation_lock_unlocked">Screen rotation unlocked</string>
 
     <!-- Common -->
     <string name="ok_button">确定</string>
