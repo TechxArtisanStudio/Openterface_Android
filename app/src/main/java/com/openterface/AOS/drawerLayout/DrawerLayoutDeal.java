@@ -300,8 +300,6 @@ public class DrawerLayoutDeal extends Fragment {
 //                    if (drawer_layout.isDrawerOpen(GravityCompat.END)) {
 //                        drawer_layout.closeDrawer(GravityCompat.END);
 //                    }
-            } else if (id == R.id.action_screen_orientation) {
-                activity.toggleScreenOrientation();
             } else if (id == R.id.action_vnc_server) {
                 activity.showVncServerDialog();
             } else if (id == R.id.action_webrtc_server) {
@@ -321,12 +319,6 @@ public class DrawerLayoutDeal extends Fragment {
         ScreenHost_Picture.setOnClickListener(buttonClickListener);
         Recording_Video.setOnClickListener(buttonClickListener);
         Close_DrawLayout.setOnClickListener(buttonClickListener);
-
-        // Wire up screen orientation toggle button
-        Button actionScreenOrientation = activity.findViewById(R.id.action_screen_orientation);
-        if (actionScreenOrientation != null) {
-            actionScreenOrientation.setOnClickListener(buttonClickListener);
-        }
 
         action_vnc_server.setOnClickListener(buttonClickListener);
         action_webrtc_server.setOnClickListener(buttonClickListener);

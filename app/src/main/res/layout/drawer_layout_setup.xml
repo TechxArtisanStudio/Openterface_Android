@@ -112,18 +112,6 @@
                         android:textColor="@color/white"
                         android:theme="@style/FontStyle" />
 
-                    <android.widget.Button
-                        android:id="@+id/action_screen_orientation"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="5dp"
-                        android:layout_weight="1"
-                        android:background="@android:color/transparent"
-                        android:drawableTop="@drawable/ic_screen_rotation_24"
-                        android:text="@string/orientation_toggle"
-                        android:textColor="@color/white"
-                        android:theme="@style/FontStyle" />
-
                 </LinearLayout>
 
                 <LinearLayout

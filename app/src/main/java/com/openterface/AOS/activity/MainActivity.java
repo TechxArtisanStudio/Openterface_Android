@@ -308,6 +308,9 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
     private boolean isPortraitMode = false;
     private static final String KEY_PORTRAIT_MODE = "is_portrait_mode";
 
+    // Screen rotation lock state
+    private boolean isRotationLocked = false;
+
     // Portrait 4-zone module state
     public enum ModuleType { NONE, KEYBOARD, MOUSE, IME, SETTINGS }
     private ModuleType currentModule = ModuleType.NONE;
@@ -323,7 +326,8 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
     private View portraitMouseTab;
     private View portraitImeTab;
     private View portraitSettingsTab;
-    private View portraitRotationButton;
+    private View portraitRotationLockButton;
+    private View landscapeRotationLockButton;
     private View portraitShortcutStrip;
 
     // Portrait module views (for reuse)
@@ -2646,7 +2650,8 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
         portraitMouseTab = findViewById(R.id.tab_mouse);
         portraitImeTab = findViewById(R.id.tab_ime);
         portraitSettingsTab = findViewById(R.id.tab_settings);
-        portraitRotationButton = findViewById(R.id.action_screen_orientation);
+        portraitRotationLockButton = findViewById(R.id.portrait_rotation_lock);
+        landscapeRotationLockButton = findViewById(R.id.landscape_rotation_lock);
 
         // Check if we're in portrait mode by checking if root layout exists
         boolean isPortrait = (portraitRootLayout != null);
@@ -2673,8 +2678,11 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
         if (portraitSettingsTab != null) {
             portraitSettingsTab.setOnClickListener(v -> showFloatingSettings());
         }
-        if (portraitRotationButton != null) {
-            portraitRotationButton.setOnClickListener(v -> toggleScreenOrientation());
+        if (portraitRotationLockButton != null) {
+            portraitRotationLockButton.setOnClickListener(v -> toggleRotationLock());
+        }
+        if (landscapeRotationLockButton != null) {
+            landscapeRotationLockButton.setOnClickListener(v -> toggleRotationLock());
         }
 
         // Collapse handle click listener
@@ -2722,6 +2730,9 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
 
         // Setup portrait shortcut strip buttons
         setupPortraitShortcutStrip();
+
+        // Update rotation lock button icon to reflect current state
+        updateRotationLockButtonIcon();
     }
 
     /**
@@ -3143,6 +3154,12 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                     }
                 }
             });
+        }
+
+        // Setup help button — opens touchpad help dialog
+        android.widget.ImageButton helpButton = view.findViewById(R.id.btn_mouse_help);
+        if (helpButton != null) {
+            helpButton.setOnClickListener(v -> com.openterface.AOS.view.TouchPadHelpDialog.show(MainActivity.this));
         }
     }
 
@@ -3730,6 +3747,50 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
 
         Log.d(TAG, "toggleScreenOrientation: " + (isPortraitMode ? "PORTRAIT" : "LANDSCAPE"));
         setRequestedOrientation(newOrientation);
+    }
+
+    /**
+     * Toggle screen rotation lock.
+     * When locked, the screen stays in its current orientation regardless of device rotation.
+     * When unlocked, the screen follows the device sensor (auto-rotate).
+     */
+    public void toggleRotationLock() {
+        isRotationLocked = !isRotationLocked;
+
+        if (isRotationLocked) {
+            // Lock to current orientation
+            int currentOrientation = getResources().getConfiguration().orientation;
+            if (currentOrientation == Configuration.ORIENTATION_PORTRAIT) {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            } else {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+            }
+            Toast.makeText(this, R.string.rotation_lock_locked, Toast.LENGTH_SHORT).show();
+        } else {
+            // Unlock: allow sensor-based auto-rotate
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR);
+            Toast.makeText(this, R.string.rotation_lock_unlocked, Toast.LENGTH_SHORT).show();
+        }
+
+        Log.d(TAG, "toggleRotationLock: " + (isRotationLocked ? "LOCKED" : "UNLOCKED"));
+        updateRotationLockButtonIcon();
+    }
+
+    /**
+     * Update the rotation lock button icon and background based on current lock state.
+     * Shows lock icon with orange background when locked, unlock icon with default background when unlocked.
+     */
+    private void updateRotationLockButtonIcon() {
+        int iconRes = isRotationLocked ? R.drawable.ic_lock_24 : R.drawable.ic_lock_open_24;
+        int bgRes = isRotationLocked ? R.drawable.shortcut_button_background_orange : R.drawable.shortcut_button_background;
+        if (portraitRotationLockButton != null) {
+            ((ImageButton) portraitRotationLockButton).setImageResource(iconRes);
+            portraitRotationLockButton.setBackgroundResource(bgRes);
+        }
+        if (landscapeRotationLockButton != null) {
+            ((ImageButton) landscapeRotationLockButton).setImageResource(iconRes);
+            landscapeRotationLockButton.setBackgroundResource(bgRes);
+        }
     }
 
     /**

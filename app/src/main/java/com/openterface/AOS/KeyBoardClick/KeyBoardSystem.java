@@ -145,7 +145,22 @@ public class KeyBoardSystem {
         for (Button b : row3Letters) { if (b != null) row3LetterButtons.add(b); }
 
         SystemButtons = new View[]{
-            // Row 1: 10 letters Q-P (or numbers when FN active)
+            // Landscape-only number row — null in portrait mode, safely skipped
+            rootView.findViewById(R.id.Key_Tilde),
+            rootView.findViewById(R.id.One_Sigh_Button),
+            rootView.findViewById(R.id.Two_At_Button),
+            rootView.findViewById(R.id.Three_Pound_Button),
+            rootView.findViewById(R.id.Four_Dollar_Button),
+            rootView.findViewById(R.id.Five_Percent_Button),
+            rootView.findViewById(R.id.Six_Caret_Button),
+            rootView.findViewById(R.id.Seven_Ampersand_Button),
+            rootView.findViewById(R.id.Eight_Asterisk_Button),
+            rootView.findViewById(R.id.Nine_Left_Parenthesis_Button),
+            rootView.findViewById(R.id.Zero_Right_Parenthesis_Button),
+            rootView.findViewById(R.id.Key_Minus),
+            rootView.findViewById(R.id.Key_Equals),
+
+            // Row 1: Q-P letters (FN layer: 1-0 in portrait)
             rootView.findViewById(R.id.Q_Button),
             rootView.findViewById(R.id.W_Button),
             rootView.findViewById(R.id.E_Button),
@@ -157,7 +172,7 @@ public class KeyBoardSystem {
             rootView.findViewById(R.id.O_Button),
             rootView.findViewById(R.id.P_Button),
 
-            // Row 2: Tab + A-L + Backspace
+            // Row 2: Tab + A-L + [ ] \ + Backspace
             rootView.findViewById(R.id.Key_Tab),
             rootView.findViewById(R.id.A_Button),
             rootView.findViewById(R.id.S_Button),
@@ -168,9 +183,15 @@ public class KeyBoardSystem {
             rootView.findViewById(R.id.J_Button),
             rootView.findViewById(R.id.K_Button),
             rootView.findViewById(R.id.L_Button),
+            rootView.findViewById(R.id.Key_LeftBracket),
+            rootView.findViewById(R.id.Key_RightBracket),
+            rootView.findViewById(R.id.Key_Backslash),
             rootView.findViewById(R.id.Key_Backspace),
 
-            // Row 3: Shift + Z-M / + Enter
+            // Row 3: Caps + ; ' + Shift + Z-M + , . / + RightShift + Enter
+            rootView.findViewById(R.id.Key_Caps),
+            rootView.findViewById(R.id.Key_Semicolon),
+            rootView.findViewById(R.id.Key_Apostrophe),
             rootView.findViewById(R.id.Key_LeftShift),
             rootView.findViewById(R.id.Z_Button),
             rootView.findViewById(R.id.X_Button),
@@ -179,15 +200,20 @@ public class KeyBoardSystem {
             rootView.findViewById(R.id.B_Button),
             rootView.findViewById(R.id.N_Button),
             rootView.findViewById(R.id.M_Button),
+            rootView.findViewById(R.id.Key_Comma),
+            rootView.findViewById(R.id.Key_Period),
             rootView.findViewById(R.id.Key_Slash),
+            rootView.findViewById(R.id.Key_RightShift),
             rootView.findViewById(R.id.Enter_Button),
 
-            // Row 4: FN + Ctrl + Space + Alt + Win
+            // Row 4: Modifiers + arrows
             rootView.findViewById(R.id.Key_FN),
             rootView.findViewById(R.id.Key_Ctrl),
             rootView.findViewById(R.id.Space_Button),
             rootView.findViewById(R.id.Key_Alt),
             rootView.findViewById(R.id.Key_Win),
+            rootView.findViewById(R.id.Key_AltGr),
+            rootView.findViewById(R.id.Key_CtrlGr),
         };
 
         languageMappings.put("us", new KeyMapConfig_Us());

@@ -253,24 +253,24 @@
     <string name="touchpad_reset_defaults">恢复默认设置</string>
 
     <!-- TouchPad Help -->
-    <string name="touchpad_help_title">触摸板使用说明</string>
-    <string name="touchpad_help_gestures">手势操作</string>
-    <string name="touchpad_help_single_tap">单击</string>
-    <string name="touchpad_help_single_tap_desc">鼠标左键单击</string>
-    <string name="touchpad_help_double_tap">双击</string>
-    <string name="touchpad_help_double_tap_desc">鼠标左键双击</string>
-    <string name="touchpad_help_two_finger_tap">双指点击</string>
-    <string name="touchpad_help_two_finger_tap_desc">鼠标右键单击</string>
-    <string name="touchpad_help_drag">单指拖动</string>
-    <string name="touchpad_help_drag_desc">移动鼠标指针</string>
-    <string name="touchpad_help_two_finger_drag">双指拖动</string>
-    <string name="touchpad_help_two_finger_drag_desc">页面上下滚动</string>
-    <string name="touchpad_help_long_press">长按</string>
-    <string name="touchpad_help_long_press_desc">进入拖拽模式</string>
-    <string name="touchpad_help_mouse_strip">按键条</string>
-    <string name="touchpad_help_btn_left_desc">左键（按住可拖拽）</string>
-    <string name="touchpad_help_btn_middle_desc">中键/滚轮点击</string>
-    <string name="touchpad_help_btn_right_desc">右键</string>
+    <string name="touchpad_help_title">Mouse Operations</string>
+    <string name="touchpad_help_gestures">Touch Gestures</string>
+    <string name="touchpad_help_single_tap">Single finger tap</string>
+    <string name="touchpad_help_single_tap_desc">Left click</string>
+    <string name="touchpad_help_double_tap">Double tap</string>
+    <string name="touchpad_help_double_tap_desc">Double left click</string>
+    <string name="touchpad_help_two_finger_tap">Two finger tap</string>
+    <string name="touchpad_help_two_finger_tap_desc">Right click</string>
+    <string name="touchpad_help_drag">Single finger drag</string>
+    <string name="touchpad_help_drag_desc">Move cursor</string>
+    <string name="touchpad_help_two_finger_drag">Two finger slide</string>
+    <string name="touchpad_help_two_finger_drag_desc">Scroll wheel</string>
+    <string name="touchpad_help_long_press">Long press</string>
+    <string name="touchpad_help_long_press_desc">Drag mode</string>
+    <string name="touchpad_help_mouse_strip">Mouse Button Strip</string>
+    <string name="touchpad_help_btn_left_desc">Left click (hold to drag)</string>
+    <string name="touchpad_help_btn_middle_desc">Middle click / scroll wheel click</string>
+    <string name="touchpad_help_btn_right_desc">Right click</string>
 
     <!-- Portrait/Landscape Orientation Toggle -->
     <string name="orientation_toggle">Screen Orientation</string>
@@ -278,6 +278,8 @@
     <string name="switch_to_portrait">Portrait</string>
     <string name="orientation_toast_portrait">Switched to Portrait mode</string>
     <string name="orientation_toast_landscape">Switched to Landscape mode</string>
+    <string name="rotation_lock_locked">Screen rotation locked</string>
+    <string name="rotation_lock_unlocked">Screen rotation unlocked</string>
 
     <!-- Common -->
     <string name="ok_button">确定</string>
