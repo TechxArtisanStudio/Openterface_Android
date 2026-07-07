@@ -136,7 +136,8 @@ tasks.whenTaskAdded { task ->
 //
 // Workaround: After stripDebugSymbols runs, copy the original merged .so files
 // (which have correct LOAD segment layout) back to the packaging directory.
-// Trade-off: APK size is slightly larger (debug symbols not stripped), but app works.
+// Trade-off: APK is slightly larger (debug symbols not stripped), but app works correctly.
+// 16KB page alignment is NOT applied (would break internal data pointers in some libs).
 task fixStrippedNativeLibs {
     description = 'Restores original .so files after llvm-strip breaks them (debug + release)'
     group = 'build'
