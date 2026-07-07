@@ -26,6 +26,14 @@ add_library(
     ${KEYMOD_SOURCES}
 )
 
+# 16 KB page size alignment (required for Android 15+ on 64-bit devices)
+target_link_options(
+    keymod
+    PRIVATE
+    "-Wl,-z,max-page-size=16384"
+    "-Wl,-z,common-page-size=16384"
+)
+
 # Link with log library
 find_library(
     log-lib

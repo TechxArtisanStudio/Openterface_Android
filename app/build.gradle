@@ -63,9 +63,10 @@ android {
     }
     
     // Enable 16KB page size packaging support
+    // AGP < 8.5.1 requires useLegacyPackaging = true for uncompressed native libs
     packaging {
         jniLibs {
-            useLegacyPackaging = false
+            useLegacyPackaging = true
         }
     }
     
@@ -128,6 +129,54 @@ tasks.whenTaskAdded { task ->
     }
 }
 
+// Task to realign pre-built .so libraries to 16 KB page boundaries.
+// Required for Android 15+ 16KB page size support (Google Play requirement Nov 2025).
+// Targets libraries we can't rebuild ourselves (e.g. libjingle_peerconnection_so.so).
+// Applies to both debug and release builds.
+// Runs AFTER stripDebugSymbols (which can undo alignment) and BEFORE packaging.
+task realignNativeLibs16KB {
+    description = 'Realigns pre-built .so files to 16KB page boundaries (debug + release)'
+    group = 'build'
+
+    // Run after strip tasks produce final .so files
+    dependsOn 'stripReleaseDebugSymbols', 'stripDebugDebugSymbols'
+
+    doLast {
+        def script = file("$rootDir/scripts/realign_elf.py")
+        // Process both release and debug stripped libs (final versions before packaging)
+        ['release', 'debug'].each { variant ->
+            def libsDir = file("$buildDir/intermediates/stripped_native_libs/${variant}/out/lib")
+            if (!libsDir.exists()) {
+                return
+            }
+            def count = 0
+            libsDir.eachFileRecurse { soFile ->
+                if (soFile.name.endsWith('.so')) {
+                    def result = exec {
+                        commandLine 'python3', script, soFile.absolutePath, '--page-size', '16384'
+                        ignoreExitValue true
+                        standardOutput = new ByteArrayOutputStream()
+                        errorOutput = new ByteArrayOutputStream()
+                    }
+                    if (result.exitValue == 0) {
+                        count++
+                    }
+                }
+            }
+            if (count > 0) {
+                println "realignNativeLibs16KB: aligned ${count} ${variant} libraries"
+            }
+        }
+    }
+}
+
+// Wire realign BEFORE packaging (so package uses realigned files)
+tasks.whenTaskAdded { task ->
+    if (task.name == 'packageRelease' || task.name == 'packageDebug') {
+        task.dependsOn realignNativeLibs16KB
+    }
+}
+
 dependencies {
     // USB serial communication library
     implementation 'com.github.mik3y:usb-serial-for-android:3.8.0'
@@ -170,8 +219,8 @@ dependencies {
 
     implementation "androidx.activity:activity:1.9.3"
 
-    // WebRTC for Android (Phase 2 streaming)
-    implementation 'io.getstream:stream-webrtc-android:1.1.0'
+    // WebRTC for Android (Phase 2 streaming) - v1.2.1+ supports 16KB page size
+    implementation 'io.getstream:stream-webrtc-android:1.2.1'
 
     // NanoHTTPD for WebRTC signaling server
     implementation 'org.nanohttpd:nanohttpd:2.3.1'
