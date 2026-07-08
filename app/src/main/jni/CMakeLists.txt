@@ -36,3 +36,6 @@ target_link_libraries(
     keymod
     ${log-lib}
 )
+
+# 16KB page alignment for Android 15+ Google Play requirement
+target_link_options(keymod PRIVATE "-Wl,-z,max-page-size=16384")
