@@ -62,7 +62,8 @@ android {
         enabled true
     }
     
-    // Enable 16KB page size packaging support
+    // Enable 16KB page size packaging support (AGP 8.5+)
+    // useLegacyPackaging = false enables automatic 16KB alignment
     packaging {
         jniLibs {
             useLegacyPackaging = false
@@ -128,6 +129,53 @@ tasks.whenTaskAdded { task ->
     }
 }
 
+// 16KB page alignment for native libraries
+// Runs after stripDebugSymbols and before packageDebug
+task realignNativeLibs16KB {
+    description = 'Realign native libraries to 16KB page boundaries'
+    group = 'build'
+
+    dependsOn 'mergeReleaseNativeLibs', 'mergeDebugNativeLibs'
+
+    doLast {
+        def script = file("$rootDir/scripts/realign_elf.py")
+        ['release', 'debug'].each { variant ->
+            def libsDir = file("$buildDir/intermediates/stripped_native_libs/${variant}/strip${variant.capitalize()}DebugSymbols/out/lib")
+            if (!libsDir.exists()) {
+                return
+            }
+            def count = 0
+            libsDir.eachFileRecurse { soFile ->
+                if (soFile.name.endsWith('.so')) {
+                    // Skip libjpeg-turbo212.so as it contains SIMD code that conflicts with realignment
+                    if (soFile.name.contains('libjpeg-turbo')) {
+                        println "Skipping realignment of ${soFile.name} (contains SIMD code)"
+                        return
+                    }
+                    def result = exec {
+                        commandLine 'python3', script, soFile.absolutePath, '--page-size', '16384'
+                        ignoreExitValue true
+                        standardOutput = new ByteArrayOutputStream()
+                        errorOutput = new ByteArrayOutputStream()
+                    }
+                    if (result.exitValue == 0) {
+                        count++
+                    }
+                }
+            }
+            if (count > 0) {
+                println "realignNativeLibs16KB: aligned ${count} ${variant} libraries to 16KB"
+            }
+        }
+    }
+}
+
+tasks.whenTaskAdded { task ->
+    if (task.name == 'packageRelease' || task.name == 'packageDebug') {
+        task.dependsOn realignNativeLibs16KB
+    }
+}
+
 dependencies {
     // USB serial communication library
     implementation 'com.github.mik3y:usb-serial-for-android:3.8.0'
@@ -170,8 +218,8 @@ dependencies {
 
     implementation "androidx.activity:activity:1.9.3"
 
-    // WebRTC for Android (Phase 2 streaming)
-    implementation 'io.getstream:stream-webrtc-android:1.1.0'
+    // WebRTC for Android (Phase 2 streaming) - v1.2.1+ supports 16KB page size
+    implementation 'io.getstream:stream-webrtc-android:1.3.8'
 
     // NanoHTTPD for WebRTC signaling server
     implementation 'org.nanohttpd:nanohttpd:2.3.1'
