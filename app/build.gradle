@@ -62,8 +62,7 @@ android {
         enabled true
     }
     
-    // Enable 16KB page size packaging support
-    // AGP < 8.5.1 requires useLegacyPackaging = true for uncompressed native libs
+    // Enable 16KB page size packaging support (AGP 8.5+)
     packaging {
         jniLibs {
             useLegacyPackaging = true
@@ -226,7 +225,7 @@ dependencies {
     implementation "androidx.activity:activity:1.9.3"
 
     // WebRTC for Android (Phase 2 streaming) - v1.2.1+ supports 16KB page size
-    implementation 'io.getstream:stream-webrtc-android:1.2.1'
+    implementation 'io.getstream:stream-webrtc-android:1.3.8'
 
     // NanoHTTPD for WebRTC signaling server
     implementation 'org.nanohttpd:nanohttpd:2.3.1'
