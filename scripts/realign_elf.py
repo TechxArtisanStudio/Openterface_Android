@@ -302,7 +302,14 @@ def main():
         sh_hdr_new_off = new_e_shoff + sh['idx'] * e_shentsize
         if sh_hdr_new_off + e_shentsize > new_file_size:
             continue
+        # Update sh_offset (position +24)
         struct.pack_into('<Q', new_data, sh_hdr_new_off + 24, new_sh_off)
+        # Update sh_addr (position +16) if section is in a shifted LOAD segment
+        old_sh_addr = struct.unpack_from('<Q', new_data, sh_hdr_new_off + 16)[0]
+        if old_sh_addr != 0:  # Skip sections with addr=0 (e.g., .bss)
+            addr_delta = get_delta_for_vaddr(old_sh_addr, loads)
+            if addr_delta != 0:
+                struct.pack_into('<Q', new_data, sh_hdr_new_off + 16, old_sh_addr + addr_delta)
 
     # --- UPDATE PROGRAM HEADERS ---
     for p in phdrs:
