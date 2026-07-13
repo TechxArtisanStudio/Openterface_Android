@@ -383,7 +383,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="主题设置"
+            android:text="@string/theme_settings"
             android:textSize="16sp"
             android:textStyle="bold"
             android:textColor="@color/text_primary"
@@ -405,7 +405,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="主题颜色"
+                android:text="@string/theme_color"
                 android:textSize="14sp"
                 android:textColor="@color/text_primary" />
 
@@ -413,7 +413,7 @@
                 android:id="@+id/settings_theme_color_value"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="橙色"
+                android:text="@string/orange"
                 android:textSize="14sp"
                 android:textColor="?attr/colorPrimary" />
         </LinearLayout>
@@ -434,7 +434,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="显示模式"
+                android:text="@string/display_mode"
                 android:textSize="14sp"
                 android:textColor="@color/text_primary" />
 
@@ -442,7 +442,35 @@
                 android:id="@+id/settings_theme_mode_value"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="跟随系统"
+                android:text="@string/follow_system"
+                android:textSize="14sp"
+                android:textColor="?attr/colorPrimary" />
+        </LinearLayout>
+
+        <!-- Language Selection -->
+        <LinearLayout
+            android:id="@+id/settings_language_layout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingVertical="8dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?android:attr/selectableItemBackground">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/language_setting"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary" />
+
+            <TextView
+                android:id="@+id/settings_language_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:textSize="14sp"
                 android:textColor="?attr/colorPrimary" />
         </LinearLayout>
@@ -462,7 +490,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="键盘设置"
+            android:text="@string/keyboard_settings"
             android:textSize="16sp"
             android:textStyle="bold"
             android:textColor="@color/text_primary"
@@ -484,7 +512,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="目标操作系统"
+                android:text="@string/target_os_setting_title"
                 android:textSize="14sp"
                 android:textColor="@color/text_primary" />
 
@@ -492,7 +520,7 @@
                 android:id="@+id/settings_target_os_value"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Windows"
+                android:text="@string/target_os_windows"
                 android:textSize="14sp"
                 android:textColor="?attr/colorPrimary" />
         </LinearLayout>
@@ -509,7 +537,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="按键音效"
+                android:text="@string/settings_key_sound_label"
                 android:textSize="14sp"
                 android:textColor="@color/text_primary" />
 
@@ -530,7 +558,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="音量"
+                android:text="@string/settings_volume_label"
                 android:textSize="12sp"
                 android:textColor="@color/text_secondary" />
 
@@ -554,7 +582,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="振动反馈"
+                android:text="@string/settings_vibrate_label"
                 android:textSize="14sp"
                 android:textColor="@color/text_primary" />
 
@@ -575,7 +603,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="振动强度"
+                android:text="@string/settings_vibrate_intensity_label"
                 android:textSize="12sp"
                 android:textColor="@color/text_secondary" />
 
@@ -602,7 +630,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="鼠标设置"
+            android:text="@string/settings_mouse_settings"
             android:textSize="16sp"
             android:textStyle="bold"
             android:textColor="@color/text_primary"
@@ -618,7 +646,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="滚轮速度"
+                android:text="@string/settings_scroll_speed"
                 android:textSize="12sp"
                 android:textColor="@color/text_secondary" />
 
@@ -633,7 +661,7 @@
                 android:id="@+id/settings_scroll_speed_value"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="中等"
+                android:text="@string/settings_speed_medium"
                 android:textSize="11sp"
                 android:textColor="@color/text_secondary" />
         </LinearLayout>
@@ -682,7 +710,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="输入设置"
+            android:text="@string/settings_input_settings"
             android:textSize="16sp"
             android:textStyle="bold"
             android:textColor="@color/text_primary"
@@ -700,7 +728,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="发送前验证文本"
+                android:text="@string/settings_pre_validate_text"
                 android:textSize="14sp"
                 android:textColor="@color/text_primary" />
 
@@ -722,7 +750,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="自动保存草稿"
+                android:text="@string/settings_auto_save_draft"
                 android:textSize="14sp"
                 android:textColor="@color/text_primary" />
 

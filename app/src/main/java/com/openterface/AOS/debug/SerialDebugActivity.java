@@ -43,11 +43,12 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.openterface.AOS.R;
+import com.openterface.AOS.activity.BaseActivity;
 import com.openterface.AOS.serial.UsbDeviceManager;
 
 import java.util.HashMap;
 
-public class SerialDebugActivity extends Activity {
+public class SerialDebugActivity extends BaseActivity {
     private static final String TAG = "OP-DEBUG";
     private static final String ACTION_USB_PERMISSION = "com.openterface.AOS.USB_PERMISSION";
     
@@ -123,8 +124,8 @@ public class SerialDebugActivity extends Activity {
         sendBtn.setOnClickListener(v -> sendCustomData());
         clearLogBtn.setOnClickListener(v -> clearLog());
         
-        updateStatus("Initializing...");
-        sendDataEdit.setText("Hello Openterface");
+        updateStatus(getString(R.string.loading));
+        sendDataEdit.setText(R.string.hello_openterface);
     }
     
     private void initSerialManager() {
@@ -137,7 +138,7 @@ public class SerialDebugActivity extends Activity {
             public void onConnected(int baudrate) {
                 runOnUiThread(() -> {
                     updateStatus("✅ Connected");
-                    appendLog("Serial port connected successfully at " + baudrate + " baud");
+                    appendLog(getString(R.string.serial_port_connected_successfully, baudrate));
                 });
             }
             
@@ -145,7 +146,7 @@ public class SerialDebugActivity extends Activity {
             public void onDisconnected() {
                 runOnUiThread(() -> {
                     updateStatus("❌ Disconnected");
-                    appendLog("Serial port disconnected");
+                    appendLog(getString(R.string.serial_port_disconnected));
                 });
             }
             
@@ -153,7 +154,7 @@ public class SerialDebugActivity extends Activity {
             public void onError(String error) {
                 runOnUiThread(() -> {
                     updateStatus("❌ Connection Failed");
-                    appendLog("Connection failed: " + error);
+                    appendLog(getString(R.string.connection_failed, error));
                 });
             }
         });
@@ -162,7 +163,7 @@ public class SerialDebugActivity extends Activity {
         serialManager.setOnDataReadListener(new UsbDeviceManager.OnDataReadListener() {
             @Override
             public void onDataRead(byte[] data, int length) {
-                String dataStr = "Received " + length + " bytes: ";
+                String dataStr = getString(R.string.received_bytes, length);
                 StringBuilder hex = new StringBuilder();
                 for (int i = 0; i < length && i < data.length; i++) {
                     hex.append(String.format("%02X ", data[i]));
@@ -178,14 +179,14 @@ public class SerialDebugActivity extends Activity {
     }
     
     private void runInitialDiagnostics() {
-        appendLog("=== INITIAL DIAGNOSTICS ===");
+        appendLog(getString(R.string.initial_diagnostics));
         SerialDebugUtils.runDiagnostics(this, serialManager);
         SerialDebugUtils.recommendSettings(this);
-        appendLog("=== DIAGNOSTICS COMPLETE ===\n");
+        appendLog(getString(R.string.diagnostics_complete));
     }
     
     private void connectToDevice() {
-        appendLog("Attempting to connect to Openterface device...");
+        appendLog(getString(R.string.connecting_to_device));
         updateStatus("🔄 Connecting...");
 
         // Try to connect in background thread
@@ -199,7 +200,7 @@ public class SerialDebugActivity extends Activity {
     private void runDiagnostics() {
         appendLog("\n=== RUNNING DIAGNOSTICS ===");
         SerialDebugUtils.runDiagnostics(this, serialManager);
-        appendLog("=== DIAGNOSTICS COMPLETE ===\n");
+        appendLog(getString(R.string.diagnostics_complete));
     }
     
     private void runCommunicationTest() {
@@ -208,9 +209,9 @@ public class SerialDebugActivity extends Activity {
             return;
         }
         
-        appendLog("\n=== COMMUNICATION TEST ===");
+        appendLog(getString(R.string.communication_test));
         SerialDebugUtils.testSerialCommunication(serialManager);
-        appendLog("=== TEST COMPLETE ===\n");
+        appendLog(getString(R.string.test_complete));
     }
     
     private void sendCustomData() {
@@ -221,12 +222,12 @@ public class SerialDebugActivity extends Activity {
         
         String dataStr = sendDataEdit.getText().toString();
         if (dataStr.isEmpty()) {
-            appendLog("❌ No data to send");
+            appendLog(getString(R.string.no_data_to_send));
             return;
         }
         
         byte[] data = dataStr.getBytes();
-        appendLog("📤 Sending: \"" + dataStr + "\" (" + data.length + " bytes)");
+        appendLog(getString(R.string.sending_data, dataStr, String.valueOf(data.length)));
         
         boolean success = serialManager.sendCommand(data, "Manual send");
         
@@ -243,7 +244,7 @@ public class SerialDebugActivity extends Activity {
     }
     
     private void updateStatus(String status) {
-        statusText.setText("Status: " + status);
+        statusText.setText(getString(R.string.status_label, status));
     }
     
     private void appendLog(String message) {

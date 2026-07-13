@@ -324,7 +324,7 @@ public class ShortcutHubFloatingFragment extends AppCompatDialogFragment
 
         // First tab: Favorites
         TabLayout.Tab favTab = tabLayout.newTab();
-        favTab.setText("⭐ 收藏");
+        favTab.setText(R.string.shortcut_hub_favorites);
         tabLayout.addTab(favTab);
 
         // Category tabs
@@ -359,8 +359,8 @@ public class ShortcutHubFloatingFragment extends AppCompatDialogFragment
      */
     private void showCategoryManageMenu(ShortcutProfile.ShortcutCategory category, View anchor) {
         androidx.appcompat.widget.PopupMenu popup = new androidx.appcompat.widget.PopupMenu(getContext(), anchor);
-        popup.getMenu().add(0, 1, 0, "重命名类别");
-        popup.getMenu().add(0, 2, 1, "删除类别");
+        popup.getMenu().add(0, 1, 0, R.string.shortcut_hub_rename_category);
+        popup.getMenu().add(0, 2, 1, R.string.shortcut_hub_delete_category);
 
         popup.setOnMenuItemClickListener(item -> {
             switch (item.getItemId()) {
@@ -391,9 +391,9 @@ public class ShortcutHubFloatingFragment extends AppCompatDialogFragment
         container.addView(input);
 
         new AlertDialog.Builder(requireContext())
-                .setTitle("重命名类别")
+                .setTitle(R.string.shortcut_hub_rename_category)
                 .setView(container)
-                .setPositiveButton("保存", (dialog, which) -> {
+                .setPositiveButton(R.string.shortcut_dialog_save, (dialog, which) -> {
                     String newName = input.getText().toString().trim();
                     if (!newName.isEmpty()) {
                         category.name = newName;
@@ -406,12 +406,12 @@ public class ShortcutHubFloatingFragment extends AppCompatDialogFragment
                             if (tab != null) tab.select();
                         }
                         refreshShortcutContent();
-                        Toast.makeText(getContext(), "已重命名", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), R.string.shortcut_hub_renamed, Toast.LENGTH_SHORT).show();
                     } else {
-                        Toast.makeText(getContext(), "名称不能为空", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), R.string.shortcut_hub_name_cannot_be_empty, Toast.LENGTH_SHORT).show();
                     }
                 })
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.shortcut_dialog_cancel, null)
                 .show();
     }
 
@@ -420,13 +420,12 @@ public class ShortcutHubFloatingFragment extends AppCompatDialogFragment
      */
     private void showDeleteCategoryDialog(ShortcutProfile.ShortcutCategory category) {
         int shortcutCount = (category.shortcuts != null) ? category.shortcuts.size() : 0;
-        String message = "确定要删除类别 \"" + category.name + "\" 吗？\n"
-                + "该类别下的 " + shortcutCount + " 个快捷键将一并删除，此操作不可撤销。";
+        String message = getString(R.string.shortcut_hub_delete_category_message, category.name, shortcutCount);
 
         new AlertDialog.Builder(requireContext())
-                .setTitle("删除类别")
+                .setTitle(R.string.shortcut_hub_delete_category)
                 .setMessage(message)
-                .setPositiveButton("删除", (dialog, which) -> {
+                .setPositiveButton(R.string.shortcut_hub_delete_label, (dialog, which) -> {
                     // Remove the category from the profile
                     selectedProfile.categories.remove(category);
                     profileManager.updateProfile(selectedProfile);
@@ -439,9 +438,9 @@ public class ShortcutHubFloatingFragment extends AppCompatDialogFragment
                         if (tab != null) tab.select();
                     }
                     refreshShortcutContent();
-                    Toast.makeText(getContext(), "已删除类别", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), R.string.shortcut_hub_category_deleted, Toast.LENGTH_SHORT).show();
                 })
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.shortcut_dialog_cancel, null)
                 .show();
     }
 
@@ -509,14 +508,14 @@ public class ShortcutHubFloatingFragment extends AppCompatDialogFragment
             // Remove from favorites
             myShortcuts.removeIf(s -> s.id != null && s.id.equals(shortcut.id));
             favoriteIds.remove(shortcut.id);
-            Toast.makeText(getContext(), "已取消收藏", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), R.string.shortcut_hub_unfavorited, Toast.LENGTH_SHORT).show();
         } else {
             // Add to favorites
             Shortcut clone = new Shortcut(shortcut.id, shortcut.name, shortcut.label,
                     shortcut.modifiers, shortcut.keyCode, shortcut.icon, shortcut.displayOrder);
             myShortcuts.add(clone);
             favoriteIds.add(shortcut.id);
-            Toast.makeText(getContext(), "已添加收藏", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), R.string.shortcut_hub_favorited, Toast.LENGTH_SHORT).show();
         }
 
         // Save
@@ -540,7 +539,7 @@ public class ShortcutHubFloatingFragment extends AppCompatDialogFragment
         String key = getKeyString(shortcut.keyCode);
 
         if (key == null || key.isEmpty()) {
-            Toast.makeText(getContext(), "未知按键", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), R.string.shortcut_hub_unknown_key, Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -552,7 +551,8 @@ public class ShortcutHubFloatingFragment extends AppCompatDialogFragment
             KeyBoardManager.sendKeyBoardShortCut(modifier, key);
         }
 
-        Toast.makeText(getContext(), "已发送: " + (shortcut.label != null ? shortcut.label : key),
+        String sentLabel = shortcut.label != null ? shortcut.label : key;
+        Toast.makeText(getContext(), getString(R.string.shortcut_hub_sent_format, sentLabel),
                 Toast.LENGTH_SHORT).show();
     }
 
@@ -629,57 +629,60 @@ public class ShortcutHubFloatingFragment extends AppCompatDialogFragment
         EditText etDescription = dialogView.findViewById(R.id.et_profile_description);
 
         new AlertDialog.Builder(requireContext())
-                .setTitle("新建配置")
+                .setTitle(R.string.shortcut_hub_new_config)
                 .setView(dialogView)
-                .setPositiveButton("创建", (dialog, which) -> {
+                .setPositiveButton(R.string.shortcut_create, (dialog, which) -> {
                     String name = etName.getText().toString().trim();
                     String desc = etDescription.getText().toString().trim();
 
                     if (name.isEmpty()) {
-                        Toast.makeText(getContext(), "请输入配置名称", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), R.string.shortcut_enter_name, Toast.LENGTH_SHORT).show();
                         return;
                     }
 
                     ShortcutProfile newProfile = profileManager.createProfile(name, desc);
                     loadData();
-                    Toast.makeText(getContext(), "已创建: " + name, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), getString(R.string.shortcut_hub_created_format, name), Toast.LENGTH_SHORT).show();
                 })
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.shortcut_dialog_cancel, null)
                 .show();
     }
 
     private void showImportDialog() {
         new AlertDialog.Builder(requireContext())
-                .setTitle("导入配置")
-                .setItems(new String[]{"粘贴 JSON 文本", "从文件导入 (.json)"}, (dialog, which) -> {
+                .setTitle(R.string.shortcut_hub_import_config)
+                .setItems(new String[]{
+                        getString(R.string.shortcut_paste_json_text),
+                        getString(R.string.shortcut_hub_import_from_file)
+                }, (dialog, which) -> {
                     if (which == 0) {
                         showPasteJsonImportDialog();
                     } else {
                         importFileLauncher.launch("*/*");
                     }
                 })
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.shortcut_dialog_cancel, null)
                 .show();
     }
 
     private void showPasteJsonImportDialog() {
         android.widget.EditText editText = new android.widget.EditText(getContext());
         editText.setMinLines(5);
-        editText.setHint("粘贴 JSON 配置...");
+        editText.setHint(R.string.shortcut_paste_json_hint);
         editText.setGravity(android.view.Gravity.TOP);
 
         new AlertDialog.Builder(requireContext())
-                .setTitle("导入配置")
+                .setTitle(R.string.shortcut_hub_import_config)
                 .setView(editText)
-                .setPositiveButton("导入", (dialog, which) -> {
+                .setPositiveButton(R.string.shortcut_import, (dialog, which) -> {
                     String json = editText.getText().toString().trim();
                     if (json.isEmpty()) {
-                        Toast.makeText(getContext(), "JSON 为空", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), R.string.shortcut_json_empty, Toast.LENGTH_SHORT).show();
                         return;
                     }
                     handleImportJson(json);
                 })
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.shortcut_dialog_cancel, null)
                 .show();
     }
 
@@ -694,21 +697,21 @@ public class ShortcutHubFloatingFragment extends AppCompatDialogFragment
                 if (imported != null && !imported.isEmpty()) {
                     loadData();
                     Toast.makeText(getContext(),
-                            "成功导入 " + imported.size() + " 个配置", Toast.LENGTH_SHORT).show();
+                            getString(R.string.shortcut_hub_import_success_format, imported.size()), Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(getContext(), "导入失败", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), R.string.shortcut_hub_import_failed, Toast.LENGTH_SHORT).show();
                 }
             } else {
                 ShortcutProfile imported = profileManager.importProfile(json);
                 if (imported != null) {
                     loadData();
-                    Toast.makeText(getContext(), "导入成功: " + imported.name, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), getString(R.string.shortcut_hub_import_success_name_format, imported.name), Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(getContext(), "导入失败", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), R.string.shortcut_hub_import_failed, Toast.LENGTH_SHORT).show();
                 }
             }
         } catch (Exception e) {
-            Toast.makeText(getContext(), "JSON 格式错误: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), getString(R.string.shortcut_hub_json_format_error, e.getMessage()), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -716,7 +719,7 @@ public class ShortcutHubFloatingFragment extends AppCompatDialogFragment
         try {
             InputStream is = requireContext().getContentResolver().openInputStream(uri);
             if (is == null) {
-                Toast.makeText(getContext(), "无法读取文件", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), R.string.shortcut_cannot_read_file, Toast.LENGTH_SHORT).show();
                 return;
             }
             BufferedReader reader = new BufferedReader(new InputStreamReader(is));
@@ -728,17 +731,17 @@ public class ShortcutHubFloatingFragment extends AppCompatDialogFragment
             reader.close();
             handleImportJson(sb.toString());
         } catch (Exception e) {
-            Toast.makeText(getContext(), "读取失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), getString(R.string.shortcut_hub_read_failed_format, e.getMessage()), Toast.LENGTH_LONG).show();
         }
     }
 
     private void showProfileOverflowMenu(ShortcutProfile profile, View anchor) {
         androidx.appcompat.widget.PopupMenu popup = new androidx.appcompat.widget.PopupMenu(getContext(), anchor);
-        popup.getMenu().add(0, 1, 0, "激活");
-        popup.getMenu().add(0, 2, 1, "复制");
-        popup.getMenu().add(0, 3, 2, "导出");
+        popup.getMenu().add(0, 1, 0, R.string.shortcut_hub_activate);
+        popup.getMenu().add(0, 2, 1, R.string.shortcut_hub_copy);
+        popup.getMenu().add(0, 3, 2, R.string.shortcut_hub_export);
         if (!profile.builtIn) {
-            popup.getMenu().add(0, 4, 3, "删除");
+            popup.getMenu().add(0, 4, 3, R.string.shortcut_hub_delete_label);
         }
 
         popup.setOnMenuItemClickListener(item -> {
@@ -746,13 +749,13 @@ public class ShortcutHubFloatingFragment extends AppCompatDialogFragment
                 case 1:
                     profileManager.setActiveProfile(profile.id);
                     loadData();
-                    Toast.makeText(getContext(), "已激活: " + profile.name, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), getString(R.string.shortcut_hub_activated_format, profile.name), Toast.LENGTH_SHORT).show();
                     return true;
                 case 2:
                     ShortcutProfile copy = profileManager.duplicateProfile(profile.id);
                     if (copy != null) {
                         loadData();
-                        Toast.makeText(getContext(), "已复制", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), R.string.shortcut_hub_copied, Toast.LENGTH_SHORT).show();
                     }
                     return true;
                 case 3:
@@ -770,8 +773,8 @@ public class ShortcutHubFloatingFragment extends AppCompatDialogFragment
 
     private void showShortcutOverflowMenu(Shortcut shortcut, View anchor) {
         androidx.appcompat.widget.PopupMenu popup = new androidx.appcompat.widget.PopupMenu(getContext(), anchor);
-        popup.getMenu().add(0, 1, 0, "编辑");
-        popup.getMenu().add(0, 2, 1, "删除");
+        popup.getMenu().add(0, 1, 0, R.string.shortcut_hub_edit);
+        popup.getMenu().add(0, 2, 1, R.string.shortcut_hub_delete_label);
 
         popup.setOnMenuItemClickListener(item -> {
             switch (item.getItemId()) {
@@ -798,15 +801,15 @@ public class ShortcutHubFloatingFragment extends AppCompatDialogFragment
         editText.setLongClickable(true);
 
         new AlertDialog.Builder(requireContext())
-                .setTitle("导出配置")
-                .setMessage("长按文本框可复制 JSON 配置：")
+                .setTitle(R.string.shortcut_hub_export_config)
+                .setMessage(R.string.shortcut_hub_long_press_to_copy)
                 .setView(editText)
-                .setPositiveButton("导出到文件", (dialog, which) -> {
+                .setPositiveButton(R.string.shortcut_hub_export_to_file, (dialog, which) -> {
                     pendingExportProfile = profile;
                     String filename = profile.name.replaceAll("[^a-zA-Z0-9\\u4e00-\\u9fa5]", "_") + ".json";
                     exportFileLauncher.launch(filename);
                 })
-                .setNegativeButton("关闭", null)
+                .setNegativeButton(R.string.shortcut_hub_close, null)
                 .show();
     }
 
@@ -817,19 +820,19 @@ public class ShortcutHubFloatingFragment extends AppCompatDialogFragment
         try {
             String json = profileManager.exportProfile(profile.id);
             if (json == null) {
-                Toast.makeText(getContext(), "导出失败", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), R.string.shortcut_hub_export_failed, Toast.LENGTH_SHORT).show();
                 return;
             }
             OutputStream os = requireContext().getContentResolver().openOutputStream(uri);
             if (os == null) {
-                Toast.makeText(getContext(), "无法写入文件", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), R.string.shortcut_hub_cannot_write_file, Toast.LENGTH_SHORT).show();
                 return;
             }
             os.write(json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             os.close();
-            Toast.makeText(getContext(), "已导出: " + profile.name, Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), getString(R.string.shortcut_hub_exported_format, profile.name), Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
-            Toast.makeText(getContext(), "导出失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), getString(R.string.shortcut_hub_export_failed) + ": " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -840,19 +843,19 @@ public class ShortcutHubFloatingFragment extends AppCompatDialogFragment
         try {
             String json = profileManager.exportAllProfiles();
             if (json == null) {
-                Toast.makeText(getContext(), "导出失败", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), R.string.shortcut_hub_export_failed, Toast.LENGTH_SHORT).show();
                 return;
             }
             OutputStream os = requireContext().getContentResolver().openOutputStream(uri);
             if (os == null) {
-                Toast.makeText(getContext(), "无法写入文件", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), R.string.shortcut_hub_cannot_write_file, Toast.LENGTH_SHORT).show();
                 return;
             }
             os.write(json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             os.close();
-            Toast.makeText(getContext(), "已导出全部配置", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), R.string.shortcut_hub_exported_all, Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
-            Toast.makeText(getContext(), "导出失败: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), getString(R.string.shortcut_hub_export_failed) + ": " + e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -867,22 +870,22 @@ public class ShortcutHubFloatingFragment extends AppCompatDialogFragment
 
     private void confirmDeleteProfile(ShortcutProfile profile) {
         new AlertDialog.Builder(requireContext())
-                .setTitle("确认删除")
-                .setMessage("确定要删除配置 \"" + profile.name + "\" 吗？此操作不可撤销。")
-                .setPositiveButton("删除", (dialog, which) -> {
+                .setTitle(R.string.shortcut_hub_confirm_delete)
+                .setMessage(getString(R.string.shortcut_hub_delete_profile_message, profile.name))
+                .setPositiveButton(R.string.shortcut_hub_delete_label, (dialog, which) -> {
                     profileManager.deleteProfile(profile.id);
                     loadData();
-                    Toast.makeText(getContext(), "已删除", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), R.string.shortcut_hub_deleted, Toast.LENGTH_SHORT).show();
                 })
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.shortcut_dialog_cancel, null)
                 .show();
     }
 
     private void confirmDeleteShortcut(Shortcut shortcut) {
         new AlertDialog.Builder(requireContext())
-                .setTitle("确认删除")
-                .setMessage("确定要删除快捷键 \"" + shortcut.name + "\" 吗？")
-                .setPositiveButton("删除", (dialog, which) -> {
+                .setTitle(R.string.shortcut_hub_confirm_delete)
+                .setMessage(getString(R.string.shortcut_hub_delete_shortcut_message, shortcut.name))
+                .setPositiveButton(R.string.shortcut_hub_delete_label, (dialog, which) -> {
                     // Find and remove the shortcut from all categories
                     boolean deleted = false;
                     for (ShortcutProfile.ShortcutCategory category : selectedProfile.categories) {
@@ -912,12 +915,12 @@ public class ShortcutHubFloatingFragment extends AppCompatDialogFragment
                     if (deleted) {
                         profileManager.updateProfile(selectedProfile);
                         showDetailPanel(selectedProfile);
-                        Toast.makeText(getContext(), "已删除", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), R.string.shortcut_hub_deleted, Toast.LENGTH_SHORT).show();
                     } else {
-                        Toast.makeText(getContext(), "删除失败", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), R.string.shortcut_hub_delete_failed, Toast.LENGTH_SHORT).show();
                     }
                 })
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.shortcut_dialog_cancel, null)
                 .show();
     }
 
@@ -940,6 +943,6 @@ public class ShortcutHubFloatingFragment extends AppCompatDialogFragment
                 showDetailPanel(selectedProfile);
             }
         }
-        Toast.makeText(getContext(), "已保存", Toast.LENGTH_SHORT).show();
+        Toast.makeText(getContext(), R.string.shortcut_hub_saved, Toast.LENGTH_SHORT).show();
     }
 }

@@ -10,18 +10,42 @@
     android:padding="12dp"
     tools:context="com.openterface.AOS.activity.MainActivity">
 
-    <!-- Help Button (top-left, opens touchpad help dialog) -->
-    <ImageButton
-        android:id="@+id/btn_mouse_help"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
-        android:layout_gravity="start"
-        android:layout_marginBottom="4dp"
-        android:background="?android:attr/selectableItemBackgroundBorderless"
-        android:src="@drawable/baseline_help_24"
-        android:contentDescription="Mouse help"
-        android:scaleType="centerInside"
-        android:tint="@color/text_secondary" />
+    <!-- Top row: Help button + Openterface logo -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="4dp">
+
+        <ImageButton
+            android:id="@+id/btn_mouse_help"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/baseline_help_24"
+            android:contentDescription="Mouse help"
+            android:scaleType="centerInside"
+            android:tint="@color/text_secondary" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="16dp"
+            android:src="@drawable/ic_openterface_wordmark"
+            android:tint="@color/text_secondary"
+            android:adjustViewBounds="true"
+            tools:ignore="ContentDescription" />
+
+        <Space
+            android:layout_width="36dp"
+            android:layout_height="0dp" />
+
+    </LinearLayout>
 
     <!-- L/M/R buttons + Scroll Strip (horizontal, same total height as before) -->
     <LinearLayout

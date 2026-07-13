@@ -8,7 +8,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="主题设置"
+        android:text="@string/theme_settings"
         android:textSize="16sp"
         android:textStyle="bold"
         android:textColor="#333333"
@@ -29,7 +29,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="主题颜色"
+            android:text="@string/theme_color"
             android:textSize="14sp"
             android:textColor="#333333" />
 
@@ -37,7 +37,7 @@
             android:id="@+id/settings_theme_value"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="橙色"
+            android:text="@string/orange"
             android:textSize="14sp"
             android:textColor="#1976D2" />
     </LinearLayout>

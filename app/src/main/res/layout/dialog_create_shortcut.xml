@@ -15,7 +15,7 @@
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="快捷键名称">
+            android:hint="@string/shortcut_name_hint">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/et_shortcut_name"
@@ -29,7 +29,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="修饰键"
+            android:text="@string/shortcut_modifier_keys"
             android:textSize="14sp"
             android:textColor="@color/text_secondary"
             android:layout_marginTop="12dp" />
@@ -44,27 +44,27 @@
                 android:id="@+id/cb_ctrl"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Ctrl" />
+                android:text="@string/Ctrl" />
 
             <CheckBox
                 android:id="@+id/cb_shift"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Shift"
+                android:text="@string/Shift"
                 android:layout_marginStart="12dp" />
 
             <CheckBox
                 android:id="@+id/cb_alt"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Alt"
+                android:text="@string/Alt"
                 android:layout_marginStart="12dp" />
 
             <CheckBox
                 android:id="@+id/cb_win"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Win"
+                android:text="@string/Win"
                 android:layout_marginStart="12dp" />
         </LinearLayout>
 
@@ -72,7 +72,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="目标类别"
+            android:text="@string/shortcut_target_category"
             android:textSize="14sp"
             android:textColor="@color/text_secondary"
             android:layout_marginTop="12dp" />
@@ -95,7 +95,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="按键"
+            android:text="@string/shortcut_key_label"
             android:textSize="14sp"
             android:textColor="@color/text_secondary"
             android:layout_marginTop="12dp" />
@@ -124,7 +124,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="预览"
+            android:text="@string/shortcut_preview_label"
             android:textSize="14sp"
             android:textColor="@color/text_secondary"
             android:layout_marginTop="12dp" />

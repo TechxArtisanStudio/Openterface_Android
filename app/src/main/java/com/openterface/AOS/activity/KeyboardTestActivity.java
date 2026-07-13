@@ -14,14 +14,13 @@ import com.openterface.AOS.R;
 import com.openterface.AOS.test.KeyboardUITest;
 import com.openterface.AOS.view.PortraitKeyboardView;
 
-import androidx.appcompat.app.AppCompatActivity;
 import java.util.List;
 
 /**
  * Keyboard UI test Activity
  * For testing portrait keyboard UI display and functionality
  */
-public class KeyboardTestActivity extends AppCompatActivity {
+public class KeyboardTestActivity extends BaseActivity {
     private static final String TAG = "OP-UI";
 
     private LinearLayout testContainer;
@@ -57,7 +56,7 @@ public class KeyboardTestActivity extends AppCompatActivity {
 
         // Add title
         TextView titleView = new TextView(this);
-        titleView.setText("竖屏键盘 UI 测试");
+        titleView.setText(R.string.keyboard_test_title);
         titleView.setTextSize(24);
         titleView.setTextColor(Color.BLACK);
         titleView.setPadding(0, 0, 0, 32);
@@ -85,7 +84,7 @@ public class KeyboardTestActivity extends AppCompatActivity {
 
         // Add result display area
         TextView resultLabel = new TextView(this);
-        resultLabel.setText("测试结果：");
+        resultLabel.setText(R.string.test_results);
         resultLabel.setTextSize(18);
         resultLabel.setTextColor(Color.BLACK);
         resultLabel.setPadding(0, 32, 0, 16);
@@ -100,7 +99,7 @@ public class KeyboardTestActivity extends AppCompatActivity {
 
         // Add retry test button
         Button retryButton = new Button(this);
-        retryButton.setText("重新测试");
+        retryButton.setText(R.string.retry_test);
         retryButton.setOnClickListener(v -> runTests());
         LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
@@ -118,9 +117,9 @@ public class KeyboardTestActivity extends AppCompatActivity {
      * Run all tests
      */
     private void runTests() {
-        Log.d(TAG, "开始运行键盘 UI 测试...");
+        Log.d(TAG, "Starting keyboard UI tests...");
 
-        resultTextView.setText("正在运行测试...");
+        resultTextView.setText(R.string.running_tests);
 
         KeyboardUITest test = new KeyboardUITest(KeyboardTestActivity.this);
         KeyboardUITest.TestResults results = test.runAllTests();
@@ -128,7 +127,7 @@ public class KeyboardTestActivity extends AppCompatActivity {
         // Display test results
         displayResults(results);
 
-        Log.d(TAG, "测试完成");
+        Log.d(TAG, "Tests completed");
     }
 
     /**
@@ -137,16 +136,16 @@ public class KeyboardTestActivity extends AppCompatActivity {
     private void displayResults(KeyboardUITest.TestResults results) {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("总测试数: ").append(results.getTotalTests()).append("\n");
-        sb.append("通过: ").append(results.getPassedTests()).append("\n");
-        sb.append("失败: ").append(results.getFailedTests()).append("\n\n");
+        sb.append(getString(R.string.total_tests, results.getTotalTests())).append("\n");
+        sb.append(getString(R.string.passed_tests, results.getPassedTests())).append("\n");
+        sb.append(getString(R.string.failed_tests, results.getFailedTests())).append("\n\n");
 
         if (results.isAllPassed()) {
-            sb.append("✓ 所有测试通过！\n");
+            sb.append(getString(R.string.all_tests_passed)).append("\n");
             resultTextView.setTextColor(Color.parseColor("#00AA00"));
         } else {
-            sb.append("✗ 部分测试失败\n\n");
-            sb.append("失败详情：\n");
+            sb.append(getString(R.string.some_tests_failed)).append("\n\n");
+            sb.append(getString(R.string.failure_details)).append("\n");
             List<String> failures = results.getFailures();
             for (int i = 0; i < failures.size(); i++) {
                 sb.append((i + 1)).append(". ").append(failures.get(i)).append("\n");

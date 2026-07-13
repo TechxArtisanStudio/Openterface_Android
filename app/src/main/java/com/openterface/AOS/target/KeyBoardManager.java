@@ -34,11 +34,11 @@ import com.openterface.AOS.KeyBoardClick.KeyBoardSystem;
 import com.openterface.AOS.KeyBoardClick.KeyMapConfig_De;
 import com.openterface.AOS.activity.MainActivity;
 import com.openterface.AOS.serial.CH9329Function;
+import com.openterface.AOS.manager.LocaleManager;
 import com.openterface.AOS.serial.UsbDeviceManager;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Locale;
 import java.util.Map;
 
 public class KeyBoardManager {
@@ -68,14 +68,17 @@ public class KeyBoardManager {
     }
 
     public static void setKeyBoardLanguage() {
-        String currentLang = Locale.getDefault().getLanguage();
-        if (currentLang.equals("de")) {
+        // Use the resolved locale from LocaleManager (e.g., "system" -> "ja-rJP")
+        String resolvedLocale = LocaleManager.getInstance().getResolvedLocaleCode();
+        // Extract the base language (e.g., "de-rDE" -> "de", "ja-rJP" -> "ja")
+        String baseLang = resolvedLocale.contains("-r") ?
+            resolvedLocale.substring(0, resolvedLocale.indexOf("-r")) :
+            resolvedLocale;
+        if (baseLang.equals("de")) {
             currentKeyCodeMap = KeyMapConfig_De.getKeyCodeMap();
-//            KeyBoardSystem.setKeyboardLanguage("de");
             Log.d(TAG, "language is de");
-        }else {
+        } else {
             currentKeyCodeMap = CH9329MSKBMap.getKeyCodeMap();
-//            KeyBoardSystem.setKeyboardLanguage("us");
             Log.d(TAG, "language is us");
         }
     }

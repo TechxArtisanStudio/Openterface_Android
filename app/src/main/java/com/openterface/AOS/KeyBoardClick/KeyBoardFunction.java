@@ -34,6 +34,7 @@ import android.widget.LinearLayout;
 
 import com.openterface.AOS.R;
 import com.openterface.AOS.activity.MainActivity;
+import com.openterface.AOS.manager.LocaleManager;
 import com.openterface.AOS.target.HidManager;
 // import com.openterface.AOS.target.KeyBoardManager;
 import com.openterface.AOS.target.KeyBoardMapping;
@@ -142,14 +143,16 @@ public class KeyBoardFunction {
         Button Left_Than_Button = rootView.findViewById(R.id.Left_Than_Button);
         if (Left_Than_Button != null) {
             Left_Than_Button.setOnClickListener(v -> {
-                String currentLang = Locale.getDefault().getLanguage();
-                if (currentLang.equals("de")) {
-
+                // Use the resolved locale from LocaleManager (e.g., "system" -> "ja-rJP")
+                String resolvedLocale = LocaleManager.getInstance().getResolvedLocaleCode();
+                // Extract base language for keyboard layout logic
+                String baseLang = resolvedLocale.contains("-r") ?
+                    resolvedLocale.substring(0, resolvedLocale.indexOf("-r")) :
+                    resolvedLocale;
+                if (baseLang.equals("de")) {
                     String key = getKey(R.id.Left_Than_Button);
                     Log.d(TAG, "German Button Pressed: " + key);
                     handleShortcut(key);
-                } else if (currentLang.equals("us")) {
-
                 }
             });
         }

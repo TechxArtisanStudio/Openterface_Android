@@ -128,11 +128,11 @@ public class TouchPadSettings {
     private void updateTapDelayText(TextView textView, long delayMs) {
         if (textView == null) return;
         String speed;
-        if (delayMs <= 40) speed = "极快";
-        else if (delayMs <= 80) speed = "快";
-        else if (delayMs <= 120) speed = "中等";
-        else if (delayMs <= 160) speed = "慢";
-        else speed = "极慢";
+        if (delayMs <= 40) speed = context.getString(R.string.speed_very_fast);
+        else if (delayMs <= 80) speed = context.getString(R.string.speed_fast);
+        else if (delayMs <= 120) speed = context.getString(R.string.speed_medium);
+        else if (delayMs <= 160) speed = context.getString(R.string.speed_slow);
+        else speed = context.getString(R.string.speed_very_slow);
         textView.setText(speed + " (" + delayMs + "ms)");
     }
 

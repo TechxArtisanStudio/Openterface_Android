@@ -159,8 +159,16 @@ public class VncServerService extends Service {
 
         isRunning.set(true);
 
-        // Start foreground service with notification
-        startForeground(NOTIFICATION_ID, createNotification(null));
+        // Start foreground service with the correct foreground service type.
+        // On Android 14+ (API 34+), explicitly specify the foregroundServiceType
+        // declared in the manifest. On older Android versions, use the 2-arg form
+        // which internally uses the manifest-declared type.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(NOTIFICATION_ID, createNotification(null),
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE);
+        } else {
+            startForeground(NOTIFICATION_ID, createNotification(null));
+        }
 
         Log.i(TAG, "VNC server started");
         return true;
@@ -285,7 +293,6 @@ public class VncServerService extends Service {
                 .setOngoing(true)
                 .build();
     }
-
     private void updateNotification(String connectedIp) {
         NotificationManager manager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         if (manager != null) {

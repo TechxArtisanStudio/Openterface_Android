@@ -34,7 +34,7 @@
             android:background="@drawable/shortcut_button_background"
             android:src="@drawable/ic_list_24"
             android:scaleType="centerInside"
-            android:contentDescription="快捷键配置"
+            android:contentDescription="@string/shortcut_config"
             android:padding="8dp"
             android:tint="@color/key_text" />
 
@@ -121,7 +121,7 @@
             android:src="@drawable/three_dots"
             android:visibility="gone"
             android:elevation="9dp"
-            android:contentDescription="拖动 PiP 窗口"/>
+            android:contentDescription="@string/drag_pip_window"/>
 
         <!-- Rotation lock button (top-right corner) -->
         <ImageButton
@@ -136,7 +136,7 @@
             android:src="@drawable/ic_lock_open_24"
             android:scaleType="centerInside"
             android:padding="8dp"
-            android:contentDescription="锁定屏幕旋转"
+            android:contentDescription="@string/lock_screen_rotation"
             android:elevation="5dp" />
     </RelativeLayout>
 
@@ -188,7 +188,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="键盘"
+                android:text="@string/tab_keyboard"
                 android:textSize="11sp"
                 android:textColor="@color/text_secondary"
                 android:layout_marginTop="2dp" />
@@ -215,7 +215,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="鼠标"
+                android:text="@string/tab_mouse"
                 android:textSize="11sp"
                 android:textColor="@color/text_secondary"
                 android:layout_marginTop="2dp" />
@@ -242,7 +242,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="输入"
+                android:text="@string/tab_input"
                 android:textSize="11sp"
                 android:textColor="@color/text_secondary"
                 android:layout_marginTop="2dp" />
@@ -269,7 +269,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="设置"
+                android:text="@string/tab_settings"
                 android:textSize="11sp"
                 android:textColor="@color/text_secondary"
                 android:layout_marginTop="2dp" />

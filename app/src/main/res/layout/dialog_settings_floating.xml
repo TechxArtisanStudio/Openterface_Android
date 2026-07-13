@@ -37,7 +37,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="设置"
+            android:text="@string/settings_title"
             android:textSize="20sp"
             android:textStyle="bold"
             android:textColor="@color/text_primary" />
@@ -48,7 +48,7 @@
             android:layout_height="32dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/baseline_close_24"
-            android:contentDescription="关闭"
+            android:contentDescription="@string/close"
             tools:ignore="ContentDescription" />
     </LinearLayout>
 

@@ -107,22 +107,22 @@ public class ShortcutManagerFragment extends Fragment implements ShortcutProfile
         EditText etDescription = dialogView.findViewById(R.id.et_profile_description);
 
         new AlertDialog.Builder(getContext())
-                .setTitle("新建快捷键配置")
+                .setTitle(R.string.shortcut_new_config)
                 .setView(dialogView)
-                .setPositiveButton("创建", (dialog, which) -> {
+                .setPositiveButton(R.string.shortcut_create, (dialog, which) -> {
                     String name = etName.getText().toString().trim();
                     String description = etDescription.getText().toString().trim();
 
                     if (name.isEmpty()) {
-                        Toast.makeText(getContext(), "请输入配置名称", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), R.string.shortcut_enter_name, Toast.LENGTH_SHORT).show();
                         return;
                     }
 
-                    profileManager.createProfile(name, description.isEmpty() ? "自定义配置" : description);
+                    profileManager.createProfile(name, description.isEmpty() ? getString(R.string.shortcut_custom_config) : description);
                     loadProfiles();
-                    Toast.makeText(getContext(), "配置已创建", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), R.string.shortcut_config_created, Toast.LENGTH_SHORT).show();
                 })
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.shortcut_cancel, null)
                 .show();
     }
 
@@ -135,52 +135,52 @@ public class ShortcutManagerFragment extends Fragment implements ShortcutProfile
         etDescription.setText(profile.description);
 
         new AlertDialog.Builder(getContext())
-                .setTitle("编辑配置")
+                .setTitle(R.string.shortcut_edit_config)
                 .setView(dialogView)
-                .setPositiveButton("保存", (dialog, which) -> {
+                .setPositiveButton(R.string.shortcut_save, (dialog, which) -> {
                     String name = etName.getText().toString().trim();
                     String description = etDescription.getText().toString().trim();
 
                     if (name.isEmpty()) {
-                        Toast.makeText(getContext(), "请输入配置名称", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), R.string.shortcut_enter_name, Toast.LENGTH_SHORT).show();
                         return;
                     }
 
                     profile.name = name;
-                    profile.description = description.isEmpty() ? "自定义配置" : description;
+                    profile.description = description.isEmpty() ? getString(R.string.shortcut_custom_config) : description;
                     profileManager.updateProfile(profile);
                     loadProfiles();
-                    Toast.makeText(getContext(), "配置已更新", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), R.string.shortcut_config_updated, Toast.LENGTH_SHORT).show();
                 })
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.shortcut_cancel, null)
                 .show();
     }
 
     private void showDeleteConfirmDialog(ShortcutProfile profile) {
         new AlertDialog.Builder(getContext())
-                .setTitle("删除配置")
-                .setMessage("确定要删除 \"" + profile.name + "\" 吗？")
-                .setPositiveButton("删除", (dialog, which) -> {
+                .setTitle(R.string.shortcut_delete_config)
+                .setMessage(getString(R.string.shortcut_delete_confirm, profile.name))
+                .setPositiveButton(R.string.shortcut_delete, (dialog, which) -> {
                     profileManager.deleteProfile(profile.id);
                     loadProfiles();
-                    Toast.makeText(getContext(), "配置已删除", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), R.string.shortcut_config_deleted, Toast.LENGTH_SHORT).show();
                 })
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.shortcut_cancel, null)
                 .show();
     }
 
     private void importProfile() {
         // Show dialog with two options: paste JSON or file picker
         new android.app.AlertDialog.Builder(requireContext())
-            .setTitle("导入快捷键配置")
-            .setItems(new String[]{"粘贴JSON文本", "浏览文件"}, (dialog, which) -> {
+            .setTitle(R.string.shortcut_import_config)
+            .setItems(new String[]{getString(R.string.shortcut_paste_json_text), getString(R.string.shortcut_browse_file)}, (dialog, which) -> {
                 if (which == 0) {
                     showPasteJsonDialog();
                 } else {
                     openFilePicker();
                 }
             })
-            .setNegativeButton("取消", null)
+            .setNegativeButton(R.string.shortcut_cancel, null)
             .show();
     }
 
@@ -188,27 +188,27 @@ public class ShortcutManagerFragment extends Fragment implements ShortcutProfile
         android.widget.EditText editText = new android.widget.EditText(requireContext());
         editText.setMinLines(8);
         editText.setGravity(android.view.Gravity.TOP);
-        editText.setHint("粘贴JSON内容...");
+        editText.setHint(R.string.shortcut_paste_json_hint);
 
         new android.app.AlertDialog.Builder(requireContext())
-            .setTitle("粘贴JSON")
+            .setTitle(R.string.shortcut_paste_json)
             .setView(editText)
-            .setPositiveButton("导入", (dialog, which) -> {
+            .setPositiveButton(R.string.shortcut_import, (dialog, which) -> {
                 String json = editText.getText().toString().trim();
                 if (json.isEmpty()) {
-                    Toast.makeText(getContext(), "JSON为空", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), R.string.shortcut_json_empty, Toast.LENGTH_SHORT).show();
                     return;
                 }
 
                 ShortcutProfile imported = profileManager.importProfile(json);
                 if (imported != null) {
                     loadProfiles();
-                    Toast.makeText(getContext(), "导入成功: " + imported.name, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), getString(R.string.shortcut_import_success, imported.name), Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(getContext(), "导入失败: JSON格式错误", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), R.string.shortcut_import_failed_format, Toast.LENGTH_SHORT).show();
                 }
             })
-            .setNegativeButton("取消", null)
+            .setNegativeButton(R.string.shortcut_cancel, null)
             .show();
     }
 
@@ -251,20 +251,20 @@ public class ShortcutManagerFragment extends Fragment implements ShortcutProfile
 
     private void exportProfileToUri(Uri uri, ShortcutProfile profile) {
         if (profile == null) {
-            Toast.makeText(getContext(), "导出失败: 配置为空", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), R.string.shortcut_export_failed_empty, Toast.LENGTH_SHORT).show();
             return;
         }
 
         try {
             String json = profileManager.exportProfile(profile.id);
             if (json == null) {
-                Toast.makeText(getContext(), "导出失败: 无法序列化配置", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), R.string.shortcut_export_failed_serialize, Toast.LENGTH_SHORT).show();
                 return;
             }
 
             OutputStream outputStream = requireContext().getContentResolver().openOutputStream(uri);
             if (outputStream == null) {
-                Toast.makeText(getContext(), "导出失败: 无法写入文件", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), R.string.shortcut_export_failed_write, Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -272,9 +272,9 @@ public class ShortcutManagerFragment extends Fragment implements ShortcutProfile
             writer.write(json);
             writer.close();
 
-            Toast.makeText(getContext(), "配置已导出: " + profile.name, Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), getString(R.string.shortcut_config_exported, profile.name), Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
-            Toast.makeText(getContext(), "导出失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), getString(R.string.shortcut_export_failed, e.getMessage()), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -282,7 +282,7 @@ public class ShortcutManagerFragment extends Fragment implements ShortcutProfile
         try {
             InputStream inputStream = requireContext().getContentResolver().openInputStream(uri);
             if (inputStream == null) {
-                Toast.makeText(getContext(), "无法读取文件", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), R.string.shortcut_cannot_read_file, Toast.LENGTH_SHORT).show();
                 return;
             }
 
@@ -299,12 +299,12 @@ public class ShortcutManagerFragment extends Fragment implements ShortcutProfile
 
             if (imported != null) {
                 loadProfiles();
-                Toast.makeText(getContext(), "配置已导入: " + imported.name, Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), getString(R.string.shortcut_config_imported, imported.name), Toast.LENGTH_SHORT).show();
             } else {
-                Toast.makeText(getContext(), "导入失败：文件格式错误", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), R.string.shortcut_import_failed_file_format, Toast.LENGTH_SHORT).show();
             }
         } catch (Exception e) {
-            Toast.makeText(getContext(), "导入失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), getString(R.string.shortcut_import_failed, e.getMessage()), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -314,7 +314,7 @@ public class ShortcutManagerFragment extends Fragment implements ShortcutProfile
     public void onProfileClick(ShortcutProfile profile) {
         // Set as active profile
         profileManager.setActiveProfile(profile.id);
-        Toast.makeText(getContext(), "已切换到: " + profile.name, Toast.LENGTH_SHORT).show();
+        Toast.makeText(getContext(), getString(R.string.shortcut_switched_to, profile.name), Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -325,7 +325,7 @@ public class ShortcutManagerFragment extends Fragment implements ShortcutProfile
     @Override
     public void onProfileDelete(ShortcutProfile profile) {
         if (profile.builtIn) {
-            Toast.makeText(getContext(), "内置配置不能删除", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), R.string.shortcut_builtin_cannot_delete, Toast.LENGTH_SHORT).show();
             return;
         }
         showDeleteConfirmDialog(profile);
@@ -341,7 +341,7 @@ public class ShortcutManagerFragment extends Fragment implements ShortcutProfile
         ShortcutProfile duplicate = profileManager.duplicateProfile(profile.id);
         if (duplicate != null) {
             loadProfiles();
-            Toast.makeText(getContext(), "配置已复制", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), R.string.shortcut_config_copied, Toast.LENGTH_SHORT).show();
         }
     }
 }

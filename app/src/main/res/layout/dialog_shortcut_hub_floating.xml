@@ -41,7 +41,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="快捷键配置"
+                android:text="@string/shortcut_hub_title"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:textColor="@android:color/white"
@@ -54,7 +54,7 @@
                 android:layout_height="36dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:src="@drawable/baseline_close_24"
-                android:contentDescription="关闭"
+                android:contentDescription="@string/shortcut_hub_close"
                 android:tint="@android:color/white"
                 tools:ignore="ContentDescription" />
         </LinearLayout>
@@ -90,7 +90,7 @@
                     android:layout_gravity="center"
                     android:gravity="center"
                     android:padding="32dp"
-                    android:text="暂无配置"
+                    android:text="@string/shortcut_hub_no_profiles"
                     android:textColor="@color/text_secondary"
                     android:textSize="14sp"
                     android:visibility="gone" />
@@ -110,7 +110,7 @@
                         android:layout_height="36dp"
                         android:layout_weight="1"
                         android:layout_marginEnd="4dp"
-                        android:text="+ 新建"
+                        android:text="@string/shortcut_hub_new"
                         android:textSize="13sp"
                         android:background="?attr/colorPrimary"
                         android:textColor="@android:color/white" />
@@ -122,7 +122,7 @@
                         android:layout_weight="1"
                         android:layout_marginStart="4dp"
                         android:layout_marginEnd="4dp"
-                        android:text="导入"
+                        android:text="@string/shortcut_hub_import"
                         android:textSize="13sp"
                         android:background="@color/divider"
                         android:textColor="@color/text_primary" />
@@ -133,7 +133,7 @@
                         android:layout_height="36dp"
                         android:layout_weight="1"
                         android:layout_marginStart="4dp"
-                        android:text="导出全部"
+                        android:text="@string/shortcut_hub_export_all"
                         android:textSize="13sp"
                         android:background="@color/divider"
                         android:textColor="@color/text_primary" />
@@ -164,7 +164,7 @@
                         android:layout_height="36dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:src="@drawable/ic_arrow_back_24"
-                        android:contentDescription="返回"
+                        android:contentDescription="@string/shortcut_hub_back"
                         android:padding="6dp"
                         android:tint="@color/text_primary"
                         tools:ignore="ContentDescription" />
@@ -187,7 +187,7 @@
                         android:layout_height="36dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:src="@drawable/ic_refresh_24"
-                        android:contentDescription="重置"
+                        android:contentDescription="@string/shortcut_hub_reset"
                         android:padding="6dp"
                         android:tint="@color/text_primary"
                         android:visibility="gone"
@@ -199,7 +199,7 @@
                         android:layout_height="36dp"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:src="@drawable/ic_add_24"
-                        android:contentDescription="添加快捷键"
+                        android:contentDescription="@string/shortcut_hub_add_shortcut"
                         android:padding="6dp"
                         android:tint="@color/text_primary"
                         tools:ignore="ContentDescription" />
@@ -248,7 +248,7 @@
                         android:layout_gravity="center"
                         android:gravity="center"
                         android:padding="32dp"
-                        android:text="暂无收藏的快捷键\n在分类中点击 ⭐ 添加"
+                        android:text="@string/shortcut_hub_no_favorites"
                         android:textColor="@color/text_secondary"
                         android:textSize="14sp"
                         android:visibility="gone" />

@@ -18,7 +18,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="键盘模块测试"
+            android:text="@string/keyboard_module_test"
             android:textColor="@android:color/white"
             android:textSize="16sp" />
 
@@ -26,7 +26,7 @@
             android:id="@+id/btn_close"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="关闭"
+            android:text="@string/close_button"
             android:textSize="14sp" />
     </LinearLayout>
 
@@ -50,7 +50,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="快捷栏 (56dp)"
+                android:text="@string/test_shortcut_bar"
                 android:textColor="@android:color/white"
                 android:textSize="12sp"
                 android:gravity="center" />
@@ -68,7 +68,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
-                android:text="视频区域\n(动态高度)"
+                android:text="@string/test_video_area"
                 android:textColor="@android:color/white"
                 android:textSize="14sp"
                 android:gravity="center" />
@@ -100,7 +100,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="模块区域 (200dp)"
+                    android:text="@string/test_module_area"
                     android:textSize="10sp"
                     android:textColor="#888888"
                     android:layout_marginStart="8dp" />
@@ -130,7 +130,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="⌨️ 键盘"
+                android:text="@string/test_tab_keyboard"
                 android:textColor="#888888"
                 android:textSize="11sp"
                 android:gravity="center" />
@@ -139,7 +139,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="🖱️ 鼠标"
+                android:text="@string/test_tab_mouse"
                 android:textColor="#888888"
                 android:textSize="11sp"
                 android:gravity="center" />
@@ -148,7 +148,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="⌨️ 输入"
+                android:text="@string/test_tab_input"
                 android:textColor="#888888"
                 android:textSize="11sp"
                 android:gravity="center" />
@@ -157,7 +157,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="⚙️ 设置"
+                android:text="@string/test_tab_settings"
                 android:textColor="#888888"
                 android:textSize="11sp"
                 android:gravity="center" />

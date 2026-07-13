@@ -130,7 +130,7 @@ public class DrawerLayoutDeal extends Fragment {
             app_version.setText(appVersion);
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
-            app_version.setText("Unknown");
+            app_version.setText(R.string.unknown);
         }
         CameraVideoDeal();
     }

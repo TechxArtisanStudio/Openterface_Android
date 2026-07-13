@@ -99,9 +99,9 @@ public class WebRtcDialogFragment extends DialogFragment {
         updateUI();
 
         AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
-        builder.setTitle("WebRTC Server");
+        builder.setTitle(R.string.webrtc_server);
         builder.setView(view);
-        builder.setPositiveButton("Close", (dialog, which) -> {
+        builder.setPositiveButton(R.string.close, (dialog, which) -> {
             saveSettings();
             dismiss();
         });
@@ -125,8 +125,8 @@ public class WebRtcDialogFragment extends DialogFragment {
                 // VNC auto-start or VNC running, show conflict warning
                 buttonView.setChecked(false);
                 new AlertDialog.Builder(requireContext())
-                    .setTitle("Cannot Enable Auto-Start")
-                    .setMessage("VNC server is already configured to auto-start or is currently running. Only one server (VNC or WebRTC) can run at a time.\n\nPlease stop the VNC server and disable its auto-start first.")
+                    .setTitle(R.string.cannot_enable_auto_start)
+                    .setMessage(R.string.webrtc_vnc_conflict_message)
                     .setPositiveButton("OK", null)
                     .show();
             }
@@ -147,8 +147,8 @@ public class WebRtcDialogFragment extends DialogFragment {
                 String url = config.getConnectionUrl(ips.get(0));
                 tvUrl.setText(url);
             } else {
-                tvIpAddress.setText("No network connection");
-                tvUrl.setText("N/A");
+                tvIpAddress.setText(R.string.no_network_connection);
+                tvUrl.setText(R.string.n_a);
             }
         }
 
@@ -199,7 +199,7 @@ public class WebRtcDialogFragment extends DialogFragment {
 
     private void startServer() {
         if (webRtcService == null) {
-            Toast.makeText(requireContext(), "WebRTC Service not available", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), R.string.webrtc_service_not_available, Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -218,12 +218,12 @@ public class WebRtcDialogFragment extends DialogFragment {
         );
 
         if (success) {
-            Toast.makeText(requireContext(), "WebRTC Server started", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), R.string.webrtc_server_started, Toast.LENGTH_SHORT).show();
             if (listener != null) {
                 listener.onServerStarted();
             }
         } else {
-            Toast.makeText(requireContext(), "Failed to start WebRTC Server", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), R.string.webrtc_server_failed, Toast.LENGTH_SHORT).show();
         }
 
         updateUI();
@@ -233,7 +233,7 @@ public class WebRtcDialogFragment extends DialogFragment {
         if (webRtcService == null) return;
 
         webRtcService.stopServer();
-        Toast.makeText(requireContext(), "WebRTC Server stopped", Toast.LENGTH_SHORT).show();
+        Toast.makeText(requireContext(), R.string.webrtc_server_stopped, Toast.LENGTH_SHORT).show();
         if (listener != null) {
             listener.onServerStopped();
         }
@@ -244,7 +244,7 @@ public class WebRtcDialogFragment extends DialogFragment {
         boolean running = webRtcService != null && webRtcService.isRunning();
 
         if (running) {
-            tvStatus.setText("Running");
+            tvStatus.setText(R.string.running);
             tvStatus.setTextColor(getResources().getColor(R.color.green));
             btnStart.setVisibility(View.GONE);
             btnStop.setVisibility(View.VISIBLE);
@@ -252,7 +252,7 @@ public class WebRtcDialogFragment extends DialogFragment {
             etFps.setEnabled(false);
             etBitrate.setEnabled(false);
         } else {
-            tvStatus.setText("Stopped");
+            tvStatus.setText(R.string.stopped);
             tvStatus.setTextColor(getResources().getColor(R.color.purple_500));
             btnStart.setVisibility(View.VISIBLE);
             btnStop.setVisibility(View.GONE);
@@ -268,7 +268,7 @@ public class WebRtcDialogFragment extends DialogFragment {
             if (!ips.isEmpty()) {
                 hostIp = ips.get(0);
             }
-            tvUrl.setText("http://" + hostIp + ":" + config.getSignallingPort());
+            tvUrl.setText(getString(R.string.url_format, hostIp, String.valueOf(config.getSignallingPort())));
         }
     }
 }

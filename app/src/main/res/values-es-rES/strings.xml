@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Openterface</string>
     <string name="action_control">Control</string>
     <string name="show_options">Función</string>
@@ -51,7 +51,7 @@
     <string name="camera_controls_button_close">Cerrar</string>
     <string name="camera_controls_button_reset">Restablecer</string>
 
-    <!-- Teclas de acceso rápido -->
+<!--    short_cut-->
     <string name="KeyBoard_Ctrl_Add_C">Ctrl+C\nCopiar</string>
     <string name="KeyBoard_Ctrl_Add_V">Ctrl+V\nPegar</string>
     <string name="KeyBoard_Ctrl_Add_A">Ctrl+A\nSeleccionar todo</string>
@@ -70,13 +70,16 @@
     <string name="KeyBoard_Ctrl_Add_Alt_Add_Del">Ctrl+Alt+Del\nAdministrador de tareas</string>
     <string name="KeyBoard_Alt_Add_PrtScr">Alt+PrtScr\nCaptura de ventana</string>
 
-    <!-- Botones flotantes -->
+<!--    FloatingButton-->
     <string name="setup_button_description">Descripción del botón de ajustes</string>
     <string name="keyBoard_button_description">Descripción del botón de teclado</string>
 
-    <!-- Botones de función -->
+<!--    Function button-->
     <string name="ShortCut">Atajo</string>
     <string name="Shift">Shift</string>
+    <string name="Ctrl" tools:ignore="MissingTranslation">Ctrl</string>
+    <string name="Alt" tools:ignore="MissingTranslation">Alt</string>
+    <string name="Win" tools:ignore="MissingTranslation">Win</string>
     <string name="Function">Tecla de función</string>
 
     <string name="Minus_Sign_Button">_\n-</string>
@@ -84,10 +87,10 @@
     <string name="Left_Bracket_Button">{\n[</string>
     <string name="Right_Bracket_Button">}\n]</string>
     <string name="Colon_Button">:\n;</string>
-    <string name="Quotation_Button">"\"\n'</string>
+    <string name="Quotation_Button">"\"\n\'</string>
     <string name="Bitwise_OR_Button">|\n\\</string>
-    <string name="Less_Sign_Button">&lt;\n,</string>
-    <string name="Greater_Sign_Button">&gt;\n.</string>
+    <string name="Less_Sign_Button">&amp;lt;\n,</string>
+    <string name="Greater_Sign_Button">&amp;gt;\n.</string>
     <string name="Question_Mark">\?\n/</string>
 
     <string name="Function1">F1</string>
@@ -117,7 +120,10 @@
     <string name="End">End</string>
     <string name="PgDn">PgDn</string>
 
-    <!-- Botones del sistema -->
+<!--    system button-->
+<!-- Row 1: Number row -->
+    <string name="Key_Tilde">~
+`</string>
     <string name="One_Sigh_Button">!\n1</string>
     <string name="Two_At_Button">@\n2</string>
     <string name="Three_Pound_Button">#\n3</string>
@@ -125,10 +131,17 @@
     <string name="Five_Percent_Button">%\n5</string>
     <string name="Six_Caret_Button">^\n6</string>
     <string name="Seven_Ampersand_Button">&amp;\n7</string>
-    <string name="Eight_Asterisk_Button">*\n8</string>
-    <string name="Nine_Left_Parenthesis_Button">(\n9</string>
-    <string name="Zero_Right_Parenthesis_Button">)\n0</string>
+    <string name="Eight_Asterisk_Button" tools:ignore="MissingTranslation">*\n8</string>
+    <string name="Nine_Left_Parenthesis_Button" tools:ignore="MissingTranslation">(\n9</string>
+    <string name="Zero_Right_Parenthesis_Button" tools:ignore="MissingTranslation">)\n0</string>
+    <string name="Key_Minus">_
+-</string>
+    <string name="Key_Equals">+
+=</string>
+    <string name="Key_Backspace" tools:ignore="MissingTranslation">⌫</string>
 
+<!-- Row 2: Q row -->
+    <string name="Key_Tab" tools:ignore="MissingTranslation">Tab</string>
     <string name="Q_Button">Q</string>
     <string name="W_Button">W</string>
     <string name="E_Button">E</string>
@@ -139,7 +152,15 @@
     <string name="I_Button">I</string>
     <string name="O_Button">O</string>
     <string name="P_Button">P</string>
+    <string name="Key_LeftBracket">{
+[</string>
+    <string name="Key_RightBracket">}
+]</string>
+    <string name="Key_Backslash">|
+\</string>
 
+<!-- Row 3: A row -->
+    <string name="Key_Caps" tools:ignore="MissingTranslation">Caps</string>
     <string name="A_Button">A</string>
     <string name="S_Button">S</string>
     <string name="D_Button">D</string>
@@ -149,7 +170,14 @@
     <string name="J_Button">J</string>
     <string name="K_Button">K</string>
     <string name="L_Button">L</string>
+    <string name="Key_Semicolon">:
+;</string>
+    <string name="Key_Apostrophe">"
+\'</string>
+    <string name="Enter_Button">Intro</string>
 
+<!-- Row 4: Z row -->
+    <string name="Key_LeftShift" tools:ignore="MissingTranslation">⇧</string>
     <string name="Z_Button">Z</string>
     <string name="X_Button">X</string>
     <string name="C_Button">C</string>
@@ -157,16 +185,37 @@
     <string name="B_Button">B</string>
     <string name="N_Button">N</string>
     <string name="M_Button">M</string>
+    <string name="Key_Comma">&lt;
+,</string>
+    <string name="Key_Period">&gt;
+.</string>
+    <string name="Key_Slash">\?
+/</string>
+    <string name="Key_RightShift" tools:ignore="MissingTranslation">⇧</string>
 
+<!-- Row 5: Bottom row -->
+    <string name="Key_Ctrl" tools:ignore="MissingTranslation">Ctrl</string>
+    <string name="Key_Win" tools:ignore="MissingTranslation">Win</string>
+    <string name="Key_Alt" tools:ignore="MissingTranslation">Alt</string>
+    <string name="Key_FN" tools:ignore="MissingTranslation">FN</string>
+<string name="Space_Button" />
+    <string name="Key_AltGr" tools:ignore="MissingTranslation">Alt</string>
+    <string name="Key_CtrlGr" tools:ignore="MissingTranslation">Ctrl</string>
+    <string name="Key_Up" tools:ignore="MissingTranslation">↑</string>
+    <string name="Key_Left" tools:ignore="MissingTranslation">←</string>
+    <string name="Key_Down" tools:ignore="MissingTranslation">↓</string>
+    <string name="Key_Right" tools:ignore="MissingTranslation">→</string>
+
+<!--    legacy keys (used in function_button.xml) -->
     <string name="DEL_Button">Eliminar</string>
-    <string name="Space_Button">Espacio</string>
-    <string name="Enter_Button">Intro</string>
-
-    <!-- Ajustes de OpenterFace -->
+    <string name="Left_Than_Button_Text" tools:ignore="MissingTranslation">&gt;\n&lt; |</string>
+<!--    OpenterFace Setting-->
     <string name="Close_DrawLayout">Cerrar diseño de cajón</string>
     <string name="Device_Connect_Setting">Dispositivo\nConectar</string>
     <string name="Device_Disconnect_Setting">Dispositivo\nDesconectar</string>
     <string name="parameter_Setting">Parámetros\nAjustes</string>
+    <string name="Baudrate_Setting">Velocidad de transmisión
+Configuración</string>
     <string name="Video_Setting">Video\nAjustes</string>
     <string name="Rotate_90_CW">Girar\n90° en sentido horario</string>
     <string name="Rotate_90_CCW">Girar\n90° en sentido antihorario</string>
@@ -178,15 +227,434 @@
     <string name="Android_Version">Versión de Android</string>
     <string name="Openterface_Version">Versión de Openterface</string>
 
-    <!-- Host objetivo -->
+<!--    traget host-->
     <string name="Target_state">Estado del objetivo</string>
     <string name="Target">Objetivo</string>
     <string name="Host">Host</string>
 
-    <!-- Modo de control del ratón -->
+<!--    mouse ctrl mode-->
     <string name="KeyMouse_Ctrl_Way">Modo de control del ratón</string>
     <string name="KeyMouse_Abs_Ctrl">Táctil\nModo</string>
     <string name="KeyMouse_Abs_Drag_Ctrl">Arrastrar\nModo</string>
     <string name="KeyMouse_Drag">Arrastrar</string>
     <string name="KeyMouse_Rel_Ctrl">Puntero\nModo</string>
+    <string name="KeyMouse_Trackpad_Ctrl">Panel táctil
+Modo</string>
+
+<!-- Baudrate Setting Dialog -->
+    <string name="baudrate_dialog_title">Seleccionar velocidad de transmisión</string>
+    <string name="baudrate_9600">9600 bps (Estable)</string>
+    <string name="baudrate_115200">115200 bps (Rápido)</string>
+    <string name="baudrate_dialog_cancel">Cancelar</string>
+    <string name="baudrate_current">Actual: %s bps</string>
+
+<!-- TouchPad Mode -->
+    <string name="touchpad_toggle">Panel táctil</string>
+    <string name="touchpad_left">I</string>
+    <string name="touchpad_middle">M</string>
+    <string name="touchpad_right">D</string>
+
+<!-- TouchPad Settings -->
+    <string name="touchpad_settings_title">Ajustes de sensibilidad del panel táctil</string>
+    <string name="touchpad_setting_tap_delay">Velocidad de respuesta al tocar</string>
+    <string name="touchpad_setting_tap_delay_desc">Más bajo es más sensible, pero puede causar dobles toques accidentales</string>
+    <string name="touchpad_setting_tap_duration">Duración del toque</string>
+    <string name="touchpad_setting_tap_duration_desc">Más alto es más indulgente, adecuado para toques más lentos</string>
+    <string name="touchpad_setting_move_threshold">Distancia de tolerancia de movimiento</string>
+    <string name="touchpad_setting_move_threshold_desc">Distancia máxima de movimiento permitida durante un toque</string>
+    <string name="touchpad_setting_scroll_sensitivity">Sensibilidad de la rueda de desplazamiento</string>
+    <string name="touchpad_reset_defaults">Restablecer configuración predeterminada</string>
+
+<!-- TouchPad Help -->
+    <string name="touchpad_help_title">Operaciones del ratón</string>
+    <string name="touchpad_help_gestures">Gestos táctiles</string>
+    <string name="touchpad_help_single_tap">Toque con un dedo</string>
+    <string name="touchpad_help_single_tap_desc">Clic izquierdo</string>
+    <string name="touchpad_help_double_tap">Doble toque</string>
+    <string name="touchpad_help_double_tap_desc">Doble clic izquierdo</string>
+    <string name="touchpad_help_two_finger_tap">Toque con dos dedos</string>
+    <string name="touchpad_help_two_finger_tap_desc">Clic derecho</string>
+    <string name="touchpad_help_drag">Arrastre con un dedo</string>
+    <string name="touchpad_help_drag_desc">Mover cursor</string>
+    <string name="touchpad_help_two_finger_drag">Deslizamiento con dos dedos</string>
+    <string name="touchpad_help_two_finger_drag_desc">Rueda de desplazamiento</string>
+    <string name="touchpad_help_long_press">Mantener presionado</string>
+    <string name="touchpad_help_long_press_desc">Modo de arrastre</string>
+    <string name="touchpad_help_mouse_strip">Barra de botones del ratón</string>
+    <string name="touchpad_help_btn_left_desc">Clic izquierdo (mantener para arrastrar)</string>
+    <string name="touchpad_help_btn_middle_desc">Clic central / clic de rueda de desplazamiento</string>
+    <string name="touchpad_help_btn_right_desc">Clic derecho</string>
+
+<!-- Portrait/Landscape Orientation Toggle -->
+    <string name="orientation_toggle">Orientación de pantalla</string>
+    <string name="switch_to_landscape">Horizontal</string>
+    <string name="switch_to_portrait">Vertical</string>
+    <string name="orientation_toast_portrait">Cambiado a modo vertical</string>
+    <string name="orientation_toast_landscape">Cambiado a modo horizontal</string>
+    <string name="rotation_lock_locked">Rotación de pantalla bloqueada</string>
+    <string name="rotation_lock_unlocked">Rotación de pantalla desbloqueada</string>
+
+<!-- Common -->
+    <string name="ok_button">Aceptar</string>
+    <string name="cancel">Cancelar</string>
+
+<!-- VNC Server -->
+    <string name="vnc_server_title">Servidor VNC</string>
+    <string name="vnc_server_close">Cerrar</string>
+    <string name="vnc_server_menu_item">Servidor VNC</string>
+    <string name="vnc_server_status_running">En ejecución</string>
+    <string name="vnc_server_status_stopped">Detenido</string>
+    <string name="vnc_server_client_connected">Cliente: %s</string>
+    <string name="vnc_server_no_network">Sin conexión de red</string>
+    <string name="vnc_encoding_auto">Automático (dejar decidir al cliente)</string>
+    <string name="vnc_encoding_tight">Tight (mejor compresión)</string>
+    <string name="vnc_encoding_zlib">Zlib (equilibrado)</string>
+    <string name="vnc_encoding_zrle">ZRLE (bajo uso de CPU)</string>
+    <string name="vnc_encoding_hextile">Hextile (compatible)</string>
+    <string name="vnc_encoding_label">Codificación:</string>
+    <string name="vnc_quality_label">Calidad (JPEG):</string>
+    <string name="vnc_compress_label">Compresión:</string>
+    <string name="vnc_quality_auto">Automática</string>
+    <string name="vnc_quality_low">Baja (mejor compresión)</string>
+    <string name="vnc_quality_medium">Media (equilibrada)</string>
+    <string name="vnc_quality_high">Alta (mejor calidad)</string>
+    <string name="vnc_compress_auto">Automática</string>
+    <string name="vnc_compress_fast">Rápida</string>
+    <string name="vnc_compress_medium">Media</string>
+    <string name="vnc_compress_max">Máxima</string>
+
+<!-- WebRTC Server -->
+    <string name="webrtc_server_title">Servidor WebRTC</string>
+    <string name="webrtc_server_menu_item">WebRTC</string>
+
+<!-- Target OS Configuration -->
+    <string name="target_os_title">Seleccionar sistema operativo objetivo</string>
+    <string name="target_os_windows">Windows (tecla Win)</string>
+    <string name="target_os_macos">macOS (tecla Cmd)</string>
+    <string name="target_os_linux">Linux (tecla Super)</string>
+    <string name="target_os_current">Actual: %s</string>
+    <string name="target_os_setting_title">Sistema operativo objetivo</string>
+
+<!-- IME Saved Texts -->
+    <string name="ime_saved_text_title">Textos guardados</string>
+    <string name="ime_saved_text_close">Cerrar</string>
+    <string name="ime_saved_text_empty">No hay textos guardados
+
+Toque el botón \'Guardar\' debajo del cuadro de entrada para guardar texto</string>
+    <string name="ime_saved_text_pin">Fijar</string>
+    <string name="ime_saved_text_unpin">Desfijar</string>
+    <string name="ime_saved_text_rename">Renombrar</string>
+    <string name="ime_saved_text_delete">Eliminar</string>
+    <string name="ime_saved_text_rename_title">Renombrar</string>
+    <string name="ime_saved_text_delete_confirm_title">Confirmación de eliminación</string>
+    <string name="ime_saved_text_delete_confirm_message">¿Está seguro de que desea eliminar este texto?</string>
+    <string name="ime_saved_text_preview_cd">Vista previa</string>
+    <string name="ime_saved_text_load_cd">Cargar en el editor</string>
+    <string name="ime_saved_text_send_cd">Enviar directamente</string>
+    <string name="ime_saved_text_more">Más acciones</string>
+    <string name="ime_saved_text_select_first">Por favor, seleccione un texto primero</string>
+    <string name="target_os_setting_desc">Cambiar etiqueta de tecla Win/Cmd/Super</string>
+
+<!-- Permission Dialog Strings -->
+    <string name="permission_required_title">Solicitud de permisos</string>
+    <string name="permission_explanation_message">Para conectar y usar el dispositivo Openterface, se requieren los siguientes permisos:
+
+1. Permiso de cámara - para mostrar video en vivo
+2. Permiso de dispositivo USB - para comunicarse con el dispositivo
+
+Por favor, permita estos permisos para continuar.</string>
+    <string name="permission_continue">Continuar</string>
+    <string name="permission_cancel">Cancelar</string>
+    <string name="permission_camera_denied">Permiso de cámara denegado, no se puede mostrar el video</string>
+
+<!-- Settings: Device Connection -->
+    <string name="settings_device_connection">Conexión del dispositivo</string>
+    <string name="settings_connect_device">Conectar dispositivo</string>
+    <string name="settings_disconnect_device">Desconectar dispositivo</string>
+    <string name="settings_baudrate">Velocidad de transmisión</string>
+    <string name="settings_connected">Conectado</string>
+    <string name="settings_disconnected">Desconectado</string>
+
+<!-- Settings: Video Settings -->
+    <string name="settings_video_settings">Ajustes de video</string>
+    <string name="settings_video_format">Formato de video</string>
+    <string name="settings_camera_controls">Controles de cámara</string>
+
+<!-- Settings: Mouse -->
+    <string name="settings_mouse_speed">Velocidad del ratón</string>
+
+<!-- Settings: Media Capture -->
+    <string name="settings_media_capture">Captura de medios</string>
+    <string name="settings_screenshot">Captura de pantalla</string>
+    <string name="settings_start_recording">Iniciar grabación</string>
+    <string name="settings_stop_recording">Detener grabación</string>
+
+<!-- Settings: Remote Access -->
+    <string name="settings_remote_access">Acceso remoto</string>
+    <string name="settings_vnc_server">Servidor VNC</string>
+    <string name="settings_webrtc_server">Servidor WebRTC</string>
+    <string name="settings_running">En ejecución</string>
+    <string name="settings_stopped">Detenido</string>
+
+<!-- Keyboard Settings Dialog -->
+    <string name="keyboard_settings_title">Ajustes del teclado</string>
+    <string name="key_sound">Sonido de tecla</string>
+    <string name="key_vibrate">Vibración de tecla</string>
+    <string name="volume">Volumen</string>
+    <string name="strength">Intensidad</string>
+
+<!-- Common Actions -->
+    <string name="favorite">Favorito</string>
+    <string name="more">Más</string>
+    <string name="copy">Copiar</string>
+    <string name="export">Exportar</string>
+    <string name="edit">Editar</string>
+    <string name="delete">Eliminar</string>
+    <string name="unknown_key">Tecla desconocida</string>
+    <string name="no_text_to_restore">No hay texto para restaurar</string>
+    <string name="restored">Restaurado</string>
+    <string name="text_empty_cannot_save">El texto está vacío, no se puede guardar</string>
+    <string name="text_saved">Texto guardado</string>
+    <string name="send_cancelled">Envío cancelado</string>
+    <string name="text_sent">Texto enviado</string>
+    <string name="load_to_editor">Cargar en el editor</string>
+    <string name="send_directly">Enviar directamente</string>
+    <string name="rename">Renombrar</string>
+    <string name="pin_unpin">Fijar/Desfijar</string>
+    <string name="delete_text">Eliminar</string>
+    <string name="renamed">Renombrado</string>
+    <string name="pinned">Fijado</string>
+    <string name="unpinned">Desfijado</string>
+    <string name="deleted">Eliminado</string>
+    <string name="back">Atrás</string>
+
+<!-- Portrait Module Tabs -->
+    <string name="tab_keyboard">Teclado</string>
+    <string name="tab_mouse">Ratón</string>
+    <string name="tab_input">Entrada</string>
+    <string name="tab_settings">Ajustes</string>
+    <string name="drag_pip_window">Arrastrar ventana PiP</string>
+    <string name="lock_screen_rotation">Bloquear rotación de pantalla</string>
+
+<!-- Theme Picker Dialog -->
+    <string name="select_theme_color">Seleccionar color del tema</string>
+    <string name="display_mode">Modo de visualización</string>
+    <string name="light_mode">Modo claro</string>
+    <string name="dark_mode">Modo oscuro</string>
+    <string name="follow_system">Seguir sistema</string>
+
+<!-- Shortcut Manager -->
+    <string name="shortcut_config">Configuración de atajos</string>
+    <string name="import_shortcut">Importar</string>
+    <string name="new_profile">Nuevo perfil</string>
+    <string name="no_profiles">No hay perfiles...</string>
+    <string name="profile_name">Nombre del perfil</string>
+    <string name="description_optional">Descripción (opcional)</string>
+    <string name="shortcut_count">%d atajos</string>
+
+<!-- Keyboard/Touchpad Opacity -->
+    <string name="keyboard_opacity">Opacidad del teclado</string>
+    <string name="keyboard_opacity_title">Ajustar opacidad del teclado/panel táctil</string>
+    <string name="touchpad_opacity">Opacidad del panel táctil</string>
+
+<!-- Portrait Settings Module -->
+    <string name="theme_settings">Ajustes del tema</string>
+    <string name="theme_color">Color del tema</string>
+    <string name="orange">Naranja</string>
+    <string name="target_os">Sistema operativo objetivo</string>
+
+<!-- Portrait IME Module -->
+    <string name="clear_text">Borrar texto</string>
+    <string name="restore_last_cleared_text">Restaurar último texto borrado</string>
+
+<!-- Mouse Speed Labels -->
+    <string name="speed_very_slow">Muy lento</string>
+    <string name="speed_slow">Lento</string>
+    <string name="speed_medium">Medio</string>
+    <string name="speed_normal">Normal</string>
+    <string name="speed_fast">Rápido</string>
+    <string name="speed_very_fast">Muy rápido</string>
+
+<!-- Keyboard Test Activity -->
+    <string name="keyboard_test_title">Prueba de UI del teclado en vertical</string>
+    <string name="test_results">Resultados de la prueba:</string>
+    <string name="retry_test">Reintentar prueba</string>
+    <string name="running_tests">Ejecutando pruebas...</string>
+    <string name="total_tests">Total de pruebas: %d</string>
+    <string name="passed_tests">Aprobadas: %d</string>
+    <string name="failed_tests">Fallidas: %d</string>
+    <string name="all_tests_passed">✓ Todas las pruebas aprobadas!</string>
+    <string name="some_tests_failed">✗ Algunas pruebas fallaron</string>
+    <string name="failure_details">Detalles de fallos:</string>
+
+<!-- Date Format (English) -->
+    <string name="date_format_y_m_d">d MMM, yyyy</string>
+    <string name="date_format_y_m_d_hh_mm">d MMM, yyyy HH:mm</string>
+
+<!-- Touchpad Speed Labels -->
+    <string name="touchpad_speed_fast">Rápido (80ms)</string>
+
+<!-- Settings Module -->
+    <string name="keyboard_settings">Ajustes del teclado</string>
+    <string name="select_display_mode">Seleccionar modo de visualización</string>
+    <string name="manage">Gestionar</string>
+    <string name="shortcut_config_title">Configuración de atajos</string>
+    <string name="no_shortcut_configs_available">No hay configuraciones de atajos disponibles</string>
+    <string name="select_shortcut_config">Seleccionar configuración de atajos</string>
+    <string name="settings_key_sound_label">Sonido de tecla</string>
+    <string name="settings_volume_label">Volumen</string>
+    <string name="settings_vibrate_label">Respuesta de vibración</string>
+    <string name="settings_vibrate_intensity_label">Intensidad de vibración</string>
+    <string name="settings_mouse_settings">Ajustes del ratón</string>
+    <string name="settings_scroll_speed">Velocidad de desplazamiento</string>
+    <string name="settings_speed_medium">Medio</string>
+    <string name="settings_input_settings">Ajustes de entrada</string>
+    <string name="settings_pre_validate_text">Validación previa al envío</string>
+    <string name="settings_auto_save_draft">Guardar borrador automáticamente</string>
+
+<!-- Keyboard Test Activity -->
+    <string name="keyboard_module_test">Prueba del módulo de teclado</string>
+    <string name="close_button">Cerrar</string>
+    <string name="test_shortcut_bar">Barra de atajos (56dp)</string>
+    <string name="test_video_area">Área de video
+(Altura dinámica)</string>
+    <string name="test_module_area">Área de módulo (200dp)</string>
+    <string name="test_tab_keyboard">⌨️ Teclado</string>
+    <string name="test_tab_mouse">🖱️ Ratón</string>
+    <string name="test_tab_input">⌨️ Entrada</string>
+    <string name="test_tab_settings">⚙️ Ajustes</string>
+
+<!-- Create Shortcut Dialog - Layout Labels -->
+    <string name="shortcut_name_hint">Nombre del atajo</string>
+    <string name="shortcut_modifier_keys">Teclas modificadoras</string>
+    <string name="shortcut_target_category">Categoría objetivo</string>
+    <string name="shortcut_key_label">Tecla</string>
+    <string name="shortcut_preview_label">Vista previa</string>
+
+<!-- Saved Texts -->
+    <string name="saved_texts_close">Cerrar</string>
+
+<!-- Create Shortcut Dialog -->
+    <string name="shortcut_dialog_title_edit">Editar atajo</string>
+    <string name="shortcut_dialog_title_new">Nuevo atajo</string>
+    <string name="shortcut_dialog_save">Guardar</string>
+    <string name="shortcut_dialog_cancel">Cancelar</string>
+    <string name="shortcut_dialog_category_letters">Letras</string>
+    <string name="shortcut_dialog_category_numbers">Números</string>
+    <string name="shortcut_dialog_category_function">Teclas de función</string>
+    <string name="shortcut_dialog_category_special">Especial</string>
+    <string name="shortcut_dialog_category_symbols">Símbolos</string>
+    <string name="shortcut_dialog_category_numpad">Teclado numérico</string>
+    <string name="shortcut_dialog_preview_none">(Ninguno seleccionado)</string>
+    <string name="shortcut_dialog_error_name_required">Por favor, introduzca un nombre</string>
+    <string name="shortcut_dialog_error_key_required">Por favor, seleccione una tecla</string>
+    <string name="shortcut_dialog_error_category_required">Por favor, seleccione una categoría objetivo</string>
+
+<!-- Shortcut Manager Fragment -->
+    <string name="shortcut_new_config">Nueva configuración de atajos</string>
+    <string name="shortcut_create">Crear</string>
+    <string name="shortcut_enter_name">Por favor, introduzca el nombre de la configuración</string>
+    <string name="shortcut_custom_config">Configuración personalizada</string>
+    <string name="shortcut_config_created">Configuración creada</string>
+    <string name="shortcut_cancel">Cancelar</string>
+    <string name="shortcut_edit_config">Editar configuración</string>
+    <string name="shortcut_save">Guardar</string>
+    <string name="shortcut_config_updated">Configuración actualizada</string>
+    <string name="shortcut_delete_config">Eliminar configuración</string>
+    <string name="shortcut_delete_confirm">¿Está seguro de que desea eliminar "%s"?</string>
+    <string name="shortcut_delete">Eliminar</string>
+    <string name="shortcut_config_deleted">Configuración eliminada</string>
+    <string name="shortcut_import_config">Importar configuración de atajos</string>
+    <string name="shortcut_paste_json_text">Pegar texto JSON</string>
+    <string name="shortcut_browse_file">Examinar archivo</string>
+    <string name="shortcut_paste_json_hint">Pegar contenido JSON...</string>
+    <string name="shortcut_paste_json">Pegar JSON</string>
+    <string name="shortcut_import">Importar</string>
+    <string name="shortcut_json_empty">JSON está vacío</string>
+    <string name="shortcut_import_success">Importación exitosa: %s</string>
+    <string name="shortcut_import_failed_format">Error de importación: error de formato JSON</string>
+    <string name="shortcut_export_failed_empty">Error de exportación: la configuración está vacía</string>
+    <string name="shortcut_export_failed_serialize">Error de exportación: no se puede serializar la configuración</string>
+    <string name="shortcut_export_failed_write">Error de exportación: no se puede escribir el archivo</string>
+    <string name="shortcut_config_exported">Configuración exportada: %s</string>
+    <string name="shortcut_export_failed">Error de exportación: %s</string>
+    <string name="shortcut_cannot_read_file">No se puede leer el archivo</string>
+    <string name="shortcut_config_imported">Configuración importada: %s</string>
+    <string name="shortcut_import_failed_file_format">Error de importación: error de formato de archivo</string>
+    <string name="shortcut_import_failed">Error de importación: %s</string>
+    <string name="shortcut_switched_to">Cambiado a: %s</string>
+    <string name="shortcut_builtin_cannot_delete">La configuración integrada no se puede eliminar</string>
+    <string name="shortcut_config_copied">Configuración copiada</string>
+
+<!-- Shortcut Hub Fragment -->
+    <string name="shortcut_hub_favorites">⭐ Favoritos</string>
+    <string name="shortcut_hub_rename_category">Renombrar categoría</string>
+    <string name="shortcut_hub_delete_category">Eliminar categoría</string>
+    <string name="shortcut_hub_renamed">Renombrado</string>
+    <string name="shortcut_hub_name_cannot_be_empty">El nombre no puede estar vacío</string>
+    <string name="shortcut_hub_delete_category_message">¿Está seguro de que desea eliminar la categoría "%1$s"?
+Los %2$d atajos en esta categoría también se eliminarán. Esta acción no se puede deshacer.</string>
+    <string name="shortcut_hub_category_deleted">Categoría eliminada</string>
+    <string name="shortcut_hub_delete_label">Eliminar</string>
+    <string name="shortcut_hub_edit">Editar</string>
+    <string name="shortcut_hub_unfavorited">Desmarcado como favorito</string>
+    <string name="shortcut_hub_favorited">Marcado como favorito</string>
+    <string name="shortcut_hub_unknown_key">Tecla desconocida</string>
+    <string name="shortcut_hub_sent_format">Enviado: %s</string>
+    <string name="shortcut_hub_new_config">Nueva configuración</string>
+    <string name="shortcut_hub_import_config">Importar configuración</string>
+    <string name="shortcut_hub_created_format">Creado: %s</string>
+    <string name="shortcut_hub_import_from_file">Importar desde archivo (.json)</string>
+    <string name="shortcut_hub_import_success_format">Importación exitosa de %d configuración(es)</string>
+    <string name="shortcut_hub_import_failed">Error de importación</string>
+    <string name="shortcut_hub_import_success_name_format">Importación exitosa: %s</string>
+    <string name="shortcut_hub_json_format_error">Error de formato JSON: %s</string>
+    <string name="shortcut_hub_read_failed_format">Error de lectura: %s</string>
+    <string name="shortcut_hub_activate">Activar</string>
+    <string name="shortcut_hub_copy">Copiar</string>
+    <string name="shortcut_hub_export">Exportar</string>
+    <string name="shortcut_hub_activated_format">Activado: %s</string>
+    <string name="shortcut_hub_activated">Activado</string>
+    <string name="shortcut_hub_copied">Copiado</string>
+    <string name="shortcut_hub_export_config">Exportar configuración</string>
+    <string name="shortcut_hub_long_press_to_copy">Mantenga presionado el campo de texto para copiar la configuración JSON:</string>
+    <string name="shortcut_hub_export_to_file">Exportar a archivo</string>
+    <string name="shortcut_hub_close">Cerrar</string>
+    <string name="shortcut_hub_export_failed">Error de exportación</string>
+    <string name="shortcut_hub_cannot_write_file">No se puede escribir en el archivo</string>
+    <string name="shortcut_hub_exported_format">Exportado: %s</string>
+    <string name="shortcut_hub_exported_all">Todas las configuraciones exportadas</string>
+    <string name="shortcut_hub_confirm_delete">Confirmar eliminación</string>
+    <string name="shortcut_hub_delete_profile_message">¿Está seguro de que desea eliminar la configuración "%s"? Esta acción no se puede deshacer.</string>
+    <string name="shortcut_hub_deleted">Eliminado</string>
+    <string name="shortcut_hub_delete_failed">Error de eliminación</string>
+    <string name="shortcut_hub_saved">Guardado</string>
+    <string name="shortcut_hub_delete_shortcut_message">¿Está seguro de que desea eliminar el atajo "%s"?</string>
+
+<!-- Language Settings -->
+    <string name="language">Idioma</string>
+    <string name="language_setting">Idioma de la aplicación</string>
+
+<!-- Settings floating dialog -->
+    <string name="settings_title">Ajustes</string>
+    <string name="close">Cerrar</string>
+
+<!-- Shortcut Hub floating panel -->
+    <string name="shortcut_hub_title">Configuración de atajos</string>
+    <string name="shortcut_hub_no_profiles">No hay configuraciones</string>
+    <string name="shortcut_hub_new">+ Nuevo</string>
+    <string name="shortcut_hub_import">Importar</string>
+    <string name="shortcut_hub_export_all">Exportar todo</string>
+    <string name="shortcut_hub_no_favorites">No hay atajos favoritos
+Toque ⭐ en las categorías para agregar</string>
+    <string name="shortcut_hub_back">Atrás</string>
+    <string name="shortcut_hub_reset">Restablecer</string>
+    <string name="shortcut_hub_add_shortcut">Agregar atajo</string>
+
+<!-- IME buttons -->
+    <string name="ime_clear">Borrar</string>
+    <string name="ime_restore">Restaurar</string>
+    <string name="ime_save">Guardar</string>
+    <string name="ime_saved">Guardado</string>
+    <string name="ime_send">Enviar</string>
 </resources>

@@ -102,7 +102,7 @@ public class ShortcutProfileManager {
      * Migrate old profiles that don't have categories support.
      * Handles three cases:
      * 1. Built-in profile is completely empty (no shortcuts, no categories) → replace with default
-     * 2. Built-in profile has shortcuts but no categories → migrate shortcuts to a "通用" category
+     * 2. Built-in profile has shortcuts but no categories → migrate shortcuts to a "General" category
      * 3. Default profile has categories but they're all empty (corrupted state) → replace with default
      */
     private void migrateIfNeeded() {
@@ -127,7 +127,7 @@ public class ShortcutProfileManager {
             // Case 2: Has shortcuts but no categories → migrate to a category
             else if (hasShortcuts && !hasCategories) {
                 ShortcutProfile.ShortcutCategory cat =
-                    new ShortcutProfile.ShortcutCategory("migrated", "通用");
+                    new ShortcutProfile.ShortcutCategory("migrated", "General");
                 cat.shortcuts.addAll(p.shortcuts);
                 p.categories.add(cat);
                 p.shortcuts.clear();
@@ -220,76 +220,76 @@ public class ShortcutProfileManager {
         p.createdAt = System.currentTimeMillis();
         p.updatedAt = System.currentTimeMillis();
 
-        // 基础编辑
-        ShortcutProfile.ShortcutCategory editing = new ShortcutProfile.ShortcutCategory("editing", "编辑");
-        editing.shortcuts.add(new ShortcutProfile.Shortcut("d-e-1", "撤销", "Ctrl+Z", ShortcutProfile.MOD_CTRL, KEY_Z));
-        editing.shortcuts.add(new ShortcutProfile.Shortcut("d-e-2", "重做", "Ctrl+Y", ShortcutProfile.MOD_CTRL, KEY_Y));
-        editing.shortcuts.add(new ShortcutProfile.Shortcut("d-e-3", "剪切", "Ctrl+X", ShortcutProfile.MOD_CTRL, KEY_X));
-        editing.shortcuts.add(new ShortcutProfile.Shortcut("d-e-4", "复制", "Ctrl+C", ShortcutProfile.MOD_CTRL, KEY_C));
-        editing.shortcuts.add(new ShortcutProfile.Shortcut("d-e-5", "粘贴", "Ctrl+V", ShortcutProfile.MOD_CTRL, KEY_V));
-        editing.shortcuts.add(new ShortcutProfile.Shortcut("d-e-6", "全选", "Ctrl+A", ShortcutProfile.MOD_CTRL, KEY_A));
-        editing.shortcuts.add(new ShortcutProfile.Shortcut("d-e-7", "查找", "Ctrl+F", ShortcutProfile.MOD_CTRL, KEY_F));
-        editing.shortcuts.add(new ShortcutProfile.Shortcut("d-e-8", "替换", "Ctrl+H", ShortcutProfile.MOD_CTRL, KEY_H));
+        // Basic Editing
+        ShortcutProfile.ShortcutCategory editing = new ShortcutProfile.ShortcutCategory("editing", "Editing");
+        editing.shortcuts.add(new ShortcutProfile.Shortcut("d-e-1", "Undo", "Ctrl+Z", ShortcutProfile.MOD_CTRL, KEY_Z));
+        editing.shortcuts.add(new ShortcutProfile.Shortcut("d-e-2", "Redo", "Ctrl+Y", ShortcutProfile.MOD_CTRL, KEY_Y));
+        editing.shortcuts.add(new ShortcutProfile.Shortcut("d-e-3", "Cut", "Ctrl+X", ShortcutProfile.MOD_CTRL, KEY_X));
+        editing.shortcuts.add(new ShortcutProfile.Shortcut("d-e-4", "Copy", "Ctrl+C", ShortcutProfile.MOD_CTRL, KEY_C));
+        editing.shortcuts.add(new ShortcutProfile.Shortcut("d-e-5", "Paste", "Ctrl+V", ShortcutProfile.MOD_CTRL, KEY_V));
+        editing.shortcuts.add(new ShortcutProfile.Shortcut("d-e-6", "Select All", "Ctrl+A", ShortcutProfile.MOD_CTRL, KEY_A));
+        editing.shortcuts.add(new ShortcutProfile.Shortcut("d-e-7", "Find", "Ctrl+F", ShortcutProfile.MOD_CTRL, KEY_F));
+        editing.shortcuts.add(new ShortcutProfile.Shortcut("d-e-8", "Replace", "Ctrl+H", ShortcutProfile.MOD_CTRL, KEY_H));
         p.categories.add(editing);
 
-        // 文件操作
-        ShortcutProfile.ShortcutCategory file = new ShortcutProfile.ShortcutCategory("file", "文件");
-        file.shortcuts.add(new ShortcutProfile.Shortcut("d-f-1", "新建", "Ctrl+N", ShortcutProfile.MOD_CTRL, KEY_N));
-        file.shortcuts.add(new ShortcutProfile.Shortcut("d-f-2", "打开", "Ctrl+O", ShortcutProfile.MOD_CTRL, KEY_O));
-        file.shortcuts.add(new ShortcutProfile.Shortcut("d-f-3", "保存", "Ctrl+S", ShortcutProfile.MOD_CTRL, KEY_S));
-        file.shortcuts.add(new ShortcutProfile.Shortcut("d-f-4", "另存为", "Ctrl+Shift+S", ShortcutProfile.MOD_CTRL_SHIFT, KEY_S));
-        file.shortcuts.add(new ShortcutProfile.Shortcut("d-f-5", "打印", "Ctrl+P", ShortcutProfile.MOD_CTRL, KEY_P));
-        file.shortcuts.add(new ShortcutProfile.Shortcut("d-f-6", "关闭", "Ctrl+W", ShortcutProfile.MOD_CTRL, KEY_W));
+        // File Operations
+        ShortcutProfile.ShortcutCategory file = new ShortcutProfile.ShortcutCategory("file", "File");
+        file.shortcuts.add(new ShortcutProfile.Shortcut("d-f-1", "New", "Ctrl+N", ShortcutProfile.MOD_CTRL, KEY_N));
+        file.shortcuts.add(new ShortcutProfile.Shortcut("d-f-2", "Open", "Ctrl+O", ShortcutProfile.MOD_CTRL, KEY_O));
+        file.shortcuts.add(new ShortcutProfile.Shortcut("d-f-3", "Save", "Ctrl+S", ShortcutProfile.MOD_CTRL, KEY_S));
+        file.shortcuts.add(new ShortcutProfile.Shortcut("d-f-4", "Save As", "Ctrl+Shift+S", ShortcutProfile.MOD_CTRL_SHIFT, KEY_S));
+        file.shortcuts.add(new ShortcutProfile.Shortcut("d-f-5", "Print", "Ctrl+P", ShortcutProfile.MOD_CTRL, KEY_P));
+        file.shortcuts.add(new ShortcutProfile.Shortcut("d-f-6", "Close", "Ctrl+W", ShortcutProfile.MOD_CTRL, KEY_W));
         p.categories.add(file);
 
-        // 窗口操作
-        ShortcutProfile.ShortcutCategory window = new ShortcutProfile.ShortcutCategory("window", "窗口");
-        window.shortcuts.add(new ShortcutProfile.Shortcut("d-w-1", "最小化", "Win+D", ShortcutProfile.MOD_WIN, KEY_D));
-        window.shortcuts.add(new ShortcutProfile.Shortcut("d-w-2", "切换窗口", "Alt+Tab", ShortcutProfile.MOD_ALT, KEY_TAB));
-        window.shortcuts.add(new ShortcutProfile.Shortcut("d-w-3", "关闭窗口", "Alt+F4", ShortcutProfile.MOD_ALT, KEY_F4));
-        window.shortcuts.add(new ShortcutProfile.Shortcut("d-w-4", "任务管理器", "Ctrl+Shift+Esc", ShortcutProfile.MOD_CTRL_SHIFT, KEY_ESC));
-        window.shortcuts.add(new ShortcutProfile.Shortcut("d-w-5", "显示桌面", "Win+D", ShortcutProfile.MOD_WIN, KEY_D));
+        // Window Operations
+        ShortcutProfile.ShortcutCategory window = new ShortcutProfile.ShortcutCategory("window", "Window");
+        window.shortcuts.add(new ShortcutProfile.Shortcut("d-w-1", "Minimize", "Win+D", ShortcutProfile.MOD_WIN, KEY_D));
+        window.shortcuts.add(new ShortcutProfile.Shortcut("d-w-2", "Switch Window", "Alt+Tab", ShortcutProfile.MOD_ALT, KEY_TAB));
+        window.shortcuts.add(new ShortcutProfile.Shortcut("d-w-3", "Close Window", "Alt+F4", ShortcutProfile.MOD_ALT, KEY_F4));
+        window.shortcuts.add(new ShortcutProfile.Shortcut("d-w-4", "Task Manager", "Ctrl+Shift+Esc", ShortcutProfile.MOD_CTRL_SHIFT, KEY_ESC));
+        window.shortcuts.add(new ShortcutProfile.Shortcut("d-w-5", "Show Desktop", "Win+D", ShortcutProfile.MOD_WIN, KEY_D));
         p.categories.add(window);
 
-        // 系统
-        ShortcutProfile.ShortcutCategory system = new ShortcutProfile.ShortcutCategory("system", "系统");
-        system.shortcuts.add(new ShortcutProfile.Shortcut("d-sys-1", "任务管理器", "Ctrl+Alt+Del", ShortcutProfile.MOD_CTRL_ALT, KEY_DELETE));
-        system.shortcuts.add(new ShortcutProfile.Shortcut("d-sys-2", "锁屏", "Win+L", ShortcutProfile.MOD_WIN, KEY_L));
-        system.shortcuts.add(new ShortcutProfile.Shortcut("d-sys-3", "截图", "Win+Shift+S", ShortcutProfile.MOD_WIN_SHIFT, KEY_S));
-        system.shortcuts.add(new ShortcutProfile.Shortcut("d-sys-4", "显示桌面", "Win+D", ShortcutProfile.MOD_WIN, KEY_D));
-        system.shortcuts.add(new ShortcutProfile.Shortcut("d-sys-5", "切换窗口", "Alt+Tab", ShortcutProfile.MOD_ALT, KEY_TAB));
-        system.shortcuts.add(new ShortcutProfile.Shortcut("d-sys-6", "关闭窗口", "Alt+F4", ShortcutProfile.MOD_ALT, KEY_F4));
-        system.shortcuts.add(new ShortcutProfile.Shortcut("d-sys-7", "运行", "Win+R", ShortcutProfile.MOD_WIN, KEY_R));
-        system.shortcuts.add(new ShortcutProfile.Shortcut("d-sys-8", "资源管理器", "Win+E", ShortcutProfile.MOD_WIN, KEY_E));
+        // System
+        ShortcutProfile.ShortcutCategory system = new ShortcutProfile.ShortcutCategory("system", "System");
+        system.shortcuts.add(new ShortcutProfile.Shortcut("d-sys-1", "Task Manager", "Ctrl+Alt+Del", ShortcutProfile.MOD_CTRL_ALT, KEY_DELETE));
+        system.shortcuts.add(new ShortcutProfile.Shortcut("d-sys-2", "Lock Screen", "Win+L", ShortcutProfile.MOD_WIN, KEY_L));
+        system.shortcuts.add(new ShortcutProfile.Shortcut("d-sys-3", "Screenshot", "Win+Shift+S", ShortcutProfile.MOD_WIN_SHIFT, KEY_S));
+        system.shortcuts.add(new ShortcutProfile.Shortcut("d-sys-4", "Show Desktop", "Win+D", ShortcutProfile.MOD_WIN, KEY_D));
+        system.shortcuts.add(new ShortcutProfile.Shortcut("d-sys-5", "Switch Window", "Alt+Tab", ShortcutProfile.MOD_ALT, KEY_TAB));
+        system.shortcuts.add(new ShortcutProfile.Shortcut("d-sys-6", "Close Window", "Alt+F4", ShortcutProfile.MOD_ALT, KEY_F4));
+        system.shortcuts.add(new ShortcutProfile.Shortcut("d-sys-7", "Run", "Win+R", ShortcutProfile.MOD_WIN, KEY_R));
+        system.shortcuts.add(new ShortcutProfile.Shortcut("d-sys-8", "Explorer", "Win+E", ShortcutProfile.MOD_WIN, KEY_E));
         p.categories.add(system);
 
-        // 浏览器
-        ShortcutProfile.ShortcutCategory browser = new ShortcutProfile.ShortcutCategory("browser", "浏览器");
-        browser.shortcuts.add(new ShortcutProfile.Shortcut("d-b-1", "新标签页", "Ctrl+T", ShortcutProfile.MOD_CTRL, KEY_T));
-        browser.shortcuts.add(new ShortcutProfile.Shortcut("d-b-2", "关闭标签页", "Ctrl+W", ShortcutProfile.MOD_CTRL, KEY_W));
-        browser.shortcuts.add(new ShortcutProfile.Shortcut("d-b-3", "恢复标签页", "Ctrl+Shift+T", ShortcutProfile.MOD_CTRL_SHIFT, KEY_T));
-        browser.shortcuts.add(new ShortcutProfile.Shortcut("d-b-4", "刷新", "F5", ShortcutProfile.MOD_NONE, KEY_F5));
-        browser.shortcuts.add(new ShortcutProfile.Shortcut("d-b-5", "强制刷新", "Ctrl+F5", ShortcutProfile.MOD_CTRL, KEY_F5));
-        browser.shortcuts.add(new ShortcutProfile.Shortcut("d-b-6", "地址栏", "Ctrl+L", ShortcutProfile.MOD_CTRL, KEY_L));
-        browser.shortcuts.add(new ShortcutProfile.Shortcut("d-b-7", "书签", "Ctrl+D", ShortcutProfile.MOD_CTRL, KEY_D));
+        // Browser
+        ShortcutProfile.ShortcutCategory browser = new ShortcutProfile.ShortcutCategory("browser", "Browser");
+        browser.shortcuts.add(new ShortcutProfile.Shortcut("d-b-1", "New Tab", "Ctrl+T", ShortcutProfile.MOD_CTRL, KEY_T));
+        browser.shortcuts.add(new ShortcutProfile.Shortcut("d-b-2", "Close Tab", "Ctrl+W", ShortcutProfile.MOD_CTRL, KEY_W));
+        browser.shortcuts.add(new ShortcutProfile.Shortcut("d-b-3", "Restore Tab", "Ctrl+Shift+T", ShortcutProfile.MOD_CTRL_SHIFT, KEY_T));
+        browser.shortcuts.add(new ShortcutProfile.Shortcut("d-b-4", "Refresh", "F5", ShortcutProfile.MOD_NONE, KEY_F5));
+        browser.shortcuts.add(new ShortcutProfile.Shortcut("d-b-5", "Hard Refresh", "Ctrl+F5", ShortcutProfile.MOD_CTRL, KEY_F5));
+        browser.shortcuts.add(new ShortcutProfile.Shortcut("d-b-6", "Address Bar", "Ctrl+L", ShortcutProfile.MOD_CTRL, KEY_L));
+        browser.shortcuts.add(new ShortcutProfile.Shortcut("d-b-7", "Bookmarks", "Ctrl+D", ShortcutProfile.MOD_CTRL, KEY_D));
         p.categories.add(browser);
 
-        // 文本编辑
-        ShortcutProfile.ShortcutCategory text = new ShortcutProfile.ShortcutCategory("text", "文本");
-        text.shortcuts.add(new ShortcutProfile.Shortcut("d-t-1", "加粗", "Ctrl+B", ShortcutProfile.MOD_CTRL, KEY_B));
-        text.shortcuts.add(new ShortcutProfile.Shortcut("d-t-2", "斜体", "Ctrl+I", ShortcutProfile.MOD_CTRL, KEY_I));
-        text.shortcuts.add(new ShortcutProfile.Shortcut("d-t-3", "下划线", "Ctrl+U", ShortcutProfile.MOD_CTRL, KEY_U));
-        text.shortcuts.add(new ShortcutProfile.Shortcut("d-t-4", "左对齐", "Ctrl+L", ShortcutProfile.MOD_CTRL, KEY_L));
-        text.shortcuts.add(new ShortcutProfile.Shortcut("d-t-5", "居中", "Ctrl+E", ShortcutProfile.MOD_CTRL, KEY_E));
-        text.shortcuts.add(new ShortcutProfile.Shortcut("d-t-6", "右对齐", "Ctrl+R", ShortcutProfile.MOD_CTRL, KEY_R));
+        // Text
+        ShortcutProfile.ShortcutCategory text = new ShortcutProfile.ShortcutCategory("text", "Text");
+        text.shortcuts.add(new ShortcutProfile.Shortcut("d-t-1", "Bold", "Ctrl+B", ShortcutProfile.MOD_CTRL, KEY_B));
+        text.shortcuts.add(new ShortcutProfile.Shortcut("d-t-2", "Italic", "Ctrl+I", ShortcutProfile.MOD_CTRL, KEY_I));
+        text.shortcuts.add(new ShortcutProfile.Shortcut("d-t-3", "Underline", "Ctrl+U", ShortcutProfile.MOD_CTRL, KEY_U));
+        text.shortcuts.add(new ShortcutProfile.Shortcut("d-t-4", "Align Left", "Ctrl+L", ShortcutProfile.MOD_CTRL, KEY_L));
+        text.shortcuts.add(new ShortcutProfile.Shortcut("d-t-5", "Center", "Ctrl+E", ShortcutProfile.MOD_CTRL, KEY_E));
+        text.shortcuts.add(new ShortcutProfile.Shortcut("d-t-6", "Align Right", "Ctrl+R", ShortcutProfile.MOD_CTRL, KEY_R));
         p.categories.add(text);
 
-        // 媒体控制
-        ShortcutProfile.ShortcutCategory media = new ShortcutProfile.ShortcutCategory("media", "媒体");
-        media.shortcuts.add(new ShortcutProfile.Shortcut("d-med-1", "播放/暂停", "F8", ShortcutProfile.MOD_NONE, KEY_F8));
-        media.shortcuts.add(new ShortcutProfile.Shortcut("d-med-2", "上一曲", "F7", ShortcutProfile.MOD_NONE, KEY_F7));
-        media.shortcuts.add(new ShortcutProfile.Shortcut("d-med-3", "下一曲", "F9", ShortcutProfile.MOD_NONE, KEY_F9));
-        media.shortcuts.add(new ShortcutProfile.Shortcut("d-med-4", "静音", "F6", ShortcutProfile.MOD_NONE, KEY_F6));
+        // Media Control
+        ShortcutProfile.ShortcutCategory media = new ShortcutProfile.ShortcutCategory("media", "Media");
+        media.shortcuts.add(new ShortcutProfile.Shortcut("d-med-1", "Play/Pause", "F8", ShortcutProfile.MOD_NONE, KEY_F8));
+        media.shortcuts.add(new ShortcutProfile.Shortcut("d-med-2", "Previous Track", "F7", ShortcutProfile.MOD_NONE, KEY_F7));
+        media.shortcuts.add(new ShortcutProfile.Shortcut("d-med-3", "Next Track", "F9", ShortcutProfile.MOD_NONE, KEY_F9));
+        media.shortcuts.add(new ShortcutProfile.Shortcut("d-med-4", "Mute", "F6", ShortcutProfile.MOD_NONE, KEY_F6));
         p.categories.add(media);
 
         return p;

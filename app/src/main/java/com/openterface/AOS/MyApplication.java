@@ -28,6 +28,7 @@ import android.app.Application;
 import android.graphics.Color;
 import android.util.Log;
 
+import com.openterface.AOS.manager.LocaleManager;
 import com.openterface.AOS.manager.ThemeManager;
 
 import jp.wasabeef.takt.Seat;
@@ -38,15 +39,16 @@ public class MyApplication extends Application {
     public void onCreate() {
         super.onCreate();
 
+        // Initialize locale manager and apply persisted locale
+        LocaleManager localeManager = LocaleManager.getInstance();
+        localeManager.initialize(this);
+        localeManager.applyPersistedLocale();
+
         // Apply saved theme mode (light/dark/system) at app startup
-        // This ensures the theme persists across app restarts
         ThemeManager themeManager = ThemeManager.getInstance();
         themeManager.initialize(this);
         String savedMode = themeManager.getThemeMode();
         themeManager.applyThemeMode(savedMode);
-        // Apply saved theme mode (dark/light/system) before any Activity is created
-        ThemeManager.getInstance().initialize(this);
-        ThemeManager.getInstance().applyThemeMode(ThemeManager.getInstance().getThemeMode());
 //        Takt.stock(this)
 //                .seat(Seat.TOP_RIGHT)
 //                .interval(250)

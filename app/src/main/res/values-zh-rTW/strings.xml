@@ -189,4 +189,64 @@
     <string name="KeyMouse_Abs_Drag_Ctrl">拖曳\n模式</string>
     <string name="KeyMouse_Drag">拖曳</string>
     <string name="KeyMouse_Rel_Ctrl">指標\n模式</string>
+
+    <!-- 常用操作 -->
+    <string name="favorite">收藏</string>
+    <string name="more">更多</string>
+    <string name="copy">複製</string>
+    <string name="export">匯出</string>
+    <string name="edit">編輯</string>
+    <string name="delete">刪除</string>
+
+    <!-- 鍵盤設置 -->
+    <string name="key_sound">按鍵音效</string>
+    <string name="key_vibrate">按鍵振動</string>
+    <string name="volume">音量</string>
+    <string name="strength">強度</string>
+
+    <!-- 主題設置 -->
+    <string name="theme_settings">主題設置</string>
+    <string name="theme_color">主題顏色</string>
+    <string name="orange">橙色</string>
+
+    <!-- 設置頁面 - 補充翻譯 -->
+    <string name="display_mode">顯示模式</string>
+    <string name="follow_system">跟隨系統</string>
+    <string name="keyboard_settings">鍵盤設置</string>
+    <string name="target_os_setting_title">目標操作系統</string>
+    <string name="target_os_windows">Windows (Win 鍵)</string>
+    <string name="settings_key_sound_label">按鍵音效</string>
+    <string name="settings_volume_label">音量</string>
+    <string name="settings_vibrate_label">振動回饋</string>
+    <string name="settings_vibrate_intensity_label">振動強度</string>
+    <string name="settings_mouse_settings">滑鼠設置</string>
+    <string name="settings_scroll_speed">滾輪速度</string>
+    <string name="settings_speed_medium">中等</string>
+    <string name="settings_input_settings">輸入設置</string>
+    <string name="settings_pre_validate_text">發送前驗證文字</string>
+    <string name="settings_auto_save_draft">自動儲存草稿</string>
+    <string name="language_setting">語言設定</string>
+
+    <!-- 設置浮動對話框 -->
+    <string name="settings_title">設置</string>
+    <string name="close">關閉</string>
+
+    <!-- 快捷鍵Hub浮動面板 -->
+    <string name="shortcut_hub_title">快捷鍵設定</string>
+    <string name="shortcut_hub_no_profiles">暫無設定</string>
+    <string name="shortcut_hub_new">+ 新建</string>
+    <string name="shortcut_hub_import">匯入</string>
+    <string name="shortcut_hub_export_all">全部匯出</string>
+    <string name="shortcut_hub_no_favorites">暫無收藏的快捷鍵\n在分類中點擊 ⭐ 新增</string>
+    <string name="shortcut_hub_close">關閉</string>
+    <string name="shortcut_hub_back">返回</string>
+    <string name="shortcut_hub_reset">重置</string>
+    <string name="shortcut_hub_add_shortcut">新增快捷鍵</string>
+
+    <!-- 輸入法按鈕 -->
+    <string name="ime_clear">清除</string>
+    <string name="ime_restore">復原</string>
+    <string name="ime_save">儲存</string>
+    <string name="ime_saved">已儲存</string>
+    <string name="ime_send">發送</string>
 </resources>

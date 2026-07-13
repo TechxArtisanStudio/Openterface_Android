@@ -43,12 +43,34 @@ public class PortraitKeyboardView extends LinearLayout {
         // Use ContextCompat for proper theme-aware color resolution
         setBackgroundColor(ContextCompat.getColor(context, R.color.background_light));
 
+        // Add Openterface logo at the top
+        addLogo(context);
+
         // Load keyboard panels
         systemPanel = loadPanel(context, R.layout.system_button);
         functionPanel = loadPanel(context, R.layout.function_button);
 
         // Default: show system (QWERTY) panel
         showSystemPanel();
+    }
+
+    private void addLogo(Context context) {
+        android.widget.ImageView logo = new android.widget.ImageView(context);
+        logo.setImageResource(R.drawable.ic_openterface_wordmark);
+        logo.setColorFilter(ContextCompat.getColor(context, R.color.text_secondary));
+        logo.setAdjustViewBounds(true);
+
+        // Set layout params
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            (int) (16 * context.getResources().getDisplayMetrics().density)
+        );
+        params.gravity = android.view.Gravity.CENTER_HORIZONTAL;
+        params.topMargin = (int) (6 * context.getResources().getDisplayMetrics().density);
+        params.bottomMargin = (int) (4 * context.getResources().getDisplayMetrics().density);
+
+        logo.setLayoutParams(params);
+        addView(logo);
     }
 
     /**

@@ -21,14 +21,14 @@
             android:layout_height="wrap_content"
             android:src="@android:drawable/ic_menu_close_clear_cancel"
             android:background="?android:attr/selectableItemBackground"
-            android:contentDescription="关闭" />
+            android:contentDescription="@string/saved_texts_close" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginStart="12dp"
-            android:text="已保存的文本"
+            android:text="@string/ime_saved_text_title"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="@color/on_primary" />
@@ -48,7 +48,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:text="暂无保存的文本\n\n点击输入框下方的 'Save' 按钮保存文本"
+        android:text="@string/ime_saved_text_empty"
         android:gravity="center"
         android:textSize="16sp"
         android:textColor="@color/text_secondary"

@@ -63,7 +63,7 @@
                 android:layout_height="36dp"
                 android:src="@drawable/ic_content_copy"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="复制"
+                android:contentDescription="@string/copy"
                 app:tint="?attr/colorOnSurfaceVariant" />
 
             <ImageButton
@@ -72,7 +72,7 @@
                 android:layout_height="36dp"
                 android:src="@drawable/ic_export"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="导出"
+                android:contentDescription="@string/export"
                 android:layout_marginStart="4dp"
                 app:tint="?attr/colorOnSurfaceVariant" />
 
@@ -82,7 +82,7 @@
                 android:layout_height="36dp"
                 android:src="@drawable/ic_edit"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="编辑"
+                android:contentDescription="@string/edit"
                 android:layout_marginStart="4dp"
                 app:tint="?attr/colorOnSurfaceVariant" />
 
@@ -92,7 +92,7 @@
                 android:layout_height="36dp"
                 android:src="@drawable/ic_delete"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="删除"
+                android:contentDescription="@string/delete"
                 android:layout_marginStart="4dp"
                 app:tint="?attr/colorError" />
         </LinearLayout>

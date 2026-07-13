@@ -116,9 +116,9 @@ public class KeyBoardOpacity {
         }
 
         new AlertDialog.Builder(keyBoardView.getContext())
-                .setTitle("调整键盘/触摸屏透明度")
+                .setTitle(R.string.keyboard_opacity_title)
                 .setView(dialogView)
-                .setPositiveButton("确定", null)
+                .setPositiveButton(R.string.ok_button, null)
                 .show();
     }
 

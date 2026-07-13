@@ -55,7 +55,7 @@ public class ShortcutProfileAdapter extends RecyclerView.Adapter<ShortcutProfile
 
         holder.tvName.setText(profile.name);
         holder.tvDescription.setText(profile.description);
-        holder.tvShortcutCount.setText(profile.getShortcutCount() + " 个快捷键");
+        holder.tvShortcutCount.setText(String.format(holder.itemView.getContext().getString(R.string.shortcut_count), profile.getShortcutCount()));
 
         // Show/hide edit and delete buttons based on builtIn flag
         if (profile.builtIn) {

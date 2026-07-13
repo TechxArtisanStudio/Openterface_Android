@@ -52,7 +52,7 @@
         android:layout_height="32dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:src="@drawable/ic_star_border_24"
-        android:contentDescription="收藏"
+        android:contentDescription="@string/favorite"
         android:padding="4dp"
         android:layout_marginStart="4dp"
         app:tint="@color/text_secondary" />
@@ -64,7 +64,7 @@
         android:layout_height="32dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:src="@drawable/ic_more_vert_24"
-        android:contentDescription="更多"
+        android:contentDescription="@string/more"
         android:padding="4dp"
         app:tint="@color/text_secondary" />
 </LinearLayout>
