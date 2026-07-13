@@ -17,7 +17,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="按键音效"
+            android:text="@string/key_sound"
             android:textSize="16sp"
             android:textColor="@android:color/black" />
 
@@ -38,7 +38,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="音量"
+            android:text="@string/volume"
             android:textSize="14sp"
             android:textColor="@android:color/darker_gray" />
 
@@ -69,7 +69,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="振动反馈"
+            android:text="@string/key_vibrate"
             android:textSize="16sp"
             android:textColor="@android:color/black" />
 
@@ -89,7 +89,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="强度"
+            android:text="@string/strength"
             android:textSize="14sp"
             android:textColor="@android:color/darker_gray" />
 

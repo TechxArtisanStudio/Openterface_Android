@@ -119,8 +119,8 @@ public class VncServerSettingsDialogFragment extends DialogFragment {
             if (isChecked && (webrtcAutoStartEnabled || webrtcServerRunning)) {
                 buttonView.setChecked(false);
                 new AlertDialog.Builder(requireContext())
-                    .setTitle("Cannot Enable Auto-Start")
-                    .setMessage("WebRTC server is already configured to auto-start or is currently running. Only one server (VNC or WebRTC) can run at a time.\n\nPlease stop the WebRTC server and disable its auto-start first.")
+                    .setTitle(R.string.cannot_enable_auto_start)
+                    .setMessage(R.string.vnc_webrtc_conflict_message)
                     .setPositiveButton("OK", null)
                     .show();
             }
@@ -172,7 +172,7 @@ public class VncServerSettingsDialogFragment extends DialogFragment {
             if (!ips.isEmpty()) {
                 tvIpAddress.setText(String.join(", ", ips));
             } else {
-                tvIpAddress.setText("No network connection");
+                tvIpAddress.setText(R.string.no_network_connection);
             }
         }
 
@@ -209,7 +209,7 @@ public class VncServerSettingsDialogFragment extends DialogFragment {
 
     private void startServer() {
         if (vncService == null) {
-            Toast.makeText(requireContext(), "VNC Service not available", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), R.string.vnc_service_not_available, Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -230,12 +230,12 @@ public class VncServerSettingsDialogFragment extends DialogFragment {
         );
 
         if (success) {
-            Toast.makeText(requireContext(), "VNC Server started", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), R.string.vnc_server_started, Toast.LENGTH_SHORT).show();
             if (listener != null) {
                 listener.onServerStarted(config.getPort(), config.getPassword());
             }
         } else {
-            Toast.makeText(requireContext(), "Failed to start VNC Server", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), R.string.vnc_server_failed, Toast.LENGTH_SHORT).show();
         }
 
         updateUI();
@@ -245,7 +245,7 @@ public class VncServerSettingsDialogFragment extends DialogFragment {
         if (vncService == null) return;
 
         vncService.stopServer();
-        Toast.makeText(requireContext(), "VNC Server stopped", Toast.LENGTH_SHORT).show();
+        Toast.makeText(requireContext(), R.string.vnc_server_stopped, Toast.LENGTH_SHORT).show();
         if (listener != null) {
             listener.onServerStopped();
         }
@@ -256,7 +256,7 @@ public class VncServerSettingsDialogFragment extends DialogFragment {
         boolean running = vncService != null && vncService.isRunning();
 
         if (running) {
-            tvStatus.setText("Running");
+            tvStatus.setText(R.string.running);
             tvStatus.setTextColor(getResources().getColor(R.color.green));
             btnStart.setVisibility(View.GONE);
             btnStop.setVisibility(View.VISIBLE);
@@ -268,7 +268,7 @@ public class VncServerSettingsDialogFragment extends DialogFragment {
             spinnerCompress.setEnabled(false);
             swAutoStart.setEnabled(false);
         } else {
-            tvStatus.setText("Stopped");
+            tvStatus.setText(R.string.stopped);
             tvStatus.setTextColor(getResources().getColor(R.color.purple_500));
             btnStart.setVisibility(View.VISIBLE);
             btnStop.setVisibility(View.GONE);

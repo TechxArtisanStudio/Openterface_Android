@@ -18,7 +18,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="快捷键配置"
+            android:text="@string/shortcut_config"
             android:textSize="20sp"
             android:textColor="@android:color/white"
             android:textStyle="bold" />
@@ -29,7 +29,7 @@
             android:layout_height="40dp"
             android:src="@drawable/ic_import"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="导入"
+            android:contentDescription="@string/import_shortcut"
             android:tint="@android:color/white" />
 
         <ImageButton
@@ -38,7 +38,7 @@
             android:layout_height="40dp"
             android:src="@drawable/ic_add"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="新建配置"
+            android:contentDescription="@string/new_profile"
             android:layout_marginStart="8dp"
             android:tint="@android:color/white" />
     </LinearLayout>
@@ -60,7 +60,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="暂无配置\n点击右上角 + 新建"
+            android:text="@string/no_shortcut_configs_available"
             android:textSize="16sp"
             android:textColor="?attr/colorOnSurface"
             android:gravity="center"

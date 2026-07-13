@@ -31,7 +31,7 @@
             android:id="@+id/tap_delay_value"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="快 (80ms)"
+            android:text="@string/touchpad_speed_fast"
             android:textSize="18sp"
             android:layout_gravity="center"
             android:layout_marginBottom="8dp"/>

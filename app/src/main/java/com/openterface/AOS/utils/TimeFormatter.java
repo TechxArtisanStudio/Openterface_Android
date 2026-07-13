@@ -34,15 +34,15 @@ import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 
 public class TimeFormatter {
-    public static final SimpleDateFormat yyyy_MM_dd = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-    public static final SimpleDateFormat yyyy_MM_ddHH_mm = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
-    public static final SimpleDateFormat yyyy_MM_ddHH_mm_ss = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
-    public static final SimpleDateFormat yyyy_MM_dd_HH_mm_ss = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.getDefault());
-    public static final SimpleDateFormat yyyyMMdd = new SimpleDateFormat("yyyyMMdd", Locale.getDefault());
-    public static final SimpleDateFormat yyyyMMddHHmmss = new SimpleDateFormat("yyyyMMddHHmmss", Locale.getDefault());
+    public static final SimpleDateFormat yyyy_MM_dd = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+    public static final SimpleDateFormat yyyy_MM_ddHH_mm = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.ENGLISH);
+    public static final SimpleDateFormat yyyy_MM_ddHH_mm_ss = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH);
+    public static final SimpleDateFormat yyyy_MM_dd_HH_mm_ss = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.ENGLISH);
+    public static final SimpleDateFormat yyyyMMdd = new SimpleDateFormat("yyyyMMdd", Locale.ENGLISH);
+    public static final SimpleDateFormat yyyyMMddHHmmss = new SimpleDateFormat("yyyyMMddHHmmss", Locale.ENGLISH);
 
-    public static final SimpleDateFormat yyyy_M_d_cn = new SimpleDateFormat("yyyy年M月d日", Locale.getDefault());
-    public static final SimpleDateFormat yyyy_M_d_HH_mm_cn = new SimpleDateFormat("yyyy年M月d日 HH:mm", Locale.getDefault());
+    public static final SimpleDateFormat yyyy_M_d = new SimpleDateFormat("yyyy-M-d", Locale.ENGLISH);
+    public static final SimpleDateFormat yyyy_M_d_HH_mm = new SimpleDateFormat("yyyy-M-d HH:mm", Locale.ENGLISH);
 
     public enum DateType {
         YEAR,

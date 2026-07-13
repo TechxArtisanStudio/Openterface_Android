@@ -24,10 +24,10 @@ package com.openterface.AOS.target;
 import android.content.Context;
 import android.util.Log;
 
+import com.openterface.AOS.manager.LocaleManager;
 import com.openterface.AOS.jni.KeymodJNI;
 import com.openterface.AOS.serial.UsbDeviceManager;
 
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -67,9 +67,13 @@ public class KeyBoardManagerCore {
     }
 
     public static void setKeyBoardLanguage() {
-        // Language support can be added later via Core
-        String currentLang = Locale.getDefault().getLanguage();
-        Log.d(TAG, "Language: " + currentLang);
+        // Use the resolved locale from LocaleManager (e.g., "system" -> "ja-rJP")
+        String resolvedLocale = LocaleManager.getInstance().getResolvedLocaleCode();
+        // Extract the base language (e.g., "de-rDE" -> "de", "ja-rJP" -> "ja")
+        String baseLang = resolvedLocale.contains("-r") ?
+            resolvedLocale.substring(0, resolvedLocale.indexOf("-r")) :
+            resolvedLocale;
+        Log.d(TAG, "Language: " + baseLang);
     }
 
     // ====== Native JNI Methods ======

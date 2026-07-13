@@ -60,7 +60,7 @@ public class HubProfileAdapter extends RecyclerView.Adapter<HubProfileAdapter.Vi
 
         holder.tvName.setText(profile.name);
         holder.tvDescription.setText(profile.description != null ? profile.description : "");
-        holder.tvCount.setText(profile.getShortcutCount() + " 个");
+        holder.tvCount.setText(String.format(holder.itemView.getContext().getString(R.string.shortcut_count), profile.getShortcutCount()));
 
         // Active indicator
         holder.ivActive.setVisibility(isActive ? View.VISIBLE : View.GONE);

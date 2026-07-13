@@ -14,7 +14,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="WebRTC Server"
+            android:text="@string/webrtc_server"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="@color/text_on_surface"
@@ -24,7 +24,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Stream video directly to web browsers without installing a client app."
+            android:text="@string/description_webrtc"
             android:textSize="12sp"
             android:textColor="@color/gray_600"
             android:layout_marginBottom="16dp" />
@@ -38,13 +38,13 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Status: "
+                android:text="@string/status_label"
                 android:textSize="14sp" />
             <TextView
                 android:id="@+id/webrtc_status_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Stopped"
+                android:text="@string/status_stopped"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:textColor="@color/purple_500" />
@@ -54,14 +54,14 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Device IP:"
+            android:text="@string/device_ip_label"
             android:textSize="12sp"
             android:textColor="@color/gray_600" />
         <TextView
             android:id="@+id/webrtc_ip_address"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Loading..."
+            android:text="@string/loading"
             android:textSize="14sp"
             android:layout_marginBottom="16dp" />
 
@@ -69,14 +69,14 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Browser URL:"
+            android:text="@string/browser_url_label"
             android:textSize="12sp"
             android:textColor="@color/gray_600" />
         <TextView
             android:id="@+id/webrtc_connection_url"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="http://..."
+            android:text="@string/url_placeholder"
             android:textSize="12sp"
             android:textColor="#2196F3"
             android:autoLink="web"
@@ -86,7 +86,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Signaling Port:"
+            android:text="@string/signaling_port_label"
             android:textSize="12sp"
             android:textColor="@color/gray_600" />
         <EditText
@@ -101,7 +101,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Frame Rate (FPS):"
+            android:text="@string/frame_rate_label"
             android:textSize="12sp"
             android:textColor="@color/gray_600" />
         <EditText
@@ -116,7 +116,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Bitrate (kbps):"
+            android:text="@string/bitrate_label"
             android:textSize="12sp"
             android:textColor="@color/gray_600" />
         <EditText
@@ -132,7 +132,7 @@
             android:id="@+id/webrtc_auto_start"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Auto-start on USB connect"
+            android:text="@string/auto_start_on_usb"
             android:textSize="14sp"
             android:checked="false"
             android:layout_marginBottom="16dp" />
@@ -147,7 +147,7 @@
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:text="Start Server"
+                android:text="@string/start_server"
                 android:backgroundTint="@color/green"
                 android:textColor="@color/white" />
             <Button
@@ -155,7 +155,7 @@
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:text="Stop Server"
+                android:text="@string/stop_server"
                 android:backgroundTint="@color/purple_500"
                 android:textColor="@color/white"
                 android:visibility="gone" />
@@ -165,7 +165,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Open the URL in a modern browser. The browser will negotiate a WebRTC connection and show the video stream."
+            android:text="@string/description_webrtc_howto"
             android:textSize="12sp"
             android:textColor="@color/gray_600"
             android:layout_marginTop="16dp"

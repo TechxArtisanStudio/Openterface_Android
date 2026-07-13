@@ -5,7 +5,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.Context;
+import android.content.pm.ServiceInfo;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.Build;
@@ -159,7 +159,16 @@ public class WebRtcServerService extends Service {
             isRunning.set(true);
 
             // Start foreground service
-            startForeground(NOTIFICATION_ID, createNotification());
+            // Start foreground service with the correct foreground service type.
+            // On Android 14+ (API 34+), explicitly specify the foregroundServiceType
+            // declared in the manifest. On older Android versions, use the 2-arg form
+            // which internally uses the manifest-declared type.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                startForeground(NOTIFICATION_ID, createNotification(),
+                        ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE);
+            } else {
+                startForeground(NOTIFICATION_ID, createNotification());
+            }
 
             Log.i(TAG, "WebRTC server started");
             return true;

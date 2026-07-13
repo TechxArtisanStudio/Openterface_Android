@@ -10,7 +10,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="选择主题颜色"
+        android:text="@string/select_theme_color"
         android:textSize="20sp"
         android:textStyle="bold"
         android:textColor="?attr/colorOnSurface"
@@ -25,7 +25,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="显示模式"
+        android:text="@string/display_mode"
         android:textSize="18sp"
         android:textStyle="bold"
         android:textColor="?attr/colorOnSurface"
@@ -40,7 +40,7 @@
             android:id="@+id/radio_light_mode"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="浅色模式"
+            android:text="@string/light_mode"
             android:textSize="16sp"
             android:padding="8dp"/>
 
@@ -48,7 +48,7 @@
             android:id="@+id/radio_dark_mode"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="深色模式"
+            android:text="@string/dark_mode"
             android:textSize="16sp"
             android:padding="8dp"/>
 
@@ -56,7 +56,7 @@
             android:id="@+id/radio_system_mode"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="跟随系统"
+            android:text="@string/follow_system"
             android:textSize="16sp"
             android:padding="8dp"/>
     </RadioGroup>
@@ -73,13 +73,13 @@
             style="@style/Widget.MaterialComponents.Button.TextButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="取消"/>
+            android:text="@string/cancel"/>
 
         <Button
             android:id="@+id/btn_confirm"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="确定"
+            android:text="@string/ok_button"
             android:layout_marginStart="8dp"/>
     </LinearLayout>
 </LinearLayout>

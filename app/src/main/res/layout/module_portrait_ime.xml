@@ -91,12 +91,12 @@
             android:layout_width="0dp"
             android:layout_height="48dp"
             android:layout_weight="1"
-            android:text="Clear"
+            android:text="@string/ime_clear"
             android:textColor="@color/key_text"
             android:background="@drawable/key_background"
             android:textSize="12sp"
             android:layout_marginEnd="4dp"
-            android:contentDescription="清空文本" />
+            android:contentDescription="@string/clear_text" />
 
         <!-- Restore button (reuses the last cleared text) -->
         <android.widget.Button
@@ -104,13 +104,13 @@
             android:layout_width="0dp"
             android:layout_height="48dp"
             android:layout_weight="1"
-            android:text="Restore"
+            android:text="@string/ime_restore"
             android:textColor="@color/key_text"
             android:background="@drawable/key_background"
             android:textSize="12sp"
             android:layout_marginHorizontal="4dp"
             android:enabled="false"
-            android:contentDescription="恢复上次清空的文本" />
+            android:contentDescription="@string/restore_last_cleared_text" />
 
         <!-- Save button -->
         <android.widget.Button
@@ -118,7 +118,7 @@
             android:layout_width="0dp"
             android:layout_height="48dp"
             android:layout_weight="1"
-            android:text="Save"
+            android:text="@string/ime_save"
             android:textColor="@color/key_text"
             android:background="@drawable/key_background"
             android:textSize="12sp"
@@ -130,7 +130,7 @@
             android:layout_width="0dp"
             android:layout_height="48dp"
             android:layout_weight="1"
-            android:text="Saved"
+            android:text="@string/ime_saved"
             android:textColor="@color/key_text"
             android:background="@drawable/key_background"
             android:textSize="12sp"
@@ -142,7 +142,7 @@
             android:layout_width="0dp"
             android:layout_height="48dp"
             android:layout_weight="2"
-            android:text="Send"
+            android:text="@string/ime_send"
             android:textColor="@color/on_primary"
             android:backgroundTint="@color/primary"
             android:textSize="14sp"

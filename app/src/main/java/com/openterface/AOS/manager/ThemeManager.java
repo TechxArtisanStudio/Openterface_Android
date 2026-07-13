@@ -178,21 +178,21 @@ public class ThemeManager {
     public static String getFamilyDisplayName(String family) {
         switch (family) {
             case FAMILY_ORANGE:
-                return "橙色";
+                return "Orange";
             case FAMILY_BLUE:
-                return "蓝色";
+                return "Blue";
             case FAMILY_GREEN:
-                return "绿色";
+                return "Green";
             case FAMILY_PINK:
-                return "粉色";
+                return "Pink";
             case FAMILY_PURPLE:
-                return "紫色";
+                return "Purple";
             case FAMILY_RED:
-                return "红色";
+                return "Red";
             case FAMILY_TEAL:
-                return "青色";
+                return "Cyan";
             case FAMILY_INDIGO:
-                return "靛蓝色";
+                return "Indigo";
             default:
                 return family;
         }

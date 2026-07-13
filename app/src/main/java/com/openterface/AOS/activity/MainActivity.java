@@ -72,6 +72,7 @@ import com.openterface.AOS.view.TouchPadHelpDialog;
 import com.openterface.AOS.view.MouseControlStripView;
 import com.openterface.AOS.KeyBoardClick.TouchPadSettings;
 import com.openterface.AOS.dialog.TargetOsPickerDialog;
+import com.openterface.AOS.manager.LocaleManager;
 import com.openterface.AOS.manager.TargetOsManager;
 import com.openterface.AOS.manager.ThemeManager;
 import com.openterface.AOS.manager.ShortcutProfileManager;
@@ -107,6 +108,7 @@ import com.openterface.AOS.fragment.VncServerSettingsDialogFragment;
 import com.openterface.AOS.fragment.WebRtcDialogFragment;
 import com.openterface.AOS.fragment.ShortcutManagerFragment;
 import com.openterface.AOS.fragment.ShortcutHubFloatingFragment;
+import com.openterface.AOS.fragment.LanguagePickerDialogFragment;
 import com.openterface.AOS.vnc.VncFrameCapture;
 import com.openterface.AOS.vnc.VncKeyMap;
 import com.openterface.AOS.vnc.VncServerCallback;
@@ -169,7 +171,7 @@ import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.IntentFilter;
 
-public class MainActivity extends AppCompatActivity implements SettingsFloatingFragment.SettingsCallback {
+public class MainActivity extends BaseActivity implements SettingsFloatingFragment.SettingsCallback {
 
     private static final String TAG = "OP-UI";
     private static final boolean DEBUG = true;
@@ -548,7 +550,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
         }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("键盘设置");
+        builder.setTitle(R.string.keyboard_settings_title);
 
         View view = getLayoutInflater().inflate(R.layout.dialog_keyboard_settings, null);
         builder.setView(view);
@@ -598,27 +600,60 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
             @Override public void onStopTrackingTouch(SeekBar seekBar) {}
         });
 
-        builder.setPositiveButton("确定", (dialog, which) -> dialog.dismiss());
-        builder.setNegativeButton("取消", (dialog, which) -> dialog.dismiss());
+        builder.setPositiveButton(R.string.ok_button, (dialog, which) -> dialog.dismiss());
+        builder.setNegativeButton(R.string.permission_cancel, (dialog, which) -> dialog.dismiss());
         builder.show();
     }
 
     private void setLanguage(){
         Button Left_Than_Button = findViewById(R.id.Left_Than_Button);
-        String currentLang = Locale.getDefault().getLanguage();
-        if (currentLang.equals("us")) {
-            if (Left_Than_Button != null) Left_Than_Button.setText("");
-            KeyBoardSystem.setKeyboardLanguage("us");
-            KeyBoardFunction.setKeyboardLanguage("us");
-        } else if (currentLang.equals("de")) {
-            Log.d(TAG, "German Button Pressed: ");
+        // Get the fully resolved locale code (e.g., "system" -> "ja-rJP")
+        LocaleManager localeManager = LocaleManager.getInstance();
+        String resolvedLocale = localeManager.getResolvedLocaleCode();
 
-            KeyBoardSystem.setKeyboardLanguage("de");
-            KeyBoardFunction.setKeyboardLanguage("de");
-        }else {
-            if (Left_Than_Button != null) Left_Than_Button.setText("");
-            KeyBoardSystem.setKeyboardLanguage("us");
-            KeyBoardFunction.setKeyboardLanguage("us");
+        // Extract the base language for keyboard mapping (e.g., "zh-rCN" -> "zh", "ja-rJP" -> "ja")
+        String baseLang = resolvedLocale.contains("-r") ?
+            resolvedLocale.substring(0, resolvedLocale.indexOf("-r")) :
+            resolvedLocale;
+
+        String keyboardLang = getKeyboardLanguageForLocale(baseLang);
+
+        if (Left_Than_Button != null) Left_Than_Button.setText("");
+        KeyBoardSystem.setKeyboardLanguage(keyboardLang);
+        KeyBoardFunction.setKeyboardLanguage(keyboardLang);
+    }
+
+    /**
+     * Maps a language code to the corresponding keyboard layout.
+     * Languages without a dedicated keyboard mapping fall back to US layout.
+     */
+    private String getKeyboardLanguageForLocale(String locale) {
+        switch (locale) {
+            case "de":
+                Log.d(TAG, "German locale, using DE keyboard layout");
+                return "de";
+            case "en":
+            case "us":
+                return "us";
+            case "zh":
+            case "ja":
+            case "ko":
+            case "es":
+            case "fr":
+            case "ru":
+            case "pt":
+            case "ar":
+            case "hi":
+            case "it":
+            case "nl":
+            case "pl":
+            case "th":
+            case "tr":
+            case "vi":
+                return "us";
+            default:
+                Log.w(TAG, "Unknown locale: " + locale + ", falling back to US keyboard");
+                return "us";
         }
     }
 
@@ -1932,8 +1967,8 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                         if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO)) {
                             // Show an explanation to the user
                             new AlertDialog.Builder(this)
-                                    .setTitle("Permission Required")
-                                    .setMessage("Recording permission is required to record videos with audio. Please grant the permission to continue.")
+                                    .setTitle(R.string.permission_required)
+                                    .setMessage(R.string.recording_permission_required)
                                     .setPositiveButton("OK", (dialog, which) -> {
                                         // Request the permission again
                                         ActivityCompat.requestPermissions(this, 
@@ -1981,8 +2016,8 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                 if (!ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.RECORD_AUDIO)) {
                     // User has permanently denied the permission
                     new AlertDialog.Builder(this)
-                            .setTitle("Permission Required")
-                            .setMessage("Recording permission is required to record videos with audio. Please enable it in Settings.")
+                            .setTitle(R.string.permission_required)
+                            .setMessage(R.string.recording_permission_required_settings)
                             .setPositiveButton("Settings", (dialog, which) -> {
                                 // Open app settings
                                 Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
@@ -2618,7 +2653,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
             if (vncEncodingHideRunnable != null) {
                 tvVncEncodingPopup.removeCallbacks(vncEncodingHideRunnable);
             }
-            tvVncEncodingPopup.setText("VNC: " + encoding + " (" + ip + ")");
+            tvVncEncodingPopup.setText(getString(R.string.vnc_running) + ": " + encoding + " (" + ip + ")");
             tvVncEncodingPopup.setVisibility(View.VISIBLE);
             vncEncodingHideRunnable = () -> tvVncEncodingPopup.setVisibility(View.GONE);
             tvVncEncodingPopup.postDelayed(vncEncodingHideRunnable, 5000);
@@ -2806,7 +2841,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
         ImageButton settingsBtn = new ImageButton(this);
         settingsBtn.setImageResource(R.drawable.baseline_settings_24);
         settingsBtn.setScaleType(ImageButton.ScaleType.CENTER_INSIDE);
-        settingsBtn.setContentDescription("键盘设置");
+        settingsBtn.setContentDescription(getString(R.string.keyboard_settings_title));
         int btnSize = (int) (40 * getResources().getDisplayMetrics().density);
         LinearLayout.LayoutParams sLp = new LinearLayout.LayoutParams(btnSize, btnSize);
         sLp.setMargins((int) (3 * getResources().getDisplayMetrics().density), 0,
@@ -2830,7 +2865,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
 
         String key = hidKeyCodeToString(shortcut.keyCode);
         if (key == null || key.isEmpty()) {
-            Toast.makeText(this, "未知按键", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, getString(R.string.unknown_key), Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -3276,7 +3311,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
             imeRestoreButton.setOnClickListener(v -> {
                 if (isSendingText) return;
                 if (undoSnapshot == null || undoSnapshot.isEmpty()) {
-                    Toast.makeText(this, "没有可恢复的文本", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.no_text_to_restore), Toast.LENGTH_SHORT).show();
                     return;
                 }
                 // IMPORTANT: capture into a local variable BEFORE setText().
@@ -3292,7 +3327,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                 undoSnapshot = null;
                 undoClearEligible = false;
                 updateClearButtonIcon();
-                Toast.makeText(this, "已恢复", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, getString(R.string.restored), Toast.LENGTH_SHORT).show();
             });
         }
 
@@ -3319,12 +3354,12 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                 if (isSendingText) return;
                 String text = imeTextInput.getText().toString();
                 if (text.isEmpty()) {
-                    Toast.makeText(this, "文本为空，无法保存", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.text_empty_cannot_save), Toast.LENGTH_SHORT).show();
                     return;
                 }
                 com.openterface.AOS.model.SavedTextItem item = savedTextRepo.addFromPlainText(text);
                 if (item != null) {
-                    Toast.makeText(this, "文本已保存", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, getString(R.string.text_saved), Toast.LENGTH_SHORT).show();
                 }
             });
         }
@@ -3403,8 +3438,8 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
         boolean hasNonAscii = com.openterface.AOS.utils.TextValidator.hasNonAscii(text);
         if (hasNonAscii) {
             new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("Non-ASCII Characters")
-                .setMessage("Text contains non-ASCII characters. These may not be sent correctly.")
+                .setTitle(R.string.non_ascii_characters)
+                .setMessage(R.string.non_ascii_warning)
                 .setPositiveButton("Continue", (dialog, which) -> startSend(text))
                 .setNegativeButton("Cancel", null)
                 .show();
@@ -3415,8 +3450,8 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
         boolean isTooLong = com.openterface.AOS.utils.TextValidator.isTooLong(text);
         if (isTooLong) {
             new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("Long Text")
-                .setMessage("Text is very long (" + text.length() + " chars). Sending may take a while.")
+                .setTitle(R.string.long_text)
+                .setMessage(R.string.text_too_long_warning_format)
                 .setPositiveButton("Continue", (dialog, which) -> startSend(text))
                 .setNegativeButton("Cancel", null)
                 .show();
@@ -3445,7 +3480,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
 
         // Switch send button to stop
         if (imeSendButton != null) {
-            imeSendButton.setText("Stop");
+            imeSendButton.setText(R.string.stop_server);
         }
 
         final String sendText = text;
@@ -3478,9 +3513,9 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                 hideSendProgress();
 
                 if (finalResult == com.openterface.AOS.utils.TextHidSender.Result.CANCELLED) {
-                    Toast.makeText(MainActivity.this, "已取消发送", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, getString(R.string.send_cancelled), Toast.LENGTH_SHORT).show();
                 } else if (finalResult == com.openterface.AOS.utils.TextHidSender.Result.COMPLETED) {
-                    Toast.makeText(MainActivity.this, "文本发送完成", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, getString(R.string.text_sent), Toast.LENGTH_SHORT).show();
                     // Set undo snapshot to the sent text so user can restore it later
                     undoSnapshot = sendText;
                     undoClearEligible = true;
@@ -3490,7 +3525,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
 
                 // Reset send button
                 if (imeSendButton != null) {
-                    imeSendButton.setText("Send");
+                    imeSendButton.setText(R.string.send);
                 }
             });
         }, "ime-send").start();
@@ -3504,7 +3539,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
         }
         if (imeProgressLabel != null) {
             imeProgressLabel.setVisibility(View.VISIBLE);
-            imeProgressLabel.setText("0/" + sendTotal);
+            imeProgressLabel.setText(getString(R.string.progress_format, "0", String.valueOf(sendTotal)));
         }
     }
 
@@ -3608,7 +3643,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
         if (item == null) return;
         new android.app.AlertDialog.Builder(this)
             .setTitle(item.title != null ? item.title : "(untitled)")
-            .setItems(new String[]{"加载到编辑器", "直接发送", "重命名", "置顶/取消置顶", "删除"}, (dialog, which) -> {
+            .setItems(new String[]{getString(R.string.load_to_editor), getString(R.string.send_directly), getString(R.string.rename), getString(R.string.pin_unpin), getString(R.string.delete_text)}, (dialog, which) -> {
                 switch (which) {
                     case 0:
                         if (imeTextInput != null && item.content != null) {
@@ -3627,29 +3662,29 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
                     case 2:
                         EditText input = new EditText(this);
                         new android.app.AlertDialog.Builder(this)
-                            .setTitle("重命名")
+                            .setTitle(R.string.rename)
                             .setView(input)
-                            .setPositiveButton("确定", (d, w) -> {
+                            .setPositiveButton(R.string.ok_button, (d, w) -> {
                                 String newTitle = input.getText().toString().trim();
                                 if (!newTitle.isEmpty()) {
                                     savedTextRepo.updateTitle(item.id, newTitle);
-                                    Toast.makeText(this, "已重命名", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(this, getString(R.string.renamed), Toast.LENGTH_SHORT).show();
                                 }
                             })
-                            .setNegativeButton("取消", null)
+                            .setNegativeButton(R.string.permission_cancel, null)
                             .show();
                         break;
                     case 3: // Pin/Unpin
                         savedTextRepo.setPinned(item.id, !item.pinned);
-                        Toast.makeText(this, item.pinned ? "已取消置顶" : "已置顶", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, item.pinned ? getString(R.string.unpinned) : getString(R.string.pinned), Toast.LENGTH_SHORT).show();
                         break;
                     case 4: // Delete
                         savedTextRepo.delete(item.id);
-                        Toast.makeText(this, "已删除", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, getString(R.string.deleted), Toast.LENGTH_SHORT).show();
                         break;
                 }
             })
-            .setNegativeButton("返回", null)
+            .setNegativeButton(R.string.back, null)
             .show();
     }
 
@@ -4166,6 +4201,24 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
             });
         }
 
+        // === Language Setting ===
+        LinearLayout languageLayout = view.findViewById(R.id.settings_language_layout);
+        TextView languageValue = view.findViewById(R.id.settings_language_value);
+        if (languageLayout != null && languageValue != null) {
+            // Display current language
+            String currentLocale = LocaleManager.getInstance().getLocale();
+            languageValue.setText(LocaleManager.getLocaleDisplayName(currentLocale));
+
+            languageLayout.setOnClickListener(v -> {
+                new LanguagePickerDialogFragment().show(getSupportFragmentManager(), "language_picker");
+                // Refresh the displayed language after dialog closes
+                view.post(() -> {
+                    String updatedLocale = LocaleManager.getInstance().getLocale();
+                    languageValue.setText(LocaleManager.getLocaleDisplayName(updatedLocale));
+                });
+            });
+        }
+
         // === Device Connection ===
         LinearLayout deviceConnectLayout = view.findViewById(R.id.settings_device_connect_layout);
         TextView deviceStatus = view.findViewById(R.id.settings_device_status);
@@ -4258,11 +4311,11 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
     }
 
     private String getScrollSpeedLabel(int progress) {
-        if (progress <= 20) return "很慢";
-        if (progress <= 40) return "慢";
-        if (progress <= 60) return "中等";
-        if (progress <= 80) return "快";
-        return "很快";
+        if (progress <= 20) return getString(R.string.speed_very_slow);
+        if (progress <= 40) return getString(R.string.speed_slow);
+        if (progress <= 60) return getString(R.string.speed_medium);
+        if (progress <= 80) return getString(R.string.speed_fast);
+        return getString(R.string.speed_very_fast);
     }
 
     /**
@@ -4283,11 +4336,11 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
     private String getMouseSpeedLabel(int progress) {
         float multiplier = progressToMouseSpeed(progress);
         String speed;
-        if (progress <= 15) speed = "很慢";
-        else if (progress <= 35) speed = "慢";
-        else if (progress <= 65) speed = "正常";
-        else if (progress <= 85) speed = "快";
-        else speed = "很快";
+        if (progress <= 15) speed = getString(R.string.speed_very_slow);
+        else if (progress <= 35) speed = getString(R.string.speed_slow);
+        else if (progress <= 65) speed = getString(R.string.speed_normal);
+        else if (progress <= 85) speed = getString(R.string.speed_fast);
+        else speed = getString(R.string.speed_very_fast);
         return speed + " " + String.format("%.1f", multiplier) + "x";
     }
 
@@ -4475,7 +4528,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
 
     private void showThemePickerDialog() {
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
-        builder.setTitle("选择主题颜色");
+        builder.setTitle(R.string.select_theme_color);
 
         String[] families = ThemeManager.getAllFamilies();
         String[] displayNames = new String[families.length];
@@ -4509,17 +4562,17 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
             dialog.dismiss();
         });
 
-        builder.setNegativeButton("取消", (dialog, which) -> dialog.dismiss());
+        builder.setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss());
 
         builder.show();
     }
 
     private void showThemeModeDialog() {
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
-        builder.setTitle("选择显示模式");
+        builder.setTitle(R.string.select_display_mode);
 
         String[] modes = {ThemeManager.MODE_LIGHT, ThemeManager.MODE_DARK, ThemeManager.MODE_SYSTEM};
-        String[] displayNames = {"浅色模式", "深色模式", "跟随系统"};
+        String[] displayNames = {getString(R.string.light_mode), getString(R.string.dark_mode), getString(R.string.follow_system)};
 
         String currentMode = ThemeManager.getInstance().getThemeMode();
         int selectedIndex = 0;
@@ -4550,24 +4603,24 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
             dialog.dismiss();
         });
 
-        builder.setNegativeButton("取消", (dialog, which) -> dialog.dismiss());
+        builder.setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss());
 
         builder.show();
     }
 
     private String getThemeModeDisplay(String mode) {
         if (mode == null) {
-            return "跟随系统";
+            return getString(R.string.follow_system);
         }
         switch (mode) {
             case ThemeManager.MODE_LIGHT:
-                return "浅色模式";
+                return getString(R.string.light_mode);
             case ThemeManager.MODE_DARK:
-                return "深色模式";
+                return getString(R.string.dark_mode);
             case ThemeManager.MODE_SYSTEM:
-                return "跟随系统";
+                return getString(R.string.follow_system);
             default:
-                return "跟随系统";
+                return getString(R.string.follow_system);
         }
     }
 
@@ -4583,9 +4636,9 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
 
         if (profiles.isEmpty()) {
             android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
-            builder.setTitle("快捷键配置")
-                .setMessage("暂无可用的快捷键配置")
-                .setPositiveButton("确定", null)
+            builder.setTitle(R.string.shortcut_config_title)
+                .setMessage(R.string.no_shortcut_configs_available)
+                .setPositiveButton(R.string.ok_button, null)
                 .show();
             return;
         }
@@ -4603,7 +4656,7 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
         }
 
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
-        builder.setTitle("选择快捷键配置");
+        builder.setTitle(R.string.select_shortcut_config);
         builder.setSingleChoiceItems(profileNames, checkedItem, (dialog, which) -> {
             ShortcutProfile selected = profiles.get(which);
             profileManager.setActiveProfile(selected.id);
@@ -4611,10 +4664,10 @@ public class MainActivity extends AppCompatActivity implements SettingsFloatingF
             setupPortraitShortcutStrip();
             dialog.dismiss();
         });
-        builder.setNegativeButton("取消", (dialog, which) -> dialog.dismiss());
+        builder.setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss());
 
         // Add "Manage" button to open ShortcutHubFloatingFragment
-        builder.setNeutralButton("管理", (dialog, which) -> {
+        builder.setNeutralButton(R.string.manage, (dialog, which) -> {
             dialog.dismiss();
             // Open Shortcut Hub as a floating panel (left side, dual-panel design)
             ShortcutHubFloatingFragment fragment = new ShortcutHubFloatingFragment();

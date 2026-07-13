@@ -9,7 +9,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="键盘透明度"
+        android:text="@string/keyboard_opacity"
         android:textSize="16sp"
         android:textStyle="bold"
         android:layout_marginBottom="4dp"/>
@@ -34,7 +34,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="触摸屏透明度"
+        android:text="@string/touchpad_opacity"
         android:textSize="16sp"
         android:textStyle="bold"
         android:layout_marginBottom="4dp"/>

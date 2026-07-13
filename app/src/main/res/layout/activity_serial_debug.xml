@@ -9,7 +9,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Openterface Serial Debug"
+        android:text="@string/serial_debug_title"
         android:textSize="20sp"
         android:textStyle="bold"
         android:gravity="center"
@@ -20,7 +20,7 @@
         android:id="@+id/statusText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Status: Initializing..."
+        android:text="@string/status_initializing"
         android:textSize="16sp"
         android:background="#f0f0f0"
         android:padding="8dp"
@@ -38,7 +38,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Connect"
+            android:text="@string/connect"
             android:layout_marginEnd="4dp" />
 
         <Button
@@ -46,7 +46,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Diagnostics"
+            android:text="@string/diagnostics"
             android:layout_marginStart="4dp" />
 
     </LinearLayout>
@@ -63,7 +63,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Test Comm"
+            android:text="@string/test_comm"
             android:layout_marginEnd="4dp" />
 
         <Button
@@ -71,7 +71,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Clear Log"
+            android:text="@string/clear_log"
             android:layout_marginStart="4dp" />
 
     </LinearLayout>
@@ -88,14 +88,14 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="Enter data to send"
+            android:hint="@string/hint_enter_data"
             android:layout_marginEnd="8dp" />
 
         <Button
             android:id="@+id/sendBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Send" />
+            android:text="@string/send" />
 
     </LinearLayout>
 
@@ -103,7 +103,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Debug Log:"
+        android:text="@string/debug_log_label"
         android:textSize="14sp"
         android:textStyle="bold"
         android:layout_marginBottom="8dp" />
@@ -123,7 +123,7 @@
             android:fontFamily="monospace"
             android:textSize="12sp"
             android:padding="8dp"
-            android:text="Initializing debug session...\n" />
+            android:text="@string/initializing_debug_session" />
 
     </ScrollView>
 

@@ -14,7 +14,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="VNC Server"
+            android:text="@string/vnc_server"
             android:textSize="18sp"
             android:textStyle="bold"
             android:textColor="@color/text_on_surface"
@@ -29,13 +29,13 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Status: "
+                android:text="@string/status_label"
                 android:textSize="14sp" />
             <TextView
                 android:id="@+id/vnc_status_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Stopped"
+                android:text="@string/status_stopped"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:textColor="@color/purple_500" />
@@ -45,14 +45,14 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Device IP:"
+            android:text="@string/device_ip_label"
             android:textSize="12sp"
             android:textColor="@color/gray_600" />
         <TextView
             android:id="@+id/vnc_ip_address"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Loading..."
+            android:text="@string/loading"
             android:textSize="14sp"
             android:layout_marginBottom="16dp" />
 
@@ -60,7 +60,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Port:"
+            android:text="@string/port_label"
             android:textSize="12sp"
             android:textColor="@color/gray_600" />
         <EditText
@@ -75,7 +75,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Password (optional):"
+            android:text="@string/password_optional_label"
             android:textSize="12sp"
             android:textColor="@color/gray_600" />
         <EditText
@@ -83,14 +83,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:inputType="textPassword"
-            android:hint="Leave empty for no password"
+            android:hint="@string/hint_no_password"
             android:layout_marginBottom="12dp" />
 
         <!-- Bind Address -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Bind Address:"
+            android:text="@string/bind_address_label"
             android:textSize="12sp"
             android:textColor="@color/gray_600" />
         <EditText
@@ -99,7 +99,7 @@
             android:layout_height="wrap_content"
             android:inputType="text"
             android:text="0.0.0.0"
-            android:hint="0.0.0.0 for all interfaces"
+            android:hint="@string/hint_default_bind"
             android:layout_marginBottom="12dp" />
 
         <!-- Encoding -->
@@ -152,7 +152,7 @@
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:text="Auto-start on USB connect"
+                android:text="@string/auto_start_on_usb"
                 android:textSize="14sp" />
             <androidx.appcompat.widget.SwitchCompat
                 android:id="@+id/vnc_auto_start"
@@ -171,7 +171,7 @@
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:text="Start Server"
+                android:text="@string/start_server"
                 android:backgroundTint="@color/green"
                 android:textColor="@color/white" />
             <Button
@@ -179,7 +179,7 @@
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:text="Stop Server"
+                android:text="@string/stop_server"
                 android:backgroundTint="@color/purple_500"
                 android:textColor="@color/white"
                 android:visibility="gone" />

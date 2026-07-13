@@ -142,10 +142,10 @@ public class CreateShortcutDialogFragment extends DialogFragment {
         }
 
         return new AlertDialog.Builder(requireContext())
-                .setTitle(editingShortcut != null ? "编辑快捷键" : "新建快捷键")
+                .setTitle(editingShortcut != null ? getString(R.string.shortcut_dialog_title_edit) : getString(R.string.shortcut_dialog_title_new))
                 .setView(view)
-                .setPositiveButton("保存", (dialog, which) -> saveShortcut())
-                .setNegativeButton("取消", null)
+                .setPositiveButton(getString(R.string.shortcut_dialog_save), (dialog, which) -> saveShortcut())
+                .setNegativeButton(getString(R.string.shortcut_dialog_cancel), null)
                 .create();
     }
 
@@ -205,7 +205,14 @@ public class CreateShortcutDialogFragment extends DialogFragment {
     }
 
     private void setupCategoryTabs() {
-        String[] categories = {"字母", "数字", "功能键", "特殊", "符号", "小键盘"};
+        String[] categories = {
+                getString(R.string.shortcut_dialog_category_letters),
+                getString(R.string.shortcut_dialog_category_numbers),
+                getString(R.string.shortcut_dialog_category_function),
+                getString(R.string.shortcut_dialog_category_special),
+                getString(R.string.shortcut_dialog_category_symbols),
+                getString(R.string.shortcut_dialog_category_numpad)
+        };
 
         for (String cat : categories) {
             TabLayout.Tab tab = tabKeysCategory.newTab();
@@ -420,24 +427,24 @@ public class CreateShortcutDialogFragment extends DialogFragment {
             preview.append(selectedKey.label);
         }
 
-        tvPreview.setText(preview.length() > 0 ? preview.toString() : "（未选择）");
+        tvPreview.setText(preview.length() > 0 ? preview.toString() : getString(R.string.shortcut_dialog_preview_none));
     }
 
     private void saveShortcut() {
         String name = etName.getText().toString().trim();
         if (name.isEmpty()) {
-            etName.setError("请输入名称");
+            etName.setError(getString(R.string.shortcut_dialog_error_name_required));
             return;
         }
 
         if (selectedKey == null) {
-            Toast.makeText(requireContext(), "请选择按键", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.shortcut_dialog_error_key_required), Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (selectedCategoryIndex < 0 || profile == null || profile.categories == null
                 || selectedCategoryIndex >= profile.categories.size()) {
-            Toast.makeText(requireContext(), "请选择目标类别", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), getString(R.string.shortcut_dialog_error_category_required), Toast.LENGTH_SHORT).show();
             return;
         }
 
