@@ -87,11 +87,14 @@ public class WebRtcInputRouter {
      * Handle keyboard event from WebRTC DataChannel.
      * Uses the same routing logic as VNC keyboard handling in MainActivity.
      *
-     * @param keysym VNC/RFB keysym value
-     * @param down   true = key pressed, false = key released
+     * @param keysym   VNC/RFB keysym value
+     * @param down     true = key pressed, false = key released
+     * @param modifier CH9329 modifier byte (bitmask: bit1=left-shift, bit5=right-shift, etc.)
+     *                 Passed as the functionKey hex string to reconstruct the correct
+     *                 CH9329 frame, especially for shifted/uppercase keys.
      */
-    public void onKeyboardEvent(int keysym, boolean down) {
-        System.out.println("[" + TAG + "] onKeyboardEvent: keysym=" + keysym + ", down=" + down);
+    public void onKeyboardEvent(int keysym, boolean down, int modifier) {
+        System.out.println("[" + TAG + "] onKeyboardEvent: keysym=" + keysym + ", down=" + down + ", modifier=0x" + Integer.toHexString(modifier));
         String keyName = VncKeyMap.vncKeysymToKeyName(keysym);
         System.out.println("[" + TAG + "] keyName=" + keyName);
         if (keyName == null) {
@@ -108,13 +111,14 @@ public class WebRtcInputRouter {
                 keyboardSender.sendKeyBoardReleaseQueued();
             }
         } else {
-            // Regular key - use atomic press+release to avoid double characters
-            // Browser sends both keydown and keyup, but we handle the full cycle on keydown
+            // Regular key - use atomic press+release to avoid double characters.
+            // The modifier byte from the CH9329 frame is used directly as the functionKey
+            // hex string, so Shift+A sends modifier=0x02 + HID code for 'a'.
             if (down) {
-                keyboardSender.sendKeyBoardPressAndRelease("00", keyName);
+                String functionKey = String.format("%02x", modifier);
+                keyboardSender.sendKeyBoardPressAndRelease(functionKey, keyName);
             } else {
                 // Release is handled by sendKeyBoardPressAndRelease, ignore keyup for regular keys
-                // But clear any pending pressed keys state
                 keyboardSender.sendKeyBoardReleaseQueued();
             }
         }

@@ -82,7 +82,7 @@ public class WebRtcServerService extends Service {
         void onClientDisconnected(String clientInfo);
         void onServerError(String error);
         void onMouseEvent(int buttonMask, int x, int y, boolean pressed);
-        void onKeyboardEvent(int keysym, boolean down);
+        void onKeyboardEvent(int keysym, boolean down, int modifier);
         void onConnectionStateChanged(String state);
     }
 
@@ -460,6 +460,32 @@ public class WebRtcServerService extends Service {
         }
     }
 
+    /**
+     * Modify SDP to add video bitrate constraints for better initial quality.
+     * This helps WebRTC encoder start with higher bitrate instead of ramping up slowly.
+     */
+    private SessionDescription modifySdpBitrate(SessionDescription sdp) {
+        String description = sdp.description;
+
+        // Add bandwidth limit (8 Mbps) for video
+        // Insert b=AS:8000 after each m=video line
+        String[] lines = description.split("\r\n");
+        StringBuilder modified = new StringBuilder();
+
+        for (String line : lines) {
+            modified.append(line).append("\r\n");
+            if (line.startsWith("m=video")) {
+                // Add bandwidth limit for video
+                modified.append("b=AS:8000\r\n");
+            }
+        }
+
+        String modifiedDescription = modified.toString();
+        Log.d(TAG, "Modified SDP with bitrate constraints");
+
+        return new SessionDescription(sdp.type, modifiedDescription);
+    }
+
     private void createAnswer() {
         MediaConstraints constraints = new MediaConstraints();
 
@@ -467,6 +493,9 @@ public class WebRtcServerService extends Service {
             @Override
             public void onCreateSuccess(SessionDescription sdp) {
                 Log.i(TAG, "Answer created");
+
+                // Modify SDP to add bitrate constraints for better initial quality
+                SessionDescription modifiedSdp = modifySdpBitrate(sdp);
 
                 peerConnection.setLocalDescription(new SdpObserver() {
                     @Override
@@ -533,10 +562,11 @@ public class WebRtcServerService extends Service {
                 case "keyboard":
                     int keysym = message.optInt("keysym", 0);
                     boolean down = message.optBoolean("down", false);
-                    Log.i(TAG, "Keyboard event received: keysym=" + keysym + ", down=" + down);
+                    int modifier = message.optInt("modifier", 0);
+                    Log.i(TAG, "Keyboard event received: keysym=" + keysym + ", down=" + down + ", modifier=" + modifier);
                     if (callback != null) {
                         Log.i(TAG, "Dispatching to callback");
-                        mainHandler.post(() -> callback.onKeyboardEvent(keysym, down));
+                        mainHandler.post(() -> callback.onKeyboardEvent(keysym, down, modifier));
                     } else {
                         Log.w(TAG, "No callback registered for keyboard event");
                     }
@@ -628,18 +658,6 @@ public class WebRtcServerService extends Service {
 
     public boolean isRunning() {
         return isRunning.get();
-    }
-
-    /**
-     * Check if video capture is fully initialized and ready to receive frames.
-     * This ensures we don't start pushing frames before WebRTC's internal
-     * SurfaceTexture and encoder are ready, which would cause BufferQueue abandoned errors.
-     */
-    public boolean isVideoCaptureReady() {
-        return isRunning.get()
-                && videoCapturer != null
-                && videoCapturer.isRunning()
-                && videoSource != null;
     }
 
     public boolean isClientConnected() {

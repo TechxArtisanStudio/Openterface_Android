@@ -2488,10 +2488,10 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         }
 
         @Override
-        public void onKeyboardEvent(int keysym, boolean down) {
-            Log.i(TAG, "MainActivity.onKeyboardEvent: keysym=" + keysym + ", down=" + down + ", router=" + (webRtcInputRouter != null));
+        public void onKeyboardEvent(int keysym, boolean down, int modifier) {
+            Log.i(TAG, "MainActivity.onKeyboardEvent: keysym=" + keysym + ", down=" + down + ", modifier=0x" + Integer.toHexString(modifier) + ", router=" + (webRtcInputRouter != null));
             if (webRtcInputRouter != null) {
-                webRtcInputRouter.onKeyboardEvent(keysym, down);
+                webRtcInputRouter.onKeyboardEvent(keysym, down, modifier);
             }
         }
 
