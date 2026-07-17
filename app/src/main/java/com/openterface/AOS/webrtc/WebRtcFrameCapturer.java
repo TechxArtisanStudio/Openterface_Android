@@ -47,6 +47,10 @@ public class WebRtcFrameCapturer implements VideoCapturer {
         this.rotation = rotation;
     }
 
+    public boolean isRunning() {
+        return isRunning;
+    }
+
     @Override
     public void initialize(SurfaceTextureHelper surfaceTextureHelper, android.content.Context context,
                            CapturerObserver capturerObserver) {
@@ -110,6 +114,9 @@ public class WebRtcFrameCapturer implements VideoCapturer {
      * @param rotation   Frame rotation (0, 90, 180, or 270 degrees)
      */
     private int frameProcessedCount = 0;
+    // Reuse buffer for RGBA-to-I420 conversion to avoid per-frame heap allocations
+    // (1920x1080 RGBA = 8MB per frame at 30fps = 240MB/s of GC pressure)
+    private byte[] rgbaConversionBuffer;
 
     public void onFrame(ByteBuffer rgbaBuffer, int width, int height, long timestampNs, int rotation) {
         if (!isRunning || rgbaBuffer == null) {
@@ -167,16 +174,11 @@ public class WebRtcFrameCapturer implements VideoCapturer {
 
     /**
      * Convert RGBA buffer to I420 (YUV420 planar) format for WebRTC.
-     * Optimized version using bulk array operations instead of per-pixel math.
+     * Reuses cached byte array to avoid per-frame heap allocations.
      */
     private JavaI420Buffer convertRgbaToI420(ByteBuffer rgbaBuffer, int width, int height) {
-        int ySize = width * height;
-        int uvSize = ySize / 4;
-
-        // Allocate I420 buffer
         JavaI420Buffer i420Buffer = JavaI420Buffer.allocate(width, height);
 
-        // Get direct buffers from I420 buffer
         ByteBuffer yPlane = i420Buffer.getDataY();
         ByteBuffer uPlane = i420Buffer.getDataU();
         ByteBuffer vPlane = i420Buffer.getDataV();
@@ -185,14 +187,18 @@ public class WebRtcFrameCapturer implements VideoCapturer {
         int uStride = i420Buffer.getStrideU();
         int vStride = i420Buffer.getStrideV();
 
-        // Make sure rgba buffer is at position 0
         int originalPosition = rgbaBuffer.position();
         rgbaBuffer.rewind();
 
-        // Use array access for speed
-        byte[] rgba = new byte[rgbaBuffer.remaining()];
-        rgbaBuffer.get(rgba);
+        int frameSize = rgbaBuffer.remaining();
+        // Reuse cached buffer to avoid allocating 8MB per frame (1920x1080 RGBA)
+        if (rgbaConversionBuffer == null || rgbaConversionBuffer.length < frameSize) {
+            rgbaConversionBuffer = new byte[frameSize];
+        }
+        rgbaBuffer.get(rgbaConversionBuffer, 0, frameSize);
         rgbaBuffer.position(originalPosition);
+
+        byte[] rgba = rgbaConversionBuffer;
 
         // Pre-calculate constants for YUV conversion
         final int[] rCoeff = {66, -38, 112};

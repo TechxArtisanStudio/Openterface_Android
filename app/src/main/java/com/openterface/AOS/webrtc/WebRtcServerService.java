@@ -630,6 +630,18 @@ public class WebRtcServerService extends Service {
         return isRunning.get();
     }
 
+    /**
+     * Check if video capture is fully initialized and ready to receive frames.
+     * This ensures we don't start pushing frames before WebRTC's internal
+     * SurfaceTexture and encoder are ready, which would cause BufferQueue abandoned errors.
+     */
+    public boolean isVideoCaptureReady() {
+        return isRunning.get()
+                && videoCapturer != null
+                && videoCapturer.isRunning()
+                && videoSource != null;
+    }
+
     public boolean isClientConnected() {
         return isConnected.get();
     }

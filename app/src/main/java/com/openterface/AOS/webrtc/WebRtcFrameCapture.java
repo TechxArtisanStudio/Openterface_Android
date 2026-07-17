@@ -18,6 +18,10 @@ import java.nio.ByteBuffer;
  */
 public class WebRtcFrameCapture {
     private static final String TAG = "OP-WEBRTC";
+    // Skip the first few frames after startup to let the camera pipeline
+    // stabilize after pixel format change. Pushing unstable frames would
+    // cause WebRTC's encoder to start with a poor keyframe (blurriness).
+    private static final int STARTUP_SKIP_FRAMES = 5;
 
     private final int targetFps;
     private final long frameIntervalNs;
@@ -33,6 +37,7 @@ public class WebRtcFrameCapture {
     private int height;
     private int rotation;
     private ByteBuffer reuseBuffer;
+    private volatile int startupFramesSkipped = 0;
 
     private final IFrameCallback frameCallback = new IFrameCallback() {
         private int frameCount = 0;
@@ -66,6 +71,15 @@ public class WebRtcFrameCapture {
                 return;
             }
             lastFrameTimeNs = now;
+
+            // Skip initial frames after start() to let the camera pipeline
+            // stabilize after setFrameCallback pixel format change.
+            // Pushing unstable frames would give WebRTC encoder a poor keyframe.
+            if (startupFramesSkipped < STARTUP_SKIP_FRAMES) {
+                startupFramesSkipped++;
+                framesDroppedLastSecond++;
+                return;
+            }
 
             // Only push if WebRTC service is running
             if (webRtcService == null || !webRtcService.isRunning()) {
@@ -122,6 +136,7 @@ public class WebRtcFrameCapture {
         this.width = width;
         this.height = height;
         this.rotation = rotation;
+        this.startupFramesSkipped = 0;  // Reset startup skip counter for fresh start
 
         Log.i(TAG, "Starting WebRTC frame capture: " + width + "x" + height + " @ " + targetFps + " fps, rotation=" + rotation);
 
