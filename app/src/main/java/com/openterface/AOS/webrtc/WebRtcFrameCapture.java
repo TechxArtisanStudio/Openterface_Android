@@ -23,27 +23,64 @@ public class WebRtcFrameCapture {
     private final long frameIntervalNs;
     private long lastFrameTimeNs = 0;
 
+    // FPS monitoring
+    private long lastFpsLogTimeNs = 0;
+    private int framesDeliveredLastSecond = 0;
+    private int framesDroppedLastSecond = 0;
+
     private WebRtcServerService webRtcService;
     private int width;
     private int height;
+    private int rotation;
     private ByteBuffer reuseBuffer;
 
     private final IFrameCallback frameCallback = new IFrameCallback() {
+        private int frameCount = 0;
+
         @Override
         public void onFrame(ByteBuffer frame) {
-            // Rate limiting
+            frameCount++;
             long now = System.nanoTime();
+
+            // FPS monitoring
+            if (lastFpsLogTimeNs == 0) {
+                lastFpsLogTimeNs = now;
+            }
+            long elapsed = now - lastFpsLogTimeNs;
+            if (elapsed >= 1_000_000_000L) {
+                Log.i(TAG, "FPS monitor: delivered=" + framesDeliveredLastSecond +
+                        " dropped=" + framesDroppedLastSecond + " target=" + targetFps +
+                        " (" + width + "x" + height + ")");
+                framesDeliveredLastSecond = 0;
+                framesDroppedLastSecond = 0;
+                lastFpsLogTimeNs = now;
+            }
+
+            if (frameCount <= 3 || frameCount % 30 == 0) {
+                Log.i(TAG, "Frame callback invoked: #" + frameCount + " buffer=" + (frame != null));
+            }
+
+            // Rate limiting
             if (now - lastFrameTimeNs < frameIntervalNs) {
+                framesDroppedLastSecond++;
                 return;
             }
             lastFrameTimeNs = now;
 
             // Only push if WebRTC service is running
             if (webRtcService == null || !webRtcService.isRunning()) {
+                framesDroppedLastSecond++;
+                Log.w(TAG, "WebRTC service not running, skipping frame");
                 return;
             }
 
+            // IMPORTANT: rewind BEFORE reading remaining() to ensure we get full buffer size
+            frame.rewind();
             int frameSize = frame.remaining();
+            if (frameSize <= 0) {
+                Log.w(TAG, "Frame size is 0, skipping");
+                return;
+            }
 
             // Reuse buffer to avoid allocations
             if (reuseBuffer == null || reuseBuffer.capacity() < frameSize) {
@@ -51,13 +88,20 @@ public class WebRtcFrameCapture {
             }
 
             // Copy frame data (frame is a direct buffer from JNI)
+            // IMPORTANT: rewind frame again - remaining() above pushed position to the end
             frame.rewind();
-            reuseBuffer.rewind();
+            reuseBuffer.clear();
             reuseBuffer.put(frame);
-            reuseBuffer.rewind();
+            reuseBuffer.flip();
 
             // Push to WebRTC server
-            webRtcService.onUvcFrame(reuseBuffer, width, height, now);
+            webRtcService.onUvcFrame(reuseBuffer, width, height, now, rotation);
+            framesDeliveredLastSecond++;
+
+            if (frameCount <= 3 || frameCount % 30 == 0) {
+                Log.i(TAG, "Frame pushed to WebRTC: #" + frameCount + " size=" + frameSize +
+                        " " + width + "x" + height);
+            }
         }
     };
 
@@ -73,15 +117,16 @@ public class WebRtcFrameCapture {
      * Start capturing frames from the camera and pushing to WebRTC server.
      * Must be called after the camera is opened.
      */
-    public void start(ICameraHelper cameraHelper, WebRtcServerService webRtcService, int width, int height) {
+    public void start(ICameraHelper cameraHelper, WebRtcServerService webRtcService, int width, int height, int rotation) {
         this.webRtcService = webRtcService;
         this.width = width;
         this.height = height;
+        this.rotation = rotation;
 
-        Log.i(TAG, "Starting WebRTC frame capture: " + width + "x" + height + " @ " + targetFps + " fps");
+        Log.i(TAG, "Starting WebRTC frame capture: " + width + "x" + height + " @ " + targetFps + " fps, rotation=" + rotation);
 
         // Start WebRTC video capturer
-        webRtcService.startVideoCapture(width, height, targetFps);
+        webRtcService.startVideoCapture(width, height, targetFps, rotation);
 
         cameraHelper.setFrameCallback(frameCallback, UVCCamera.PIXEL_FORMAT_RGBX);
     }

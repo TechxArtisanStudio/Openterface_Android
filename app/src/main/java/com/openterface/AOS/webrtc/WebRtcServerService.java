@@ -58,11 +58,11 @@ public class WebRtcServerService extends Service {
     private final AtomicBoolean isConnected = new AtomicBoolean(false);
     private final AtomicReference<String> connectedClient = new AtomicReference<>("");
 
-    // Video parameters
+        // Video parameters
     private int targetFps;
     private int videoWidth;
     private int videoHeight;
-    private static final int STARTUP_FPS = 15;
+    private int rotation;
 
     // Diagnostics
     private boolean enableDiagnostics = true;
@@ -124,7 +124,7 @@ public class WebRtcServerService extends Service {
      * @param fps           Target frame rate
      * @return true if started successfully
      */
-    public boolean startServer(int signalingPort, String stunServer, int width, int height, int fps) {
+    public boolean startServer(int signalingPort, String stunServer, int width, int height, int fps, int rotation) {
         if (isRunning.get()) {
             Log.w(TAG, "Server already running");
             return false;
@@ -134,8 +134,10 @@ public class WebRtcServerService extends Service {
         this.targetFps = fps;
         this.videoWidth = width;
         this.videoHeight = height;
+        this.rotation = rotation;
         Log.i(TAG, "Starting WebRTC server: port=" + signalingPort +
-                ", video=" + width + "x" + height + "@" + fps + "fps");
+                ", video=" + width + "x" + height + "@" + fps + "fps" +
+                ", rotation=" + rotation);
 
         try {
             // Initialize WebRTC
@@ -394,66 +396,30 @@ public class WebRtcServerService extends Service {
     }
 
     /**
-     * Start video capture with FPS ramp-up for faster initial connection.
-     * Full resolution is used throughout (e.g., 1920x1080).
-     * FPS: 15 → 20 → 30 over 3 seconds.
+     * Start video capture at target FPS.
+     * Uses full resolution from the start for stable video output.
      */
-    public void startVideoCapture(int width, int height, int fps) {
-        int initialFps = Math.min(STARTUP_FPS, fps);
+    public void startVideoCapture(int width, int height, int fps, int rotation) {
+        this.rotation = rotation;
 
-        videoCapturer = new WebRtcFrameCapturer(width, height, initialFps);
+        videoCapturer = new WebRtcFrameCapturer(width, height, fps);
+        videoCapturer.setRotation(rotation);
 
         // Initialize capturer with WebRTC internals
         videoCapturer.initialize(null, getApplicationContext(),
                 videoSource.getCapturerObserver());
-        videoCapturer.startCapture(width, height, initialFps);
+        videoCapturer.startCapture(width, height, fps);
 
-        Log.i(TAG, "Video capture started: " + width + "x" + height + " @ " + initialFps + "fps" +
-                " (ramping to " + fps + "fps in 3s)");
-
-        // Start FPS ramp-up schedule
-        startFpsRampUp();
-    }
-
-    /**
-     * Gradually ramp up FPS (full resolution throughout):
-     * T+1s: 20fps
-     * T+2s: 25fps
-     * T+3s: target fps (30)
-     */
-    private void startFpsRampUp() {
-        // T+1s: 20fps
-        mainHandler.postDelayed(() -> {
-            if (videoCapturer != null && isRunning.get()) {
-                videoCapturer.changeCaptureFormat(videoWidth, videoHeight, 20);
-                Log.i(TAG, "FPS ramped to 20 at T+1s");
-            }
-        }, 1000);
-
-        // T+2s: 25fps
-        mainHandler.postDelayed(() -> {
-            if (videoCapturer != null && isRunning.get()) {
-                videoCapturer.changeCaptureFormat(videoWidth, videoHeight, 25);
-                Log.i(TAG, "FPS ramped to 25 at T+2s");
-            }
-        }, 2000);
-
-        // T+3s: target fps
-        mainHandler.postDelayed(() -> {
-            if (videoCapturer != null && isRunning.get()) {
-                videoCapturer.changeCaptureFormat(videoWidth, videoHeight, targetFps);
-                Log.i(TAG, "FPS ramped to " + targetFps + " at T+3s (full quality)");
-            }
-        }, 3000);
+        Log.i(TAG, "Video capture started: " + width + "x" + height + " @ " + fps + "fps");
     }
 
     /**
      * Feed a frame from UVC camera into WebRTC.
      * Called from WebRtcFrameCapture (similar pattern to VNC).
      */
-    public void onUvcFrame(ByteBuffer rgbaBuffer, int width, int height, long timestampNs) {
+    public void onUvcFrame(ByteBuffer rgbaBuffer, int width, int height, long timestampNs, int rotation) {
         if (videoCapturer != null && isRunning.get()) {
-            videoCapturer.onFrame(rgbaBuffer, width, height, timestampNs);
+            videoCapturer.onFrame(rgbaBuffer, width, height, timestampNs, rotation);
         }
     }
 

@@ -2,8 +2,12 @@ package com.openterface.AOS.fragment;
 
 import android.app.Dialog;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -49,6 +53,7 @@ public class WebRtcDialogFragment extends DialogFragment {
 
     private int previewWidth = 1920;
     private int previewHeight = 1080;
+    private int previewRotation = 0;
 
     // VNC state for mutual exclusion validation
     private boolean vncAutoStartEnabled;
@@ -75,6 +80,10 @@ public class WebRtcDialogFragment extends DialogFragment {
     public void setPreviewSize(int width, int height) {
         this.previewWidth = width;
         this.previewHeight = height;
+    }
+
+    public void setPreviewRotation(int rotation) {
+        this.previewRotation = rotation;
     }
 
     public void setVncAutoStartEnabled(boolean enabled) {
@@ -107,6 +116,29 @@ public class WebRtcDialogFragment extends DialogFragment {
         });
 
         return builder.create();
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        // Constrain dialog width to fit portrait-mode screens.
+        // Without this, the two side-by-side buttons and long URL / description
+        // text cause the dialog to measure wider than the portrait viewport,
+        // producing a horizontally-scrolling / clipped layout.
+        Dialog dialog = getDialog();
+        if (dialog != null) {
+            Window window = dialog.getWindow();
+            if (window != null) {
+                DisplayMetrics metrics = getResources().getDisplayMetrics();
+                int screenWidth = metrics.widthPixels;
+                int maxWidth = (int) (screenWidth * 0.92f);
+
+                WindowManager.LayoutParams params = window.getAttributes();
+                params.width = maxWidth;
+                params.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                window.setAttributes(params);
+            }
+        }
     }
 
     private void initViews(View view) {
@@ -214,7 +246,8 @@ public class WebRtcDialogFragment extends DialogFragment {
             config.getStunServer(),
             previewWidth,
             previewHeight,
-            config.getVideoFps()
+            config.getVideoFps(),
+            previewRotation
         );
 
         if (success) {
@@ -268,7 +301,7 @@ public class WebRtcDialogFragment extends DialogFragment {
             if (!ips.isEmpty()) {
                 hostIp = ips.get(0);
             }
-            tvUrl.setText(getString(R.string.url_format, hostIp, String.valueOf(config.getSignallingPort())));
+            tvUrl.setText(getString(R.string.url_format, hostIp, config.getSignallingPort()));
         }
     }
 }

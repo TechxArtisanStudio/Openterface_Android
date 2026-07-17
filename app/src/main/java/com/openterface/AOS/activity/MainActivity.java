@@ -919,7 +919,7 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
 
         Log.d(TAG, "Configuration changed: " + (isPortraitMode ? "PORTRAIT" : "LANDSCAPE"));
 
-        // Reload layout for new orientation (this already calls initPreviewView)
+        // Reload layout for new orientation
         reloadLayoutForOrientation();
 
         // Restore module state if was expanded
@@ -940,10 +940,23 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
      * Portrait uses the 4-zone layout, landscape uses the original layout.
      */
     private void reloadLayoutForOrientation() {
-        Log.d(TAG, "reloadLayoutForOrientation: START");
-        // Re-inflate view binding for the new orientation
-        mBinding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(mBinding.getRoot());
+        Log.d(TAG, "reloadLayoutForOrientation: START, isPortrait=" + isPortraitMode);
+
+        // Create a new context with the correct orientation configuration
+        // This forces Android's resource system to load the layout from the correct directory
+        // (layout/ for landscape, layout-port/ for portrait)
+        Configuration newConfig = new Configuration(getResources().getConfiguration());
+        newConfig.orientation = isPortraitMode ? Configuration.ORIENTATION_PORTRAIT : Configuration.ORIENTATION_LANDSCAPE;
+        Context configContext = createConfigurationContext(newConfig);
+
+        // Wrap with the Activity's theme to ensure Material components work correctly
+        Context themedContext = new android.view.ContextThemeWrapper(configContext, getApplicationInfo().theme);
+        LayoutInflater inflater = LayoutInflater.from(themedContext);
+        View rootView = inflater.inflate(R.layout.activity_main, null);
+        setContentView(rootView);
+
+        // Bind the views from the inflated layout
+        mBinding = ActivityMainBinding.bind(rootView);
 
         // Clear cached module views to ensure they reload in new orientation
         keyboardModuleView = null;
@@ -2523,7 +2536,7 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
 
         WebRtcConfig config = webRtcConfig;
 
-        // Use actual camera resolution
+        // Use actual camera resolution (always landscape, regardless of device orientation)
         int width = DEFAULT_WIDTH;
         int height = DEFAULT_HEIGHT;
         if (mCameraHelper != null) {
@@ -2533,6 +2546,10 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
                 height = size.height;
             }
         }
+
+        // WebRTC stream is always in camera's native orientation (landscape).
+        // No rotation needed - the device orientation doesn't affect the captured content.
+        int rotation = 0;
 
         // Store WebRTC resolution for mouse coordinate mapping
         webRtcServerWidth = width;
@@ -2545,14 +2562,15 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
                 config.getStunServer(),
                 width,
                 height,
-                config.getVideoFps()
+                config.getVideoFps(),
+                rotation
         );
 
         if (started && mCameraHelper != null) {
             if (webRtcFrameCapture == null) {
                 webRtcFrameCapture = new WebRtcFrameCapture(config.getVideoFps());
             }
-            webRtcFrameCapture.start(mCameraHelper, webRtcService, width, height);
+            webRtcFrameCapture.start(mCameraHelper, webRtcService, width, height, rotation);
 
             if (webRtcInputRouter != null) {
                 webRtcInputRouter.setFramebufferSize(width, height);
@@ -2605,10 +2623,12 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
             cameraHeight = DEFAULT_HEIGHT;
         }
         dialog.setPreviewSize(cameraWidth, cameraHeight);
+        dialog.setPreviewRotation(mPreviewRotation);
 
         dialog.setListener(new WebRtcDialogFragment.OnWebRtcSettingsListener() {
             @Override
             public void onServerStarted() {
+                // WebRTC stream is always in camera's native orientation (landscape).
                 webRtcServerWidth = cameraWidth;
                 webRtcServerHeight = cameraHeight;
                 if (mCameraHelper != null) {
@@ -2617,9 +2637,9 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
                         if (webRtcFrameCapture == null) {
                             webRtcFrameCapture = new WebRtcFrameCapture(webRtcConfig.getVideoFps());
                         }
-                        webRtcFrameCapture.start(mCameraHelper, webRtcService, size.width, size.height);
+                        webRtcFrameCapture.start(mCameraHelper, webRtcService, size.width, size.height, 0);
                         if (webRtcInputRouter != null) {
-                            webRtcInputRouter.setFramebufferSize(size.width, size.height);
+                            webRtcInputRouter.setFramebufferSize(cameraWidth, cameraHeight);
                         }
                     }
                 }
@@ -2688,8 +2708,9 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         portraitRotationLockButton = findViewById(R.id.portrait_rotation_lock);
         landscapeRotationLockButton = findViewById(R.id.landscape_rotation_lock);
 
-        // Check if we're in portrait mode by checking if root layout exists
-        boolean isPortrait = (portraitRootLayout != null);
+        // Check if we're in portrait mode by checking if module_selector_bar exists
+        // (only portrait layout has this element)
+        boolean isPortrait = (findViewById(R.id.module_selector_bar) != null);
         isPortraitMode = isPortrait;
 
         if (!isPortrait) {

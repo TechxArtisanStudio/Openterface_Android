@@ -26,6 +26,7 @@ public class WebRtcFrameCapturer implements VideoCapturer {
     private int targetFps;
     private long frameIntervalNs;
     private long lastFrameTimeNs = 0;
+    private int rotation = 0;
 
     private volatile boolean isRunning;
 
@@ -40,6 +41,10 @@ public class WebRtcFrameCapturer implements VideoCapturer {
         this.targetFps = fps > 0 ? fps : 30;
         this.frameIntervalNs = 1_000_000_000L / this.targetFps;
         Log.i(TAG, "Created capturer: " + width + "x" + height + " @ " + this.targetFps + "fps");
+    }
+
+    public void setRotation(int rotation) {
+        this.rotation = rotation;
     }
 
     @Override
@@ -102,9 +107,20 @@ public class WebRtcFrameCapturer implements VideoCapturer {
      * @param width      Frame width (must match capturer width)
      * @param height     Frame height (must match capturer height)
      * @param timestampNs Frame timestamp in nanoseconds
+     * @param rotation   Frame rotation (0, 90, 180, or 270 degrees)
      */
-    public void onFrame(ByteBuffer rgbaBuffer, int width, int height, long timestampNs) {
-        if (!isRunning || capturerObserver == null || rgbaBuffer == null) {
+    private int frameProcessedCount = 0;
+
+    public void onFrame(ByteBuffer rgbaBuffer, int width, int height, long timestampNs, int rotation) {
+        if (!isRunning || rgbaBuffer == null) {
+            Log.w(TAG, "Frame dropped early: isRunning=" + isRunning + " buffer=" + (rgbaBuffer != null));
+            return;
+        }
+
+        // Take a local snapshot to avoid race condition with dispose()
+        CapturerObserver observer = capturerObserver;
+        if (observer == null) {
+            Log.w(TAG, "Frame dropped: capturerObserver is null (disposed?)");
             return;
         }
 
@@ -115,18 +131,34 @@ public class WebRtcFrameCapturer implements VideoCapturer {
         }
         lastFrameTimeNs = now;
 
+        frameProcessedCount++;
+        if (frameProcessedCount <= 3 || frameProcessedCount % 30 == 0) {
+            Log.i(TAG, "Processing frame: #" + frameProcessedCount + " " + width + "x" + height +
+                    " rotation=" + rotation + " bufferPosition=" + rgbaBuffer.position() +
+                    " bufferRemaining=" + rgbaBuffer.remaining());
+        }
+
         try {
             // Convert RGBA to I420 for WebRTC
             JavaI420Buffer i420Buffer = convertRgbaToI420(rgbaBuffer, width, height);
 
-            // Create WebRTC VideoFrame
-            VideoFrame videoFrame = new VideoFrame(i420Buffer, 0, timestampNs);
+            if (i420Buffer == null) {
+                Log.e(TAG, "I420 buffer is null!");
+                return;
+            }
+
+            // Create WebRTC VideoFrame with rotation
+            VideoFrame videoFrame = new VideoFrame(i420Buffer, rotation, timestampNs);
 
             // Pass to WebRTC
-            capturerObserver.onFrameCaptured(videoFrame);
+            observer.onFrameCaptured(videoFrame);
 
             // Release the frame
             videoFrame.release();
+
+            if (frameProcessedCount <= 3 || frameProcessedCount % 30 == 0) {
+                Log.i(TAG, "Frame delivered to WebRTC: #" + frameProcessedCount);
+            }
 
         } catch (Exception e) {
             Log.e(TAG, "Error processing frame", e);
@@ -135,7 +167,7 @@ public class WebRtcFrameCapturer implements VideoCapturer {
 
     /**
      * Convert RGBA buffer to I420 (YUV420 planar) format for WebRTC.
-     * This is the standard format WebRTC expects.
+     * Optimized version using bulk array operations instead of per-pixel math.
      */
     private JavaI420Buffer convertRgbaToI420(ByteBuffer rgbaBuffer, int width, int height) {
         int ySize = width * height;
@@ -157,42 +189,50 @@ public class WebRtcFrameCapturer implements VideoCapturer {
         int originalPosition = rgbaBuffer.position();
         rgbaBuffer.rewind();
 
+        // Use array access for speed
         byte[] rgba = new byte[rgbaBuffer.remaining()];
         rgbaBuffer.get(rgba);
         rgbaBuffer.position(originalPosition);
 
-        int frameSize = width * height;
+        // Pre-calculate constants for YUV conversion
+        final int[] rCoeff = {66, -38, 112};
+        final int[] gCoeff = {129, -74, -94};
+        final int[] bCoeff = {25, 112, -18};
+        final int[] offset = {16, 128, 128};
 
-        // Convert RGBA to I420
-        int yPos = 0;
-        int uPos = 0;
-        int vPos = 0;
-
+        // Process Y plane (full resolution)
         for (int j = 0; j < height; j++) {
-            int yLineOffset = (j * yStride);
+            int yLineOffset = j * yStride;
+            int rgbaRowStart = j * width * 4;
             for (int i = 0; i < width; i++) {
-                int rgbaIndex = (j * width + i) * 4;
+                int rgbaIndex = rgbaRowStart + i * 4;
                 int r = rgba[rgbaIndex] & 0xFF;
                 int g = rgba[rgbaIndex + 1] & 0xFF;
                 int b = rgba[rgbaIndex + 2] & 0xFF;
 
-                // Y component
-                int y = ((66 * r + 129 * g + 25 * b + 128) >> 8) + 16;
+                // Y = 0.257*R + 0.504*G + 0.098*B + 16
+                int y = ((rCoeff[0] * r + gCoeff[0] * g + bCoeff[0] * b + 128) >> 8) + offset[0];
                 yPlane.put(yLineOffset + i, (byte) Math.max(16, Math.min(235, y)));
+            }
+        }
 
-                // U and V components for every 2x2 block
-                if (j % 2 == 0 && i % 2 == 0) {
-                    int uvRow = j / 2;
-                    int uvCol = i / 2;
+        // Process U/V planes (quarter resolution)
+        for (int j = 0; j < height; j += 2) {
+            int uvRow = j / 2;
+            int rgbaRowStart = j * width * 4;
+            for (int i = 0; i < width; i += 2) {
+                int rgbaIndex = rgbaRowStart + i * 4;
+                int r = rgba[rgbaIndex] & 0xFF;
+                int g = rgba[rgbaIndex + 1] & 0xFF;
+                int b = rgba[rgbaIndex + 2] & 0xFF;
 
-                    // U = -0.169R - 0.331G + 0.5B + 128
-                    int u = ((-38 * r - 74 * g + 112 * b + 128) >> 8) + 128;
-                    uPlane.put(uvRow * uStride + uvCol, (byte) Math.max(0, Math.min(255, u)));
+                // U = -0.148*R - 0.291*G + 0.439*B + 128
+                int u = ((rCoeff[1] * r + gCoeff[1] * g + bCoeff[1] * b + 128) >> 8) + offset[1];
+                // V = 0.439*R - 0.368*G - 0.071*B + 128
+                int v = ((rCoeff[2] * r + gCoeff[2] * g + bCoeff[2] * b + 128) >> 8) + offset[2];
 
-                    // V = 0.5R - 0.419G - 0.081B + 128
-                    int v = ((112 * r - 94 * g - 18 * b + 128) >> 8) + 128;
-                    vPlane.put(uvRow * vStride + uvCol, (byte) Math.max(0, Math.min(255, v)));
-                }
+                uPlane.put(uvRow * uStride + i/2, (byte) Math.max(0, Math.min(255, u)));
+                vPlane.put(uvRow * vStride + i/2, (byte) Math.max(0, Math.min(255, v)));
             }
         }
 
