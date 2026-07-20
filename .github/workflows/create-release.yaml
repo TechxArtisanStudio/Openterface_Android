@@ -136,7 +136,7 @@ jobs:
     - name: Set up Android NDK
       uses: nttld/setup-ndk@v1
       with:
-        ndk-version: r23b
+        ndk-version: 26.3.11579264
         local-cache: true
 
     - name: Set up CMake

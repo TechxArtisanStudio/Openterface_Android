@@ -288,6 +288,51 @@ jobs:
           app/build/outputs/bundle/release/*.aab
         retention-days: 90
 
+    # Create GitHub Release with APK and AAB files directly (no ZIP wrapper)
+    - name: Create GitHub Release
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ steps.version.outputs.version_name }}
+        name: Openterface Android v${{ steps.version.outputs.version_name }}
+        body: |
+          ## Openterface Android v${{ steps.version.outputs.version_name }}
+
+          ### 📱 Application Information
+          - **Version**: ${{ steps.version.outputs.version_name }}
+          - **Version Code**: ${{ steps.version.outputs.version_code }}
+          - **Build Time**: $(date)
+          - **Commit**: ${{ github.sha }}
+
+          ### 📦 Downloads
+          - **APK**: For direct installation on Android devices
+          - **AAB**: For Google Play Store submission (if available)
+
+          ### ✨ Features
+          - Support for 16 KB page size (Android 15+ compatible)
+          - Target SDK: Android 15 (API 35)
+          - Minimum SDK: Android 5.0 (API 21)
+
+          ### 📥 Installation
+          **APK Installation:**
+          1. Download the APK file below
+          2. Enable 'Install from Unknown Sources' in Android settings
+          3. Open the APK file to install
+
+          ### 🔐 Security
+          Both APK and AAB files are signed with the official release keystore.
+
+          ---
+          **Full Changelog**: https://github.com/${{ github.repository }}/commits/v${{ steps.version.outputs.version_name }}
+        draft: false
+        prerelease: false
+        files: |
+          app/build/outputs/apk/release/*.apk
+          app/build/outputs/bundle/release/*.aab
+        fail_on_unmatched_files: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     # Create build summary
     - name: Build Summary
       run: |
@@ -298,9 +343,9 @@ jobs:
         echo "- **Version Code**: ${{ steps.version.outputs.version_code }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Build Time**: $(date)" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 📱 Artifacts" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ APK: Openterface-v${{ steps.version.outputs.version_name }}-release.apk" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ AAB: Openterface-v${{ steps.version.outputs.version_name }}-release.aab" >> $GITHUB_STEP_SUMMARY
+        echo "### 📱 Downloads" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ [APK](https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.version_name }}/Openterface-v${{ steps.version.outputs.version_name }}-release.apk)" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ [AAB](https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.version_name }}/Openterface-v${{ steps.version.outputs.version_name }}-release.aab)" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🔐 Signing" >> $GITHUB_STEP_SUMMARY
         echo "Both APK and AAB are signed with the release keystore" >> $GITHUB_STEP_SUMMARY
