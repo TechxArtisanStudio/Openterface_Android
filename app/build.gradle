@@ -130,24 +130,36 @@ tasks.whenTaskAdded { task ->
 }
 
 // 16KB page alignment for native libraries
-// Runs after stripDebugSymbols and before packageDebug
-task realignNativeLibs16KB {
-    description = 'Realign native libraries to 16KB page boundaries'
-    group = 'build'
+// Runs AFTER strip (which outputs to stripped_native_libs/) and BEFORE package
+// Each variant gets its own task to avoid cross-variant dependencies
+['release', 'debug'].each { variant ->
+    def realignTaskName = "realignNativeLibs16KB${variant.capitalize()}"
+    def stripTaskName = "strip${variant.capitalize()}DebugSymbols"
+    def packageTaskName = "package${variant.capitalize()}"
 
-    dependsOn 'mergeReleaseNativeLibs', 'mergeDebugNativeLibs'
+    task(realignTaskName) {
+        description = "Realign native libraries to 16KB page boundaries (${variant})"
+        group = 'build'
 
-    doLast {
-        def script = file("$rootDir/scripts/realign_elf.py")
-        ['release', 'debug'].each { variant ->
-            def libsDir = file("$buildDir/intermediates/stripped_native_libs/${variant}/strip${variant.capitalize()}DebugSymbols/out/lib")
+        // Depend on the strip task (not merge) — realign modifies the stripped output
+        dependsOn stripTaskName
+        // Must run before package
+        tasks.whenTaskAdded { t ->
+            if (t.name == packageTaskName) {
+                t.dependsOn realignTaskName
+            }
+        }
+
+        doLast {
+            def script = file("$rootDir/scripts/realign_elf.py")
+            def libsDir = file("$buildDir/intermediates/stripped_native_libs/${variant}/${stripTaskName}/out/lib")
             if (!libsDir.exists()) {
                 return
             }
             def count = 0
             libsDir.eachFileRecurse { soFile ->
                 if (soFile.name.endsWith('.so')) {
-                    // Skip libjpeg-turbo212.so as it contains SIMD code that conflicts with realignment
+                    // Skip libjpeg-turbo as it contains SIMD code that conflicts with realignment
                     if (soFile.name.contains('libjpeg-turbo')) {
                         println "Skipping realignment of ${soFile.name} (contains SIMD code)"
                         return
@@ -167,12 +179,6 @@ task realignNativeLibs16KB {
                 println "realignNativeLibs16KB: aligned ${count} ${variant} libraries to 16KB"
             }
         }
-    }
-}
-
-tasks.whenTaskAdded { task ->
-    if (task.name == 'packageRelease' || task.name == 'packageDebug') {
-        task.dependsOn realignNativeLibs16KB
     }
 }
 
