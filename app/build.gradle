@@ -79,12 +79,8 @@ android {
         disable 'all'  // Disable all lint checks
     }
 
-    // Add WebRTC client assets from WebUI submodule
-    sourceSets {
-        main {
-            assets.srcDirs += ['src/main/assets', '../Openterface_WebUI/packages/webrtc/dist/webrtc-android']
-        }
-    }
+    // WebRTC assets are synced from dist via syncWebRtcAssets task
+    // (see task definition below)
 
     // Build Openterface_Core native library
     externalNativeBuild {
@@ -109,9 +105,9 @@ task buildWebClient(type: Exec) {
     def webDir = file('../Openterface_WebUI')
     def distDir = file('../Openterface_WebUI/packages/webrtc/dist/webrtc-android')
 
-    // Only run if the submodule exists and dist is not already built
+    // Only run if the submodule exists
     onlyIf {
-        webDir.exists() && !distDir.exists()
+        webDir.exists()
     }
 
     workingDir webDir
@@ -122,63 +118,33 @@ task buildWebClient(type: Exec) {
     ignoreExitValue true
 }
 
-// Make preBuild depend on buildWebClient
+// Sync WebRTC dist files into Android assets under webrtc/ prefix
+task syncWebRtcAssets(type: Copy) {
+    description = 'Sync WebRTC client build output into Android assets'
+    group = 'build'
+
+    def distDir = file('../Openterface_WebUI/packages/webrtc/dist/webrtc-android')
+    def assetsDir = file('src/main/assets/webrtc')
+
+    from distDir
+    into assetsDir
+
+    // Always sync (don't skip if up-to-date) to avoid stale index.html references
+    outputs.upToDateWhen { false }
+
+    onlyIf {
+        distDir.exists()
+    }
+}
+
+// Ensure WebRTC client is built and synced before merging assets
 tasks.whenTaskAdded { task ->
     if (task.name == 'preBuild') {
         task.dependsOn buildWebClient
     }
-}
-
-// 16KB page alignment for native libraries
-// Runs AFTER strip (which outputs to stripped_native_libs/) and BEFORE package
-// Each variant gets its own task to avoid cross-variant dependencies
-['release', 'debug'].each { variant ->
-    def realignTaskName = "realignNativeLibs16KB${variant.capitalize()}"
-    def stripTaskName = "strip${variant.capitalize()}DebugSymbols"
-    def packageTaskName = "package${variant.capitalize()}"
-
-    task(realignTaskName) {
-        description = "Realign native libraries to 16KB page boundaries (${variant})"
-        group = 'build'
-
-        // Depend on the strip task (not merge) — realign modifies the stripped output
-        dependsOn stripTaskName
-        // Must run before package
-        tasks.whenTaskAdded { t ->
-            if (t.name == packageTaskName) {
-                t.dependsOn realignTaskName
-            }
-        }
-
-        doLast {
-            def script = file("$rootDir/scripts/realign_elf.py")
-            def libsDir = file("$buildDir/intermediates/stripped_native_libs/${variant}/${stripTaskName}/out/lib")
-            if (!libsDir.exists()) {
-                return
-            }
-            def count = 0
-            libsDir.eachFileRecurse { soFile ->
-                if (soFile.name.endsWith('.so')) {
-                    // Skip libjpeg-turbo as it contains SIMD code that conflicts with realignment
-                    if (soFile.name.contains('libjpeg-turbo')) {
-                        println "Skipping realignment of ${soFile.name} (contains SIMD code)"
-                        return
-                    }
-                    def result = exec {
-                        commandLine 'python3', script, soFile.absolutePath, '--page-size', '16384'
-                        ignoreExitValue true
-                        standardOutput = new ByteArrayOutputStream()
-                        errorOutput = new ByteArrayOutputStream()
-                    }
-                    if (result.exitValue == 0) {
-                        count++
-                    }
-                }
-            }
-            if (count > 0) {
-                println "realignNativeLibs16KB: aligned ${count} ${variant} libraries to 16KB"
-            }
-        }
+    if (task.name.startsWith('merge') && task.name.endsWith('Assets')) {
+        task.dependsOn syncWebRtcAssets
+        syncWebRtcAssets.mustRunAfter buildWebClient
     }
 }
 
