@@ -200,6 +200,38 @@ public class WebRtcFrameCapturer implements VideoCapturer {
         final int[] bCoeff = {25, 112, -18};
         final int[] offset = {16, 128, 128};
 
+        // Diagnostic: verify buffer has real data (not all zeros)
+        if (frameProcessedCount <= 5) {
+            // Sample first 16 pixels
+            int sum = 0;
+            for (int k = 0; k < 64 && k < rgba.length; k++) {
+                sum += rgba[k] & 0xFF;
+            }
+            // Also sample middle and last pixels
+            int midIdx = (rgba.length / 2) & ~3;  // align to pixel boundary
+            int lastIdx = rgba.length - 4;
+            int totalNonZero = 0;
+            int totalSum = 0;
+            // Quick scan of entire buffer (sample every 4096th byte for speed)
+            for (int k = 0; k < rgba.length; k += 4096) {
+                int v = rgba[k] & 0xFF;
+                if (v > 0) totalNonZero++;
+                totalSum += v;
+            }
+            int samples = rgba.length / 4096;
+            Log.i(TAG, "Buffer diagnostic #" + frameProcessedCount +
+                    " length=" + rgba.length +
+                    " first64Sum=" + sum +
+                    " first4=[" + (rgba[0] & 0xFF) + "," + (rgba[1] & 0xFF) +
+                    "," + (rgba[2] & 0xFF) + "," + (rgba[3] & 0xFF) + "]" +
+                    " mid4=[" + (rgba[midIdx] & 0xFF) + "," + (rgba[midIdx+1] & 0xFF) +
+                    "," + (rgba[midIdx+2] & 0xFF) + "," + (rgba[midIdx+3] & 0xFF) + "]" +
+                    " last4=[" + (rgba[lastIdx] & 0xFF) + "," + (rgba[lastIdx+1] & 0xFF) +
+                    "," + (rgba[lastIdx+2] & 0xFF) + "," + (rgba[lastIdx+3] & 0xFF) + "]" +
+                    " sampledAvg=" + (samples > 0 ? totalSum / samples : 0) +
+                    " sampledNonZeroPct=" + (samples > 0 ? (totalNonZero * 100 / samples) : 0) + "%");
+        }
+
         // Process Y plane (full resolution)
         for (int j = 0; j < height; j++) {
             int yLineOffset = j * yStride;
@@ -234,6 +266,23 @@ public class WebRtcFrameCapturer implements VideoCapturer {
                 uPlane.put(uvRow * uStride + i/2, (byte) Math.max(0, Math.min(255, u)));
                 vPlane.put(uvRow * vStride + i/2, (byte) Math.max(0, Math.min(255, v)));
             }
+        }
+
+        // Diagnostic: verify I420 output
+        if (frameProcessedCount <= 5) {
+            yPlane.rewind();
+            byte firstY = yPlane.get(0);
+            byte midY = yPlane.get(ySize / 2);
+            uPlane.rewind();
+            byte firstU = uPlane.get(0);
+            vPlane.rewind();
+            byte firstV = vPlane.get(0);
+            Log.i(TAG, "I420 diagnostic #" + frameProcessedCount +
+                    " firstY=" + (firstY & 0xFF) +
+                    " midY=" + (midY & 0xFF) +
+                    " firstU=" + (firstU & 0xFF) +
+                    " firstV=" + (firstV & 0xFF) +
+                    " yStride=" + yStride + " uStride=" + uStride + " vStride=" + vStride);
         }
 
         return i420Buffer;
