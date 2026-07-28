@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.HapticFeedbackConstants;
@@ -207,7 +208,7 @@ public class MouseControlStripView extends LinearLayout {
             super(context);
             this.label = label;
             this.buttonMask = buttonMask;
-            this.longPressHandler = new Handler();
+            this.longPressHandler = new Handler(Looper.getMainLooper());
 
             float density = context.getResources().getDisplayMetrics().density;
 

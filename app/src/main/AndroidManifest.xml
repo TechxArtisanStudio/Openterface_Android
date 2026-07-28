@@ -2,8 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <!-- Storage permissions: only needed on API 32 and below (scoped storage enforced on API 30+) -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="29" />
+    <!-- Granular media permissions for API 33+ (scoped storage) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <!-- VNC Server permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -18,12 +24,11 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_openterface_foreground"
         android:label="@string/app_name"
-        android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_openterface_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Usbvideo"
         android:enableOnBackInvokedCallback="true"
-        tools:targetApi="tiramisu">
+        tools:targetApi="36">
         <activity
             android:name="com.openterface.AOS.activity.MainActivity"
             android:exported="true"

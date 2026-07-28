@@ -11,6 +11,7 @@ package com.openterface.AOS.KeyBoardClick;
 
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
+import android.os.Looper;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
@@ -32,7 +33,7 @@ public class ModifierKeyHelper {
 
     private final View view;
     private final ModifierCallback callback;
-    private final Handler handler = new Handler();
+    private final Handler handler = new Handler(Looper.getMainLooper());
     private boolean longPressFired = false;
     private float startRawY;
 

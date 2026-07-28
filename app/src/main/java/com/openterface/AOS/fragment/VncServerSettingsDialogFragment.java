@@ -16,6 +16,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.content.ContextCompat;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.DialogFragment;
 
@@ -257,7 +258,7 @@ public class VncServerSettingsDialogFragment extends DialogFragment {
 
         if (running) {
             tvStatus.setText(R.string.running);
-            tvStatus.setTextColor(getResources().getColor(R.color.green));
+            tvStatus.setTextColor(ContextCompat.getColor(requireContext(),R.color.green));
             btnStart.setVisibility(View.GONE);
             btnStop.setVisibility(View.VISIBLE);
             etPort.setEnabled(false);
@@ -269,7 +270,7 @@ public class VncServerSettingsDialogFragment extends DialogFragment {
             swAutoStart.setEnabled(false);
         } else {
             tvStatus.setText(R.string.stopped);
-            tvStatus.setTextColor(getResources().getColor(R.color.purple_500));
+            tvStatus.setTextColor(ContextCompat.getColor(requireContext(),R.color.purple_500));
             btnStart.setVisibility(View.VISIBLE);
             btnStop.setVisibility(View.GONE);
             etPort.setEnabled(true);

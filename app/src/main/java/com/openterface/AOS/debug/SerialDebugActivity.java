@@ -32,6 +32,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.hardware.usb.UsbDevice;
 import android.hardware.usb.UsbManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -68,7 +69,12 @@ public class SerialDebugActivity extends BaseActivity {
             String action = intent.getAction();
             if (ACTION_USB_PERMISSION.equals(action)) {
                 synchronized (this) {
-                    UsbDevice device = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                    UsbDevice device;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice.class);
+                    } else {
+                        device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                    }
                     if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
                         if (device != null) {
                             log("✅ USB permission granted for device: " + device.getDeviceName());
@@ -285,9 +291,17 @@ public class SerialDebugActivity extends BaseActivity {
                     log("📋 Requesting permission for Openterface device: " + 
                         String.format("%04X:%04X", device.getVendorId(), device.getProductId()));
                     
+                    // Must use FLAG_MUTABLE so the USB service can add EXTRA_DEVICE and
+                    // EXTRA_PERMISSION_GRANTED to the Intent before delivering the broadcast.
+                    // FLAG_IMMUTABLE would silently drop those extras, causing device=null.
+                    int flags = PendingIntent.FLAG_UPDATE_CURRENT;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                        flags |= PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT;
+                    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        flags |= PendingIntent.FLAG_MUTABLE;
+                    }
                     PendingIntent permissionIntent = PendingIntent.getBroadcast(
-                        this, 0, new Intent(ACTION_USB_PERMISSION), 
-                        PendingIntent.FLAG_IMMUTABLE);
+                        this, 0, new Intent(ACTION_USB_PERMISSION), flags);
                     usbManager.requestPermission(device, permissionIntent);
                 } else {
                     log("✅ Already have permission for Openterface device: " + 

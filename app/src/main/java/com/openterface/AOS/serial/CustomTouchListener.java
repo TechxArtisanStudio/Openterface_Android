@@ -26,6 +26,7 @@ package com.openterface.AOS.serial;
 
 import android.graphics.Matrix;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -84,7 +85,7 @@ public class CustomTouchListener implements View.OnTouchListener {
 
     //system module
     private static UsbDeviceManager usbDeviceManager;
-    private Handler handler = new Handler();
+    private Handler handler = new Handler(Looper.getMainLooper());
     private Runnable twoFingerPressRunnable;
     private TextView floatingLabel;
     private static MainActivity activity;

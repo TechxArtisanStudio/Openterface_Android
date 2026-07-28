@@ -1628,7 +1628,12 @@ public class UsbDeviceManager {
             
             if (ACTION_USB_PERMISSION.equals(action)) {
                 synchronized (this) {
-                    UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                    UsbDevice device;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice.class);
+                    } else {
+                        device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                    }
 
                     // Safety net: if the Intent extras are missing (e.g. FLAG_IMMUTABLE was
                     // used by mistake), fall back to the pendingDevice stored in
@@ -1678,7 +1683,12 @@ public class UsbDeviceManager {
                 Log.d(TAG, "USB device attached - re-detecting (camera connects first)");
                 detectDeviceOnly();
             } else if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
-                UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                UsbDevice device;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice.class);
+                } else {
+                    device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                }
                 if (device != null) {
                     // Check if the detached device is the one we're using (or trying to use)
                     boolean isOurDevice = false;

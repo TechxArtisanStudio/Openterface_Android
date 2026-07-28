@@ -19,6 +19,7 @@ import android.widget.Toast;
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -218,10 +219,10 @@ public class ImeSavedTextFragment extends Fragment {
             boolean selected = it.id == selectedItemId;
             // Title color: primary when selected, otherwise text_primary
             int titleColor = selected
-                    ? h.itemView.getResources().getColor(R.color.primary, null)
-                    : h.itemView.getResources().getColor(R.color.text_primary, null);
+                    ? ContextCompat.getColor(h.itemView.getContext(), R.color.primary)
+                    : ContextCompat.getColor(h.itemView.getContext(), R.color.text_primary);
             h.title.setTextColor(titleColor);
-            int selectedBg = h.itemView.getResources().getColor(R.color.shortcut_selected, null);
+            int selectedBg = ContextCompat.getColor(h.itemView.getContext(), R.color.shortcut_selected);
             h.itemView.setBackgroundColor(selected ? selectedBg : Color.TRANSPARENT);
             h.itemView.setOnClickListener(
                     v -> {

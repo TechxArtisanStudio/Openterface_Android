@@ -48,6 +48,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
@@ -120,8 +121,10 @@ import com.openterface.AOS.webrtc.WebRtcInputRouter;
 import com.openterface.AOS.webrtc.WebRtcServerService;
 import com.serenegiant.widget.AspectRatioSurfaceView;
 
+import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
@@ -410,9 +413,6 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         // Initialize Theme Manager
         ThemeManager.getInstance().initialize(this);
         ThemeManager.getInstance().applyTheme(this);
-
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
 
         //deal mouse click and button ,you can jump CustomTouchListener java
         mCustomTouchListener = new CustomTouchListener(this, usbDeviceManager);
@@ -823,14 +823,14 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         }
         
         // Original release logic for fallback cases
-        new Handler().post(new Runnable() {
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
             public void run() {
                 if (mKeyboardRequestSent) {
                     HidManager.EmptyKeyboard();
                     mKeyboardRequestSent = false;
                 } else {
-                    new Handler().postDelayed(this, 50);
+                    new Handler(Looper.getMainLooper()).postDelayed(this, 50);
                 }
             }
         });
@@ -854,7 +854,11 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         usbDeviceManager.handleUsbDevice(intent);
         if (action != null && action.equals(UsbManager.ACTION_USB_DEVICE_ATTACHED)) {
             if (!mIsCameraConnected) {
-                mUsbDevice = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    mUsbDevice = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice.class);
+                } else {
+                    mUsbDevice = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
+                }
                 Log.d(TAG, "onNewIntent: USB device attached, device=" + (mUsbDevice != null ? mUsbDevice.getDeviceName() : "null"));
                 selectDevice(mUsbDevice);
             } else {
@@ -1210,12 +1214,12 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
 
             // Guard against landscape-only views in portrait mode
             if (action_safely_eject_drawable != null && action_safely_eject != null) {
-                action_safely_eject_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
-                action_safely_eject.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+                action_safely_eject_drawable.setColorFilter(ContextCompat.getColor(this,android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+                action_safely_eject.setTextColor(ContextCompat.getColor(this,android.R.color.holo_red_light));
             }
             if (action_device_drawable != null && action_device != null) {
-                action_device_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
-                action_device.setTextColor(getResources().getColor(android.R.color.white));
+                action_device_drawable.setColorFilter(ContextCompat.getColor(this,android.R.color.white), PorterDuff.Mode.SRC_IN);
+                action_device.setTextColor(ContextCompat.getColor(this,android.R.color.white));
             }
         }
     }
@@ -1564,12 +1568,12 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
 
             // Guard against landscape-only views in portrait mode
             if (action_device_drawable != null && action_device != null) {
-                action_device_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
-                action_device.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+                action_device_drawable.setColorFilter(ContextCompat.getColor(this,android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+                action_device.setTextColor(ContextCompat.getColor(this,android.R.color.holo_red_light));
             }
             if (action_safely_eject_drawable != null && action_safely_eject != null) {
-                action_safely_eject_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
-                action_safely_eject.setTextColor(getResources().getColor(android.R.color.white));
+                action_safely_eject_drawable.setColorFilter(ContextCompat.getColor(this,android.R.color.white), PorterDuff.Mode.SRC_IN);
+                action_safely_eject.setTextColor(ContextCompat.getColor(this,android.R.color.white));
             }
         }
     }
@@ -1785,12 +1789,12 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
             if (DEBUG) Log.v(TAG, "onDeviceClose:device=" + device.getDeviceName());
             // Guard against landscape-only views in portrait mode
             if (action_safely_eject_drawable != null && action_safely_eject != null) {
-                action_safely_eject_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
-                action_safely_eject.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+                action_safely_eject_drawable.setColorFilter(ContextCompat.getColor(MainActivity.this,android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+                action_safely_eject.setTextColor(ContextCompat.getColor(MainActivity.this,android.R.color.holo_red_light));
             }
             if (action_device_drawable != null && action_device != null) {
-                action_device_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
-                action_device.setTextColor(getResources().getColor(android.R.color.white));
+                action_device_drawable.setColorFilter(ContextCompat.getColor(MainActivity.this,android.R.color.white), PorterDuff.Mode.SRC_IN);
+                action_device.setTextColor(ContextCompat.getColor(MainActivity.this,android.R.color.white));
             }
         }
 
@@ -1821,12 +1825,18 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         } else {
             // Fallback to screen dimensions if size not available
             WindowManager wm = (WindowManager) getSystemService(WINDOW_SERVICE);
-            DisplayMetrics metrics = new DisplayMetrics();
             if (wm != null) {
-                Display display = wm.getDefaultDisplay();
-                display.getRealMetrics(metrics);
-                mPreviewWidth = metrics.widthPixels;
-                mPreviewHeight = metrics.heightPixels;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    // API 30+: Use WindowMetrics (getDefaultDisplay deprecated)
+                    android.graphics.Rect bounds = wm.getCurrentWindowMetrics().getBounds();
+                    mPreviewWidth = bounds.width();
+                    mPreviewHeight = bounds.height();
+                } else {
+                    DisplayMetrics metrics = new DisplayMetrics();
+                    wm.getDefaultDisplay().getRealMetrics(metrics);
+                    mPreviewWidth = metrics.widthPixels;
+                    mPreviewHeight = metrics.heightPixels;
+                }
             }
         }
         Log.d(TAG, "resizePreviewView: " + mPreviewWidth + "x" + mPreviewHeight + " (mMainSurfaceAdded=" + mMainSurfaceAdded + " isPortrait=" + isPortraitMode + ")");
@@ -1869,11 +1879,11 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
                     Drawable Recording_Video_drawable = Recording_Video.getCompoundDrawables()[1];
                     // Update record button
                     if (mIsRecording) {
-                        Recording_Video_drawable.setColorFilter(getResources().getColor(android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
-                        Recording_Video.setTextColor(getResources().getColor(android.R.color.holo_red_light));
+                        Recording_Video_drawable.setColorFilter(ContextCompat.getColor(this,android.R.color.holo_red_light), PorterDuff.Mode.SRC_IN);
+                        Recording_Video.setTextColor(ContextCompat.getColor(this,android.R.color.holo_red_light));
                     }else{
-                        Recording_Video_drawable.setColorFilter(getResources().getColor(android.R.color.white), PorterDuff.Mode.SRC_IN);
-                        Recording_Video.setTextColor(getResources().getColor(android.R.color.white));
+                        Recording_Video_drawable.setColorFilter(ContextCompat.getColor(this,android.R.color.white), PorterDuff.Mode.SRC_IN);
+                        Recording_Video.setTextColor(ContextCompat.getColor(this,android.R.color.white));
                     }
                 }
 
@@ -1936,8 +1946,12 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         try {
 
             // Define the directory where the image will be saved
-            String directoryPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + "/Openterface";
-            File directory = new File(directoryPath);
+            // Use app-specific external storage (scoped storage compliant on API 29+)
+            File baseDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+            if (baseDir == null) {
+                baseDir = getFilesDir(); // fallback to internal storage
+            }
+            File directory = new File(baseDir, "Openterface");
 
             // Create the directory if it does not exist
             if (!directory.exists()) {
@@ -2060,8 +2074,12 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
 
     private void startRecord() {
 
-        String directoryPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + "/Openterface";
-        File directory = new File(directoryPath);
+        // Use app-specific external storage (scoped storage compliant on API 29+)
+        File baseDir = getExternalFilesDir(Environment.DIRECTORY_MOVIES);
+        if (baseDir == null) {
+            baseDir = getFilesDir(); // fallback to internal storage
+        }
+        File directory = new File(baseDir, "Openterface");
 
         // Create the directory if it does not exist
         if (!directory.exists()) {
@@ -2180,7 +2198,7 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
             usbDeviceManager.enableDebugLogging();
             
             // Delayed debug test (wait for device to be ready)
-            new Handler().postDelayed(() -> {
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
                 if (usbDeviceManager.isConnected()) {
                     usbDeviceManager.debugFE0CKeyboard();
                 } else {
@@ -2237,7 +2255,7 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
             final int keyCode = testKeys[i];
             final int delay = i * 200; // 200ms between keys
             
-            new Handler().postDelayed(() -> {
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
                 debugKeyPress(keyCode);
             }, delay);
         }
@@ -2842,7 +2860,7 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
             Button btn = new Button(this);
             btn.setText(shortcut.label != null ? shortcut.label : shortcut.name);
             btn.setTextSize(11);
-            btn.setTextColor(getResources().getColor(R.color.text_primary));
+            btn.setTextColor(ContextCompat.getColor(this,R.color.text_primary));
             btn.setBackgroundResource(R.drawable.shortcut_button_background);
             LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -2873,7 +2891,7 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
                 (int) (10 * getResources().getDisplayMetrics().density),
                 (int) (10 * getResources().getDisplayMetrics().density));
         settingsBtn.setBackgroundResource(R.drawable.shortcut_button_background);
-        settingsBtn.setColorFilter(getResources().getColor(R.color.text_primary));
+        settingsBtn.setColorFilter(ContextCompat.getColor(this,R.color.text_primary));
         settingsBtn.setOnClickListener(v -> showKeyboardSettingsDialog());
         buttonsContainer.addView(settingsBtn);
     }
@@ -4372,10 +4390,10 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         if (statusView == null) return;
         if (mIsCameraConnected) {
             statusView.setText(R.string.settings_connected);
-            statusView.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+            statusView.setTextColor(ContextCompat.getColor(this,android.R.color.holo_green_dark));
         } else {
             statusView.setText(R.string.settings_disconnected);
-            statusView.setTextColor(getResources().getColor(R.color.text_secondary));
+            statusView.setTextColor(ContextCompat.getColor(this,R.color.text_secondary));
         }
     }
 
@@ -4388,7 +4406,7 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         }
         if (iconView != null) {
             int color = mIsRecording ? android.R.color.holo_red_light : R.color.text_primary;
-            iconView.setColorFilter(getResources().getColor(color));
+            iconView.setColorFilter(ContextCompat.getColor(this,color));
         }
     }
 
@@ -4400,8 +4418,8 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         boolean running = vncService != null && vncService.isRunning();
         statusView.setText(running ? R.string.settings_running : R.string.settings_stopped);
         statusView.setTextColor(running ?
-            getResources().getColor(android.R.color.holo_green_dark) :
-            getResources().getColor(R.color.text_secondary));
+            ContextCompat.getColor(this,android.R.color.holo_green_dark) :
+            ContextCompat.getColor(this,R.color.text_secondary));
     }
 
     /**
@@ -4412,8 +4430,8 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         boolean running = webRtcService != null && webRtcService.isRunning();
         statusView.setText(running ? R.string.settings_running : R.string.settings_stopped);
         statusView.setTextColor(running ?
-            getResources().getColor(android.R.color.holo_green_dark) :
-            getResources().getColor(R.color.text_secondary));
+            ContextCompat.getColor(this,android.R.color.holo_green_dark) :
+            ContextCompat.getColor(this,R.color.text_secondary));
     }
 
     /**

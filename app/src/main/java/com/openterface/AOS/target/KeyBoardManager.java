@@ -26,6 +26,7 @@ package com.openterface.AOS.target;
 
 import android.content.Context;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.widget.Toast;
@@ -127,7 +128,7 @@ public class KeyBoardManager {
         if (targetChars.contains(pressedChar)) {
             Log.d(TAG, "Detected special character: " + pressedChar);
             sendKeyboardRequest(functionKey, pressedChar);
-            new Handler().postDelayed(new Runnable() {
+            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     MainActivity.mKeyboardRequestSent = true;
@@ -213,7 +214,7 @@ public class KeyBoardManager {
         if (keyName != null) {
             Log.d(TAG, "keyName: " + keyName);
             sendKeyboardRequest(functionKey, keyName);
-            new Handler().postDelayed(new Runnable() {
+            new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     MainActivity.mKeyboardRequestSent = true;

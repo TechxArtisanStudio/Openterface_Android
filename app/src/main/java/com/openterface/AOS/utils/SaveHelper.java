@@ -24,6 +24,7 @@
 */
 package com.openterface.AOS.utils;
 
+import android.content.Context;
 import android.net.Uri;
 import android.os.Environment;
 
@@ -33,20 +34,49 @@ import com.openterface.AOS.R;
 import java.io.File;
 import java.util.Date;
 
+/**
+ * Utility for generating save paths for photos and videos.
+ *
+ * On API 30+ (scoped storage enforced), uses app-specific external storage
+ * via getExternalFilesDir() which requires no permissions and is scoped
+ * storage compliant. On older APIs, still uses app-specific storage for
+ * consistency (previously used Environment.getExternalStorageDirectory()).
+ */
 public class SaveHelper {
 
     public static String BaseStoragePath = null;
 
-    public static void checkBaseStoragePath() {
+    /**
+     * Get the base storage path. Uses app-specific external storage directory
+     * which is scoped-storage compliant on all API levels.
+     *
+     * @param context optional context; if null, falls back to UVCUtils.getApplication()
+     */
+    public static void checkBaseStoragePath(Context context) {
         if (BaseStoragePath == null) {
-            BaseStoragePath = Environment.getExternalStorageDirectory().getPath() + File.separator + UVCUtils.getApplication().getString(R.string.app_name);
+            Context ctx = context != null ? context : UVCUtils.getApplication();
+            File dir = ctx.getExternalFilesDir(null);
+            if (dir != null) {
+                BaseStoragePath = dir.getPath();
+            } else {
+                // Fallback: use internal files dir if external is unavailable
+                BaseStoragePath = ctx.getFilesDir().getPath();
+            }
         }
     }
 
-    public static String getSavePhotoPath() {
-        checkBaseStoragePath();
+    /** @deprecated Use {@link #checkBaseStoragePath(Context)} instead */
+    @Deprecated
+    public static void checkBaseStoragePath() {
+        checkBaseStoragePath(null);
+    }
 
-        String parentPath = BaseStoragePath + File.separator + TimeFormatter.format_yyyyMMdd(new Date()) + File.separator + "photo";
+    public static String getSavePhotoPath() {
+        checkBaseStoragePath(null);
+
+        String parentPath = BaseStoragePath + File.separator
+                + Environment.DIRECTORY_PICTURES + File.separator
+                + TimeFormatter.format_yyyyMMdd(new Date()) + File.separator + "photo";
         File folder = new File(parentPath);
         if (!folder.exists()) {
             folder.mkdirs();
@@ -59,9 +89,11 @@ public class SaveHelper {
     }
 
     public static String getSaveVideoPath() {
-        checkBaseStoragePath();
+        checkBaseStoragePath(null);
 
-        String parentPath = BaseStoragePath + File.separator + TimeFormatter.format_yyyyMMdd(new Date()) + File.separator + "video";
+        String parentPath = BaseStoragePath + File.separator
+                + Environment.DIRECTORY_MOVIES + File.separator
+                + TimeFormatter.format_yyyyMMdd(new Date()) + File.separator + "video";
         File folder = new File(parentPath);
         if (!folder.exists()) {
             folder.mkdirs();

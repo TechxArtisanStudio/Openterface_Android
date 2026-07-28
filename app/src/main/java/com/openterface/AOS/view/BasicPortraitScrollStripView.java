@@ -11,6 +11,7 @@ import android.view.View;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.content.res.AppCompatResources;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.drawable.DrawableCompat;
 
 import com.openterface.AOS.R;
@@ -81,7 +82,7 @@ public class BasicPortraitScrollStripView extends View {
         setFocusable(true);
 
         // Setup divider paint
-        dividerPaint.setColor(getContext().getResources().getColor(R.color.divider));
+        dividerPaint.setColor(ContextCompat.getColor(getContext(),R.color.divider));
         dividerPaint.setStrokeWidth(Math.max(1f, getResources().getDisplayMetrics().density));
 
         // Load chevron drawables
@@ -132,8 +133,8 @@ public class BasicPortraitScrollStripView extends View {
         }
 
         // Determine chevron tint based on pulse state
-        int baseChevronTint = getContext().getResources().getColor(R.color.km_touchpad_scroll_strip_chevron);
-        int accent = getContext().getResources().getColor(R.color.primary);
+        int baseChevronTint = ContextCompat.getColor(getContext(),R.color.km_touchpad_scroll_strip_chevron);
+        int accent = ContextCompat.getColor(getContext(),R.color.primary);
         int upTint = baseChevronTint;
         int dnTint = baseChevronTint;
 

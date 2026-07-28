@@ -26,6 +26,7 @@ package com.openterface.AOS.KeyBoardClick;
 
 import android.content.Context;
 import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -404,7 +405,7 @@ public class KeyBoardSystem {
                 // Regular key: delayed send to support long-press alternates
                 // - Short press (tap): send on ACTION_UP
                 // - Long press: show alternates, slide-to-select, send on ACTION_UP
-                final Handler longPressHandler = new Handler();
+                final Handler longPressHandler = new Handler(Looper.getMainLooper());
                 final boolean[] longPressFired = {false};
                 final boolean[] alternatesShown = {false};
 
@@ -603,7 +604,7 @@ public class KeyBoardSystem {
     private void setupModifierButton(View v) {
         final boolean[] isLocked = {false};
         final float[] startY = {0};
-        final Handler lockHandler = new Handler();
+        final Handler lockHandler = new Handler(Looper.getMainLooper());
         final boolean[] longPressFired = {false};
         final String modLabel = getModifierLabel(v.getId());
 
