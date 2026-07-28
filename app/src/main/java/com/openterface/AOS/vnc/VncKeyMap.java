@@ -186,6 +186,10 @@ public class VncKeyMap {
      * Map ASCII character to CH9329 key name.
      * Uppercase letters return the uppercase key name and caller must
      * apply shift modifier via functionKey parameter.
+     * Shifted punctuation returns the character itself — CH9329MSKBMap
+     * maps both the shifted char and its unshifted base to the same HID code
+     * (e.g. "!" and "1" both map to 0x1E), and the shift modifier is carried
+     * separately in the functionKey byte.
      */
     private static String asciiToKeyName(char c) {
         if (c == ' ') return "SPACE";
@@ -205,6 +209,7 @@ public class VncKeyMap {
 
         // Common punctuation - match CH9329MSKBMap key names
         switch (c) {
+            // Unshifted punctuation (base keys)
             case '-':  return "MINUS";
             case '=':  return "EQUALS";
             case '[':  return "LEFT_BRACKET";
@@ -216,6 +221,34 @@ public class VncKeyMap {
             case ',':  return "COMMA";
             case '.':  return "PERIOD";
             case '/':  return "SLASH";
+
+            // Shifted punctuation (Shift + number row / symbol keys)
+            // CH9329MSKBMap already maps these to the same HID codes as their
+            // unshifted counterparts (e.g. "!" → "1E", same as "1" → "1E").
+            // The shift modifier is carried in functionKey, so returning the
+            // literal character here is sufficient.
+            case '!':  return "!";   // Shift+1
+            case '@':  return "@";   // Shift+2
+            case '#':  return "#";   // Shift+3
+            case '$':  return "$";   // Shift+4
+            case '%':  return "%";   // Shift+5
+            case '^':  return "^";   // Shift+6
+            case '&':  return "&";   // Shift+7
+            case '*':  return "*";   // Shift+8
+            case '(':  return "(";   // Shift+9
+            case ')':  return ")";   // Shift+0
+            case '_':  return "_";   // Shift+-
+            case '+':  return "+";   // Shift+=
+            case '{':  return "{";   // Shift+[
+            case '}':  return "}";   // Shift+]
+            case '|':  return "BACKSLASH";   // Shift+\ — ANSI backslash is HID 0x31 (same as unshifted)
+            case ':':  return ":";   // Shift+;
+            case '"':  return "\"";  // Shift+'
+            case '~':  return "~";   // Shift+`
+            case '<':  return "<";   // Shift+,
+            case '>':  return ">";   // Shift+.
+            case '?':  return "?";   // Shift+/
+
             default:   return null;
         }
     }

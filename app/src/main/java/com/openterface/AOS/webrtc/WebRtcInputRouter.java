@@ -95,6 +95,15 @@ public class WebRtcInputRouter {
      */
     public void onKeyboardEvent(int keysym, boolean down, int modifier) {
         System.out.println("[" + TAG + "] onKeyboardEvent: keysym=" + keysym + ", down=" + down + ", modifier=0x" + Integer.toHexString(modifier));
+
+        // Release-all frame from WASM buildKeyboard(0, []) has keysym=0, down=false, modifier=0.
+        // This is a pure release signal — no keyName lookup needed.
+        if (keysym == 0 && !down) {
+            System.out.println("[" + TAG + "] release-all received");
+            keyboardSender.sendKeyBoardReleaseQueued();
+            return;
+        }
+
         String keyName = VncKeyMap.vncKeysymToKeyName(keysym);
         System.out.println("[" + TAG + "] keyName=" + keyName);
         if (keyName == null) {
@@ -111,14 +120,14 @@ public class WebRtcInputRouter {
                 keyboardSender.sendKeyBoardReleaseQueued();
             }
         } else {
-            // Regular key - use atomic press+release to avoid double characters.
-            // The modifier byte from the CH9329 frame is used directly as the functionKey
-            // hex string, so Shift+A sends modifier=0x02 + HID code for 'a'.
+            // Regular key - press and release are driven by separate keydown/keyup
+            // events from the browser. The modifier byte from the CH9329 frame is used
+            // directly as the functionKey hex string, so Shift+A sends modifier=0x02
+            // + HID code for 'a'.
+            String functionKey = String.format("%02x", modifier);
             if (down) {
-                String functionKey = String.format("%02x", modifier);
-                keyboardSender.sendKeyBoardPressAndRelease(functionKey, keyName);
+                keyboardSender.sendKeyBoardPressQueued(functionKey, keyName);
             } else {
-                // Release is handled by sendKeyBoardPressAndRelease, ignore keyup for regular keys
                 keyboardSender.sendKeyBoardReleaseQueued();
             }
         }

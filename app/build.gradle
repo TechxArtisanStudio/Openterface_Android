@@ -4,13 +4,13 @@ plugins {
 
 android {
     namespace 'com.openterface.AOS'
-    compileSdk 35  // Now can use SDK 35 with AGP 8.1+
+    compileSdk 36  // Android 16 (API 36)
 
     defaultConfig {
         archivesBaseName = "OpenterfaceAndroid"
         applicationId "com.openterface.AOS"
         minSdkVersion 21
-        targetSdkVersion 35
+        targetSdkVersion 36
         versionCode 14
         versionName "1.2.7"
 
