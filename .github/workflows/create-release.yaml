@@ -8,10 +8,11 @@ on:
         required: true
         type: choice
         options:
+          - current
           - patch
           - minor
           - major
-        default: 'patch'
+        default: 'current'
       release_type:
         description: 'Release Type'
         required: true
@@ -57,32 +58,38 @@ jobs:
         BUMP_TYPE="${{ github.event.inputs.bump_type }}"
         echo "🔼 Bump type: $BUMP_TYPE"
 
-        case "$BUMP_TYPE" in
-          major)
-            MAJOR=$((MAJOR + 1))
-            MINOR=0
-            PATCH=0
-            ;;
-          minor)
-            MINOR=$((MINOR + 1))
-            PATCH=0
-            ;;
-          patch)
-            PATCH=$((PATCH + 1))
-            ;;
-        esac
+        if [ "$BUMP_TYPE" = "current" ]; then
+          echo "🔄 Keeping current version (no bump)"
+          NEW_VERSION="$CURRENT_VERSION"
+          NEW_CODE="$CURRENT_CODE"
+        else
+          case "$BUMP_TYPE" in
+            major)
+              MAJOR=$((MAJOR + 1))
+              MINOR=0
+              PATCH=0
+              ;;
+            minor)
+              MINOR=$((MINOR + 1))
+              PATCH=0
+              ;;
+            patch)
+              PATCH=$((PATCH + 1))
+              ;;
+          esac
 
-        NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
-        NEW_CODE=$((CURRENT_CODE + 1))
+          NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          NEW_CODE=$((CURRENT_CODE + 1))
 
-        echo "✨ New version: $NEW_VERSION (code: $NEW_CODE)"
+          # Update build.gradle
+          sed -i "s/versionCode $CURRENT_CODE/versionCode $NEW_CODE/" app/build.gradle
+          sed -i "s/versionName \"$CURRENT_VERSION\"/versionName \"$NEW_VERSION\"/" app/build.gradle
 
-        # Update build.gradle
-        sed -i "s/versionCode $CURRENT_CODE/versionCode $NEW_CODE/" app/build.gradle
-        sed -i "s/versionName \"$CURRENT_VERSION\"/versionName \"$NEW_VERSION\"/" app/build.gradle
+          # Verify changes
+          grep -A 2 "versionCode" app/build.gradle | head -3
+        fi
 
-        # Verify changes
-        grep -A 2 "versionCode" app/build.gradle | head -3
+        echo "✨ Target version: $NEW_VERSION (code: $NEW_CODE)"
 
         # Set outputs
         echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
@@ -90,6 +97,7 @@ jobs:
         echo "tag_name=v${NEW_VERSION}" >> $GITHUB_OUTPUT
 
     - name: Commit Version Bump
+      if: github.event.inputs.bump_type != 'current'
       run: |
         git config user.name "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -244,17 +252,29 @@ jobs:
         git config user.email "github-actions[bot]@users.noreply.github.com"
 
         TAG_NAME="${{ steps.bump.outputs.tag_name }}"
+        BUMP_TYPE="${{ github.event.inputs.bump_type }}"
 
-        # Check if tag already exists
-        if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
-          echo "⚠️  Tag $TAG_NAME already exists, overwriting..."
-          git tag -d "$TAG_NAME"
-          git push origin ":refs/tags/$TAG_NAME" || true
+        if [ "$BUMP_TYPE" = "current" ]; then
+          # For current version release, tag should already exist
+          if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+            echo "✅ Tag $TAG_NAME already exists, using it for release"
+          else
+            echo "⚠️  Tag $TAG_NAME doesn't exist, creating it"
+            git tag -a "$TAG_NAME" -m "Release $TAG_NAME"
+            git push origin "$TAG_NAME"
+          fi
+        else
+          # For version bump, overwrite tag if exists
+          if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+            echo "⚠️  Tag $TAG_NAME already exists, overwriting..."
+            git tag -d "$TAG_NAME"
+            git push origin ":refs/tags/$TAG_NAME" || true
+          fi
+
+          git tag -a "$TAG_NAME" -m "Release $TAG_NAME"
+          git push origin "$TAG_NAME"
+          echo "✅ Created and pushed tag: $TAG_NAME"
         fi
-
-        git tag -a "$TAG_NAME" -m "Release $TAG_NAME"
-        git push origin "$TAG_NAME"
-        echo "✅ Created and pushed tag: $TAG_NAME"
 
     # ======== STEP 7: Generate Release Notes ========
     - name: Generate Release Notes
@@ -324,7 +344,11 @@ jobs:
         echo "- **Tag**: ${{ steps.bump.outputs.tag_name }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Version**: ${{ steps.bump.outputs.new_version }} (code: ${{ steps.bump.outputs.new_code }})" >> $GITHUB_STEP_SUMMARY
         echo "- **Type**: ${{ inputs.release_type }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **Bump**: ${{ inputs.bump_type }}" >> $GITHUB_STEP_SUMMARY
+        if [ "${{ inputs.bump_type }}" = "current" ]; then
+          echo "- **Bump**: None (current version)" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "- **Bump**: ${{ inputs.bump_type }}" >> $GITHUB_STEP_SUMMARY
+        fi
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🔗 Links" >> $GITHUB_STEP_SUMMARY
         echo "- [View Release](https://github.com/${{ github.repository }}/releases/tag/${{ steps.bump.outputs.tag_name }})" >> $GITHUB_STEP_SUMMARY
