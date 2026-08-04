@@ -276,7 +276,7 @@ jobs:
         name: Openterface-v${{ steps.version.outputs.version_name }}-APK
         path: |
           app/build/outputs/apk/release/*.apk
-        retention-days: 90
+        retention-days: 30
 
     # Store signed release AAB files as artifacts
     - name: Upload Signed Release AAB
@@ -286,7 +286,7 @@ jobs:
         name: Openterface-v${{ steps.version.outputs.version_name }}-AAB
         path: |
           app/build/outputs/bundle/release/*.aab
-        retention-days: 90
+        retention-days: 30
 
     # Create GitHub Release with APK and AAB files directly (no ZIP wrapper)
     - name: Create GitHub Release
