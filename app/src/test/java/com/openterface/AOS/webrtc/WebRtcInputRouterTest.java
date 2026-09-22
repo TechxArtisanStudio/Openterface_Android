@@ -1,5 +1,6 @@
 package com.openterface.AOS.webrtc;
 
+import com.openterface.AOS.vnc.VncKeyMap;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -99,32 +100,32 @@ public class WebRtcInputRouterTest {
 
     @Test
     public void keyboardLetterSendsKeyboardKey() {
-        router.onKeyboardEvent(0x61, true); // 'a' press
-        assertEquals("sendKeyBoardPressAndRelease", mockKeyboardSender.lastAction);
+        router.onKeyboardEvent(0x61, true, 0); // 'a' press
+        assertEquals("sendKeyBoardPressQueued", mockKeyboardSender.lastAction);
         assertEquals("00", mockKeyboardSender.lastFunctionKey);
         assertEquals("a", mockKeyboardSender.lastKeyName);
 
-        router.onKeyboardEvent(0x61, false); // release
+        router.onKeyboardEvent(0x61, false, 0); // release
         assertEquals("sendKeyBoardReleaseQueued", mockKeyboardSender.lastAction);
     }
 
     @Test
     public void keyboardEnterSendsKeyboardKey() {
-        router.onKeyboardEvent(0xFF0D, true); // Return press
-        assertEquals("sendKeyBoardPressAndRelease", mockKeyboardSender.lastAction);
+        router.onKeyboardEvent(0xFF0D, true, 0); // Return press
+        assertEquals("sendKeyBoardPressQueued", mockKeyboardSender.lastAction);
         assertEquals("ENTER", mockKeyboardSender.lastKeyName);
     }
 
     @Test
     public void keyboardEscapeSendsKeyboardKey() {
-        router.onKeyboardEvent(0xFF1B, true); // Escape press
-        assertEquals("sendKeyBoardPressAndRelease", mockKeyboardSender.lastAction);
+        router.onKeyboardEvent(0xFF1B, true, 0); // Escape press
+        assertEquals("sendKeyBoardPressQueued", mockKeyboardSender.lastAction);
         assertEquals("Esc", mockKeyboardSender.lastKeyName);
     }
 
     @Test
     public void keyboardShiftSendsKeyboardPress() {
-        router.onKeyboardEvent(0xFFE1, true); // Shift_L press
+        router.onKeyboardEvent(0xFFE1, true, 0); // Shift_L press
         assertEquals("sendKeyBoardPressQueued", mockKeyboardSender.lastAction);
         assertEquals("Shift", mockKeyboardSender.lastFunctionKey);
         assertEquals("SHIFT_LEFT", mockKeyboardSender.lastKeyName);
@@ -132,14 +133,14 @@ public class WebRtcInputRouterTest {
 
     @Test
     public void keyboardShiftReleaseSendsKeyboardRelease() {
-        router.onKeyboardEvent(0xFFE1, true);  // press
-        router.onKeyboardEvent(0xFFE1, false); // release
+        router.onKeyboardEvent(0xFFE1, true, 0);  // press
+        router.onKeyboardEvent(0xFFE1, false, 0); // release
         assertEquals("sendKeyBoardReleaseQueued", mockKeyboardSender.lastAction);
     }
 
     @Test
     public void keyboardControlSendsKeyboardPress() {
-        router.onKeyboardEvent(0xFFE3, true); // Control_L press
+        router.onKeyboardEvent(0xFFE3, true, 0); // Control_L press
         assertEquals("sendKeyBoardPressQueued", mockKeyboardSender.lastAction);
         assertEquals("Ctrl", mockKeyboardSender.lastFunctionKey);
         assertEquals("CTRL_LEFT", mockKeyboardSender.lastKeyName);
@@ -147,7 +148,7 @@ public class WebRtcInputRouterTest {
 
     @Test
     public void keyboardAltSendsKeyboardPress() {
-        router.onKeyboardEvent(0xFFE9, true); // Alt_L press
+        router.onKeyboardEvent(0xFFE9, true, 0); // Alt_L press
         assertEquals("sendKeyBoardPressQueued", mockKeyboardSender.lastAction);
         assertEquals("Alt", mockKeyboardSender.lastFunctionKey);
         assertEquals("ALT_LEFT", mockKeyboardSender.lastKeyName);
@@ -155,47 +156,273 @@ public class WebRtcInputRouterTest {
 
     @Test
     public void keyboardWinSendsKeyboardPress() {
-        router.onKeyboardEvent(0xFFEB, true); // Super_L press
+        router.onKeyboardEvent(0xFFEB, true, 0); // Super_L press
         assertEquals("sendKeyBoardPressQueued", mockKeyboardSender.lastAction);
         assertEquals("Win", mockKeyboardSender.lastFunctionKey);
     }
 
     @Test
     public void keyboardFunctionKeySendsKeyboardKey() {
-        router.onKeyboardEvent(0xFFBE, true); // F1
-        assertEquals("sendKeyBoardPressAndRelease", mockKeyboardSender.lastAction);
+        router.onKeyboardEvent(0xFFBE, true, 0); // F1
+        assertEquals("sendKeyBoardPressQueued", mockKeyboardSender.lastAction);
         assertEquals("F1", mockKeyboardSender.lastKeyName);
 
-        router.onKeyboardEvent(0xFFC9, true); // F12
-        assertEquals("sendKeyBoardPressAndRelease", mockKeyboardSender.lastAction);
+        router.onKeyboardEvent(0xFFC9, true, 0); // F12
+        assertEquals("sendKeyBoardPressQueued", mockKeyboardSender.lastAction);
         assertEquals("F12", mockKeyboardSender.lastKeyName);
     }
 
     @Test
     public void keyboardUnknownKeysymDoesNothing() {
-        router.onKeyboardEvent(0x9999, true);
+        router.onKeyboardEvent(0x9999, true, 0);
         assertNull(mockKeyboardSender.lastAction); // No action for unknown keysym
     }
 
     @Test
     public void keyboardZeroKeysymDoesNothing() {
-        router.onKeyboardEvent(0, true);
+        router.onKeyboardEvent(0, true, 0);
         assertNull(mockKeyboardSender.lastAction);
     }
 
     @Test
     public void keyboardArrowKeysSendKeyboardKey() {
-        router.onKeyboardEvent(0xFF51, true); // Left
+        router.onKeyboardEvent(0xFF51, true, 0); // Left
         assertEquals("DPAD_LEFT", mockKeyboardSender.lastKeyName);
 
-        router.onKeyboardEvent(0xFF52, true); // Up
+        router.onKeyboardEvent(0xFF52, true, 0); // Up
         assertEquals("DPAD_UP", mockKeyboardSender.lastKeyName);
     }
 
     @Test
     public void keyboardNumpadSendsKeyboardKey() {
-        router.onKeyboardEvent(0xFFB0, true); // KP_0
+        router.onKeyboardEvent(0xFFB0, true, 0); // KP_0
         assertEquals("0", mockKeyboardSender.lastKeyName);
+    }
+
+    // ====== Release-all signal ======
+
+    @Test
+    public void releaseAllSignal_sendsKeyboardRelease() {
+        // When keysym=0 and down=false, it's a release-all signal
+        router.onKeyboardEvent(0, false, 0);
+        assertEquals("sendKeyBoardReleaseQueued", mockKeyboardSender.lastAction);
+    }
+
+    @Test
+    public void releaseAllSignal_afterKeyPress_clearsAllModifiers() {
+        // Press Shift
+        router.onKeyboardEvent(VncKeyMap.XK_Shift_L, true, 0);
+        assertEquals("sendKeyBoardPressQueued", mockKeyboardSender.lastAction);
+        
+        // Send release-all
+        router.onKeyboardEvent(0, false, 0);
+        assertEquals("sendKeyBoardReleaseQueued", mockKeyboardSender.lastAction);
+    }
+
+    // ====== Modifier function key mapping ======
+
+    @Test
+    public void modifierFunctionKey_shiftLeft_mapsToShift() {
+        router.onKeyboardEvent(VncKeyMap.XK_Shift_L, true, 0);
+        assertEquals("Shift", mockKeyboardSender.lastFunctionKey);
+        assertEquals("SHIFT_LEFT", mockKeyboardSender.lastKeyName);
+    }
+
+    @Test
+    public void modifierFunctionKey_shiftRight_mapsToShift() {
+        router.onKeyboardEvent(VncKeyMap.XK_Shift_R, true, 0);
+        assertEquals("Shift", mockKeyboardSender.lastFunctionKey);
+        assertEquals("SHIFT_RIGHT", mockKeyboardSender.lastKeyName);
+    }
+
+    @Test
+    public void modifierFunctionKey_controlLeft_mapsToCtrl() {
+        router.onKeyboardEvent(VncKeyMap.XK_Control_L, true, 0);
+        assertEquals("Ctrl", mockKeyboardSender.lastFunctionKey);
+        assertEquals("CTRL_LEFT", mockKeyboardSender.lastKeyName);
+    }
+
+    @Test
+    public void modifierFunctionKey_controlRight_mapsToCtrl() {
+        router.onKeyboardEvent(VncKeyMap.XK_Control_R, true, 0);
+        assertEquals("Ctrl", mockKeyboardSender.lastFunctionKey);
+        assertEquals("CTRL_RIGHT", mockKeyboardSender.lastKeyName);
+    }
+
+    @Test
+    public void modifierFunctionKey_altLeft_mapsToAlt() {
+        router.onKeyboardEvent(VncKeyMap.XK_Alt_L, true, 0);
+        assertEquals("Alt", mockKeyboardSender.lastFunctionKey);
+        assertEquals("ALT_LEFT", mockKeyboardSender.lastKeyName);
+    }
+
+    @Test
+    public void modifierFunctionKey_altRight_mapsToAlt() {
+        router.onKeyboardEvent(VncKeyMap.XK_Alt_R, true, 0);
+        assertEquals("Alt", mockKeyboardSender.lastFunctionKey);
+        assertEquals("ALT_RIGHT", mockKeyboardSender.lastKeyName);
+    }
+
+    @Test
+    public void modifierFunctionKey_metaLeft_mapsToWin() {
+        router.onKeyboardEvent(VncKeyMap.XK_Meta_L, true, 0);
+        assertEquals("Win", mockKeyboardSender.lastFunctionKey);
+        assertEquals("Win", mockKeyboardSender.lastKeyName);
+    }
+
+    @Test
+    public void modifierFunctionKey_metaRight_mapsToWin() {
+        router.onKeyboardEvent(VncKeyMap.XK_Meta_R, true, 0);
+        assertEquals("Win", mockKeyboardSender.lastFunctionKey);
+        assertEquals("Win", mockKeyboardSender.lastKeyName);
+    }
+
+    @Test
+    public void modifierFunctionKey_superLeft_mapsToWin() {
+        router.onKeyboardEvent(VncKeyMap.XK_Super_L, true, 0);
+        assertEquals("Win", mockKeyboardSender.lastFunctionKey);
+        assertEquals("Win", mockKeyboardSender.lastKeyName);
+    }
+
+    @Test
+    public void modifierFunctionKey_superRight_mapsToWin() {
+        router.onKeyboardEvent(VncKeyMap.XK_Super_R, true, 0);
+        assertEquals("Win", mockKeyboardSender.lastFunctionKey);
+        assertEquals("Win", mockKeyboardSender.lastKeyName);
+    }
+
+    // ====== Keyboard press vs release events ======
+
+    @Test
+    public void keyboardPress_sendsPressQueued() {
+        router.onKeyboardEvent(0x61, true, 0); // 'a' press
+        assertEquals("sendKeyBoardPressQueued", mockKeyboardSender.lastAction);
+    }
+
+    @Test
+    public void keyboardRelease_sendsReleaseQueued() {
+        router.onKeyboardEvent(0x61, false, 0); // 'a' release
+        assertEquals("sendKeyBoardReleaseQueued", mockKeyboardSender.lastAction);
+    }
+
+    @Test
+    public void modifierKeyPress_sendsPressQueued() {
+        router.onKeyboardEvent(VncKeyMap.XK_Shift_L, true, 0);
+        assertEquals("sendKeyBoardPressQueued", mockKeyboardSender.lastAction);
+    }
+
+    @Test
+    public void modifierKeyRelease_sendsReleaseQueued() {
+        router.onKeyboardEvent(VncKeyMap.XK_Shift_L, false, 0);
+        assertEquals("sendKeyBoardReleaseQueued", mockKeyboardSender.lastAction);
+    }
+
+    // ====== Modifier byte handling ======
+
+    @Test
+    public void regularKey_withModifierByte_passesCorrectFunctionKey() {
+        // Simulate Shift+A: modifier byte is 0x02 (left shift), keysym is 0x41 (uppercase A)
+        router.onKeyboardEvent(0x41, true, 0x02);
+        assertEquals("sendKeyBoardPressQueued", mockKeyboardSender.lastAction);
+        assertEquals("02", mockKeyboardSender.lastFunctionKey);
+        assertEquals("a", mockKeyboardSender.lastKeyName);
+    }
+
+    @Test
+    public void regularKey_withCtrlModifier_passesCorrectFunctionKey() {
+        // Simulate Ctrl+C: modifier byte is 0x01 (left ctrl), keysym is 0x63 (lowercase c)
+        router.onKeyboardEvent(0x63, true, 0x01);
+        assertEquals("sendKeyBoardPressQueued", mockKeyboardSender.lastAction);
+        assertEquals("01", mockKeyboardSender.lastFunctionKey);
+        assertEquals("c", mockKeyboardSender.lastKeyName);
+    }
+
+    @Test
+    public void regularKey_noModifier_passesZeroFunctionKey() {
+        // Simulate plain 'a': modifier byte is 0x00
+        router.onKeyboardEvent(0x61, true, 0x00);
+        assertEquals("sendKeyBoardPressQueued", mockKeyboardSender.lastAction);
+        assertEquals("00", mockKeyboardSender.lastFunctionKey);
+        assertEquals("a", mockKeyboardSender.lastKeyName);
+    }
+
+    // ====== Framebuffer size handling ======
+
+    @Test
+    public void framebufferSize_default_is1920x1080() {
+        // Default framebuffer size should be 1920x1080
+        router.onMouseEvent(0, 100, 200, false);
+        assertEquals(1920, mockHidSender.lastWidth);
+        assertEquals(1080, mockHidSender.lastHeight);
+    }
+
+    @Test
+    public void framebufferSize_custom_resolution() {
+        router.setFramebufferSize(2560, 1440);
+        router.onMouseEvent(0, 100, 200, false);
+        assertEquals(2560, mockHidSender.lastWidth);
+        assertEquals(1440, mockHidSender.lastHeight);
+    }
+
+    @Test
+    public void framebufferSize_zeroDimensions_doesNotCallSetMouseDimensions() {
+        router.setFramebufferSize(0, 0);
+        router.onMouseEvent(0, 100, 200, false);
+        // When dimensions are 0, setMouseDimensions should not be called
+        assertNotEquals("setMouseDimensions", mockHidSender.lastAction);
+    }
+
+    // ====== Mouse button combinations ======
+
+    @Test
+    public void mouseButtons_simultaneousLeftAndRight_prioritizesLeft() {
+        // Button mask 0x05 = left (0x01) + right (0x04)
+        // Should prioritize left button
+        router.onMouseEvent(0x05, 100, 200, true);
+        assertEquals("sendAbsButtonClick", mockHidSender.lastAction);
+        assertEquals("SecLeftData", mockHidSender.lastClickType);
+    }
+
+    @Test
+    public void mouseButtons_simultaneousMiddleAndRight_prioritizesMiddle() {
+        // Button mask 0x06 = middle (0x02) + right (0x04)
+        // Should prioritize middle button
+        router.onMouseEvent(0x06, 100, 200, true);
+        assertEquals("sendAbsButtonClick", mockHidSender.lastAction);
+        assertEquals("SecMiddleData", mockHidSender.lastClickType);
+    }
+
+    @Test
+    public void mouseButtonRelease_fromLeftClick_sendsMove() {
+        // Press left button
+        router.onMouseEvent(0x01, 100, 200, true);
+        assertEquals("sendAbsButtonClick", mockHidSender.lastAction);
+        
+        // Release all buttons
+        router.onMouseEvent(0x00, 100, 200, false);
+        assertEquals("sendAbsMove", mockHidSender.lastAction);
+    }
+
+    // ====== Unknown keysyms ======
+
+    @Test
+    public void unknownKeysym_0x9999_doesNothing() {
+        router.onKeyboardEvent(0x9999, true, 0);
+        assertNull(mockKeyboardSender.lastAction);
+    }
+
+    @Test
+    public void unknownKeysym_0x0100_doesNothing() {
+        router.onKeyboardEvent(0x0100, true, 0);
+        assertNull(mockKeyboardSender.lastAction);
+    }
+
+    @Test
+    public void unknownKeysym_0xFFFF_mapsToDeleteKey() {
+        // 0xFFFF is XK_Delete, not unknown
+        router.onKeyboardEvent(0xFFFF, true, 0);
+        assertEquals("sendKeyBoardPressQueued", mockKeyboardSender.lastAction);
+        assertEquals("Delete", mockKeyboardSender.lastKeyName);
     }
 
     // ====== Combined scenario tests ======
@@ -203,14 +430,15 @@ public class WebRtcInputRouterTest {
     @Test
     public void modifierCombo_CtrlCSendsCorrectCommands() {
         // Press Ctrl (modifier held)
-        router.onKeyboardEvent(0xFFE3, true);
+        router.onKeyboardEvent(0xFFE3, true, 0);
         assertEquals("sendKeyBoardPressQueued", mockKeyboardSender.lastAction);
         mockKeyboardSender.reset();
 
         // Press 'c' while Ctrl held
-        router.onKeyboardEvent(0x63, true);
-        assertEquals("sendKeyBoardPressAndRelease", mockKeyboardSender.lastAction);
+        router.onKeyboardEvent(0x63, true, 0x01); // Ctrl modifier byte
+        assertEquals("sendKeyBoardPressQueued", mockKeyboardSender.lastAction);
         assertEquals("c", mockKeyboardSender.lastKeyName);
+        assertEquals("01", mockKeyboardSender.lastFunctionKey);
     }
 
     @Test
@@ -220,8 +448,8 @@ public class WebRtcInputRouterTest {
         assertEquals("sendAbsButtonClick", mockHidSender.lastAction);
 
         // Type a key
-        router.onKeyboardEvent(0x61, true);
-        assertEquals("sendKeyBoardPressAndRelease", mockKeyboardSender.lastAction);
+        router.onKeyboardEvent(0x61, true, 0);
+        assertEquals("sendKeyBoardPressQueued", mockKeyboardSender.lastAction);
 
         // Release mouse
         router.onMouseEvent(0, 100, 200, false);

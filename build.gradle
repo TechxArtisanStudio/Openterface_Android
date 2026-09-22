@@ -9,9 +9,8 @@ buildscript {
 		maven { url 'https://maven.aliyun.com/repository/central' }
     }
     dependencies {
-        // AGP 8.9.2 supports SDK 36, works with Gradle 8.11+, requires Java 17+
-        // Built-in 16KB page alignment support for Android 15+
-        classpath 'com.android.tools.build:gradle:8.9.2'
+        // AGP 8.11.0+ supports SDK 36 (Android 16) fully, works with Gradle 8.11+, requires Java 17+
+        classpath 'com.android.tools.build:gradle:8.11.0'
     }
 }
 

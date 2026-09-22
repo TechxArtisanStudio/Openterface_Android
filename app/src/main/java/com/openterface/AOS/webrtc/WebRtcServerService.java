@@ -160,16 +160,30 @@ public class WebRtcServerService extends Service {
 
             isRunning.set(true);
 
-            // Start foreground service
             // Start foreground service with the correct foreground service type.
             // On Android 14+ (API 34+), explicitly specify the foregroundServiceType
             // declared in the manifest. On older Android versions, use the 2-arg form
             // which internally uses the manifest-declared type.
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                startForeground(NOTIFICATION_ID, createNotification(),
-                        ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE);
-            } else {
-                startForeground(NOTIFICATION_ID, createNotification());
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    startForeground(NOTIFICATION_ID, createNotification(),
+                            ServiceInfo.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE);
+                } else {
+                    startForeground(NOTIFICATION_ID, createNotification());
+                }
+            } catch (SecurityException e) {
+                Log.e(TAG, "Failed to start foreground service", e);
+                // Fallback: try without explicit type on API 34+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    try {
+                        startForeground(NOTIFICATION_ID, createNotification());
+                    } catch (SecurityException e2) {
+                        Log.e(TAG, "Fallback also failed", e2);
+                        throw e2;
+                    }
+                } else {
+                    throw e;
+                }
             }
 
             Log.i(TAG, "WebRTC server started");

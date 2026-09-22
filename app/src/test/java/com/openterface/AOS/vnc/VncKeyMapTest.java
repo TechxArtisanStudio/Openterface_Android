@@ -172,6 +172,65 @@ public class VncKeyMapTest {
         assertEquals("PERIOD", VncKeyMap.vncKeysymToKeyName(VncKeyMap.XK_KP_Decimal));
     }
 
+    // ====== Shifted punctuation ======
+
+    @Test
+    public void shiftedPunctuationMapsToLiteralCharacter() {
+        // Shifted symbols return the literal character — shift modifier is separate
+        assertEquals("!", VncKeyMap.vncKeysymToKeyName(0x21));   // Shift+1
+        assertEquals("@", VncKeyMap.vncKeysymToKeyName(0x40));   // Shift+2
+        assertEquals("#", VncKeyMap.vncKeysymToKeyName(0x23));   // Shift+3
+        assertEquals("$", VncKeyMap.vncKeysymToKeyName(0x24));   // Shift+4
+        assertEquals("%", VncKeyMap.vncKeysymToKeyName(0x25));   // Shift+5
+        assertEquals("^", VncKeyMap.vncKeysymToKeyName(0x5E));   // Shift+6
+        assertEquals("&", VncKeyMap.vncKeysymToKeyName(0x26));   // Shift+7
+        assertEquals("*", VncKeyMap.vncKeysymToKeyName(0x2A));   // Shift+8
+        assertEquals("(", VncKeyMap.vncKeysymToKeyName(0x28));   // Shift+9
+        assertEquals(")", VncKeyMap.vncKeysymToKeyName(0x29));   // Shift+0
+    }
+
+    @Test
+    public void shiftedPunctuationExtendedMapsCorrectly() {
+        assertEquals("_", VncKeyMap.vncKeysymToKeyName(0x5F));   // Shift+-
+        assertEquals("+", VncKeyMap.vncKeysymToKeyName(0x2B));   // Shift+=
+        assertEquals("{", VncKeyMap.vncKeysymToKeyName(0x7B));   // Shift+[
+        assertEquals("}", VncKeyMap.vncKeysymToKeyName(0x7D));   // Shift+]
+        assertEquals(":", VncKeyMap.vncKeysymToKeyName(0x3A));   // Shift+;
+        assertEquals("\"", VncKeyMap.vncKeysymToKeyName(0x22));  // Shift+'
+        assertEquals("~", VncKeyMap.vncKeysymToKeyName(0x7E));   // Shift+`
+        assertEquals("<", VncKeyMap.vncKeysymToKeyName(0x3C));   // Shift+,
+        assertEquals(">", VncKeyMap.vncKeysymToKeyName(0x3E));   // Shift+.
+        assertEquals("?", VncKeyMap.vncKeysymToKeyName(0x3F));   // Shift+/
+    }
+
+    @Test
+    public void shiftedBackslashMapsToBackslash() {
+        // Shift+\ should return "BACKSLASH" (same as unshifted)
+        assertEquals("BACKSLASH", VncKeyMap.vncKeysymToKeyName(0x7C)); // |
+    }
+
+    // ====== Boundary values ======
+
+    @Test
+    public void boundaryValues_printableASCIIRange() {
+        // Lower boundary of printable ASCII
+        assertEquals("SPACE", VncKeyMap.vncKeysymToKeyName(0x20));
+        // Upper boundary of printable ASCII
+        assertEquals("~", VncKeyMap.vncKeysymToKeyName(0x7E));
+    }
+
+    @Test
+    public void boundaryValues_letterRange() {
+        // Uppercase A (0x41) should return lowercase 'a'
+        assertEquals("a", VncKeyMap.vncKeysymToKeyName(0x41));
+        // Uppercase Z (0x5A) should return lowercase 'z'
+        assertEquals("z", VncKeyMap.vncKeysymToKeyName(0x5A));
+        // Lowercase a (0x61)
+        assertEquals("a", VncKeyMap.vncKeysymToKeyName(0x61));
+        // Lowercase z (0x7A)
+        assertEquals("z", VncKeyMap.vncKeysymToKeyName(0x7A));
+    }
+
     // ====== Unknown keysyms ======
 
     @Test
@@ -180,5 +239,13 @@ public class VncKeyMapTest {
         assertNull(VncKeyMap.vncKeysymToKeyName(0x7F));  // Above printable ASCII, not mapped
         assertNull(VncKeyMap.vncKeysymToKeyName(0x100)); // Out of range
         assertNull(VncKeyMap.vncKeysymToKeyName(0));
+    }
+
+    @Test
+    public void controlCharactersReturnNull() {
+        // Control characters (0x00-0x1F) should return null
+        assertNull(VncKeyMap.vncKeysymToKeyName(0x00)); // NUL
+        assertNull(VncKeyMap.vncKeysymToKeyName(0x01)); // SOH
+        assertNull(VncKeyMap.vncKeysymToKeyName(0x1F)); // US
     }
 }
