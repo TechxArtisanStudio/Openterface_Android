@@ -13,7 +13,7 @@ import java.nio.ByteBuffer;
 
 /**
  * Custom WebRTC VideoCapturer that feeds UVC camera frames into WebRTC.
- * Bridges the IFrameCallback RGBA frames from libuvccamera to WebRTC's VideoFrame pipeline.
+ * Bridges the IFrameCallback NV12 frames from libuvccamera to WebRTC's VideoFrame pipeline.
  * WebRTC's internal encoder (MediaCodec H264) handles the rest automatically.
  */
 public class WebRtcFrameCapturer implements VideoCapturer {
@@ -101,9 +101,9 @@ public class WebRtcFrameCapturer implements VideoCapturer {
 
     /**
      * Feed a frame from the UVC camera into WebRTC.
-     * The frame must be in PIXEL_FORMAT_RGBX format.
+     * The frame must be in PIXEL_FORMAT_NV12 format.
      *
-     * @param rgbaBuffer RGBA buffer from UVC camera
+     * @param nv12Buffer NV12 buffer from UVC camera
      * @param width      Frame width (must match capturer width)
      * @param height     Frame height (must match capturer height)
      * @param timestampNs Frame timestamp in nanoseconds
@@ -111,9 +111,9 @@ public class WebRtcFrameCapturer implements VideoCapturer {
      */
     private int frameProcessedCount = 0;
 
-    public void onFrame(ByteBuffer rgbaBuffer, int width, int height, long timestampNs, int rotation) {
-        if (!isRunning || rgbaBuffer == null) {
-            Log.w(TAG, "Frame dropped early: isRunning=" + isRunning + " buffer=" + (rgbaBuffer != null));
+    public void onFrame(ByteBuffer nv12Buffer, int width, int height, long timestampNs, int rotation) {
+        if (!isRunning || nv12Buffer == null) {
+            Log.w(TAG, "Frame dropped early: isRunning=" + isRunning + " buffer=" + (nv12Buffer != null));
             return;
         }
 
@@ -134,13 +134,13 @@ public class WebRtcFrameCapturer implements VideoCapturer {
         frameProcessedCount++;
         if (frameProcessedCount <= 3 || frameProcessedCount % 30 == 0) {
             Log.i(TAG, "Processing frame: #" + frameProcessedCount + " " + width + "x" + height +
-                    " rotation=" + rotation + " bufferPosition=" + rgbaBuffer.position() +
-                    " bufferRemaining=" + rgbaBuffer.remaining());
+                    " rotation=" + rotation + " bufferPosition=" + nv12Buffer.position() +
+                    " bufferRemaining=" + nv12Buffer.remaining());
         }
 
         try {
-            // Convert RGBA to I420 for WebRTC
-            JavaI420Buffer i420Buffer = convertRgbaToI420(rgbaBuffer, width, height);
+            // Convert NV12 to I420 for WebRTC
+            JavaI420Buffer i420Buffer = convertNv12ToI420(nv12Buffer, width, height);
 
             if (i420Buffer == null) {
                 Log.e(TAG, "I420 buffer is null!");
@@ -166,12 +166,14 @@ public class WebRtcFrameCapturer implements VideoCapturer {
     }
 
     /**
-     * Convert RGBA buffer to I420 (YUV420 planar) format for WebRTC.
-     * Optimized version using bulk array operations instead of per-pixel math.
+     * Convert NV12 buffer to I420 (YUV420 planar) format for WebRTC.
+     * NV12 has Y plane followed by interleaved UV plane.
+     * I420 has separate Y, U, V planes.
+     * This is much faster than RGBA conversion as it only involves memory rearrangement.
      */
-    private JavaI420Buffer convertRgbaToI420(ByteBuffer rgbaBuffer, int width, int height) {
+    private JavaI420Buffer convertNv12ToI420(ByteBuffer nv12Buffer, int width, int height) {
         int ySize = width * height;
-        int uvSize = ySize / 4;
+        int uvSize = ySize / 2; // UV interleaved data size
 
         // Allocate I420 buffer
         JavaI420Buffer i420Buffer = JavaI420Buffer.allocate(width, height);
@@ -185,88 +187,45 @@ public class WebRtcFrameCapturer implements VideoCapturer {
         int uStride = i420Buffer.getStrideU();
         int vStride = i420Buffer.getStrideV();
 
-        // Make sure rgba buffer is at position 0
-        int originalPosition = rgbaBuffer.position();
-        rgbaBuffer.rewind();
+        // Make sure nv12 buffer is at position 0
+        int originalPosition = nv12Buffer.position();
+        nv12Buffer.rewind();
 
-        // Use array access for speed
-        byte[] rgba = new byte[rgbaBuffer.remaining()];
-        rgbaBuffer.get(rgba);
-        rgbaBuffer.position(originalPosition);
-
-        // Pre-calculate constants for YUV conversion
-        final int[] rCoeff = {66, -38, 112};
-        final int[] gCoeff = {129, -74, -94};
-        final int[] bCoeff = {25, 112, -18};
-        final int[] offset = {16, 128, 128};
-
-        // Diagnostic: verify buffer has real data (not all zeros)
-        if (frameProcessedCount <= 5) {
-            // Sample first 16 pixels
-            int sum = 0;
-            for (int k = 0; k < 64 && k < rgba.length; k++) {
-                sum += rgba[k] & 0xFF;
-            }
-            // Also sample middle and last pixels
-            int midIdx = (rgba.length / 2) & ~3;  // align to pixel boundary
-            int lastIdx = rgba.length - 4;
-            int totalNonZero = 0;
-            int totalSum = 0;
-            // Quick scan of entire buffer (sample every 4096th byte for speed)
-            for (int k = 0; k < rgba.length; k += 4096) {
-                int v = rgba[k] & 0xFF;
-                if (v > 0) totalNonZero++;
-                totalSum += v;
-            }
-            int samples = rgba.length / 4096;
-            Log.i(TAG, "Buffer diagnostic #" + frameProcessedCount +
-                    " length=" + rgba.length +
-                    " first64Sum=" + sum +
-                    " first4=[" + (rgba[0] & 0xFF) + "," + (rgba[1] & 0xFF) +
-                    "," + (rgba[2] & 0xFF) + "," + (rgba[3] & 0xFF) + "]" +
-                    " mid4=[" + (rgba[midIdx] & 0xFF) + "," + (rgba[midIdx+1] & 0xFF) +
-                    "," + (rgba[midIdx+2] & 0xFF) + "," + (rgba[midIdx+3] & 0xFF) + "]" +
-                    " last4=[" + (rgba[lastIdx] & 0xFF) + "," + (rgba[lastIdx+1] & 0xFF) +
-                    "," + (rgba[lastIdx+2] & 0xFF) + "," + (rgba[lastIdx+3] & 0xFF) + "]" +
-                    " sampledAvg=" + (samples > 0 ? totalSum / samples : 0) +
-                    " sampledNonZeroPct=" + (samples > 0 ? (totalNonZero * 100 / samples) : 0) + "%");
+        // Check if NV12 buffer has expected size
+        int expectedSize = ySize + uvSize; // Y + UV (interleaved)
+        int actualSize = nv12Buffer.remaining();
+        if (actualSize < expectedSize) {
+            Log.e(TAG, "NV12 buffer too small: expected=" + expectedSize + " actual=" + actualSize);
+            nv12Buffer.position(originalPosition);
+            return null;
         }
 
-        // Process Y plane (full resolution)
+        // Copy Y plane directly (same layout in NV12 and I420)
+        byte[] yData = new byte[ySize];
+        nv12Buffer.get(yData);
         for (int j = 0; j < height; j++) {
-            int yLineOffset = j * yStride;
-            int rgbaRowStart = j * width * 4;
-            for (int i = 0; i < width; i++) {
-                int rgbaIndex = rgbaRowStart + i * 4;
-                int r = rgba[rgbaIndex] & 0xFF;
-                int g = rgba[rgbaIndex + 1] & 0xFF;
-                int b = rgba[rgbaIndex + 2] & 0xFF;
+            yPlane.put(j * yStride, yData, j * width, width);
+        }
 
-                // Y = 0.257*R + 0.504*G + 0.098*B + 16
-                int y = ((rCoeff[0] * r + gCoeff[0] * g + bCoeff[0] * b + 128) >> 8) + offset[0];
-                yPlane.put(yLineOffset + i, (byte) Math.max(16, Math.min(235, y)));
+        // De-interleave UV plane (NV12: UVUVUV... -> I420: UUU... VVV...)
+        // NV12 UV data starts at offset ySize
+        byte[] uvData = new byte[uvSize];
+        nv12Buffer.get(uvData);
+
+        // De-interleave U and V
+        int uvWidth = width / 2;
+        int uvHeight = height / 2;
+        for (int j = 0; j < uvHeight; j++) {
+            for (int i = 0; i < uvWidth; i++) {
+                int uvIndex = j * width + i * 2; // NV12 UV is interleaved, row stride = width
+                int uIndex = j * uStride + i;
+                int vIndex = j * vStride + i;
+                uPlane.put(uIndex, uvData[uvIndex]);
+                vPlane.put(vIndex, uvData[uvIndex + 1]);
             }
         }
 
-        // Process U/V planes (quarter resolution)
-        for (int j = 0; j < height; j += 2) {
-            int uvRow = j / 2;
-            int rgbaRowStart = j * width * 4;
-            for (int i = 0; i < width; i += 2) {
-                int rgbaIndex = rgbaRowStart + i * 4;
-                int r = rgba[rgbaIndex] & 0xFF;
-                int g = rgba[rgbaIndex + 1] & 0xFF;
-                int b = rgba[rgbaIndex + 2] & 0xFF;
-
-                // U = -0.148*R - 0.291*G + 0.439*B + 128
-                int u = ((rCoeff[1] * r + gCoeff[1] * g + bCoeff[1] * b + 128) >> 8) + offset[1];
-                // V = 0.439*R - 0.368*G - 0.071*B + 128
-                int v = ((rCoeff[2] * r + gCoeff[2] * g + bCoeff[2] * b + 128) >> 8) + offset[2];
-
-                uPlane.put(uvRow * uStride + i/2, (byte) Math.max(0, Math.min(255, u)));
-                vPlane.put(uvRow * vStride + i/2, (byte) Math.max(0, Math.min(255, v)));
-            }
-        }
+        nv12Buffer.position(originalPosition);
 
         // Diagnostic: verify I420 output
         if (frameProcessedCount <= 5) {
@@ -277,7 +236,7 @@ public class WebRtcFrameCapturer implements VideoCapturer {
             byte firstU = uPlane.get(0);
             vPlane.rewind();
             byte firstV = vPlane.get(0);
-            Log.i(TAG, "I420 diagnostic #" + frameProcessedCount +
+            Log.i(TAG, "NV12->I420 diagnostic #" + frameProcessedCount +
                     " firstY=" + (firstY & 0xFF) +
                     " midY=" + (midY & 0xFF) +
                     " firstU=" + (firstU & 0xFF) +

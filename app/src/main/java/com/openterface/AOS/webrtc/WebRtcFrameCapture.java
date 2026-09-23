@@ -14,7 +14,7 @@ import java.nio.ByteBuffer;
  * and pushes them to WebRtcServerService.
  *
  * Similar pattern to VncFrameCapture, but feeds into WebRTC's
- * VideoCapturer pipeline instead of raw RGBX push.
+ * VideoCapturer pipeline instead of raw NV12 push.
  */
 public class WebRtcFrameCapture {
     private static final String TAG = "OP-WEBRTC";
@@ -143,7 +143,7 @@ public class WebRtcFrameCapture {
         // Start WebRTC video capturer
         webRtcService.startVideoCapture(width, height, targetFps, rotation);
 
-        cameraHelper.setFrameCallback(frameCallback, UVCCamera.PIXEL_FORMAT_RGBX);
+        cameraHelper.setFrameCallback(frameCallback, UVCCamera.PIXEL_FORMAT_NV12);
     }
 
     /**

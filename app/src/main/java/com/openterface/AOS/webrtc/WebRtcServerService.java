@@ -431,9 +431,9 @@ public class WebRtcServerService extends Service {
      * Feed a frame from UVC camera into WebRTC.
      * Called from WebRtcFrameCapture (similar pattern to VNC).
      */
-    public void onUvcFrame(ByteBuffer rgbaBuffer, int width, int height, long timestampNs, int rotation) {
+    public void onUvcFrame(ByteBuffer nv12Buffer, int width, int height, long timestampNs, int rotation) {
         if (videoCapturer != null && isRunning.get()) {
-            videoCapturer.onFrame(rgbaBuffer, width, height, timestampNs, rotation);
+            videoCapturer.onFrame(nv12Buffer, width, height, timestampNs, rotation);
         }
     }
 
