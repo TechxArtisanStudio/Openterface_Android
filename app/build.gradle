@@ -9,7 +9,7 @@ android {
     defaultConfig {
         archivesBaseName = "OpenterfaceAndroid"
         applicationId "com.openterface.AOS"
-        minSdkVersion 21
+        minSdkVersion 24
         targetSdkVersion 36
         versionCode 17
         versionName "1.2.9"

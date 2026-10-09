@@ -34,7 +34,7 @@ allprojects {
 ext {
 	versionCompiler = 36
 	versionTarget = 36
-	versionMin = 21
+	versionMin = 24
 
 	javaSourceCompatibility = JavaVersion.VERSION_1_8
 	javaTargetCompatibility = JavaVersion.VERSION_1_8
