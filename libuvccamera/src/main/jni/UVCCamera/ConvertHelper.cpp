@@ -52,10 +52,6 @@ int convert_mjpeg_to_rgbx_tj(void *in, int inSize, void *out, int width, int hei
         goto fail;
     }
 
-//    LOGI("Image:  %d x %d pixels, %s subsampling, %s colorspace\n",
-//         out->width, out->height,
-//           subsampName[inSubsamp], colorspaceName[inColorspace]);
-
     // will cause memory overflow
 //    if ((out->data = (unsigned char *) tjAlloc(tjBufSizeYUV2(width, padding, height, outSubsamp))) ==NULL)
 //        THROW_UNIX("allocating uncompressed image buffer");
@@ -149,12 +145,11 @@ int uvc_mjpeg2rgbx_new(uvc_frame_t *in, uvc_frame_t *out) {
     return result;
 }
 
-
 /** @brief Convert a frame from RGBX8888 to YUYV
-* @ingroup frame
-* @param ini RGBX8888 frame
-* @param out YUYV frame
-*/
+ * @ingroup frame
+ * @param ini RGBX8888 frame
+ * @param out YUYV frame
+ */
 int uvc_rgbx_to_yuyv(uvc_frame_t *in, uvc_frame_t *out) {
     uint8_t *in_data = (uint8_t *) in->data;
     uint8_t *out_data = (uint8_t *) out->data;
@@ -176,84 +171,115 @@ int uvc_rgbx_to_yuyv(uvc_frame_t *in, uvc_frame_t *out) {
 
     int ret = UVC_SUCCESS;
 
-    ret = libyuv::ABGRToYUY2(in_data, in->step,
-                             out_data, out->step, out->width, out->height);
+    ret = libyuv::ABGRToYUY2(in_data, in->step, out_data, out->step, out->width, out->height);
 
     return  ret;
 }
 
 /** @brief Convert a frame from RGBX8888 to NV12
-* @ingroup frame
-* @param ini RGBX8888 frame
-* @param out NV12 frame
-*/
- int uvc_rgbx_to_nv12(uvc_frame_t *in, uvc_frame_t *out) {
+ * @ingroup frame
+ * @param ini RGBX8888 frame
+ * @param out NV12 frame
+ */
+int uvc_rgbx_to_nv12(uvc_frame_t *in, uvc_frame_t *out) {
     uint8_t *in_data = (uint8_t *) in->data;
-    uint8_t *out_data = (uint8_t *) out->data;
 
     if (in->frame_format != UVC_FRAME_FORMAT_RGBX)
         return UVC_ERROR_INVALID_PARAM;
 
-    if (uvc_ensure_frame_size(out, (in->width * in->height * 3) / 2) < 0)
+    // Ensure input stride is correct for RGBX (4 bytes per pixel)
+    int src_stride = in->step;
+    if (src_stride != (size_t)in->width * 4) {
+        LOGW("uvc_rgbx_to_nv12: fixing input stride from %zu to %d", src_stride, in->width * 4);
+        src_stride = in->width * 4;
+    }
+
+    // For NV12, Y stride = width, UV stride = width (interleaved UV)
+    // Ensure output stride is properly aligned (16-byte for NEON)
+    size_t y_stride = (in->width + 15) & ~15;  // Align to 16 bytes for NEON
+    size_t uv_stride = y_stride;
+    size_t uv_height = (in->height + 1) / 2;
+    size_t required_size = y_stride * in->height + uv_stride * uv_height;
+
+    if (uvc_ensure_frame_size(out, required_size) < 0)
         return UVC_ERROR_NO_MEM;
+
+    // Get output pointer AFTER ensure_frame_size (it may have reallocated)
+    uint8_t *out_data = (uint8_t *) out->data;
 
     out->width = in->width;
     out->height = in->height;
     out->frame_format = UVC_FRAME_FORMAT_NV12;
     if (out->library_owns_data)
-        out->step = in->width;
+        out->step = y_stride;
     out->sequence = in->sequence;
     out->capture_time = in->capture_time;
     out->source = in->source;
 
     int ret = UVC_SUCCESS;
 
-    ret = libyuv::ABGRToNV12(in_data, in->step, out_data, out->step,
-                             out_data + out->width * out->height,
-                             out->step, out->width, out->height);
+    ret = libyuv::ABGRToNV12(in_data, src_stride, out_data, y_stride,
+                             out_data + y_stride * out->height,
+                             uv_stride, out->width, out->height);
 
     return  ret;
 }
 
 /** @brief Convert a frame from RGBX8888 to NV21
-* @ingroup frame
-* @param ini RGBX8888 frame
-* @param out NV21 frame
-*/
- int uvc_rgbx_to_nv21(uvc_frame_t *in, uvc_frame_t *out) {
+ * @ingroup frame
+ * @param ini RGBX8888 frame
+ * @param out NV21 frame
+ */
+int uvc_rgbx_to_nv21(uvc_frame_t *in, uvc_frame_t *out) {
     uint8_t *in_data = (uint8_t *) in->data;
-    uint8_t *out_data = (uint8_t *) out->data;
 
     if (in->frame_format != UVC_FRAME_FORMAT_RGBX)
         return UVC_ERROR_INVALID_PARAM;
 
-    if (uvc_ensure_frame_size(out, (in->width * in->height * 3) / 2) < 0)
+    // Ensure input stride is correct for RGBX (4 bytes per pixel)
+    int src_stride = in->step;
+    if (src_stride != (size_t)in->width * 4) {
+        LOGW("uvc_rgbx_to_nv21: fixing input stride from %zu to %d", src_stride, in->width * 4);
+        src_stride = in->width * 4;
+    }
+
+    // For NV21, Y stride = width, VU stride = width (interleaved VU)
+    // Ensure output stride is properly aligned (16-byte for NEON)
+    size_t y_stride = (in->width + 15) & ~15;  // Align to 16 bytes for NEON
+    size_t vu_stride = y_stride;
+    size_t vu_height = (in->height + 1) / 2;
+    size_t required_size = y_stride * in->height + vu_stride * vu_height;
+
+    if (uvc_ensure_frame_size(out, required_size) < 0)
         return UVC_ERROR_NO_MEM;
+
+    // Get output pointer AFTER ensure_frame_size (it may have reallocated)
+    uint8_t *out_data = (uint8_t *) out->data;
 
     out->width = in->width;
     out->height = in->height;
     out->frame_format = UVC_FRAME_FORMAT_NV21;
     if (out->library_owns_data)
-        out->step = in->width;
+        out->step = y_stride;
     out->sequence = in->sequence;
     out->capture_time = in->capture_time;
     out->source = in->source;
 
     int ret = UVC_SUCCESS;
 
-    ret = libyuv::ABGRToNV21(in_data, in->step, out_data, out->step,
-                             out_data + out->width * out->height,
-                             out->step, out->width, out->height);
+    ret = libyuv::ABGRToNV21(in_data, src_stride, out_data, y_stride,
+                             out_data + y_stride * out->height,
+                             vu_stride, out->width, out->height);
 
     return  ret;
 }
 
 /** @brief Convert a frame from RGBX8888 to RGB
-* @ingroup frame
-* @param ini RGBX8888 frame
-* @param out RGB frame
-*/
- int uvc_rgbx_to_rgb(uvc_frame_t *in, uvc_frame_t *out) {
+ * @ingroup frame
+ * @param ini RGBX8888 frame
+ * @param out RGB frame
+ */
+int uvc_rgbx_to_rgb(uvc_frame_t *in, uvc_frame_t *out) {
     uint8_t *in_data = (uint8_t *) in->data;
     uint8_t *out_data = (uint8_t *) out->data;
 
@@ -281,11 +307,11 @@ int uvc_rgbx_to_yuyv(uvc_frame_t *in, uvc_frame_t *out) {
 }
 
 /** @brief Convert a frame from RGBX8888 to RGB565
-* @ingroup frame
-* @param ini RGBX8888 frame
-* @param out RGB565 frame
-*/
- int uvc_rgbx_to_rgb565(uvc_frame_t *in, uvc_frame_t *out) {
+ * @ingroup frame
+ * @param ini RGBX8888 frame
+ * @param out RGB565 frame
+ */
+int uvc_rgbx_to_rgb565(uvc_frame_t *in, uvc_frame_t *out) {
     uint8_t *in_data = (uint8_t *) in->data;
     uint8_t *out_data = (uint8_t *) out->data;
 
@@ -313,11 +339,11 @@ int uvc_rgbx_to_yuyv(uvc_frame_t *in, uvc_frame_t *out) {
 }
 
 /** @brief Convert a frame from RGBX8888 to BGR
-* @ingroup frame
-* @param ini RGBX8888 frame
-* @param out BGR frame
-*/
- int uvc_rgbx_to_bgr(uvc_frame_t *in, uvc_frame_t *out) {
+ * @ingroup frame
+ * @param ini RGBX8888 frame
+ * @param out BGR frame
+ */
+int uvc_rgbx_to_bgr(uvc_frame_t *in, uvc_frame_t *out) {
     uint8_t *in_data = (uint8_t *) in->data;
     uint8_t *out_data = (uint8_t *) out->data;
 

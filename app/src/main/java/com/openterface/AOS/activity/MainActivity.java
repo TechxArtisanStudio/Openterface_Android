@@ -2650,15 +2650,22 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
                 webRtcServerWidth = cameraWidth;
                 webRtcServerHeight = cameraHeight;
                 if (mCameraHelper != null) {
+                    // Use the resolution captured at dialog creation time, or fall back to
+                    // querying the camera if available. This ensures frame capture starts
+                    // even if the camera preview size isn't set yet.
+                    int captureWidth = cameraWidth;
+                    int captureHeight = cameraHeight;
                     Size size = mCameraHelper.getPreviewSize();
                     if (size != null) {
-                        if (webRtcFrameCapture == null) {
-                            webRtcFrameCapture = new WebRtcFrameCapture(webRtcConfig.getVideoFps());
-                        }
-                        webRtcFrameCapture.start(mCameraHelper, webRtcService, size.width, size.height, 0);
-                        if (webRtcInputRouter != null) {
-                            webRtcInputRouter.setFramebufferSize(cameraWidth, cameraHeight);
-                        }
+                        captureWidth = size.width;
+                        captureHeight = size.height;
+                    }
+                    if (webRtcFrameCapture == null) {
+                        webRtcFrameCapture = new WebRtcFrameCapture(webRtcConfig.getVideoFps());
+                    }
+                    webRtcFrameCapture.start(mCameraHelper, webRtcService, captureWidth, captureHeight, 0);
+                    if (webRtcInputRouter != null) {
+                        webRtcInputRouter.setFramebufferSize(cameraWidth, cameraHeight);
                     }
                 }
             }

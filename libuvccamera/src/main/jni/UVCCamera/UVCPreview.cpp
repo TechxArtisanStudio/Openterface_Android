@@ -108,6 +108,13 @@ uvc_frame_t *UVCPreview::get_frame(size_t data_bytes) {
     {
         if (!mFramePool.isEmpty()) {
             frame = mFramePool.last();
+            // Check if the frame has enough space.
+            // last() already removed it from the pool.
+            if (frame->data_bytes < data_bytes) {
+                // Frame is too small, free it and allocate a new one
+                uvc_free_frame(frame);
+                frame = NULL;
+            }
         }
     }
     pthread_mutex_unlock(&pool_mutex);
@@ -232,7 +239,8 @@ int UVCPreview::setFrameCallback(JNIEnv *env, jobject frame_callback_obj, int pi
     ENTER();
     pthread_mutex_lock(&capture_mutex);
     {
-        if (isRunning() && isCapturing()) {
+        bool wasCapturing = isRunning() && isCapturing();
+        if (wasCapturing) {
             mIsCapturing = false;
             if (mFrameCallbackObj) {
                 pthread_cond_signal(&capture_sync);
@@ -267,6 +275,11 @@ int UVCPreview::setFrameCallback(JNIEnv *env, jobject frame_callback_obj, int pi
             mPixelFormat = pixel_format;
             callbackPixelFormatChanged();
         }
+        // Restart capturing if it was running before
+        if (wasCapturing && frame_callback_obj) {
+            mIsCapturing = true;
+            pthread_cond_signal(&capture_sync);
+        }
     }
     pthread_mutex_unlock(&capture_mutex);
     RETURN(0, int);
@@ -274,7 +287,7 @@ int UVCPreview::setFrameCallback(JNIEnv *env, jobject frame_callback_obj, int pi
 
 void UVCPreview::callbackPixelFormatChanged() {
     mFrameCallbackFunc = NULL;
-    const size_t sz = requestWidth * requestHeight;
+    const size_t sz = frameWidth * frameHeight;
     switch (mPixelFormat) {
         case PIXEL_FORMAT_RAW:
             LOGI("PIXEL_FORMAT_RAW:");
@@ -850,7 +863,33 @@ void UVCPreview::do_capture_callback(JNIEnv *env, uvc_frame_t *frame) {
         uvc_frame_t *callback_frame = frame;
         if (mFrameCallbackObj && iframecallback_fields.onFrame) {
             if (mFrameCallbackFunc) {
-                callback_frame = get_frame(callbackPixelBytes);
+                // Calculate required buffer size based on actual frame dimensions
+                // Must match the calculation in ConvertHelper.cpp
+                size_t requiredBytes = callbackPixelBytes;
+                switch (mPixelFormat) {
+                    case PIXEL_FORMAT_NV12:
+                    case PIXEL_FORMAT_NV21:
+                        // Y plane + UV/VU plane with 16-byte aligned stride to match ConvertHelper.cpp
+                        {
+                            size_t y_stride = (frame->width + 15) & ~15;
+                            size_t uv_height = (frame->height + 1) / 2;
+                            requiredBytes = y_stride * frame->height + y_stride * uv_height;
+                        }
+                        break;
+                    case PIXEL_FORMAT_RGB:
+                    case PIXEL_FORMAT_BGR:
+                        requiredBytes = frame->width * frame->height * 3;
+                        break;
+                    case PIXEL_FORMAT_RGBX:
+                        requiredBytes = frame->width * frame->height * 4;
+                        break;
+                    case PIXEL_FORMAT_RGB565:
+                    case PIXEL_FORMAT_RAW:
+                    case PIXEL_FORMAT_YUV:
+                        requiredBytes = frame->width * frame->height * 2;
+                        break;
+                }
+                callback_frame = get_frame(requiredBytes);
                 if (LIKELY(callback_frame)) {
                     int b = mFrameCallbackFunc(frame, callback_frame);
                     recycle_frame(frame);
@@ -864,7 +903,7 @@ void UVCPreview::do_capture_callback(JNIEnv *env, uvc_frame_t *frame) {
                     goto SKIP;
                 }
             }
-            jobject buf = env->NewDirectByteBuffer(callback_frame->data, callbackPixelBytes);
+            jobject buf = env->NewDirectByteBuffer(callback_frame->data, callback_frame->data_bytes);
             env->CallVoidMethod(mFrameCallbackObj, iframecallback_fields.onFrame, buf);
             env->ExceptionClear();
             env->DeleteLocalRef(buf);

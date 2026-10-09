@@ -502,6 +502,12 @@ public class WebRtcServerService extends Service {
 
     private void createAnswer() {
         MediaConstraints constraints = new MediaConstraints();
+        // Explicitly set video bitrate constraints for high quality 1080p
+        // WebRTC encoder needs these to avoid using conservative defaults
+        constraints.mandatory.add(new MediaConstraints.KeyValuePair("maxBitrate", "8000"));
+        constraints.mandatory.add(new MediaConstraints.KeyValuePair("minBitrate", "4000"));
+        constraints.mandatory.add(new MediaConstraints.KeyValuePair("maxWidth", "1920"));
+        constraints.mandatory.add(new MediaConstraints.KeyValuePair("maxHeight", "1080"));
 
         peerConnection.createAnswer(new SdpObserver() {
             @Override

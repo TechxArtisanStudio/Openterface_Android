@@ -42,8 +42,20 @@
 uvc_error_t uvc_ensure_frame_size(uvc_frame_t *frame, size_t need_bytes) {
     if (frame->library_owns_data) {
         if (!frame->data || frame->data_bytes != need_bytes) {
+            // Use posix_memalign for 16-byte alignment (required for NEON instructions)
+            // realloc doesn't guarantee alignment, so we must free and reallocate
+            void *new_data = NULL;
+            if (posix_memalign(&new_data, 16, need_bytes) != 0) {
+                return UVC_ERROR_NO_MEM;
+            }
+            // Copy old data if it exists and we're growing
+            if (frame->data && frame->data_bytes > 0) {
+                size_t copy_size = (frame->data_bytes < need_bytes) ? frame->data_bytes : need_bytes;
+                memcpy(new_data, frame->data, copy_size);
+                free(frame->data);
+            }
+            frame->data = new_data;
             frame->data_bytes = need_bytes;
-            frame->data = realloc(frame->data, frame->data_bytes);
         }
         if (!frame->data)
             return UVC_ERROR_NO_MEM;
@@ -73,9 +85,8 @@ uvc_frame_t *uvc_allocate_frame(size_t data_bytes) {
 
     if (data_bytes > 0) {
         frame->data_bytes = data_bytes;
-        frame->data = malloc(data_bytes);
-
-        if (!frame->data) {
+        // Use posix_memalign for 16-byte alignment (required for NEON instructions)
+        if (posix_memalign(&frame->data, 16, data_bytes) != 0) {
             free(frame);
             return NULL;
         }

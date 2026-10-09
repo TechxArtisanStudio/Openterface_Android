@@ -79,6 +79,13 @@ android {
         disable 'all'  // Disable all lint checks
     }
 
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+            returnDefaultValues = true
+        }
+    }
+
     // WebRTC assets are synced from dist via syncWebRtcAssets task
     // (see task definition below)
 

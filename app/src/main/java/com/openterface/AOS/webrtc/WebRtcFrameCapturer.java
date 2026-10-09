@@ -124,6 +124,15 @@ public class WebRtcFrameCapturer implements VideoCapturer {
             return;
         }
 
+        // Dynamically update capture format if frame dimensions differ from initialized dimensions
+        // This handles the case where WebRTC starts before camera is fully initialized
+        if (width != this.width || height != this.height) {
+            Log.i(TAG, "Frame dimension mismatch: capturer=" + this.width + "x" + this.height +
+                    " frame=" + width + "x" + height + ". Updating capture format.");
+            this.width = width;
+            this.height = height;
+        }
+
         // Rate limiting
         long now = System.nanoTime();
         if (now - lastFrameTimeNs < frameIntervalNs) {
@@ -140,7 +149,7 @@ public class WebRtcFrameCapturer implements VideoCapturer {
 
         try {
             // Convert NV12 to I420 for WebRTC
-            JavaI420Buffer i420Buffer = convertNv12ToI420(nv12Buffer, width, height);
+            JavaI420Buffer i420Buffer = convertYuv420ToRgb(nv12Buffer, width, height);
 
             if (i420Buffer == null) {
                 Log.e(TAG, "I420 buffer is null!");
@@ -171,7 +180,7 @@ public class WebRtcFrameCapturer implements VideoCapturer {
      * I420 has separate Y, U, V planes.
      * This is much faster than RGBA conversion as it only involves memory rearrangement.
      */
-    private JavaI420Buffer convertNv12ToI420(ByteBuffer nv12Buffer, int width, int height) {
+    private JavaI420Buffer convertYuv420ToRgb(ByteBuffer nv12Buffer, int width, int height) {
         int ySize = width * height;
         int uvSize = ySize / 2; // UV interleaved data size
 
