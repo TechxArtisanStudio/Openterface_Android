@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
-    <background android:drawable="@color/ic_switch_key_board_background"/>
-    <foreground android:drawable="@mipmap/ic_switch_key_board_foreground"/>
-</adaptive-icon>
