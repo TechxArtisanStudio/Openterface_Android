@@ -213,7 +213,7 @@ public class CH9329MSKBMap {
         keyCodeMap.put("+", "2E");keyCodeMap.put("=", "2E");
         keyCodeMap.put("[", "2F");keyCodeMap.put("{", "2F");
         keyCodeMap.put("]", "30");keyCodeMap.put("}", "30");
-        keyCodeMap.put("|", "64");keyCodeMap.put("\\", "64");
+        keyCodeMap.put("|", "31");keyCodeMap.put("\\", "31");
         keyCodeMap.put(";", "33");keyCodeMap.put(":", "33");
         keyCodeMap.put("'", "34");keyCodeMap.put("\"", "34");
         keyCodeMap.put(",", "36");keyCodeMap.put("<", "36");
@@ -269,7 +269,7 @@ public class CH9329MSKBMap {
         keyCodeMap.put("SPACE", "2C");
         keyCodeMap.put("BACK", "2A");
         keyCodeMap.put("ENTER", "28");
-        keyCodeMap.put("DEL", "4C");
+        keyCodeMap.put("DEL", "2A"); // KEYCODE_DEL is Backspace, not Delete
         keyCodeMap.put("Esc", "29");
         keyCodeMap.put("PrtSc", "46");
         keyCodeMap.put("ScrLk", "47");
@@ -291,6 +291,17 @@ public class CH9329MSKBMap {
         keyCodeMap.put("NUMPAD_MULTIPLY", "55");
         keyCodeMap.put("NUMPAD_SUBTRACT", "56");
         keyCodeMap.put("NUMPAD_ADD", "57");
+        keyCodeMap.put("NUMPAD_ENTER", "58");
+        keyCodeMap.put("NUMPAD_1", "59");
+        keyCodeMap.put("NUMPAD_2", "5A");
+        keyCodeMap.put("NUMPAD_3", "5B");
+        keyCodeMap.put("NUMPAD_4", "5C");
+        keyCodeMap.put("NUMPAD_5", "5D");
+        keyCodeMap.put("NUMPAD_6", "5E");
+        keyCodeMap.put("NUMPAD_7", "5F");
+        keyCodeMap.put("NUMPAD_8", "60");
+        keyCodeMap.put("NUMPAD_9", "61");
+        keyCodeMap.put("NUMPAD_DECIMAL", "63");
 
         //release keyboard data
         keyCodeMap.put("release", "57AB00020800000000000000000C");

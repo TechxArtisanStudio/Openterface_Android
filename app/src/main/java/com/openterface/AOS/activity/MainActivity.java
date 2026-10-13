@@ -43,6 +43,7 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.view.InputDevice;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -375,6 +376,14 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         mBinding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(mBinding.getRoot());
 
+        // Ensure Activity can receive focus for hardware keyboard events
+        getWindow().getDecorView().setFocusable(true);
+        getWindow().getDecorView().setFocusableInTouchMode(true);
+        getWindow().getDecorView().requestFocus();
+
+        // Detect connected input devices (for debugging)
+        detectInputDevices();
+
         checkCameraHelper();
 
         setListeners();
@@ -688,6 +697,101 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
     }
 
 
+    /**
+     * Detect connected input devices for debugging
+     */
+    private void detectInputDevices() {
+        int[] deviceIds = InputDevice.getDeviceIds();
+        Log.d(TAG, "=== Connected Input Devices ===");
+        for (int deviceId : deviceIds) {
+            InputDevice device = InputDevice.getDevice(deviceId);
+            if (device != null) {
+                boolean isKeyboard = (device.getSources() & InputDevice.SOURCE_KEYBOARD) != 0;
+                Log.d(TAG, "Device: " + device.getName()
+                    + ", sources: " + device.getSources()
+                    + ", isKeyboard: " + isKeyboard
+                    + ", vendorId: " + device.getVendorId()
+                    + ", productId: " + device.getProductId());
+            }
+        }
+        Log.d(TAG, "=== End Input Devices ===");
+    }
+
+    // Key state tracking for hardware keyboard
+    private int mLastHardwareKeyCode = 0;
+    private boolean mHardwareKeyPressed = false;  // Track if key is currently pressed
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        // Check if this is a hardware keyboard (Bluetooth, USB, etc.)
+        if (event.getDevice() != null) {
+            int sources = event.getDevice().getSources();
+            if ((sources & InputDevice.SOURCE_KEYBOARD) != 0) {
+                int keyCode = event.getKeyCode();
+
+                if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                    // Only process if this is the first press (not auto-repeat)
+                    // and the same key is not already pressed
+                    if (event.getRepeatCount() == 0 && (!mHardwareKeyPressed || keyCode != mLastHardwareKeyCode)) {
+                        mLastHardwareKeyCode = keyCode;
+                        mHardwareKeyPressed = true;
+                        Log.d(TAG, "Hardware key down: " + keyCode + " (" + KeyEvent.keyCodeToString(keyCode) + ")");
+                        return handleHardwareKeyDown(event);
+                    } else {
+                        Log.d(TAG, "Key repeat ignored: " + keyCode + " repeatCount=" + event.getRepeatCount() + " alreadyPressed=" + mHardwareKeyPressed);
+                        return true;
+                    }
+                } else if (event.getAction() == KeyEvent.ACTION_UP) {
+                    if (keyCode == mLastHardwareKeyCode) {
+                        mHardwareKeyPressed = false;
+                    }
+                    return handleHardwareKeyUp(event);
+                }
+                return true;
+            }
+        }
+
+        // Non-hardware keyboard events, let parent handle
+        return super.dispatchKeyEvent(event);
+    }
+
+    /**
+     * Handle hardware keyboard key down event
+     * Uses sendKeyboardRequest which sends press + auto-release (like on-screen keyboard)
+     * This prevents infinite key sending from Bluetooth keyboards
+     */
+    private boolean handleHardwareKeyDown(KeyEvent event) {
+        int keyCode = event.getKeyCode();
+
+        // Use HidManager path (same as on-screen keyboard buttons)
+        String functionKey = HidManager.getFunctionKey(event, keyCode);
+        String keyName = HidManager.getKeyName(keyCode);
+
+        Log.d(TAG, "FunctionKey: '" + functionKey + "', KeyName: '" + keyName + "'");
+
+        if (keyName != null && usbDeviceManager != null) {
+            Log.d(TAG, "Sending key via HidManager.sendKeyBoardData() (press + auto-release)");
+            HidManager.sendKeyBoardData(functionKey, keyName);
+            Log.d(TAG, "Key sent successfully");
+            return true;
+        } else {
+            Log.w(TAG, "Cannot send key - keyName: " + keyName + ", usbDeviceManager: " + (usbDeviceManager != null));
+        }
+
+        return true;
+    }
+
+    /**
+     * Handle hardware keyboard key up event
+     * No need to send release - sendKeyboardRequest() already handles auto-release
+     */
+    private boolean handleHardwareKeyUp(KeyEvent event) {
+        Log.d(TAG, "Hardware key up: " + event.getKeyCode());
+        // Release is handled automatically by sendKeyboardRequest()
+        // Just reset the key state tracking
+        return true;
+    }
+
     @Override
     public boolean onGenericMotionEvent(MotionEvent event) {
         return CustomTouchListener.handleGenericMotionEvent(event) || super.onGenericMotionEvent(event);
@@ -870,6 +974,9 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
     @Override
     protected void onStart() {
         super.onStart();
+
+        // Request focus to ensure Activity can receive hardware keyboard events
+        getWindow().getDecorView().requestFocus();
 
         initPreviewView();
     }
