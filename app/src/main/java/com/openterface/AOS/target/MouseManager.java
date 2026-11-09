@@ -69,6 +69,10 @@ public class MouseManager {
     private static final int MSG_TWO_PAN_SLIDE  = 8;
     private static final int MSG_REL_DBL_CLICK  = 9;
     private static final int MSG_ABS_RELEASE    = 10;
+    // Bluetooth mouse message types - receive pre-converted HID coords, no secondary scaling
+    private static final int MSG_BT_MOUSE_HID_MOVE    = 11;
+    private static final int MSG_BT_MOUSE_HID_CLICK   = 12;
+    private static final int MSG_BT_MOUSE_HID_DRAG    = 13;
 
     public static void setUsbDeviceManager(UsbDeviceManager deviceManager) {
         usbDeviceManager = deviceManager;
@@ -131,6 +135,44 @@ public class MouseManager {
         Message msg = sHandler.obtainMessage(MSG_ABS_DRAG);
         msg.arg1 = (int) (x * 1000);
         msg.arg2 = (int) (y * 1000);
+        sHandler.sendMessage(msg);
+    }
+
+    /**
+     * Send BT mouse absolute move with pre-converted HID coordinates [0, 4095].
+     * Bypasses Handler's view→HID scaling - sends HID coords directly.
+     * This avoids double-scaling when BT mouse path already converted to HID range.
+     */
+    public static void sendBtMouseHidAbsData(float hidX, float hidY) {
+        if (sHandler == null) init();
+        Message msg = sHandler.obtainMessage(MSG_BT_MOUSE_HID_MOVE);
+        msg.arg1 = (int) hidX;
+        msg.arg2 = (int) hidY;
+        sHandler.sendMessage(msg);
+    }
+
+    /**
+     * Send BT mouse button click with pre-converted HID coordinates [0, 4095].
+     * Bypasses Handler's view→HID scaling - sends HID coords directly.
+     */
+    public static void sendBtMouseHidAbsButtonClickData(String mouseClick, float hidX, float hidY) {
+        if (sHandler == null) init();
+        Message msg = sHandler.obtainMessage(MSG_BT_MOUSE_HID_CLICK);
+        msg.arg1 = (int) hidX;
+        msg.arg2 = (int) hidY;
+        msg.obj = mouseClick;
+        sHandler.sendMessage(msg);
+    }
+
+    /**
+     * Send BT mouse drag with pre-converted HID coordinates [0, 4095].
+     * Bypasses Handler's view→HID scaling - sends HID coords directly.
+     */
+    public static void sendBtMouseHidAbsDragData(float hidX, float hidY) {
+        if (sHandler == null) init();
+        Message msg = sHandler.obtainMessage(MSG_BT_MOUSE_HID_DRAG);
+        msg.arg1 = (int) hidX;
+        msg.arg2 = (int) hidY;
         sHandler.sendMessage(msg);
     }
 
@@ -200,28 +242,39 @@ public class MouseManager {
             super(looper);
         }
 
+        /**
+         * Convert view coordinate to HID absolute coordinate.
+         * Uses 4095 (12-bit max) instead of 4096 to prevent overflow/wrapping at right/bottom edges.
+         * Clamps result to [0, 4095] range.
+         */
+        private int viewToHid(float viewCoord, float screenSize) {
+            if (screenSize <= 0) return 0;
+            int hid = (int) ((viewCoord / screenSize) * 4095f);
+            return Math.max(0, Math.min(4095, hid));
+        }
+
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case MSG_ABS_MOVE:
                     doSendHexAbsData(
-                            (int) ((msg.arg1 / 1000f) * 4096 / screenWidth),
-                            (int) ((msg.arg2 / 1000f) * 4096 / screenHeight));
+                            viewToHid(msg.arg1 / 1000f, screenWidth),
+                            viewToHid(msg.arg2 / 1000f, screenHeight));
                     break;
                 case MSG_ABS_CLICK:
                     doSendHexAbsButtonClickData((String) msg.obj,
-                            (int) ((msg.arg1 / 1000f) * 4096 / screenWidth),
-                            (int) ((msg.arg2 / 1000f) * 4096 / screenHeight));
+                            viewToHid(msg.arg1 / 1000f, screenWidth),
+                            viewToHid(msg.arg2 / 1000f, screenHeight));
                     break;
                 case MSG_ABS_DRAG:
                     doSendHexAbsData(
-                            (int) ((msg.arg1 / 1000f) * 4096 / screenWidth),
-                            (int) ((msg.arg2 / 1000f) * 4096 / screenHeight));
+                            viewToHid(msg.arg1 / 1000f, screenWidth),
+                            viewToHid(msg.arg2 / 1000f, screenHeight));
                     break;
                 case MSG_ABS_DBL_CLICK:
                     doHandleDoubleClickAbs(
-                            (int) ((msg.arg1 / 1000f) * 4096 / screenWidth),
-                            (int) ((msg.arg2 / 1000f) * 4096 / screenHeight));
+                            viewToHid(msg.arg1 / 1000f, screenWidth),
+                            viewToHid(msg.arg2 / 1000f, screenHeight));
                     break;
                 case MSG_TWO_PRESS:
                     doHandleTwoPress();
@@ -242,6 +295,26 @@ public class MouseManager {
                 case MSG_ABS_RELEASE:
                     AbsReleaseData rd = (AbsReleaseData) msg.obj;
                     doReleaseMSAbsData(rd.x0, rd.x1, rd.y0, rd.y1);
+                    break;
+                // BT mouse HID events - receive pre-converted HID coords [0,4095], send directly
+                // No scaling - normalizeBtMouseToHid in CustomTouchListener already did the conversion
+                case MSG_BT_MOUSE_HID_MOVE:
+                    if (CH9329Function.DEBUG_SEND_LOG) {
+                        Log.d(TAG, "BT_HID_MOVE: received arg1=" + msg.arg1 + " arg2=" + msg.arg2);
+                    }
+                    doSendHexAbsData(msg.arg1, msg.arg2);
+                    break;
+                case MSG_BT_MOUSE_HID_CLICK:
+                    if (CH9329Function.DEBUG_SEND_LOG) {
+                        Log.d(TAG, "BT_HID_CLICK: received arg1=" + msg.arg1 + " arg2=" + msg.arg2 + " click=" + msg.obj);
+                    }
+                    doSendHexAbsButtonClickData((String) msg.obj, msg.arg1, msg.arg2);
+                    break;
+                case MSG_BT_MOUSE_HID_DRAG:
+                    if (CH9329Function.DEBUG_SEND_LOG) {
+                        Log.d(TAG, "BT_HID_DRAG: received arg1=" + msg.arg1 + " arg2=" + msg.arg2);
+                    }
+                    doSendHexAbsData(msg.arg1, msg.arg2);
                     break;
             }
         }
@@ -410,7 +483,7 @@ public class MouseManager {
         int yMovement = (int) ((startMoveMSY - lastMoveMSY) * mouseSpeedMultiplier);
 
         String xByte;
-        if (xMovement == 0 || lastMoveMSX == 0) {
+        if (xMovement == 0) {
             xByte = "00";
         } else if (xMovement > 0) {
             xByte = String.format("%02X", Math.min(xMovement, 0x7F));
@@ -419,7 +492,7 @@ public class MouseManager {
         }
 
         String yByte;
-        if (yMovement == 0 || lastMoveMSY == 0) {
+        if (yMovement == 0) {
             yByte = "00";
         } else if (yMovement > 0) {
             yByte = String.format("%02X", Math.min(yMovement, 0x7F));
@@ -496,17 +569,29 @@ public class MouseManager {
         CH9329Function.checkSendLogData(hexData);
         byte[] bytes = CH9329Function.hexStringToByteArray(hexData);
         try {
-            if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
-                boolean result = usbDeviceManager.writeData(bytes);
-                // Only log errors — success logging adds overhead in the hot path
-                if (!result) {
-                    Log.e(TAG, "Failed to write " + tag);
-                }
-            } else {
-                Log.e(TAG, "USB device not connected for " + tag);
+            // Diagnostic logging
+            if (usbDeviceManager == null) {
+                Log.e(TAG, "USB device manager is NULL for " + tag);
+                return;
+            }
+            if (!usbDeviceManager.isConnected()) {
+                Log.e(TAG, "USB device not connected for " + tag + " - data: " + hexData);
+                return;
+            }
+            // 逐包 hex 日志（默认关闭，见 CH9329Function.DEBUG_SEND_LOG）
+            if (CH9329Function.DEBUG_SEND_LOG) {
+                Log.d(TAG, "Sending " + tag + ": " + hexData);
+            }
+
+            boolean result = usbDeviceManager.writeData(bytes);
+            if (!result) {
+                Log.e(TAG, "Failed to write " + tag);
+            } else if (CH9329Function.DEBUG_SEND_LOG) {
+                Log.d(TAG, "Successfully wrote " + tag);
             }
         } catch (Exception e) {
-            Log.e(TAG, "Error writing to port: " + e.getMessage());
+            // Catch all exceptions to prevent app crash on USB errors
+            Log.e(TAG, "Error writing to port: " + e.getMessage(), e);
         }
     }
 }

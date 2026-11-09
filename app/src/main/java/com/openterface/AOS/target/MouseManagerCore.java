@@ -59,6 +59,10 @@ public class MouseManagerCore {
     private static final int MSG_ABS_CLICK = 2;
     private static final int MSG_ABS_DRAG = 3;
     private static final int MSG_REL_MOVE = 5;
+    // BT mouse HID events - receive pre-converted HID coords, no scaling
+    private static final int MSG_BT_MOUSE_HID_MOVE = 11;
+    private static final int MSG_BT_MOUSE_HID_CLICK = 12;
+    private static final int MSG_BT_MOUSE_HID_DRAG = 13;
 
     static {
         // Load native library
@@ -126,6 +130,43 @@ public class MouseManagerCore {
         sHandler.sendMessage(msg);
     }
 
+    /**
+     * Send BT mouse absolute move with pre-converted HID coordinates [0, 4095].
+     * Bypasses Handler's view→HID scaling - sends HID coords directly.
+     */
+    public static void sendBtMouseHidAbsData(float hidX, float hidY) {
+        if (sHandler == null) init();
+        Message msg = sHandler.obtainMessage(MSG_BT_MOUSE_HID_MOVE);
+        msg.arg1 = (int) hidX;
+        msg.arg2 = (int) hidY;
+        sHandler.sendMessage(msg);
+    }
+
+    /**
+     * Send BT mouse button click with pre-converted HID coordinates [0, 4095].
+     * Bypasses Handler's view→HID scaling - sends HID coords directly.
+     */
+    public static void sendBtMouseHidAbsButtonClickData(String mouseClick, float hidX, float hidY) {
+        if (sHandler == null) init();
+        Message msg = sHandler.obtainMessage(MSG_BT_MOUSE_HID_CLICK);
+        msg.arg1 = (int) hidX;
+        msg.arg2 = (int) hidY;
+        msg.obj = mouseClick;
+        sHandler.sendMessage(msg);
+    }
+
+    /**
+     * Send BT mouse drag with pre-converted HID coordinates [0, 4095].
+     * Bypasses Handler's view→HID scaling - sends HID coords directly.
+     */
+    public static void sendBtMouseHidAbsDragData(float hidX, float hidY) {
+        if (sHandler == null) init();
+        Message msg = sHandler.obtainMessage(MSG_BT_MOUSE_HID_DRAG);
+        msg.arg1 = (int) hidX;
+        msg.arg2 = (int) hidY;
+        sHandler.sendMessage(msg);
+    }
+
     public static void sendHexRelData(String mouseClick, float sx, float sy, float lx, float ly) {
         if (sHandler == null) init();
         RelData data = new RelData(mouseClick, sx, sy, lx, ly);
@@ -140,27 +181,49 @@ public class MouseManagerCore {
             super(looper);
         }
 
+        /**
+         * Convert view coordinate to HID absolute coordinate.
+         * Uses 4095 (12-bit max) instead of 4096 to prevent overflow/wrapping at right/bottom edges.
+         * Clamps result to [0, 4095] range.
+         */
+        private int viewToHid(float viewCoord, float screenSize) {
+            if (screenSize <= 0) return 0;
+            int hid = (int) ((viewCoord / screenSize) * 4095f);
+            return Math.max(0, Math.min(4095, hid));
+        }
+
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case MSG_ABS_MOVE:
                     doSendHexAbsData(
-                            (int) ((msg.arg1 / 1000f) * 4096 / screenWidth),
-                            (int) ((msg.arg2 / 1000f) * 4096 / screenHeight));
+                            viewToHid(msg.arg1 / 1000f, screenWidth),
+                            viewToHid(msg.arg2 / 1000f, screenHeight));
                     break;
                 case MSG_ABS_CLICK:
                     doSendHexAbsButtonClickData((String) msg.obj,
-                            (int) ((msg.arg1 / 1000f) * 4096 / screenWidth),
-                            (int) ((msg.arg2 / 1000f) * 4096 / screenHeight));
+                            viewToHid(msg.arg1 / 1000f, screenWidth),
+                            viewToHid(msg.arg2 / 1000f, screenHeight));
                     break;
                 case MSG_ABS_DRAG:
                     doSendHexAbsData(
-                            (int) ((msg.arg1 / 1000f) * 4096 / screenWidth),
-                            (int) ((msg.arg2 / 1000f) * 4096 / screenHeight));
+                            viewToHid(msg.arg1 / 1000f, screenWidth),
+                            viewToHid(msg.arg2 / 1000f, screenHeight));
                     break;
                 case MSG_REL_MOVE:
                     RelData d = (RelData) msg.obj;
                     doSendHexRelData(d.click, d.sx, d.sy, d.lx, d.ly);
+                    break;
+                // BT mouse HID events - receive pre-converted HID coords [0,4095], send directly
+                // No scaling - normalizeBtMouseToHid in CustomTouchListener already did the conversion
+                case MSG_BT_MOUSE_HID_MOVE:
+                    doSendHexAbsData(msg.arg1, msg.arg2);
+                    break;
+                case MSG_BT_MOUSE_HID_CLICK:
+                    doSendHexAbsButtonClickData((String) msg.obj, msg.arg1, msg.arg2);
+                    break;
+                case MSG_BT_MOUSE_HID_DRAG:
+                    doSendHexAbsData(msg.arg1, msg.arg2);
                     break;
             }
         }
@@ -200,6 +263,8 @@ public class MouseManagerCore {
             case "SecLeftData": return KeymodJNI.MS_BTN_LEFT;
             case "SecRightData": return KeymodJNI.MS_BTN_RIGHT;
             case "SecMiddleData": return KeymodJNI.MS_BTN_MIDDLE;
+            case "SecBackData": return KeymodJNI.MS_BTN_BACK;
+            case "SecForwardData": return KeymodJNI.MS_BTN_FORWARD;
             default: return KeymodJNI.MS_BTN_NONE;
         }
     }

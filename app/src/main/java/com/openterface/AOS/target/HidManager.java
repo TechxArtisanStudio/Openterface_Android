@@ -3,6 +3,7 @@ package com.openterface.AOS.target;
 import android.util.Log;
 
 import com.openterface.AOS.jni.KeymodJNI;
+import com.openterface.AOS.serial.CH9329Function;
 import com.openterface.AOS.serial.UsbDeviceManager;
 
 /**
@@ -210,6 +211,13 @@ public class HidManager {
     }
 
     public static void sendHexAbsData(float x, float y) {
+        // Per-frame log with a stack trace: this runs on every absolute move (60~120
+        // times per second), so it must stay behind the shared debug switch.
+        if (CH9329Function.DEBUG_SEND_LOG) {
+            Log.d("OP-HID", "sendHexAbsData CALLED: x=" + x + " y=" + y
+                    + " btMouseConnected=" + com.openterface.AOS.serial.BtMouseInputHandler.isBtMouseConnected(),
+                    new Exception("Stack trace"));
+        }
         if (useCoreImplementation && coreLibraryLoaded) {
             MouseManagerCore.sendHexAbsData(x, y);
         } else {
@@ -230,6 +238,35 @@ public class HidManager {
             MouseManagerCore.sendHexAbsDragData(x, y);
         } else {
             MouseManager.sendHexAbsDragData(x, y);
+        }
+    }
+
+    /**
+     * Send BT mouse absolute move with pre-converted HID coordinates.
+     * Bypasses Handler's view→HID scaling to avoid double-scaling.
+     * @param hidX HID X coordinate [0, 4095]
+     * @param hidY HID Y coordinate [0, 4095]
+     */
+    public static void sendBtMouseHidAbsData(float hidX, float hidY) {
+        if (useCoreImplementation && coreLibraryLoaded) {
+            MouseManagerCore.sendBtMouseHidAbsData(hidX, hidY);
+        } else {
+            MouseManager.sendBtMouseHidAbsData(hidX, hidY);
+        }
+    }
+
+    /**
+     * Send BT mouse button click with pre-converted HID coordinates.
+     * Bypasses Handler's view→HID scaling to avoid double-scaling.
+     * @param mouseClick Button key (e.g., "SecLeftData")
+     * @param hidX HID X coordinate [0, 4095]
+     * @param hidY HID Y coordinate [0, 4095]
+     */
+    public static void sendBtMouseHidAbsButtonClickData(String mouseClick, float hidX, float hidY) {
+        if (useCoreImplementation && coreLibraryLoaded) {
+            MouseManagerCore.sendBtMouseHidAbsButtonClickData(mouseClick, hidX, hidY);
+        } else {
+            MouseManager.sendBtMouseHidAbsButtonClickData(mouseClick, hidX, hidY);
         }
     }
 

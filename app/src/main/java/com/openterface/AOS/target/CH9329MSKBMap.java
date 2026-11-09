@@ -96,6 +96,9 @@ public class CH9329MSKBMap {
         MSAbsData.put("SecLeftData", "01");
         MSAbsData.put("SecRightData", "02");
         MSAbsData.put("SecMiddleData", "04");
+        // side buttons (browser back/forward)
+        MSAbsData.put("SecBackData", "08");
+        MSAbsData.put("SecForwardData", "10");
 
         //three and four is x,five and six is y
 
@@ -116,6 +119,9 @@ public class CH9329MSKBMap {
         MSRelData.put("SecLeftData", "01");
         MSRelData.put("SecRightData", "02");
         MSRelData.put("SecMiddleData", "04");
+        // side buttons (browser back/forward)
+        MSRelData.put("SecBackData", "08");
+        MSRelData.put("SecForwardData", "10");
 
         //three and four is x,five and six is y
 
