@@ -28,7 +28,6 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.TextView;
 
 import com.openterface.AOS.R;
 import com.openterface.AOS.activity.MainActivity;
@@ -66,9 +65,6 @@ public class CustomTouchListener implements View.OnTouchListener {
     // ===== Instance handlers =====
     private final TouchInputHandler touchHandler;
 
-    // ===== UI elements =====
-    private final TextView floatingLabel;
-
     // ===== Portrait mode detection =====
     private static boolean isPortraitMode;
 
@@ -85,7 +81,6 @@ public class CustomTouchListener implements View.OnTouchListener {
     public CustomTouchListener(MainActivity activity, UsbDeviceManager usbDeviceManager) {
         CustomTouchListener.usbDeviceManager = usbDeviceManager;
         CustomTouchListener.activity = activity;
-        floatingLabel = activity.findViewById(R.id.floating_label);
 
         // Detect portrait mode using screen orientation
         isPortraitMode = isCurrentlyPortrait();
@@ -535,12 +530,6 @@ public class CustomTouchListener implements View.OnTouchListener {
         // This is handled by the activity or can be delegated
         // For now, this is a no-op placeholder
         Log.d(TAG, "updateSystemGestureExclusion: " + enable);
-    }
-
-    // ===== Floating label accessor =====
-
-    public TextView getFloatingLabel() {
-        return floatingLabel;
     }
 
     // ===== Reset =====
