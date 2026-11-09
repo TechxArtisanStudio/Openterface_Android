@@ -360,6 +360,17 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
     public AspectRatioSurfaceView cameraViewSecond;
     private RelativeLayout thumbnail_container;
 
+    /**
+     * Owns the landscape drawer/PiP controller. It is created once per activity and only
+     * referenced from here, so it dies with the activity instead of leaking through a
+     * static field.
+     */
+    private ZoomLayoutDeal zoomLayoutDeal;
+
+    public ZoomLayoutDeal getZoomLayoutDeal() {
+        return zoomLayoutDeal;
+    }
+
     @SuppressLint("ClickableViewAccessibility")//add
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -570,7 +581,7 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
 
         //Zoom layout deal
         setCameraViewSecond();
-        ZoomLayoutDeal ZoomLayoutDeal = new ZoomLayoutDeal(this, mCameraHelper, mBinding);
+        zoomLayoutDeal = new ZoomLayoutDeal(this, mCameraHelper, mBinding);
 
         HidManager.setKeyBoardLanguage();
 
@@ -1264,9 +1275,11 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
                 Log.w(TAG, "reloadLayoutForOrientation: DrawerLayoutDeal failed (expected in portrait): " + e.getMessage());
             }
         }
+        // Replace the controller of the previous layout: it still points at the views of
+        // the tree that was just thrown away.
+        zoomLayoutDeal = null;
         try {
-            com.openterface.AOS.drawerLayout.ZoomLayoutDeal zoomLayoutDeal =
-                    new com.openterface.AOS.drawerLayout.ZoomLayoutDeal(this, mCameraHelper, mBinding);
+            zoomLayoutDeal = new com.openterface.AOS.drawerLayout.ZoomLayoutDeal(this, mCameraHelper, mBinding);
             Log.d(TAG, "reloadLayoutForOrientation: ZoomLayoutDeal created");
         } catch (Exception e) {
             Log.w(TAG, "reloadLayoutForOrientation: ZoomLayoutDeal failed: " + e.getMessage());
@@ -1391,7 +1404,9 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
                         @Override
                         public void onGlobalLayout() {
                             Log.d(TAG,"keyBoardView.getWidth():"+keyBoardView.getWidth() + "keyBoardView.getHeight():"+keyBoardView.getHeight());
-                            ZoomLayoutDeal.getViewWidthHeight(keyBoardView.getWidth(), keyBoardView.getHeight());
+                            if (zoomLayoutDeal != null) {
+                                zoomLayoutDeal.getViewWidthHeight(keyBoardView.getWidth(), keyBoardView.getHeight());
+                            }
                         }
                     });
                     keyBoardView.setVisibility(View.VISIBLE);
@@ -2081,7 +2096,9 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
 
             closeAllDialogFragment();
 
-            ZoomLayoutDeal.zoomOut();
+            if (zoomLayoutDeal != null) {
+                zoomLayoutDeal.zoomOut();
+            }
         }
 
         @Override

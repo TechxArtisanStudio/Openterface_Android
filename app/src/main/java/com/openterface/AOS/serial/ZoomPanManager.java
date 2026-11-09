@@ -95,6 +95,14 @@ public class ZoomPanManager {
     }
 
     /**
+     * The PiP controller of the current activity. It is owned by the activity, so nothing
+     * in this class keeps the activity (or its views) alive through a static field.
+     */
+    private static ZoomLayoutDeal pip() {
+        return activity == null ? null : activity.getZoomLayoutDeal();
+    }
+
+    /**
      * Get effective zoom scale (minimum 1.0).
      */
     public static float getEffectiveZoomScale() {
@@ -164,7 +172,10 @@ public class ZoomPanManager {
             mPortraitTranslateX = 0f;
             mPortraitTranslateY = 0f;
             if (mPipVisible) {
-                ZoomLayoutDeal.zoomOut();
+                ZoomLayoutDeal zoomLayoutDeal = pip();
+                if (zoomLayoutDeal != null) {
+                    zoomLayoutDeal.zoomOut();
+                }
                 mPipVisible = false;
             }
             resetTextureViewHeight();
@@ -172,7 +183,10 @@ public class ZoomPanManager {
             // Only on the transition into zoom: enlargeView() captures a bitmap and
             // re-adds surfaces, which is far too heavy to run on every pinch frame
             // (it caused the pinch to stutter/freeze after the first step).
-            ZoomLayoutDeal.enlargeView();
+            ZoomLayoutDeal zoomLayoutDeal = pip();
+            if (zoomLayoutDeal != null) {
+                zoomLayoutDeal.enlargeView();
+            }
             mPipVisible = true;
         }
 
@@ -202,7 +216,10 @@ public class ZoomPanManager {
         if (newScale < MIN_SCALE) {
             newScale = MIN_SCALE;
             if (mPipVisible) {
-                ZoomLayoutDeal.zoomOut();
+                ZoomLayoutDeal zoomLayoutDeal = pip();
+                if (zoomLayoutDeal != null) {
+                    zoomLayoutDeal.zoomOut();
+                }
                 mPipVisible = false;
             }
         } else if (newScale > MAX_SCALE_LANDSCAPE) {
@@ -211,7 +228,10 @@ public class ZoomPanManager {
 
         // Show PiP once when zoomed in (not on every pinch frame)
         if (newScale > MIN_SCALE && !mPipVisible) {
-            ZoomLayoutDeal.enlargeView();
+            ZoomLayoutDeal zoomLayoutDeal = pip();
+            if (zoomLayoutDeal != null) {
+                zoomLayoutDeal.enlargeView();
+            }
             mPipVisible = true;
         }
 
@@ -221,7 +241,10 @@ public class ZoomPanManager {
 
         // The PiP indicator stands for the visible part of the frame, so it has to
         // follow the zoom; it used to keep the size picked when the PiP was created.
-        ZoomLayoutDeal.updateIndicatorSize(newScale);
+        ZoomLayoutDeal zoomLayoutDeal = pip();
+        if (zoomLayoutDeal != null) {
+            zoomLayoutDeal.updateIndicatorSize(newScale);
+        }
 
         // Center pivot
         drawerLayout.setPivotX(drawerLayout.getWidth() / 2f);
@@ -321,8 +344,11 @@ public class ZoomPanManager {
         textureView.invalidate();
 
         // Sync PiP indicator
-        ZoomLayoutDeal.updateIndicatorFromMainView(
-                mPortraitZoomScale, mPortraitTranslateX, mPortraitTranslateY);
+        ZoomLayoutDeal zoomLayoutDeal = pip();
+        if (zoomLayoutDeal != null) {
+            zoomLayoutDeal.updateIndicatorFromMainView(
+                    mPortraitZoomScale, mPortraitTranslateX, mPortraitTranslateY);
+        }
 
         Log.d(TAG, "Portrait transform: buffer=" + bufferWidth + "x" + bufferHeight +
               " view=" + viewWidth + "x" + viewHeight + " zoom=" + mPortraitZoomScale);

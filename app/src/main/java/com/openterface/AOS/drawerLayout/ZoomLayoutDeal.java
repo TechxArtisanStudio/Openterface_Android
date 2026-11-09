@@ -54,37 +54,41 @@ public class ZoomLayoutDeal {
 
     /** Below this the indicator is not worth re-laying out during a pinch. */
     private static final int INDICATOR_SIZE_THRESHOLD = 3;
-    private static MainActivity activity;
-    private static DrawerLayout drawerLayout;
-    private static View thumbnailContainer;
-    private static View indicatorView;
-    private static float ratioX;
-    private static float ratioY;
-    private final AspectRatioSurfaceView cameraViewSecond;
-    private static ICameraHelper mCameraHelper;
-    private ActivityMainBinding mBinding;
-    private static int screenWidth;
-    private static int screenHeight;
 
-    private static ImageButton dragButton;
+    // Everything below belongs to the activity that created this controller. Holding it
+    // statically kept the whole activity, its views and window alive after onDestroy, so
+    // the members are instance members and the activity owns the single instance.
+    private MainActivity activity;
+    private DrawerLayout drawerLayout;
+    private View thumbnailContainer;
+    private View indicatorView;
+    private float ratioX;
+    private float ratioY;
+    private final AspectRatioSurfaceView cameraViewSecond;
+    private ICameraHelper mCameraHelper;
+    private ActivityMainBinding mBinding;
+    private int screenWidth;
+    private int screenHeight;
+
+    private ImageButton dragButton;
     private float lastTouchX, lastTouchY;
 
     // Drag offset to prevent indicator jumping when starting to drag
-    private static float dragOffsetX = 0f;
-    private static float dragOffsetY = 0f;
+    private float dragOffsetX = 0f;
+    private float dragOffsetY = 0f;
 
     private boolean isKeyboardScaled = false; // Track scaling state
-    private static int originalWidth;
-    private static int originalHeight; // Store original dimensions
+    private int originalWidth;
+    private int originalHeight; // Store original dimensions
     private LinearLayout keyBoardView;
     private ImageButton keyBoardZoomInOutButton;
     private ImageButton dragHandle;
     private boolean isPortraitMode = false; // Track if in portrait mode
 
-    public static void getViewWidthHeight(int originalWidth, int originalHeight){
+    public void getViewWidthHeight(int originalWidth, int originalHeight){
 
-        ZoomLayoutDeal.originalWidth = originalWidth;
-        ZoomLayoutDeal.originalHeight = originalHeight;
+        this.originalWidth = originalWidth;
+        this.originalHeight = originalHeight;
     }
 
     public ZoomLayoutDeal(MainActivity activity, ICameraHelper mCameraHelper, ActivityMainBinding mBinding) {
@@ -223,7 +227,7 @@ public class ZoomLayoutDeal {
         });
     }
 
-    public static void enlargeView(){
+    public void enlargeView(){
         // Guard against missing views
         if (thumbnailContainer == null || dragButton == null || activity == null) {
             Log.d(TAG, "enlargeView: views not initialized, skipping");
@@ -265,7 +269,7 @@ public class ZoomLayoutDeal {
     }
 
 
-    public static void zoomOut(){
+    public void zoomOut(){
         // Guard against missing views
         if (thumbnailContainer == null || dragButton == null || activity == null) {
             Log.d(TAG, "zoomOut: views not initialized, skipping");
@@ -340,7 +344,7 @@ public class ZoomLayoutDeal {
         });
     }
 
-    private static void resetIndicatorToCenter() {
+    private void resetIndicatorToCenter() {
         // Guard against null views
         if (activity == null || activity.cameraViewSecond == null || indicatorView == null) {
             Log.d(TAG, "resetIndicatorToCenter: views not available, skipping");
@@ -368,7 +372,7 @@ public class ZoomLayoutDeal {
         syncMainViewPosition(centerX + indicatorWidth / 2f, centerY + indicatorHeight / 2f);
     }
 
-    private static void showThumbnailWindow() {
+    private void showThumbnailWindow() {
         // Guard against null views before calling sub-methods
         if (activity == null || activity.mBinding == null || activity.mBinding.viewMainPreview == null) {
             Log.d(TAG, "showThumbnailWindow: views not available, skipping");
@@ -400,7 +404,7 @@ public class ZoomLayoutDeal {
         }
     }
 
-    private static void initializeIndicatorPosition() {
+    private void initializeIndicatorPosition() {
         if (indicatorView == null || activity == null || activity.cameraViewSecond == null ||
             activity.mBinding == null || activity.mBinding.viewMainPreview == null) {
             return;
@@ -417,7 +421,7 @@ public class ZoomLayoutDeal {
      * surface view can measure differently. Falls back to the requested layout size while
      * the container has not been laid out yet.
      */
-    private static float pipWidth() {
+    private float pipWidth() {
         if (thumbnailContainer != null && thumbnailContainer.getWidth() > 0) {
             return thumbnailContainer.getWidth();
         }
@@ -434,7 +438,7 @@ public class ZoomLayoutDeal {
         return 0f;
     }
 
-    private static float pipHeight() {
+    private float pipHeight() {
         if (thumbnailContainer != null && thumbnailContainer.getHeight() > 0) {
             return thumbnailContainer.getHeight();
         }
@@ -455,13 +459,13 @@ public class ZoomLayoutDeal {
      * Indicator size as currently requested. The measured size is stale right after a
      * resize, so the layout parameters win when they are set.
      */
-    private static float indicatorWidth() {
+    private float indicatorWidth() {
         if (indicatorView == null) return 0f;
         ViewGroup.LayoutParams params = indicatorView.getLayoutParams();
         return params != null && params.width > 0 ? params.width : indicatorView.getWidth();
     }
 
-    private static float indicatorHeight() {
+    private float indicatorHeight() {
         if (indicatorView == null) return 0f;
         ViewGroup.LayoutParams params = indicatorView.getLayoutParams();
         return params != null && params.height > 0 ? params.height : indicatorView.getHeight();
@@ -472,7 +476,7 @@ public class ZoomLayoutDeal {
      * drawer, portrait scales the image matrix. Reading the portrait scale in landscape
      * always returned 1.0 and the indicator never matched the real viewport.
      */
-    private static float currentZoomScale() {
+    private float currentZoomScale() {
         if (drawerLayout != null) {
             return Math.max(1f, drawerLayout.getScaleX());
         }
@@ -485,7 +489,7 @@ public class ZoomLayoutDeal {
      *
      * @return the applied indicator size as {width, height}
      */
-    private static float[] applyIndicatorSize(float zoomScale) {
+    private float[] applyIndicatorSize(float zoomScale) {
         float pipWidth = pipWidth();
         float pipHeight = pipHeight();
         if (indicatorView == null || pipWidth <= 0 || pipHeight <= 0) {
@@ -515,19 +519,19 @@ public class ZoomLayoutDeal {
     /**
      * Called while the landscape zoom changes so the indicator tracks the viewport.
      */
-    public static void updateIndicatorSize(float zoomScale) {
+    public void updateIndicatorSize(float zoomScale) {
         applyIndicatorSize(zoomScale);
     }
 
     /**
      * Get current portrait zoom scale from CustomTouchListener
      */
-    private static float getCurrentPortraitZoomScale() {
+    private float getCurrentPortraitZoomScale() {
         return com.openterface.AOS.serial.CustomTouchListener.getPortraitZoomScale();
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    private static void setupThumbnailDrag() {
+    private void setupThumbnailDrag() {
         // Guard against null views
         if (activity == null || activity.cameraViewSecond == null) {
             Log.d(TAG, "setupThumbnailDrag: cameraViewSecond not available, skipping");
@@ -571,7 +575,7 @@ public class ZoomLayoutDeal {
         });
     }
 
-    private static void setMouseLocation() {
+    private void setMouseLocation() {
         // Don't move mouse to viewport center when BT mouse is connected
         // User is using the mouse, not touch gestures
         if (com.openterface.AOS.serial.CustomTouchListener.isBtMouseConnected()) {
@@ -583,7 +587,7 @@ public class ZoomLayoutDeal {
         Log.d(TAG, "setMouseLocation: moved to viewport center");
     }
 
-    private static void updateIndicatorPosition(float x, float y) {
+    private void updateIndicatorPosition(float x, float y) {
         // Guard against null views
         if (indicatorView == null || activity == null || activity.cameraViewSecond == null) {
             return;
@@ -626,7 +630,7 @@ public class ZoomLayoutDeal {
      * @param translateX Horizontal translation of the main view
      * @param translateY Vertical translation of the main view
      */
-    public static void updateIndicatorFromMainView(float zoomScale, float translateX, float translateY) {
+    public void updateIndicatorFromMainView(float zoomScale, float translateX, float translateY) {
         if (indicatorView == null || activity == null || activity.cameraViewSecond == null ||
             activity.mBinding == null || activity.mBinding.viewMainPreview == null) {
             return;
@@ -685,7 +689,7 @@ public class ZoomLayoutDeal {
     }
 
 
-    private static void syncMainViewPosition(float thumbX, float thumbY) {
+    private void syncMainViewPosition(float thumbX, float thumbY) {
         // Guard against null views - especially drawerLayout which is null in portrait mode
         if (indicatorView == null || thumbnailContainer == null || activity == null ||
             activity.mBinding == null || activity.mBinding.viewMainPreview == null ||
