@@ -772,7 +772,8 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
                         Log.d(TAG, "Hardware key down: " + keyCode + " (" + KeyEvent.keyCodeToString(keyCode) + ")");
                         return handleHardwareKeyDown(event);
                     } else {
-                        Log.d(TAG, "Key repeat ignored: " + keyCode + " repeatCount=" + event.getRepeatCount() + " alreadyPressed=" + mHardwareKeyPressed);
+                        // Auto-repeat from the keyboard. The target already repeats on
+                        // its own because the key stays down, so there is nothing to send.
                         return true;
                     }
                 } else if (event.getAction() == KeyEvent.ACTION_UP) {
@@ -816,9 +817,10 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
     }
 
     /**
-     * Handle hardware keyboard key down event
-     * Uses sendKeyboardRequest which sends press + auto-release (like on-screen keyboard)
-     * This prevents infinite key sending from Bluetooth keyboards
+     * Handle hardware keyboard key down event.
+     * Sends a press only. The target OS generates its own auto-repeat while the
+     * key stays down, which is what makes holding a key repeat. The matching
+     * release is sent from handleHardwareKeyUp().
      */
     private boolean handleHardwareKeyDown(KeyEvent event) {
         int keyCode = event.getKeyCode();
@@ -827,28 +829,22 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         String functionKey = HidManager.getFunctionKey(event, keyCode);
         String keyName = HidManager.getKeyName(keyCode);
 
-        Log.d(TAG, "FunctionKey: '" + functionKey + "', KeyName: '" + keyName + "'");
-
         if (keyName != null && usbDeviceManager != null) {
-            Log.d(TAG, "Sending key via HidManager.sendKeyBoardData() (press + auto-release)");
-            HidManager.sendKeyBoardData(functionKey, keyName);
-            Log.d(TAG, "Key sent successfully");
+            HidManager.sendKeyBoardPressQueued(functionKey, keyName);
             return true;
-        } else {
-            Log.w(TAG, "Cannot send key - keyName: " + keyName + ", usbDeviceManager: " + (usbDeviceManager != null));
         }
+        Log.w(TAG, "Cannot send key - keyName: " + keyName
+                + ", usbDeviceManager: " + (usbDeviceManager != null));
 
         return true;
     }
 
     /**
-     * Handle hardware keyboard key up event
-     * No need to send release - sendKeyboardRequest() already handles auto-release
+     * Handle hardware keyboard key up event.
+     * Releases every key, pairing with the press sent on ACTION_DOWN.
      */
     private boolean handleHardwareKeyUp(KeyEvent event) {
-        Log.d(TAG, "Hardware key up: " + event.getKeyCode());
-        // Release is handled automatically by sendKeyboardRequest()
-        // Just reset the key state tracking
+        HidManager.sendKeyBoardReleaseQueued();
         return true;
     }
 
@@ -1108,6 +1104,9 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
     @Override
     protected void onStop() {
         super.onStop();
+        // Focus can be lost before ACTION_UP arrives. Drop any held key so the
+        // target does not keep repeating while the app sits in the background.
+        HidManager.sendKeyBoardReleaseQueued();
         if (mIsRecording) {
             toggleVideoRecord(false);
         }

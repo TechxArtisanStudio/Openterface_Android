@@ -355,29 +355,22 @@ public class KeyBoardManager {
      */
     public static void sendKeyBoardPressQueued(String functionKey, String keyName) {
         if (keyName == null) {
-            Log.w(TAG, "❌ sendKeyBoardPressQueued: keyName is null");
+            Log.w(TAG, "sendKeyBoardPressQueued: keyName is null");
             return;
         }
 
         // Skip if key is already pressed (prevents duplicate from browser double-firing)
         if (!currentlyPressedKeys.add(keyName)) {
-            Log.w(TAG, "🟣 Key '" + keyName + "' already pressed, ignoring duplicate");
             return;
         }
 
-        Log.e(TAG, "🔵 ========== QUEUED KEY PRESS START ==========");
-        Log.e(TAG, "🔵 functionKey: '" + functionKey + "', keyName: '" + keyName + "'");
-
         keyboardExecutor.execute(() -> {
             try {
-                Log.e(TAG, "🔵 Sending PRESS...");
-                boolean result = sendKeyBoardPressSync(functionKey, keyName);
-                Log.e(TAG, "🔵 Press result: " + (result ? "SUCCESS" : "FAILED"));
+                sendKeyBoardPressSync(functionKey, keyName);
             } catch (Exception e) {
-                Log.e(TAG, "❌ Exception in sendKeyBoardPressQueued: " + e.getMessage(), e);
+                Log.e(TAG, "sendKeyBoardPressQueued failed: " + e.getMessage(), e);
                 currentlyPressedKeys.remove(keyName);
             }
-            Log.e(TAG, "🔵 ========== QUEUED KEY PRESS END ==========");
         });
     }
 
@@ -387,18 +380,13 @@ public class KeyBoardManager {
      * This ensures release always happens AFTER all queued press operations.
      */
     public static void sendKeyBoardReleaseQueued() {
-        Log.e(TAG, "🔴 ========== QUEUED KEY RELEASE START ==========");
-
         keyboardExecutor.execute(() -> {
             try {
-                Log.e(TAG, "🔴 Sending RELEASE...");
                 sendKeyBoardReleaseSync();
                 currentlyPressedKeys.clear();
-                Log.e(TAG, "✅ Release sent, cleared all pressed keys");
             } catch (Exception e) {
-                Log.e(TAG, "❌ Exception in sendKeyBoardReleaseQueued: " + e.getMessage(), e);
+                Log.e(TAG, "sendKeyBoardReleaseQueued failed: " + e.getMessage(), e);
             }
-            Log.e(TAG, "🔴 ========== QUEUED KEY RELEASE END ==========");
         });
     }
 
