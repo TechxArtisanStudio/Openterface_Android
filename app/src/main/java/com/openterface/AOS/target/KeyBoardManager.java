@@ -97,24 +97,30 @@ public class KeyBoardManager {
     }
 
     public static String getFunctionKey(KeyEvent event, int keyCode) {
-        boolean isCtrlPressed = (event.getMetaState() & KeyEvent.META_CTRL_ON) != 0;
-        boolean isShiftPressed = (event.getMetaState() & KeyEvent.META_SHIFT_ON) != 0;
-        boolean isAltPressed = (event.getMetaState() & KeyEvent.META_ALT_ON) != 0;
+        int metaState = event.getMetaState();
+        int modifier = 0;
 
-        if (isCtrlPressed) {
-            if (keyCode != KeyEvent.KEYCODE_CTRL_LEFT && keyCode != KeyEvent.KEYCODE_CTRL_RIGHT) {
-                return "01";
-            }
-        } else if (isShiftPressed) {
-            if (keyCode != KeyEvent.KEYCODE_SHIFT_LEFT && keyCode != KeyEvent.KEYCODE_SHIFT_RIGHT) {
-                return "02";
-            }
-        } else if (isAltPressed) {
-            if (keyCode != KeyEvent.KEYCODE_ALT_LEFT && keyCode != KeyEvent.KEYCODE_ALT_RIGHT) {
-                return "04";
-            }
+        // Bits match the CH9329 modifier byte: Ctrl, Shift, Alt, Win. Each is
+        // assembled independently so that combinations such as Ctrl+Shift keep
+        // both bits instead of only the first one matched.
+        if ((metaState & KeyEvent.META_CTRL_ON) != 0
+                && keyCode != KeyEvent.KEYCODE_CTRL_LEFT && keyCode != KeyEvent.KEYCODE_CTRL_RIGHT) {
+            modifier |= 0x01;
         }
-        return "00";
+        if ((metaState & KeyEvent.META_SHIFT_ON) != 0
+                && keyCode != KeyEvent.KEYCODE_SHIFT_LEFT && keyCode != KeyEvent.KEYCODE_SHIFT_RIGHT) {
+            modifier |= 0x02;
+        }
+        if ((metaState & KeyEvent.META_ALT_ON) != 0
+                && keyCode != KeyEvent.KEYCODE_ALT_LEFT && keyCode != KeyEvent.KEYCODE_ALT_RIGHT) {
+            modifier |= 0x04;
+        }
+        if ((metaState & KeyEvent.META_META_ON) != 0
+                && keyCode != KeyEvent.KEYCODE_META_LEFT && keyCode != KeyEvent.KEYCODE_META_RIGHT) {
+            modifier |= 0x08;
+        }
+
+        return String.format("%02X", modifier);
     }
 
     public static String getKeyName(int keyCode) {

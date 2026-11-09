@@ -825,6 +825,14 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
     private boolean handleHardwareKeyDown(KeyEvent event) {
         int keyCode = event.getKeyCode();
 
+        // Ctrl/Shift/Alt/Meta have no key slot of their own: their state travels in
+        // the modifier byte of the next real key press. Sending one on its own puts
+        // E0/E1/E2 into the key field, and the target then sees the following key
+        // arrive while that bogus key is still held, so it drops it.
+        if (isModifierOnlyKey(keyCode)) {
+            return true;
+        }
+
         // Use HidManager path (same as on-screen keyboard buttons)
         String functionKey = HidManager.getFunctionKey(event, keyCode);
         String keyName = HidManager.getKeyName(keyCode);
@@ -837,6 +845,25 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
                 + ", usbDeviceManager: " + (usbDeviceManager != null));
 
         return true;
+    }
+
+    /**
+     * Modifier keys only contribute to the modifier byte of other keys.
+     */
+    private static boolean isModifierOnlyKey(int keyCode) {
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_CTRL_LEFT:
+            case KeyEvent.KEYCODE_CTRL_RIGHT:
+            case KeyEvent.KEYCODE_SHIFT_LEFT:
+            case KeyEvent.KEYCODE_SHIFT_RIGHT:
+            case KeyEvent.KEYCODE_ALT_LEFT:
+            case KeyEvent.KEYCODE_ALT_RIGHT:
+            case KeyEvent.KEYCODE_META_LEFT:
+            case KeyEvent.KEYCODE_META_RIGHT:
+                return true;
+            default:
+                return false;
+        }
     }
 
     /**
