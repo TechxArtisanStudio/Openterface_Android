@@ -308,6 +308,11 @@ public class HidManager {
     }
 
     public static void sendHexRelData(String mouseClick, float sx, float sy, float lx, float ly) {
+        // Called on every relative move frame, so it stays behind the debug switch.
+        if (CH9329Function.DEBUG_SEND_LOG) {
+            Log.d("OP-HID", "sendHexRelData CALLED: click=" + mouseClick
+                    + " cur=(" + sx + "," + sy + ") prev=(" + lx + "," + ly + ")");
+        }
         if (useCoreImplementation && coreLibraryLoaded) {
             MouseManagerCore.sendHexRelData(mouseClick, sx, sy, lx, ly);
         } else {

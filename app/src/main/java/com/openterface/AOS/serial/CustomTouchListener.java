@@ -497,7 +497,7 @@ public class CustomTouchListener implements View.OnTouchListener {
      * Move the mouse cursor to the center of the currently visible viewport.
      */
     public static void moveMouseToViewportCenter() {
-        Log.d(TAG, "moveMouseToViewportCenter CALLED FROM:", new Exception("Stack trace"));
+        Log.d(TAG, "moveMouseToViewportCenter");
 
         if (activity == null || activity.mBinding == null
                 || activity.mBinding.viewMainPreview == null) {

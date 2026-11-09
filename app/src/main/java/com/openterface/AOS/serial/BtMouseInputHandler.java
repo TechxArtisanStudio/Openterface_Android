@@ -568,7 +568,8 @@ public class BtMouseInputHandler {
     }
 
     private static void releaseBtMouseButtons(float x, float y) {
-        Log.d(TAG, "releaseBtMouseButtons CALLED with x=" + x + " y=" + y, new Exception("Stack trace"));
+        // Runs on every button release, so no stack trace here.
+        Log.d(TAG, "releaseBtMouseButtons x=" + x + " y=" + y);
         if (MouseModeManager.isAbsoluteMode()) {
             // Apply portrait zoom/pan transform first, then normalize to HID
             float viewW = CoordinateConverter.getTouchViewWidth();
