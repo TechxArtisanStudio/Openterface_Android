@@ -38,6 +38,13 @@
                     android:layout_centerInParent="true"
                     android:visibility="visible" />
 
+                <!-- Black border overlay - shows semi-transparent mask over non-video areas -->
+                <com.openterface.AOS.view.BlackBorderOverlayView
+                    android:id="@+id/blackBorderOverlay"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_centerInParent="true" />
+
                 <ImageView
                     android:id="@+id/tvConnectUSBCameraTip"
                     android:layout_width="wrap_content"

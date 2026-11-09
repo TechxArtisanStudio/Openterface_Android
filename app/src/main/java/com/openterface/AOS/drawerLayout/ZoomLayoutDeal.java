@@ -482,6 +482,12 @@ public class ZoomLayoutDeal {
     }
 
     private static void setMouseLocation(int setMaxViewX, int setMaxViewY) {
+        // Don't move mouse to viewport center when BT mouse is connected
+        // User is using the mouse, not touch gestures
+        if (com.openterface.AOS.serial.CustomTouchListener.isBtMouseConnected()) {
+            Log.d(TAG, "setMouseLocation: skipped - BT mouse connected");
+            return;
+        }
         // Delegate to CustomTouchListener to calculate viewport center based on current zoom/pan state
         com.openterface.AOS.serial.CustomTouchListener.moveMouseToViewportCenter();
         Log.d(TAG, "setMouseLocation: moved to viewport center");
