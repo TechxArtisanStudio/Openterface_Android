@@ -394,6 +394,20 @@ public class BtMouseInputHandler {
     private static void handleRelativeMode(float cursorX, float cursorY,
             float relX, float relY, boolean nowAtEdge) {
 
+        Log.d(TAG, "handleRelativeMode: cursor=(" + cursorX + "," + cursorY
+                + ") rel=(" + relX + "," + relY + ") atEdge=" + nowAtEdge);
+
+        // First sample after (re)connect: only learn the baseline. With 0f as the
+        // previous position the absolute cursor coordinate became a delta and the
+        // host cursor jumped up to 127px on the first movement.
+        if (!btMouseRelInitialized) {
+            btMouseRelPrevX = cursorX;
+            btMouseRelPrevY = cursorY;
+            btMouseRelInitialized = true;
+            Log.d(TAG, "handleRelativeMode: initialized baseline at (" + cursorX + "," + cursorY + ")");
+            return;
+        }
+
         if (nowAtEdge && (relX != 0 || relY != 0)) {
             float scaledRelX = relX * 2.0f;
             float scaledRelY = relY * 2.0f;
@@ -547,9 +561,9 @@ public class BtMouseInputHandler {
 
             HidManager.sendBtMouseHidAbsButtonClickData(buttonKey, virtualHidX, virtualHidY);
         } else {
-            HidManager.sendHexRelData(buttonKey, x, y, btMouseRelPrevX, btMouseRelPrevY);
-            btMouseRelPrevX = x;
-            btMouseRelPrevY = y;
+            // A click carries no movement. Prev stays untouched because the pointer
+            // did not move; the next motion frame keeps subtracting the same baseline.
+            HidManager.sendHexRelData(buttonKey, 0, 0, 0, 0);
         }
     }
 

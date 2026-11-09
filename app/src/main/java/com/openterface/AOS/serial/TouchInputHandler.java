@@ -613,8 +613,8 @@ public class TouchInputHandler {
                 HidManager.sendHexAbsButtonClickData("SecRightData", content[0], content[1]);
                 HidManager.sendHexAbsData(content[0], content[1]);
             } else {
-                HidManager.sendHexRelData("SecRightData",
-                        twoFingerDownCenterX, twoFingerDownCenterY, 0, 0);
+                // Same as the single tap: no movement along with the click.
+                HidManager.sendHexRelData("SecRightData", 0, 0, 0, 0);
                 HidManager.releaseMSRelData();
             }
             Log.d(TAG, "Two-finger tap confirmed → RIGHT CLICK");
@@ -685,7 +685,10 @@ public class TouchInputHandler {
             HidManager.sendHexAbsButtonClickData("SecLeftData", content[0], content[1]);
             HidManager.sendHexAbsData(content[0], content[1]);
         } else {
-            HidManager.sendHexRelData("SecLeftData", x, y, 0, 0);
+            // Relative mode: a click must carry no movement. The previous form
+            // passed (x, y, 0, 0), so the view coordinate became a delta and was
+            // clamped to 127px — the host cursor jumped on every tap.
+            HidManager.sendHexRelData("SecLeftData", 0, 0, 0, 0);
             HidManager.releaseMSRelData();
         }
         Log.d(TAG, "Single tap → LEFT CLICK");
