@@ -25,33 +25,35 @@
 package com.openterface.AOS.drawerLayout;
 
 import android.annotation.SuppressLint;
-import android.graphics.Bitmap;
-import android.graphics.Matrix;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
-import android.view.SurfaceHolder;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 
-import androidx.annotation.NonNull;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.openterface.AOS.ICameraHelper;
 import com.openterface.AOS.R;
 import com.openterface.AOS.activity.MainActivity;
 import com.openterface.AOS.databinding.ActivityMainBinding;
-import com.openterface.AOS.target.HidManager;
 // import com.openterface.AOS.target.MouseManager;
 import com.serenegiant.widget.AspectRatioSurfaceView;
 
 public class ZoomLayoutDeal {
     private static final String TAG = "OP-UI";
+
+    /**
+     * Per-frame trace for the indicator/scroll mapping. This runs on every MOVE
+     * event while the thumbnail is dragged, so the output stays off by default.
+     */
+    private static final boolean DEBUG_LAYOUT_LOG = false;
+
+    /** Below this the indicator is not worth re-laying out during a pinch. */
+    private static final int INDICATOR_SIZE_THRESHOLD = 3;
     private static MainActivity activity;
     private static DrawerLayout drawerLayout;
     private static View thumbnailContainer;
@@ -61,8 +63,6 @@ public class ZoomLayoutDeal {
     private final AspectRatioSurfaceView cameraViewSecond;
     private static ICameraHelper mCameraHelper;
     private ActivityMainBinding mBinding;
-    private static int setMaxViewX;
-    private static int setMaxViewY;
     private static int screenWidth;
     private static int screenHeight;
 
@@ -251,13 +251,11 @@ public class ZoomLayoutDeal {
             });
         }
 
-        // Now try to add surface if available
+        // Now try to add surface if available. Not having the binding view is no reason
+        // to skip the PiP setup below: the indicator must still be sized and draggable.
         if (activity.mBinding == null || activity.mBinding.cameraViewSecond == null) {
             Log.d(TAG, "enlargeView: cameraViewSecond not available");
-            return;
-        }
-
-        if (activity.mBinding.cameraViewSecond.getHolder() != null &&
+        } else if (activity.mBinding.cameraViewSecond.getHolder() != null &&
             activity.mBinding.cameraViewSecond.getHolder().getSurface() != null) {
             activity.mCameraHelper.addSurface(activity.mBinding.cameraViewSecond.getHolder().getSurface(), false);
         }
@@ -349,18 +347,25 @@ public class ZoomLayoutDeal {
             return;
         }
 
-        // Calculate center position of cameraViewSecond
-        float centerX = activity.cameraViewSecond.getWidth() / 2f - indicatorView.getWidth() / 2f;
-        float centerY = activity.cameraViewSecond.getHeight() / 2f - indicatorView.getHeight() / 2f;
+        // Use the requested sizes rather than the measured ones: this runs right after
+        // the indicator was resized, before the new size has been laid out.
+        float pipWidth = pipWidth();
+        float pipHeight = pipHeight();
+        float indicatorWidth = indicatorWidth();
+        float indicatorHeight = indicatorHeight();
+        if (pipWidth <= 0 || pipHeight <= 0) {
+            return;
+        }
+
+        float centerX = pipWidth / 2f - indicatorWidth / 2f;
+        float centerY = pipHeight / 2f - indicatorHeight / 2f;
 
         // Ensure the position stays within bounds
-        indicatorView.setX(Math.max(0, Math.min(centerX, activity.cameraViewSecond.getWidth() - indicatorView.getWidth())));
-        indicatorView.setY(Math.max(0, Math.min(centerY, activity.cameraViewSecond.getHeight() - indicatorView.getHeight())));
+        indicatorView.setX(Math.max(0, Math.min(centerX, pipWidth - indicatorWidth)));
+        indicatorView.setY(Math.max(0, Math.min(centerY, pipHeight - indicatorHeight)));
 
         // Sync main view to match the centered indicator
-        syncMainViewPosition(centerX + indicatorView.getWidth() / 2f, centerY + indicatorView.getHeight() / 2f);
-
-        Log.d(TAG, "Indicator reset to center: x=" + indicatorView.getX() + ", y=" + indicatorView.getY());
+        syncMainViewPosition(centerX + indicatorWidth / 2f, centerY + indicatorHeight / 2f);
     }
 
     private static void showThumbnailWindow() {
@@ -371,65 +376,147 @@ public class ZoomLayoutDeal {
         }
 
         // Generate thumbnail
-        generateThumbnail();
-
-        // Set drag and drop listening
         setupThumbnailDrag();
 
         // Initialize indicator position based on current main view state
         initializeIndicatorPosition();
-    }
 
-    private static void generateThumbnail() {
-        if (activity == null || activity.mBinding == null || activity.mBinding.viewMainPreview == null) {
-            Log.e(TAG, "TextureView is not available");
-            return;
-        }
-
-        if (!activity.mBinding.viewMainPreview.isAvailable()) {
-            Log.e(TAG, "TextureView is not available");
-            return;
-        }
-
-        try {
-            Bitmap mainBitmap = activity.mBinding.viewMainPreview.getBitmap();
-            if (mainBitmap == null) {
-                Log.e(TAG, "Failed to get bitmap from TextureView");
-                return;
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "Exception getting bitmap: " + e.getMessage());
+        // On the frame the container is made visible it has no measured size yet, so the
+        // indicator was sized from the requested layout values. Size it again from the real
+        // PiP size as soon as the first layout pass lands.
+        if (thumbnailContainer != null) {
+            thumbnailContainer.addOnLayoutChangeListener(new View.OnLayoutChangeListener() {
+                @Override
+                public void onLayoutChange(View v, int left, int top, int right, int bottom,
+                                           int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                    if (right - left <= 0 || bottom - top <= 0) {
+                        return;
+                    }
+                    v.removeOnLayoutChangeListener(this);
+                    applyIndicatorSize(currentZoomScale());
+                    resetIndicatorToCenter();
+                }
+            });
         }
     }
 
-    /**
-     * Initialize indicator position based on current main view zoom/pan state
-     * This ensures the green box shows the correct area of the main view
-     */
     private static void initializeIndicatorPosition() {
         if (indicatorView == null || activity == null || activity.cameraViewSecond == null ||
             activity.mBinding == null || activity.mBinding.viewMainPreview == null) {
             return;
         }
 
-        // Get current zoom scale from CustomTouchListener
-        float currentScale = getCurrentPortraitZoomScale();
-
-        // Calculate indicator size based on zoom scale
-        // When zoomed in, the visible area is smaller, so indicator should be smaller
-        float indicatorWidth = activity.cameraViewSecond.getWidth() / currentScale;
-        float indicatorHeight = activity.cameraViewSecond.getHeight() / currentScale;
-
-        // Constrain indicator size
-        indicatorWidth = Math.max(20f, Math.min(indicatorWidth, activity.cameraViewSecond.getWidth()));
-        indicatorHeight = Math.max(20f, Math.min(indicatorHeight, activity.cameraViewSecond.getHeight()));
-
-        indicatorView.getLayoutParams().width = (int) indicatorWidth;
-        indicatorView.getLayoutParams().height = (int) indicatorHeight;
-        indicatorView.requestLayout();
+        applyIndicatorSize(currentZoomScale());
 
         // Position indicator at center initially
         resetIndicatorToCenter();
+    }
+
+    /**
+     * Size of the PiP. The container is what the user sees, so it is the reference; the
+     * surface view can measure differently. Falls back to the requested layout size while
+     * the container has not been laid out yet.
+     */
+    private static float pipWidth() {
+        if (thumbnailContainer != null && thumbnailContainer.getWidth() > 0) {
+            return thumbnailContainer.getWidth();
+        }
+        if (activity != null && activity.cameraViewSecond != null && activity.cameraViewSecond.getWidth() > 0) {
+            return activity.cameraViewSecond.getWidth();
+        }
+        if (activity != null && activity.cameraViewSecond != null) {
+            ViewGroup.LayoutParams params = activity.cameraViewSecond.getLayoutParams();
+            if (params != null && params.width > 0) return params.width;
+        }
+        if (thumbnailContainer != null && thumbnailContainer.getLayoutParams() != null) {
+            return Math.max(0, thumbnailContainer.getLayoutParams().width);
+        }
+        return 0f;
+    }
+
+    private static float pipHeight() {
+        if (thumbnailContainer != null && thumbnailContainer.getHeight() > 0) {
+            return thumbnailContainer.getHeight();
+        }
+        if (activity != null && activity.cameraViewSecond != null && activity.cameraViewSecond.getHeight() > 0) {
+            return activity.cameraViewSecond.getHeight();
+        }
+        if (activity != null && activity.cameraViewSecond != null) {
+            ViewGroup.LayoutParams params = activity.cameraViewSecond.getLayoutParams();
+            if (params != null && params.height > 0) return params.height;
+        }
+        if (thumbnailContainer != null && thumbnailContainer.getLayoutParams() != null) {
+            return Math.max(0, thumbnailContainer.getLayoutParams().height);
+        }
+        return 0f;
+    }
+
+    /**
+     * Indicator size as currently requested. The measured size is stale right after a
+     * resize, so the layout parameters win when they are set.
+     */
+    private static float indicatorWidth() {
+        if (indicatorView == null) return 0f;
+        ViewGroup.LayoutParams params = indicatorView.getLayoutParams();
+        return params != null && params.width > 0 ? params.width : indicatorView.getWidth();
+    }
+
+    private static float indicatorHeight() {
+        if (indicatorView == null) return 0f;
+        ViewGroup.LayoutParams params = indicatorView.getLayoutParams();
+        return params != null && params.height > 0 ? params.height : indicatorView.getHeight();
+    }
+
+    /**
+     * The zoom that is actually applied to what the user sees: landscape scales the
+     * drawer, portrait scales the image matrix. Reading the portrait scale in landscape
+     * always returned 1.0 and the indicator never matched the real viewport.
+     */
+    private static float currentZoomScale() {
+        if (drawerLayout != null) {
+            return Math.max(1f, drawerLayout.getScaleX());
+        }
+        return Math.max(1f, getCurrentPortraitZoomScale());
+    }
+
+    /**
+     * The PiP shows the whole frame and the indicator the part of it that is on screen,
+     * so the indicator is the PiP size divided by the zoom.
+     *
+     * @return the applied indicator size as {width, height}
+     */
+    private static float[] applyIndicatorSize(float zoomScale) {
+        float pipWidth = pipWidth();
+        float pipHeight = pipHeight();
+        if (indicatorView == null || pipWidth <= 0 || pipHeight <= 0) {
+            return new float[]{0f, 0f};
+        }
+
+        float scale = Math.max(1f, zoomScale);
+        float width = Math.max(20f, Math.min(pipWidth / scale, pipWidth));
+        float height = Math.max(20f, Math.min(pipHeight / scale, pipHeight));
+
+        ViewGroup.LayoutParams params = indicatorView.getLayoutParams();
+        if (params != null
+                && (Math.abs(params.width - (int) width) > INDICATOR_SIZE_THRESHOLD
+                || Math.abs(params.height - (int) height) > INDICATOR_SIZE_THRESHOLD)) {
+            params.width = (int) width;
+            params.height = (int) height;
+            indicatorView.setLayoutParams(params);
+            // Fires only when the size really changes, so a pinch produces a handful
+            // of lines. Useful to confirm the indicator tracks the real zoom.
+            Log.d(TAG, "indicator size " + params.width + "x" + params.height
+                    + " scale=" + scale + " pip=" + pipWidth + "x" + pipHeight);
+        }
+
+        return new float[]{width, height};
+    }
+
+    /**
+     * Called while the landscape zoom changes so the indicator tracks the viewport.
+     */
+    public static void updateIndicatorSize(float zoomScale) {
+        applyIndicatorSize(zoomScale);
     }
 
     /**
@@ -450,13 +537,13 @@ public class ZoomLayoutDeal {
         activity.cameraViewSecond.setOnTouchListener((v, event) -> {
             switch (event.getActionMasked()) {
                 case MotionEvent.ACTION_DOWN:
+                    if (indicatorView == null) {
+                        return true;
+                    }
                     // Record the offset between touch point and indicator position
                     // to prevent jumping when starting to drag
-                    if (indicatorView != null) {
-                        dragOffsetX = event.getX() - indicatorView.getX();
-                        dragOffsetY = event.getY() - indicatorView.getY();
-                    }
-                    // Update indicator position with offset preserved
+                    dragOffsetX = event.getX() - indicatorView.getX();
+                    dragOffsetY = event.getY() - indicatorView.getY();
                     updateIndicatorPosition(event.getX(), event.getY());
                     syncMainViewPosition(
                         indicatorView.getX() + indicatorView.getWidth() / 2f,
@@ -465,6 +552,9 @@ public class ZoomLayoutDeal {
                     return true;
 
                 case MotionEvent.ACTION_MOVE:
+                    if (indicatorView == null) {
+                        return true;
+                    }
                     // Dragging - update position with offset preserved
                     updateIndicatorPosition(event.getX(), event.getY());
                     syncMainViewPosition(
@@ -474,14 +564,14 @@ public class ZoomLayoutDeal {
                     return true;
 
                 case MotionEvent.ACTION_UP:
-                    setMouseLocation(setMaxViewX, setMaxViewY);
+                    setMouseLocation();
                     return true;
             }
             return false;
         });
     }
 
-    private static void setMouseLocation(int setMaxViewX, int setMaxViewY) {
+    private static void setMouseLocation() {
         // Don't move mouse to viewport center when BT mouse is connected
         // User is using the mouse, not touch gestures
         if (com.openterface.AOS.serial.CustomTouchListener.isBtMouseConnected()) {
@@ -500,10 +590,10 @@ public class ZoomLayoutDeal {
         }
 
         // Get the dimensions
-        float pipWidth = activity.cameraViewSecond.getWidth();
-        float pipHeight = activity.cameraViewSecond.getHeight();
-        float indicatorWidth = indicatorView.getWidth();
-        float indicatorHeight = indicatorView.getHeight();
+        float pipWidth = pipWidth();
+        float pipHeight = pipHeight();
+        float indicatorWidth = indicatorWidth();
+        float indicatorHeight = indicatorHeight();
 
         // Calculate the position using the drag offset to prevent jumping
         float indicatorX = x - dragOffsetX;
@@ -548,22 +638,9 @@ public class ZoomLayoutDeal {
         if (pipWidth <= 0 || pipHeight <= 0) return;
 
         // Calculate indicator size based on zoom scale
-        float indicatorWidth = pipWidth / zoomScale;
-        float indicatorHeight = pipHeight / zoomScale;
-        indicatorWidth = Math.max(20f, Math.min(indicatorWidth, pipWidth));
-        indicatorHeight = Math.max(20f, Math.min(indicatorHeight, pipHeight));
-
-        // Update indicator size only when changed significantly (avoid layout thrash during pinch)
-        final int INDICATOR_SIZE_THRESHOLD = 3;
-        ViewGroup.LayoutParams params = indicatorView.getLayoutParams();
-        int newWidth = (int) indicatorWidth;
-        int newHeight = (int) indicatorHeight;
-        if (Math.abs(params.width - newWidth) > INDICATOR_SIZE_THRESHOLD
-                || Math.abs(params.height - newHeight) > INDICATOR_SIZE_THRESHOLD) {
-            params.width = newWidth;
-            params.height = newHeight;
-            indicatorView.setLayoutParams(params);
-        }
+        float[] size = applyIndicatorSize(zoomScale);
+        float indicatorWidth = size[0];
+        float indicatorHeight = size[1];
 
         if (zoomScale <= 1.0f) {
             // Not zoomed, center the indicator
@@ -613,61 +690,44 @@ public class ZoomLayoutDeal {
         if (indicatorView == null || thumbnailContainer == null || activity == null ||
             activity.mBinding == null || activity.mBinding.viewMainPreview == null ||
             activity.cameraViewSecond == null) {
-            Log.d(TAG, "syncMainViewPosition: views not available, skipping");
+            if (DEBUG_LAYOUT_LOG) {
+                Log.d(TAG, "syncMainViewPosition: views not available, skipping");
+            }
             return;
         }
 
-        int[] location = new int[2];
-        indicatorView.getLocationInWindow(location);
-
-        int[] containerLocation = new int[2];
-        thumbnailContainer.getLocationInWindow(containerLocation);
-
-        // Computation center coordinate
-        float centerX = location[0] - containerLocation[0] + indicatorView.getWidth() / 2f;
-        float centerY = location[1] - containerLocation[1] + indicatorView.getHeight() / 2f;
-
-        Log.d(TAG, "X: " + centerX + ", Y: " + centerY);
-
-        Log.d(TAG, "sizeThumbX: " + thumbX + " sizeThumbY: " + thumbY);
-        // Calculate where the main view should scroll to
+        // This runs for every MOVE event while the thumbnail is dragged, so it
+        // stays free of logging and of work that is not needed for the mapping.
         ratioX = (float) (activity.mBinding.viewMainPreview.getWidth()) / activity.cameraViewSecond.getWidth();
         ratioY = (float) (activity.mBinding.viewMainPreview.getHeight()) / activity.cameraViewSecond.getHeight();
-        Log.d(TAG, "ratioX: " + ratioX + ", ratioY: " + ratioY);
 
         float mainX = thumbX * ratioX;
         float mainY = thumbY * ratioY;
 
         // In landscape mode, use drawerLayout to scroll the main view
         if (drawerLayout != null) {
-            float currentScale = drawerLayout.getScaleX();
-            Log.d(TAG, "currentScale: " + currentScale);
-            Log.d(TAG, "ratioX: " + ratioX + ", ratioY: " + ratioY);
-
-            Log.d(TAG, "mainX: " + mainX + " mainY: " + mainY);
-            // Update the main view location
-            Log.d(TAG, "mainX - drawerLayout.getWidth()/2f: " + (mainX - drawerLayout.getWidth()/2f));
-            Log.d(TAG, "mainY - drawerLayout.getHeight()/2f: " + (mainY - drawerLayout.getHeight()/2f));
+            int scrollX;
             if((mainX - drawerLayout.getWidth()/2f) < -(drawerLayout.getWidth()/ ratioX)){
-                setMaxViewX = (int)(-(drawerLayout.getWidth()/ ratioX));
+                scrollX = (int)(-(drawerLayout.getWidth()/ ratioX));
             } else if ((mainX - drawerLayout.getWidth()/2f) > (drawerLayout.getWidth()/ ratioX)) {
-                setMaxViewX = (int)((drawerLayout.getWidth()/ ratioX));
+                scrollX = (int)((drawerLayout.getWidth()/ ratioX));
             }else {
-                setMaxViewX = (int)(mainX - drawerLayout.getWidth()/2f);
+                scrollX = (int)(mainX - drawerLayout.getWidth()/2f);
             }
 
+            int scrollY;
             if((mainY - drawerLayout.getHeight()/2f) < -(drawerLayout.getHeight()/ ratioY)){
-                setMaxViewY = (int)(-(drawerLayout.getHeight()/ ratioY));
+                scrollY = (int)(-(drawerLayout.getHeight()/ ratioY));
             } else if ((mainY - drawerLayout.getHeight()/2f) > (drawerLayout.getHeight()/ ratioY)) {
-                setMaxViewY = (int)((drawerLayout.getHeight()/ ratioY));
+                scrollY = (int)((drawerLayout.getHeight()/ ratioY));
             }else {
-                setMaxViewY = (int)(mainY - drawerLayout.getHeight()/2f);
+                scrollY = (int)(mainY - drawerLayout.getHeight()/2f);
             }
-            Log.d(TAG, "setMaxViewX: " + setMaxViewX + " setMaxViewY: " + setMaxViewY);
-            drawerLayout.scrollTo(
-                    (setMaxViewX),
-                    (setMaxViewY)
-            );
+            if (DEBUG_LAYOUT_LOG) {
+                Log.d(TAG, "syncMainViewPosition: scrollX=" + scrollX
+                        + " scrollY=" + scrollY);
+            }
+            drawerLayout.scrollTo(scrollX, scrollY);
         } else {
             // In portrait mode, use CustomTouchListener's zoom state
             float currentZoomScale = com.openterface.AOS.serial.CustomTouchListener.getPortraitZoomScale();
@@ -732,13 +792,11 @@ public class ZoomLayoutDeal {
             com.openterface.AOS.serial.CustomTouchListener.setPortraitPan(newTranslateX, newTranslateY);
             com.openterface.AOS.serial.CustomTouchListener.applyCurrentPortraitTransform();
 
-            // Store for setMouseLocation calculation
-            setMaxViewX = (int) newTranslateX;
-            setMaxViewY = (int) newTranslateY;
-
-            Log.d(TAG, "Portrait mode: normalizedX=" + normalizedX + " normalizedY=" + normalizedY
-                + " translateX=" + newTranslateX + " translateY=" + newTranslateY
-                + " viewWidth=" + viewWidth + " viewHeight=" + viewHeight);
+            if (DEBUG_LAYOUT_LOG) {
+                Log.d(TAG, "Portrait mode: normalizedX=" + normalizedX + " normalizedY=" + normalizedY
+                    + " translateX=" + newTranslateX + " translateY=" + newTranslateY
+                    + " viewWidth=" + viewWidth + " viewHeight=" + viewHeight);
+            }
         }
     }
 

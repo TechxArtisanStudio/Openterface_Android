@@ -489,11 +489,10 @@ public class CustomTouchListener implements View.OnTouchListener {
     }
 
     /**
-     * Move the mouse cursor to the center of the currently visible viewport.
+     * Move the mouse cursor to the point of the target screen that is currently shown
+     * at the middle of the phone screen.
      */
     public static void moveMouseToViewportCenter() {
-        Log.d(TAG, "moveMouseToViewportCenter");
-
         if (activity == null || activity.mBinding == null
                 || activity.mBinding.viewMainPreview == null) {
             return;
@@ -503,21 +502,30 @@ public class CustomTouchListener implements View.OnTouchListener {
         float viewHeight = activity.mBinding.viewMainPreview.getHeight();
         if (viewWidth <= 0 || viewHeight <= 0) return;
 
-        // viewWidth/2 is already a view-local coordinate (Android reverses the parent matrix
-        // before dispatch), so the landscape drawer scale/scroll must NOT be applied here —
-        // doing so moved the cursor off-centre whenever landscape was zoomed.
+        float centerX = viewWidth / 2f;
+        float centerY = viewHeight / 2f;
+
+        // Landscape pans the video by scrolling the drawer, so the middle of the screen
+        // is a shifted content point. Without this shift the cursor was placed in the
+        // middle of the target desktop instead of the middle of what is on screen.
+        if (!isPortraitMode) {
+            androidx.drawerlayout.widget.DrawerLayout drawer = ZoomPanManager.getDrawerLayout();
+            if (drawer != null) {
+                centerX += drawer.getScrollX();
+                centerY += drawer.getScrollY();
+            }
+        }
+
+        // The point is already a view-local coordinate (Android reverses the parent matrix
+        // before dispatch), so the landscape drawer scale must NOT be applied here.
         float[] content = CoordinateConverter.mapToContentCoords(
-                viewWidth / 2f, viewHeight / 2f, viewWidth, viewHeight,
-                isPortraitMode, 1.0f, 0f, 0f);
+                centerX, centerY, viewWidth, viewHeight, isPortraitMode, 1.0f, 0f, 0f);
 
-        int hidWidth = HidManager.getScreenWidth();
-        int hidHeight = HidManager.getScreenHeight();
-        float hidX = content[0] / viewWidth * hidWidth;
-        float hidY = content[1] / viewHeight * hidHeight;
-
-        HidManager.sendHexAbsData(hidX, hidY);
-        Log.d(TAG, "moveMouseToViewportCenter: content=(" + content[0] + "," + content[1]
-                + ") hid=(" + hidX + "," + hidY + ")");
+        // Send it exactly like a tap does: sendHexAbsData takes view coordinates and
+        // converts them to the 12-bit HID range itself. Scaling by the view size here
+        // first and letting it be scaled a second time was a no-op at the centre but
+        // relied on screenWidth matching the view width.
+        HidManager.sendHexAbsData(content[0], content[1]);
     }
 
     // ===== System gesture exclusion =====

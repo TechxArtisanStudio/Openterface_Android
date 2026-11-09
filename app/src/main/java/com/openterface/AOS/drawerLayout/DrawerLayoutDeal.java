@@ -1,6 +1,5 @@
 package com.openterface.AOS.drawerLayout;
 
-import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.pm.PackageInfo;
@@ -19,10 +18,7 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 
-import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.openterface.AOS.R;
@@ -33,7 +29,15 @@ import com.openterface.AOS.target.MouseModeManager;
 import com.openterface.AOS.utils.MouseModePreferences;
 import com.openterface.AOS.vnc.VncServerConfig;
 
-public class DrawerLayoutDeal extends Fragment {
+/**
+ * Helper that wires the landscape drawer/settings panel.
+ * <p>
+ * This is a plain controller, not a fragment: it is only ever created with
+ * {@code new} and never handed to a FragmentManager. It used to extend
+ * Fragment without a no-arg constructor, which would have crashed the moment
+ * anything did try to restore it through the framework.
+ */
+public class DrawerLayoutDeal {
     private static final String TAG = "OP-UI";
     private final MainActivity activity;
     private final Context context;
@@ -84,9 +88,9 @@ public class DrawerLayoutDeal extends Fragment {
 
         // Initialize mouse mode buttons
         btnAbsolute = activity.findViewById(R.id.btn_absolute);
-        btnAbsoluteDrawable = btnAbsolute.getCompoundDrawables()[1];
+        btnAbsoluteDrawable = btnAbsolute != null ? btnAbsolute.getCompoundDrawables()[1] : null;
         btnRelative = activity.findViewById(R.id.btn_relative);
-        btnRelativeDrawable = btnRelative.getCompoundDrawables()[1];
+        btnRelativeDrawable = btnRelative != null ? btnRelative.getCompoundDrawables()[1] : null;
 
         // Initialize mouse mode from preferences
         MouseMode savedMode = MouseModePreferences.loadMode(context);
@@ -125,7 +129,7 @@ public class DrawerLayoutDeal extends Fragment {
             String appVersion = packageInfo.versionName;
             app_version.setText(appVersion);
         } catch (PackageManager.NameNotFoundException e) {
-            e.printStackTrace();
+            Log.e(TAG, "Cannot read app version: " + e.getMessage(), e);
             app_version.setText(R.string.unknown);
         }
         CameraVideoDeal();
@@ -170,26 +174,26 @@ public class DrawerLayoutDeal extends Fragment {
         });
 
         // Absolute mode button click handler
-        btnAbsolute.setOnClickListener(v -> {
-            if (btnAbsoluteDrawable != null) {
+        if (btnAbsolute != null) {
+            btnAbsolute.setOnClickListener(v -> {
                 MouseModeManager.setMode(MouseMode.ABSOLUTE);
                 MouseModePreferences.save(context, MouseMode.ABSOLUTE,
                     MouseModeManager.isTrackpadSensitivityEnabled());
                 updateMouseModeUI();
                 Log.d(TAG, "Switched to absolute mode");
-            }
-        });
+            });
+        }
 
         // Relative mode button click handler
-        btnRelative.setOnClickListener(v -> {
-            if (btnRelativeDrawable != null) {
+        if (btnRelative != null) {
+            btnRelative.setOnClickListener(v -> {
                 MouseModeManager.setMode(MouseMode.RELATIVE);
                 MouseModePreferences.save(context, MouseMode.RELATIVE,
                     MouseModeManager.isTrackpadSensitivityEnabled());
                 updateMouseModeUI();
                 Log.d(TAG, "Switched to relative mode");
-            }
-        });
+            });
+        }
     }
 
     /**
@@ -197,21 +201,34 @@ public class DrawerLayoutDeal extends Fragment {
      * Uses MouseModeManager as the single source of truth.
      */
     private void updateMouseModeUI() {
+        if (btnAbsolute == null || btnRelative == null) {
+            return;
+        }
+
         int white = context.getResources().getColor(android.R.color.white);
         int highlight = context.getResources().getColor(android.R.color.holo_red_light);
 
-        // Reset both buttons to white
-        btnAbsoluteDrawable.setColorFilter(white, PorterDuff.Mode.SRC_IN);
+        // Reset both buttons to white. The drawables come from the layout and may be
+        // absent, in which case only the label colour carries the state.
+        if (btnAbsoluteDrawable != null) {
+            btnAbsoluteDrawable.setColorFilter(white, PorterDuff.Mode.SRC_IN);
+        }
         btnAbsolute.setTextColor(white);
-        btnRelativeDrawable.setColorFilter(white, PorterDuff.Mode.SRC_IN);
+        if (btnRelativeDrawable != null) {
+            btnRelativeDrawable.setColorFilter(white, PorterDuff.Mode.SRC_IN);
+        }
         btnRelative.setTextColor(white);
 
         // Highlight the active mode
         if (MouseModeManager.isAbsoluteMode()) {
-            btnAbsoluteDrawable.setColorFilter(highlight, PorterDuff.Mode.SRC_IN);
+            if (btnAbsoluteDrawable != null) {
+                btnAbsoluteDrawable.setColorFilter(highlight, PorterDuff.Mode.SRC_IN);
+            }
             btnAbsolute.setTextColor(highlight);
         } else {
-            btnRelativeDrawable.setColorFilter(highlight, PorterDuff.Mode.SRC_IN);
+            if (btnRelativeDrawable != null) {
+                btnRelativeDrawable.setColorFilter(highlight, PorterDuff.Mode.SRC_IN);
+            }
             btnRelative.setTextColor(highlight);
         }
     }
@@ -293,7 +310,7 @@ public class DrawerLayoutDeal extends Fragment {
         if (currentBaudrate > 0) {
             currentText = context.getString(R.string.baudrate_current, String.valueOf(currentBaudrate));
         } else {
-            currentText = "Current: Not connected";
+            currentText = context.getString(R.string.baudrate_not_connected);
         }
         currentBaudrateText.setText(currentText);
         

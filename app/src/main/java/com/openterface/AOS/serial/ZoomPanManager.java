@@ -87,6 +87,14 @@ public class ZoomPanManager {
     }
 
     /**
+     * The drawer that hosts the preview in landscape; null in portrait, where the
+     * layout has no drawer at all.
+     */
+    public static DrawerLayout getDrawerLayout() {
+        return drawerLayout;
+    }
+
+    /**
      * Get effective zoom scale (minimum 1.0).
      */
     public static float getEffectiveZoomScale() {
@@ -210,6 +218,10 @@ public class ZoomPanManager {
         // Apply the new scale
         drawerLayout.setScaleX(newScale);
         drawerLayout.setScaleY(newScale);
+
+        // The PiP indicator stands for the visible part of the frame, so it has to
+        // follow the zoom; it used to keep the size picked when the PiP was created.
+        ZoomLayoutDeal.updateIndicatorSize(newScale);
 
         // Center pivot
         drawerLayout.setPivotX(drawerLayout.getWidth() / 2f);

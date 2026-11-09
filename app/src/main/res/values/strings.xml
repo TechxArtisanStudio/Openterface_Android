@@ -232,6 +232,7 @@
     <string name="baudrate_115200">115200 bps (Fast)</string>
     <string name="baudrate_dialog_cancel">Cancel</string>
     <string name="baudrate_current">Current: %s bps</string>
+    <string name="baudrate_not_connected">Current: Not connected</string>
 
     <!-- TouchPad Mode -->
     <string name="touchpad_toggle">TouchPad</string>
