@@ -1796,6 +1796,9 @@ public class UsbDeviceManager {
 
                     if (isOurDevice) {
                         Log.i(TAG, "Openterface device detached — cleaning up connection state");
+                        // A locked keycap would otherwise keep the left button pressed on
+                        // the host after the next reconnect.
+                        com.openterface.AOS.target.HidManager.unlockAll();
                         if (onConnectionStatusListener != null) {
                             onConnectionStatusListener.onDisconnected();
                         }

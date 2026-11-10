@@ -25,11 +25,11 @@ public class TouchInputHandler {
     // ===== Timing constants =====
     private static final long TAP_DELAY_MS = 150;
     private static final long TAP_TIMEOUT_MS = 400;
-    private static final long DOUBLE_TAP_TIMEOUT_MS = 300;
+    private static final long DOUBLE_TAP_TIMEOUT_MS = 400;
 
     // ===== Distance thresholds =====
     private static final float TAP_MOVE_THRESHOLD_PX = 10f;
-    private static final float DOUBLE_TAP_SLOP_PX = 15f;
+    private static final float DOUBLE_TAP_SLOP_PX = 32f;
     private static final float TWO_FINGER_TAP_MAX_PRESS_GAP_MS = 100f;
     // ===== Two-finger classification =====
     // A gesture is classified once, from the deltas accumulated since the first MOVE.
@@ -447,6 +447,18 @@ public class TouchInputHandler {
         // two-finger gesture and must not be handled as mouse input.
         inTwoFingerSequence = true;
 
+        // A second finger during a double-tap drag abandons the drag: the scroll and
+        // pinch frames would otherwise fight the pressed left button.
+        if (isDragMode) {
+            Log.d(TAG, "Two fingers down during drag → releasing left button");
+            releaseMouseAndReset();
+            isDragMode = false;
+            lastMoveX = 0;
+            lastMoveY = 0;
+            lastMoveMSX = 0;
+            lastMoveMSY = 0;
+        }
+
         twoFingerDownCenterX = (event.getX(0) + event.getX(1)) / 2f;
         twoFingerDownCenterY = (event.getY(0) + event.getY(1)) / 2f;
         twoFingerPrevX = twoFingerDownCenterX;
@@ -611,7 +623,7 @@ public class TouchInputHandler {
                         CoordinateConverter.isPortraitMode(),
                         1.0f, 0, 0);
                 HidManager.sendHexAbsButtonClickData("SecRightData", content[0], content[1]);
-                HidManager.sendHexAbsData(content[0], content[1]);
+                HidManager.sendHexAbsReleaseData(content[0], content[1]);
             } else {
                 // Same as the single tap: no movement along with the click.
                 HidManager.sendHexRelData("SecRightData", 0, 0, 0, 0);
@@ -683,7 +695,7 @@ public class TouchInputHandler {
                     CoordinateConverter.isPortraitMode(),
                     1.0f, 0, 0);
             HidManager.sendHexAbsButtonClickData("SecLeftData", content[0], content[1]);
-            HidManager.sendHexAbsData(content[0], content[1]);
+            HidManager.sendHexAbsReleaseData(content[0], content[1]);
         } else {
             // Relative mode: a click must carry no movement. The previous form
             // passed (x, y, 0, 0), so the view coordinate became a delta and was
@@ -702,7 +714,7 @@ public class TouchInputHandler {
                     lastMoveMSX, lastMoveMSY, viewW, viewH,
                     CoordinateConverter.isPortraitMode(),
                     1.0f, 0, 0);
-            HidManager.sendHexAbsData(content[0], content[1]);
+            HidManager.sendHexAbsReleaseData(content[0], content[1]);
         } else {
             HidManager.releaseMSRelData();
         }
@@ -722,7 +734,7 @@ public class TouchInputHandler {
                 1.0f, 0, 0);
 
         if (MouseModeManager.isAbsoluteMode()) {
-            HidManager.sendHexAbsData(content[0], content[1]);
+            HidManager.sendHexAbsReleaseData(content[0], content[1]);
         } else {
             HidManager.releaseMSRelData();
         }

@@ -1141,6 +1141,9 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         // Focus can be lost before ACTION_UP arrives. Drop any held key so the
         // target does not keep repeating while the app sits in the background.
         HidManager.sendKeyBoardReleaseQueued();
+        // A locked keycap keeps a mouse button down in the host for the same reason.
+        HidManager.unlockAll();
+        HidManager.releaseMSRelData();
         if (mIsRecording) {
             toggleVideoRecord(false);
         }
@@ -1166,6 +1169,9 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         // Release the mouse event worker thread
         HidManager.releaseMouse();
 
+        // Stop the keycap frame queue
+        mouseStripExecutor.shutdownNow();
+
         // Cleanup debug broadcast receiver
         if (debugReceiver != null) {
             unregisterReceiver(debugReceiver);
@@ -1186,6 +1192,11 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         isPortraitMode = (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT);
 
         Log.d(TAG, "Configuration changed: " + (isPortraitMode ? "PORTRAIT" : "LANDSCAPE"));
+
+        // The layout is rebuilt below, so the new keycaps are all unlocked. Release the
+        // buttons the old ones kept pressed, otherwise every later move is a drag.
+        HidManager.unlockAll();
+        HidManager.releaseMSRelData();
 
         // Reload layout for new orientation
         reloadLayoutForOrientation();
@@ -2734,9 +2745,9 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
                 Log.e(TAG, "VNC mouse click: " + mouseClick);
                 HidManager.sendHexAbsButtonClickData(mouseClick, x, y);
             } else {
-                // Button release - send release (null click at position)
+                // Button release - a plain move would keep the held button pressed
                 Log.e(TAG, "VNC mouse release");
-                HidManager.sendHexAbsData(x, y);
+                HidManager.sendHexAbsReleaseData(x, y);
             }
             lastVncButtonMask = buttonMask;
         } else if (buttonMask == 0) {
@@ -3496,24 +3507,12 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
                             default:
                                 clickType = "SecNullData";
                         }
-                        sendMouseClick(clickType);
+                        sendMouseStripPress(clickType);
                     }
 
                     @Override
                     public void onMouseRelease() {
-                        String releaseData = com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
-                            com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
-                            com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("address") +
-                            com.openterface.AOS.target.CH9329MSKBMap.CmdData().get("CmdMS_REL") +
-                            com.openterface.AOS.target.CH9329MSKBMap.DataLen().get("DataLenRelMS") +
-                            com.openterface.AOS.target.CH9329MSKBMap.MSRelData().get("FirstData") +
-                            com.openterface.AOS.target.CH9329MSKBMap.MSRelData().get("SecNullData") +
-                            "00" + "00" + "00";
-                        releaseData += com.openterface.AOS.serial.CH9329Function.makeChecksum(releaseData);
-                        byte[] bytes = com.openterface.AOS.serial.CH9329Function.hexStringToByteArray(releaseData);
-                        if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
-                            usbDeviceManager.writeData(bytes);
-                        }
+                        sendMouseStripRelease();
                     }
 
                     @Override
@@ -3531,6 +3530,10 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
                         // Deprecated: scroll handled by BasicPortraitScrollStripView
                     }
                 });
+
+            // A locked keycap has to keep its button pressed across gestures; report the
+            // lock state separately from the press/release callbacks.
+            portraitMouseStrip.setOnLockChangeListener(this::applyKeycapLock);
         }
 
         // Setup scroll strip
@@ -3557,42 +3560,77 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
     }
 
     /**
-     * Send a mouse click via CH9329 HID protocol
+     * Keycap press/release frames share one queue: they used to run on two independent
+     * threads, so a fast tap could deliver the release before the press and leave the
+     * button down in the host.
      */
-    private void sendMouseClick(String clickType) {
-        new Thread(() -> {
-            try {
-                String clickData = com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
-                    com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
-                    com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("address") +
-                    com.openterface.AOS.target.CH9329MSKBMap.CmdData().get("CmdMS_REL") +
-                    com.openterface.AOS.target.CH9329MSKBMap.DataLen().get("DataLenRelMS") +
-                    com.openterface.AOS.target.CH9329MSKBMap.MSRelData().get("FirstData") +
-                    clickType + "00" + "00" + "00";
-                clickData += com.openterface.AOS.serial.CH9329Function.makeChecksum(clickData);
-                byte[] bytes = com.openterface.AOS.serial.CH9329Function.hexStringToByteArray(clickData);
-                if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
-                    usbDeviceManager.writeData(bytes);
-                }
-                // Auto release after 30ms
-                Thread.sleep(30);
-                String releaseData = com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
-                    com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
-                    com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("address") +
-                    com.openterface.AOS.target.CH9329MSKBMap.CmdData().get("CmdMS_REL") +
-                    com.openterface.AOS.target.CH9329MSKBMap.DataLen().get("DataLenRelMS") +
-                    com.openterface.AOS.target.CH9329MSKBMap.MSRelData().get("FirstData") +
-                    com.openterface.AOS.target.CH9329MSKBMap.MSRelData().get("SecNullData") +
-                    "00" + "00" + "00";
-                releaseData += com.openterface.AOS.serial.CH9329Function.makeChecksum(releaseData);
-                bytes = com.openterface.AOS.serial.CH9329Function.hexStringToByteArray(releaseData);
-                if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
-                    usbDeviceManager.writeData(bytes);
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Error sending mouse click: " + e.getMessage());
+    private final java.util.concurrent.ExecutorService mouseStripExecutor =
+            java.util.concurrent.Executors.newSingleThreadExecutor();
+
+    /**
+     * Press a keycap button. The button stays pressed until sendMouseStripRelease(): the
+     * long-press lock and the "hold L and drag" gesture both rely on it. Releasing it
+     * from this side after 30 ms made every hold-to-drag impossible.
+     */
+    private void sendMouseStripPress(String clickType) {
+        HidManager.setHeldButton(clickType);
+        String hex = CH9329MSKBMap.MSAbsData().get(clickType);
+        final String buttonByte = (hex == null) ? "00" : hex;
+        mouseStripExecutor.execute(() -> writeMouseStripFrame(buttonByte));
+    }
+
+    /**
+     * Release the keycap buttons. Only the buttons that are still locked stay pressed,
+     * so unlocking one keycap does not drop another one.
+     */
+    private void sendMouseStripRelease() {
+        HidManager.setHeldButton(null);
+        final String buttonByte = String.format("%02X", HidManager.getLockedMask());
+        mouseStripExecutor.execute(() -> writeMouseStripFrame(buttonByte));
+    }
+
+    /** One relative-mode frame carrying a raw CH9329 button byte. */
+    private void writeMouseStripFrame(String buttonHex) {
+        try {
+            String data = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
+                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
+                    CH9329MSKBMap.getKeyCodeMap().get("address") +
+                    CH9329MSKBMap.CmdData().get("CmdMS_REL") +
+                    CH9329MSKBMap.DataLen().get("DataLenRelMS") +
+                    CH9329MSKBMap.MSRelData().get("FirstData") +
+                    buttonHex + "00" + "00" + "00";
+            data += CH9329Function.makeChecksum(data);
+            byte[] bytes = CH9329Function.hexStringToByteArray(data);
+            if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                usbDeviceManager.writeData(bytes);
             }
-        }).start();
+        } catch (Exception e) {
+            Log.e(TAG, "Error sending keycap frame: " + e.getMessage());
+        }
+    }
+
+    /** Keep a locked keycap pressed in the host independently of the touch gestures. */
+    private void applyKeycapLock(int buttonMask, boolean locked) {
+        String button = keycapName(buttonMask);
+        if (button == null) return;
+        if (locked) {
+            HidManager.lockButton(button);
+        } else {
+            HidManager.unlockButton(button);
+        }
+    }
+
+    private static String keycapName(int buttonMask) {
+        switch (buttonMask) {
+            case com.openterface.AOS.view.MouseControlStripView.BTN_LEFT:
+                return "SecLeftData";
+            case com.openterface.AOS.view.MouseControlStripView.BTN_MIDDLE:
+                return "SecMiddleData";
+            case com.openterface.AOS.view.MouseControlStripView.BTN_RIGHT:
+                return "SecRightData";
+            default:
+                return null;
+        }
     }
 
     /**
@@ -4215,48 +4253,13 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
                             clickType = "SecNullData";
                     }
                     Log.d(TAG, "Mouse strip button click: " + clickType);
-                    new Thread(() -> {
-                        try {
-                            String clickData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
-                                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
-                                    CH9329MSKBMap.getKeyCodeMap().get("address") +
-                                    CH9329MSKBMap.CmdData().get("CmdMS_REL") +
-                                    CH9329MSKBMap.DataLen().get("DataLenRelMS") +
-                                    CH9329MSKBMap.MSRelData().get("FirstData") +
-                                    clickType + "00" + "00" + "00";
-                            clickData += CH9329Function.makeChecksum(clickData);
-                            byte[] bytes = CH9329Function.hexStringToByteArray(clickData);
-                            if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
-                                usbDeviceManager.writeData(bytes);
-                            }
-                        } catch (Exception e) {
-                            Log.e(TAG, "Error sending mouse click: " + e.getMessage());
-                        }
-                    }).start();
+                    sendMouseStripPress(clickType);
                 }
 
                 @Override
                 public void onMouseRelease() {
                     Log.d(TAG, "Mouse strip button release");
-                    new Thread(() -> {
-                        try {
-                            String releaseData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
-                                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
-                                    CH9329MSKBMap.getKeyCodeMap().get("address") +
-                                    CH9329MSKBMap.CmdData().get("CmdMS_REL") +
-                                    CH9329MSKBMap.DataLen().get("DataLenRelMS") +
-                                    CH9329MSKBMap.MSRelData().get("FirstData") +
-                                    CH9329MSKBMap.MSRelData().get("SecNullData") +
-                                    "00" + "00" + "00";
-                            releaseData += CH9329Function.makeChecksum(releaseData);
-                            byte[] bytes = CH9329Function.hexStringToByteArray(releaseData);
-                            if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
-                                usbDeviceManager.writeData(bytes);
-                            }
-                        } catch (Exception e) {
-                            Log.e(TAG, "Error releasing mouse button: " + e.getMessage());
-                        }
-                    }).start();
+                    sendMouseStripRelease();
                 }
 
                 @Override
@@ -4274,6 +4277,9 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
                     // Deprecated: scroll handled by BasicPortraitScrollStripView
                 }
             });
+
+            // A locked keycap has to keep its button pressed across gestures.
+            mouseControlStripView.setOnLockChangeListener(this::applyKeycapLock);
         }
 
         // Setup landscape scroll strip

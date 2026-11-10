@@ -561,9 +561,17 @@ public class BtMouseInputHandler {
 
             HidManager.sendBtMouseHidAbsButtonClickData(buttonKey, virtualHidX, virtualHidY);
         } else {
-            // A click carries no movement. Prev stays untouched because the pointer
-            // did not move; the next motion frame keeps subtracting the same baseline.
-            HidManager.sendHexRelData(buttonKey, 0, 0, 0, 0);
+            // Relative mode: a drag frame must carry the same delta a plain move would.
+            // Sending (0,0) froze the host cursor while the button was held, so a BT
+            // mouse drag looked like "nothing happens".
+            if (!btMouseRelInitialized) {
+                btMouseRelPrevX = x;
+                btMouseRelPrevY = y;
+                btMouseRelInitialized = true;
+            }
+            HidManager.sendHexRelData(buttonKey, x, y, btMouseRelPrevX, btMouseRelPrevY);
+            btMouseRelPrevX = x;
+            btMouseRelPrevY = y;
         }
     }
 
@@ -594,9 +602,9 @@ public class BtMouseInputHandler {
                     + ") contentCoords=(" + contentCoords[0] + "," + contentCoords[1]
                     + ") hidCoords=(" + hidCoords[0] + "," + hidCoords[1] + ")");
 
-            HidManager.sendBtMouseHidAbsData(hidCoords[0], hidCoords[1]);
+            HidManager.sendBtMouseHidAbsReleaseData(hidCoords[0], hidCoords[1]);
         } else {
-            HidManager.sendHexRelData("SecNullData", 0, 0, 0, 0);
+            HidManager.releaseMSRelData();
         }
     }
 

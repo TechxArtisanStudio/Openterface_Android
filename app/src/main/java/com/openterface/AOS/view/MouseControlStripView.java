@@ -68,6 +68,21 @@ public class MouseControlStripView extends LinearLayout {
 
     private OnMouseClickListener mouseClickListener;
 
+    /**
+     * Told when a keycap is locked or unlocked. A lock keeps the mouse button pressed
+     * in the host on its own, independently of the gestures that press and release
+     * buttons, so it has to be reported separately from onMouseClick/onMouseRelease.
+     */
+    public interface OnLockChangeListener {
+        /**
+         * @param buttonMask BTN_LEFT / BTN_MIDDLE / BTN_RIGHT
+         * @param locked     true when the long press locked it, false when a tap unlocked it
+         */
+        void onLockChanged(int buttonMask, boolean locked);
+    }
+
+    private OnLockChangeListener lockChangeListener;
+
     public MouseControlStripView(Context context) {
         super(context);
         init(context);
@@ -134,6 +149,7 @@ public class MouseControlStripView extends LinearLayout {
             int x = HidManager.getScreenWidth() / 2;
             int y = HidManager.getScreenHeight() / 2;
             String clickType = getClickTypeString(buttonMask);
+            HidManager.setHeldButton(clickType);
             HidManager.sendHexAbsButtonClickData(clickType, x, y);
         }
     }
@@ -142,7 +158,14 @@ public class MouseControlStripView extends LinearLayout {
         if (mouseClickListener != null) {
             mouseClickListener.onMouseRelease();
         } else {
+            HidManager.setHeldButton(null);
             HidManager.releaseMSRelData();
+        }
+    }
+
+    private void notifyLockChanged(int buttonMask, boolean locked) {
+        if (lockChangeListener != null) {
+            lockChangeListener.onLockChanged(buttonMask, locked);
         }
     }
 
@@ -157,6 +180,10 @@ public class MouseControlStripView extends LinearLayout {
 
     public void setOnMouseClickListener(OnMouseClickListener listener) {
         this.mouseClickListener = listener;
+    }
+
+    public void setOnLockChangeListener(OnLockChangeListener listener) {
+        this.lockChangeListener = listener;
     }
 
     public void setOpacity(int opacity) {
@@ -288,6 +315,7 @@ public class MouseControlStripView extends LinearLayout {
                         longPressFired = true;
                         isLocked = true;
                         updateLockedState(buttonMask, true);
+                        notifyLockChanged(buttonMask, true);
                         invalidate();
                         performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
                     };
@@ -307,6 +335,7 @@ public class MouseControlStripView extends LinearLayout {
                         isLocked = false;
                         isPressed = false;
                         updateLockedState(buttonMask, false);
+                        notifyLockChanged(buttonMask, false);
                         invalidate();
                         setButtonPressed(buttonMask, false);
                         sendMouseRelease();
