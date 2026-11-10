@@ -219,10 +219,6 @@
     <string name="settings_mouse_mode_relative">相对模式</string>
     <string name="settings_mouse_mode_absolute">绝对模式</string>
 
-    <!-- 蓝牙鼠标 -->
-    <string name="bt_mouse_connected">🖱️ 蓝牙鼠标已连接</string>
-    <string name="bt_mouse_not_connected">无蓝牙鼠标</string>
-    <string name="bt_mouse_banner_text">🖱️ 蓝牙鼠标激活中 — 直接控制目标电脑</string>
     <string name="settings_input_settings">输入设置</string>
     <string name="settings_pre_validate_text">发送前验证文本</string>
     <string name="settings_auto_save_draft">自动保存草稿</string>

@@ -576,13 +576,10 @@ public class ZoomLayoutDeal {
     }
 
     private void setMouseLocation() {
-        // Don't move mouse to viewport center when BT mouse is connected
-        // User is using the mouse, not touch gestures
-        if (com.openterface.AOS.serial.CustomTouchListener.isBtMouseConnected()) {
-            Log.d(TAG, "setMouseLocation: skipped - BT mouse connected");
-            return;
-        }
-        // Delegate to CustomTouchListener to calculate viewport center based on current zoom/pan state
+        // Always recentre after the drag: the whole point of dragging the viewport is to
+        // bring that part of the frame under the cursor. This used to be skipped while the
+        // BT mouse was "connected", and since that flag is a ten second activity window,
+        // simply moving the mouse left the cursor wherever it happened to be.
         com.openterface.AOS.serial.CustomTouchListener.moveMouseToViewportCenter();
         Log.d(TAG, "setMouseLocation: moved to viewport center");
     }

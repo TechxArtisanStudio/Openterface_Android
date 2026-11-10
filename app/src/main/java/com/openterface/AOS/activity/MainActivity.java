@@ -416,10 +416,6 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         // Initialize the mouse event worker thread
         HidManager.initMouse();
 
-        // Load saved mouse speed multiplier (default 50 → 1.0x)
-        int initialMouseSpeed = getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).getInt(KEY_MOUSE_SPEED, 50);
-        HidManager.setMouseSpeedMultiplier(progressToMouseSpeed(initialMouseSpeed));
-
         // Initialize mouse mode at startup using MouseModeManager
         com.openterface.AOS.target.MouseMode savedMode =
             com.openterface.AOS.utils.MouseModePreferences.loadMode(this);
@@ -466,7 +462,7 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
                     if (connected) {
                         CustomTouchListener.cancelBtMouseCursorRestore();
                     }
-                    updateBtMouseCursorState(connected);
+                    applyBtMousePointerCapture(connected);
                 });
             }
         });
@@ -1352,10 +1348,11 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         // Update UI controls to reflect current state
         updateUIControls();
 
-        // Re-apply cursor hiding after layout reload (BT mouse state persists across rotation)
+        // Re-install the captured-pointer hook after layout reload (BT mouse state persists
+        // across rotation)
         if (com.openterface.AOS.serial.CustomTouchListener.isBtMouseConnected()) {
-            updateBtMouseCursorState(true);
-            Log.d(TAG, "reloadLayoutForOrientation: BT mouse cursor hiding re-applied");
+            applyBtMousePointerCapture(true);
+            Log.d(TAG, "reloadLayoutForOrientation: BT mouse pointer capture re-applied");
         }
 
         Log.d(TAG, "reloadLayoutForOrientation: COMPLETE");
@@ -4381,8 +4378,6 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
     private final String KEY_SOUND_VOLUME = "key_sound_volume";
     private final String KEY_VIBRATE_ENABLED = "key_vibrate_enabled";
     private final String KEY_VIBRATE_INTENSITY = "key_vibrate_intensity";
-    private final String KEY_SCROLL_SPEED = "scroll_speed";
-    private final String KEY_MOUSE_SPEED = "mouse_speed";
     private final String KEY_PRE_VALIDATE = "pre_validate_enabled";
     private final String KEY_AUTO_SAVE = "auto_save_enabled";
 
@@ -4398,12 +4393,6 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         LinearLayout vibrateIntensityLayout = view.findViewById(R.id.settings_vibrate_intensity_layout);
         SeekBar vibrateSeekbar = view.findViewById(R.id.settings_vibrate_intensity_seekbar);
 
-        // === Mouse Settings ===
-        SeekBar scrollSpeedSeekbar = view.findViewById(R.id.settings_scroll_speed_seekbar);
-        TextView scrollSpeedValue = view.findViewById(R.id.settings_scroll_speed_value);
-        SeekBar mouseSpeedSeekbar = view.findViewById(R.id.settings_mouse_speed_seekbar);
-        TextView mouseSpeedValue = view.findViewById(R.id.settings_mouse_speed_value);
-
         // === IME Settings ===
         androidx.appcompat.widget.SwitchCompat preValidateSwitch = view.findViewById(R.id.settings_pre_validate_switch);
         androidx.appcompat.widget.SwitchCompat autoSaveSwitch = view.findViewById(R.id.settings_auto_save_switch);
@@ -4413,8 +4402,6 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         int soundVolume = prefs.getInt(KEY_SOUND_VOLUME, 80);
         boolean vibrateEnabled = prefs.getBoolean(KEY_VIBRATE_ENABLED, true);
         int vibrateIntensity = prefs.getInt(KEY_VIBRATE_INTENSITY, 60);
-        int scrollSpeed = prefs.getInt(KEY_SCROLL_SPEED, 50);
-        int mouseSpeed = prefs.getInt(KEY_MOUSE_SPEED, 50);
         boolean preValidate = prefs.getBoolean(KEY_PRE_VALIDATE, true);
         boolean autoSave = prefs.getBoolean(KEY_AUTO_SAVE, false);
 
@@ -4425,12 +4412,6 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         if (vibrateSwitch != null) vibrateSwitch.setChecked(vibrateEnabled);
         if (vibrateSeekbar != null) vibrateSeekbar.setProgress(vibrateIntensity);
         if (vibrateIntensityLayout != null) vibrateIntensityLayout.setVisibility(vibrateEnabled ? View.VISIBLE : View.GONE);
-        if (scrollSpeedSeekbar != null) scrollSpeedSeekbar.setProgress(scrollSpeed);
-        if (scrollSpeedValue != null) scrollSpeedValue.setText(getScrollSpeedLabel(scrollSpeed));
-        if (mouseSpeedSeekbar != null) mouseSpeedSeekbar.setProgress(mouseSpeed);
-        if (mouseSpeedValue != null) mouseSpeedValue.setText(getMouseSpeedLabel(mouseSpeed));
-        // Apply saved mouse speed multiplier to both Java and Core mouse implementations
-        com.openterface.AOS.target.HidManager.setMouseSpeedMultiplier(progressToMouseSpeed(mouseSpeed));
         if (preValidateSwitch != null) preValidateSwitch.setChecked(preValidate);
         if (autoSaveSwitch != null) autoSaveSwitch.setChecked(autoSave);
 
@@ -4466,38 +4447,6 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
             vibrateSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                     if (fromUser) prefs.edit().putInt(KEY_VIBRATE_INTENSITY, progress).apply();
-                }
-                @Override public void onStartTrackingTouch(SeekBar seekBar) {}
-                @Override public void onStopTrackingTouch(SeekBar seekBar) {}
-            });
-        }
-
-        // === Scroll Speed ===
-        if (scrollSpeedSeekbar != null) {
-            scrollSpeedSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                @Override
-                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    if (fromUser) {
-                        prefs.edit().putInt(KEY_SCROLL_SPEED, progress).apply();
-                        if (scrollSpeedValue != null) scrollSpeedValue.setText(getScrollSpeedLabel(progress));
-                    }
-                }
-                @Override public void onStartTrackingTouch(SeekBar seekBar) {}
-                @Override public void onStopTrackingTouch(SeekBar seekBar) {}
-            });
-        }
-
-        // === Mouse Move Speed ===
-        if (mouseSpeedSeekbar != null) {
-            mouseSpeedSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                @Override
-                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    if (fromUser) {
-                        prefs.edit().putInt(KEY_MOUSE_SPEED, progress).apply();
-                        if (mouseSpeedValue != null) mouseSpeedValue.setText(getMouseSpeedLabel(progress));
-                        // Apply multiplier immediately so it takes effect on next movement
-                        com.openterface.AOS.target.HidManager.setMouseSpeedMultiplier(progressToMouseSpeed(progress));
-                    }
                 }
                 @Override public void onStartTrackingTouch(SeekBar seekBar) {}
                 @Override public void onStopTrackingTouch(SeekBar seekBar) {}
@@ -4702,40 +4651,6 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         }
     }
 
-    private String getScrollSpeedLabel(int progress) {
-        if (progress <= 20) return getString(R.string.speed_very_slow);
-        if (progress <= 40) return getString(R.string.speed_slow);
-        if (progress <= 60) return getString(R.string.speed_medium);
-        if (progress <= 80) return getString(R.string.speed_fast);
-        return getString(R.string.speed_very_fast);
-    }
-
-    /**
-     * Convert SeekBar progress (0-100) to mouse speed multiplier (0.25x-3.0x).
-     * Uses piecewise linear mapping:
-     *   0-50   → 0.25x to 1.0x  (slow range, finer control)
-     *   50-100 → 1.0x to 3.0x   (fast range, wider spread)
-     * Default progress=50 maps to multiplier=1.0x.
-     */
-    private float progressToMouseSpeed(int progress) {
-        if (progress <= 50) {
-            return 0.25f + (progress / 50f) * 0.75f;
-        } else {
-            return 1.0f + ((progress - 50) / 50f) * 2.0f;
-        }
-    }
-
-    private String getMouseSpeedLabel(int progress) {
-        float multiplier = progressToMouseSpeed(progress);
-        String speed;
-        if (progress <= 15) speed = getString(R.string.speed_very_slow);
-        else if (progress <= 35) speed = getString(R.string.speed_slow);
-        else if (progress <= 65) speed = getString(R.string.speed_normal);
-        else if (progress <= 85) speed = getString(R.string.speed_fast);
-        else speed = getString(R.string.speed_very_fast);
-        return speed + " " + String.format("%.1f", multiplier) + "x";
-    }
-
     /**
      * Update mouse mode button states (selected/unselected).
      * Uses MouseMode enum for clear state representation.
@@ -4757,19 +4672,17 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
     }
 
     /**
-     * Update cursor visibility based on Bluetooth mouse connection state.
-     * When BT mouse is connected, hide the local cursor indicator for direct pass-through experience.
+     * Hook the Bluetooth mouse into the preview while it is in use: it installs the
+     * captured-pointer listener that forwards relative motion to the target.
+     *
+     * The green viewport indicator in the PiP is deliberately left alone. It used to be
+     * hidden from here, and because "connected" is really a ten second activity window,
+     * every mouse move made the indicator disappear and every pause brought it back.
      */
-    private void updateBtMouseCursorState(boolean btMouseConnected) {
-        Log.d(TAG, "updateBtMouseCursorState: btMouseConnected=" + btMouseConnected
+    private void applyBtMousePointerCapture(boolean btMouseConnected) {
+        Log.d(TAG, "applyBtMousePointerCapture: btMouseConnected=" + btMouseConnected
                 + " screenWidth=" + MouseManager.screenWidth
                 + " screenHeight=" + MouseManager.screenHeight);
-
-        // Hide/show the view_indicator (green cursor dot in PiP)
-        View viewIndicator = findViewById(R.id.view_indicator);
-        if (viewIndicator != null) {
-            viewIndicator.setVisibility(btMouseConnected ? View.GONE : View.VISIBLE);
-        }
 
         // NOTE: System cursor is now visible intentionally.
         // Users watch the phone screen - seeing the local cursor enter black borders
@@ -4796,46 +4709,6 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
                 mBinding.viewMainPreview.setOnCapturedPointerListener(null);
                 Log.d(TAG, "OnCapturedPointerListener removed");
             }
-        }
-
-        // Show a toast notification when BT mouse connects
-        if (btMouseConnected) {
-            Toast.makeText(this, R.string.bt_mouse_connected, Toast.LENGTH_SHORT).show();
-        }
-
-        // Update settings panel if it's open
-        if (currentModule == ModuleType.SETTINGS) {
-            updateBtMouseStatusInSettings(btMouseConnected);
-        }
-    }
-
-    /**
-     * Update BT mouse status display in settings panel.
-     */
-    private void updateBtMouseStatusInSettings(boolean btMouseConnected) {
-        // Find and update the BT mouse status text
-        TextView btMouseStatus = findViewById(R.id.settings_bt_mouse_status);
-        if (btMouseStatus != null) {
-            if (btMouseConnected) {
-                btMouseStatus.setText(R.string.bt_mouse_connected);
-                btMouseStatus.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
-            } else {
-                btMouseStatus.setText(R.string.bt_mouse_not_connected);
-                btMouseStatus.setTextColor(getResources().getColor(R.color.text_secondary));
-            }
-        }
-
-        // Hide/show mouse mode switcher based on BT mouse state
-        View mouseModeContainer = findViewById(R.id.settings_mouse_mode_container);
-        if (mouseModeContainer != null) {
-            // When BT mouse is connected, hide the mode switcher (we're always in pass-through)
-            mouseModeContainer.setVisibility(btMouseConnected ? View.GONE : View.VISIBLE);
-        }
-
-        // Show/hide BT mouse info banner
-        View btMouseBanner = findViewById(R.id.settings_bt_mouse_banner);
-        if (btMouseBanner != null) {
-            btMouseBanner.setVisibility(btMouseConnected ? View.VISIBLE : View.GONE);
         }
     }
 
@@ -4948,14 +4821,6 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         return getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).getInt(KEY_VIBRATE_INTENSITY, 60);
     }
 
-    public int getScrollSpeed() {
-        return getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).getInt(KEY_SCROLL_SPEED, 50);
-    }
-
-    public int getMouseSpeed() {
-        return getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).getInt(KEY_MOUSE_SPEED, 50);
-    }
-
     // ============================================================
     // SettingsFloatingFragment.SettingsCallback implementation
     // ============================================================
@@ -4996,17 +4861,6 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         if (keyboardSettingsManager != null) {
             keyboardSettingsManager.setVibrateStrength(intensity);
         }
-    }
-
-    @Override
-    public void setScrollSpeed(int speed) {
-        getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).edit().putInt(KEY_SCROLL_SPEED, speed).apply();
-    }
-
-    @Override
-    public void setMouseSpeed(int speed) {
-        getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).edit().putInt(KEY_MOUSE_SPEED, speed).apply();
-        HidManager.setMouseSpeedMultiplier(progressToMouseSpeed(speed));
     }
 
     /**

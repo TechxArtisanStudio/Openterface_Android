@@ -645,136 +645,32 @@
             android:textColor="@color/text_secondary"
             android:layout_marginBottom="4dp" />
 
-        <!-- BT Mouse Banner (shown when BT mouse is connected) -->
+        <!-- Mouse mode buttons. Absolute is what the touch pad drives; relative is only
+             used by the on-screen pointer controls, so the switcher is always visible. -->
         <LinearLayout
-            android:id="@+id/settings_bt_mouse_banner"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:padding="10dp"
-            android:layout_marginBottom="12dp"
-            android:background="#E8F5E9"
-            android:visibility="gone">
+            android:orientation="horizontal">
 
-            <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@drawable/baseline_mouse_24"
-                android:layout_marginEnd="8dp"
-                app:tint="#4CAF50" />
-
-            <TextView
+            <android.widget.Button
+                android:id="@+id/settings_mouse_mode_absolute"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/bt_mouse_banner_text"
-                android:textSize="12sp"
-                android:textColor="#2E7D32" />
-        </LinearLayout>
-
-        <!-- Mouse mode buttons container (hidden when BT mouse is connected) -->
-        <LinearLayout
-            android:id="@+id/settings_mouse_mode_container"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginBottom="12dp">
-
-                <android.widget.Button
-                    android:id="@+id/settings_mouse_mode_absolute"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="4dp"
-                    android:text="@string/settings_mouse_mode_absolute"
-                    android:textSize="11sp"
-                    android:background="@drawable/settings_button_selector" />
-
-                <android.widget.Button
-                    android:id="@+id/settings_mouse_mode_relative"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="4dp"
-                    android:text="@string/settings_mouse_mode_relative"
-                    android:textSize="11sp"
-                    android:background="@drawable/settings_button_selector" />
-            </LinearLayout>
-
-            <!-- BT Mouse status (shown when no BT mouse) -->
-            <TextView
-                android:id="@+id/settings_bt_mouse_status"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/bt_mouse_not_connected"
+                android:layout_marginEnd="4dp"
+                android:text="@string/settings_mouse_mode_absolute"
                 android:textSize="11sp"
-                android:textColor="@color/text_secondary"
-                android:layout_marginBottom="8dp" />
-        </LinearLayout>
+                android:background="@drawable/settings_button_selector" />
 
-        <!-- Scroll Speed -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingVertical="4dp">
-
-            <TextView
-                android:layout_width="wrap_content"
+            <android.widget.Button
+                android:id="@+id/settings_mouse_mode_relative"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="@string/settings_scroll_speed"
-                android:textSize="12sp"
-                android:textColor="@color/text_secondary" />
-
-            <SeekBar
-                android:id="@+id/settings_scroll_speed_seekbar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:max="100"
-                android:progress="50" />
-
-            <TextView
-                android:id="@+id/settings_scroll_speed_value"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/settings_speed_medium"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:text="@string/settings_mouse_mode_relative"
                 android:textSize="11sp"
-                android:textColor="@color/text_secondary" />
-        </LinearLayout>
-
-        <!-- Mouse Move Speed -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingVertical="4dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/settings_mouse_speed"
-                android:textSize="12sp"
-                android:textColor="@color/text_secondary" />
-
-            <SeekBar
-                android:id="@+id/settings_mouse_speed_seekbar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:max="100"
-                android:progress="50" />
-
-            <TextView
-                android:id="@+id/settings_mouse_speed_value"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="11sp"
-                android:textColor="@color/text_secondary" />
+                android:background="@drawable/settings_button_selector" />
         </LinearLayout>
 
     </LinearLayout>

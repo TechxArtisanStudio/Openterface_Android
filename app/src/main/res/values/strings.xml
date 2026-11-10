@@ -491,10 +491,6 @@
     <string name="settings_mouse_mode_relative">Relative</string>
     <string name="settings_mouse_mode_absolute">Absolute</string>
 
-    <!-- Bluetooth Mouse -->
-    <string name="bt_mouse_connected">🖱️ Bluetooth mouse connected</string>
-    <string name="bt_mouse_not_connected">No Bluetooth mouse</string>
-    <string name="bt_mouse_banner_text">🖱️ Bluetooth mouse active — controlling target directly</string>
     <string name="settings_input_settings">Input Settings</string>
     <string name="settings_pre_validate_text">Pre-send Validation</string>
     <string name="settings_auto_save_draft">Auto-save Draft</string>
