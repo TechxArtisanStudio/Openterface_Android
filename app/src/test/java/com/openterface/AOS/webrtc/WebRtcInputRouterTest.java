@@ -69,14 +69,15 @@ public class WebRtcInputRouterTest {
     }
 
     @Test
-    public void mouseButtonReleaseSendsMove() {
+    public void mouseButtonReleaseSendsRelease() {
         // First press a button
         router.onMouseEvent(1, 100, 200, true);
         assertEquals("sendAbsButtonClick", mockHidSender.lastAction);
 
-        // Then release (buttonMask=0) — should send move
+        // Then release (buttonMask=0) — the button has to be released explicitly,
+        // a plain move would keep it pressed in the host
         router.onMouseEvent(0, 100, 200, false);
-        assertEquals("sendAbsMove", mockHidSender.lastAction);
+        assertEquals("sendAbsRelease", mockHidSender.lastAction);
     }
 
     @Test
@@ -94,6 +95,7 @@ public class WebRtcInputRouterTest {
         // the actual mouse action (click/move) should NOT happen.
         assertNotEquals("sendAbsButtonClick", mockHidSender.lastAction);
         assertNotEquals("sendAbsMove", mockHidSender.lastAction);
+        assertNotEquals("sendAbsRelease", mockHidSender.lastAction);
     }
 
     // ====== Keyboard routing tests ======
@@ -393,14 +395,14 @@ public class WebRtcInputRouterTest {
     }
 
     @Test
-    public void mouseButtonRelease_fromLeftClick_sendsMove() {
+    public void mouseButtonRelease_fromLeftClick_sendsRelease() {
         // Press left button
         router.onMouseEvent(0x01, 100, 200, true);
         assertEquals("sendAbsButtonClick", mockHidSender.lastAction);
         
         // Release all buttons
         router.onMouseEvent(0x00, 100, 200, false);
-        assertEquals("sendAbsMove", mockHidSender.lastAction);
+        assertEquals("sendAbsRelease", mockHidSender.lastAction);
     }
 
     // ====== Unknown keysyms ======
@@ -453,7 +455,7 @@ public class WebRtcInputRouterTest {
 
         // Release mouse
         router.onMouseEvent(0, 100, 200, false);
-        assertEquals("sendAbsMove", mockHidSender.lastAction);
+        assertEquals("sendAbsRelease", mockHidSender.lastAction);
     }
 
     // ====== Mock implementations ======
@@ -486,6 +488,13 @@ public class WebRtcInputRouterTest {
         @Override
         public void sendAbsMove(int x, int y) {
             lastAction = "sendAbsMove";
+            lastX = x;
+            lastY = y;
+        }
+
+        @Override
+        public void sendAbsRelease(int x, int y) {
+            lastAction = "sendAbsRelease";
             lastX = x;
             lastY = y;
         }

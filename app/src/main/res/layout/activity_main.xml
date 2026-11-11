@@ -38,6 +38,13 @@
                     android:layout_centerInParent="true"
                     android:visibility="visible" />
 
+                <!-- Black border overlay - shows semi-transparent mask over non-video areas -->
+                <com.openterface.AOS.view.BlackBorderOverlayView
+                    android:id="@+id/blackBorderOverlay"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_centerInParent="true" />
+
                 <ImageView
                     android:id="@+id/tvConnectUSBCameraTip"
                     android:layout_width="wrap_content"
@@ -51,21 +58,6 @@
         </LinearLayout>
 
     </androidx.drawerlayout.widget.DrawerLayout>
-
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center|top">
-        <TextView
-            android:id="@+id/floating_label"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/KeyMouse_Drag"
-            android:layout_marginTop="5dp"
-            android:textColor="@color/text_on_surface"
-            android:background="@drawable/lable_background"
-            android:visibility="gone"/>
-    </LinearLayout>
 
     <LinearLayout
         android:layout_width="wrap_content"

@@ -73,8 +73,8 @@ public class WebRtcInputRouter {
                 else if ((buttonMask & 0x04) != 0) mouseClick = "SecRightData";
                 hidSender.sendAbsButtonClick(mouseClick, x, y);
             } else {
-                // Button release
-                hidSender.sendAbsMove(x, y);
+                // Button release - a plain move would keep it pressed in the host
+                hidSender.sendAbsRelease(x, y);
             }
             lastButtonMask = buttonMask;
         } else if (buttonMask == 0) {

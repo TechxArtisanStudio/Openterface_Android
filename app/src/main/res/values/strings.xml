@@ -221,12 +221,10 @@
     <string name="Host">Host</string>
 
     <!--    mouse ctrl mode-->
-    <string name="KeyMouse_Ctrl_Way">Mouse Ctrl Way</string>
-    <string name="KeyMouse_Abs_Ctrl">Touch\nMode</string>
-    <string name="KeyMouse_Abs_Drag_Ctrl">Drag\nMode</string>
+    <string name="KeyMouse_Ctrl_Way">Mouse Mode</string>
+    <string name="mouse_mode_absolute">Absolute</string>
+    <string name="mouse_mode_relative">Relative</string>
     <string name="KeyMouse_Drag">Dragging</string>
-    <string name="KeyMouse_Rel_Ctrl">Pointer\nMode</string>
-    <string name="KeyMouse_Trackpad_Ctrl">Trackpad\nMode</string>
     
     <!-- Baudrate Setting Dialog -->
     <string name="baudrate_dialog_title">Select Baudrate</string>
@@ -234,6 +232,7 @@
     <string name="baudrate_115200">115200 bps (Fast)</string>
     <string name="baudrate_dialog_cancel">Cancel</string>
     <string name="baudrate_current">Current: %s bps</string>
+    <string name="baudrate_not_connected">Current: Not connected</string>
 
     <!-- TouchPad Mode -->
     <string name="touchpad_toggle">TouchPad</string>
@@ -488,6 +487,10 @@
     <string name="settings_mouse_settings">Mouse Settings</string>
     <string name="settings_scroll_speed">Scroll Speed</string>
     <string name="settings_speed_medium">Medium</string>
+    <string name="settings_mouse_control_mode">Mouse Control Mode</string>
+    <string name="settings_mouse_mode_relative">Relative</string>
+    <string name="settings_mouse_mode_absolute">Absolute</string>
+
     <string name="settings_input_settings">Input Settings</string>
     <string name="settings_pre_validate_text">Pre-send Validation</string>
     <string name="settings_auto_save_draft">Auto-save Draft</string>

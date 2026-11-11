@@ -29,6 +29,17 @@ public class AndroidHidInputSender implements HidInputSender {
     }
 
     @Override
+    public void sendAbsRelease(int x, int y) {
+        // x,y are already normalized 0-4095 from WebRTC client
+        // Convert back to pixel coordinates for HidManager (which re-normalizes to 0-4095)
+        int width = HidManager.getScreenWidth();
+        int height = HidManager.getScreenHeight();
+        int pixelX = (int) (x / 4095.0f * width);
+        int pixelY = (int) (y / 4095.0f * height);
+        HidManager.sendHexAbsReleaseData(pixelX, pixelY);
+    }
+
+    @Override
     public void sendAbsButtonClick(String clickType, int x, int y) {
         // x,y are already normalized 0-4095 from WebRTC client
         // Convert back to pixel coordinates for HidManager (which re-normalizes to 0-4095)

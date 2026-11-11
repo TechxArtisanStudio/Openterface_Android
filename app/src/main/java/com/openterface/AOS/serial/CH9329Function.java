@@ -30,6 +30,13 @@ public class CH9329Function {
     private static final String TAG = "OP-SERIAL";
     private static UsbDeviceManager usbDeviceManager;
 
+    /**
+     * 逐包 hex 日志开关。
+     * 该日志位于每次 HID 报文下发的热路径上（鼠标拖动时 60~120 次/秒），常开会带来逐包
+     * String 重组与日志输出开销。排查键鼠报文时临时改为 true 即可。
+     */
+    public static final boolean DEBUG_SEND_LOG = false;
+
     public static String makeChecksum(String data) {
         int total = 0;
 
@@ -58,6 +65,9 @@ public class CH9329Function {
     }
 
     public static void checkSendLogData(String sendKBData) {
+        if (!DEBUG_SEND_LOG) {
+            return;
+        }
         StringBuilder check_send_data = new StringBuilder();
         for (int i = 0; i < sendKBData.length(); i += 2) {
             if (i + 2 <= sendKBData.length()) {
@@ -70,6 +80,9 @@ public class CH9329Function {
     }
 
     public static void ReleaseSendLogData(String releaseKBData) {
+        if (!DEBUG_SEND_LOG) {
+            return;
+        }
         StringBuilder check_release_data = new StringBuilder();
         for (int i = 0; i < releaseKBData.length(); i += 2) {
             check_release_data.append(releaseKBData.substring(i, i + 2)).append(" ");

@@ -50,6 +50,45 @@ public class MouseManagerCore {
         return mouseSpeedMultiplier;
     }
 
+    // Buttons held by a gesture in flight and buttons held by a locked keycap. A
+    // gesture release must not drop a lock, and a lock has to survive the finger being
+    // lifted, so the two masks are kept apart. Move frames carry their union: the next
+    // movement packet would otherwise release the button in the host and a drag would
+    // stop after one pixel.
+    private static volatile int gestureButtons = KeymodJNI.MS_BTN_NONE;
+    private static volatile int lockedButtons = KeymodJNI.MS_BTN_NONE;
+
+    /** Set the gesture buttons; 0 releases them, locked keycaps stay pressed. */
+    public static void setHeldButtons(int buttons) {
+        gestureButtons = buttons;
+    }
+
+    /** Add a button that stays pressed until it is unlocked (keycap long press). */
+    public static void lockButtons(int buttons) {
+        lockedButtons |= buttons;
+    }
+
+    /** Drop one locked button (the keycap was tapped again to unlock). */
+    public static void unlockButtons(int buttons) {
+        lockedButtons &= ~buttons;
+        gestureButtons &= ~buttons;
+    }
+
+    /** Drop every gesture and locked button: disconnect, rotation, activity stop. */
+    public static void unlockAll() {
+        gestureButtons = KeymodJNI.MS_BTN_NONE;
+        lockedButtons = KeymodJNI.MS_BTN_NONE;
+    }
+
+    /** Button mask every move frame has to carry. */
+    public static int getHeldButtons() {
+        return gestureButtons | lockedButtons;
+    }
+
+    public static int getLockedButtons() {
+        return lockedButtons;
+    }
+
     // Single worker thread for all mouse events
     private static HandlerThread sWorkerThread;
     private static MouseHandler sHandler;
@@ -57,8 +96,12 @@ public class MouseManagerCore {
     // Message types
     private static final int MSG_ABS_MOVE = 1;
     private static final int MSG_ABS_CLICK = 2;
-    private static final int MSG_ABS_DRAG = 3;
+    private static final int MSG_ABS_RELEASE_XY = 4;
     private static final int MSG_REL_MOVE = 5;
+    // BT mouse HID events - receive pre-converted HID coords, no scaling
+    private static final int MSG_BT_MOUSE_HID_MOVE = 11;
+    private static final int MSG_BT_MOUSE_HID_CLICK = 12;
+    private static final int MSG_BT_MOUSE_HID_RELEASE = 15;
 
     static {
         // Load native library
@@ -118,11 +161,51 @@ public class MouseManagerCore {
         sHandler.sendMessage(msg);
     }
 
-    public static void sendHexAbsDragData(float x, float y) {
+    /**
+     * Absolute move that releases the gesture buttons (end of click / drag). A locked
+     * keycap keeps its button pressed.
+     */
+    public static void sendHexAbsReleaseData(float x, float y) {
         if (sHandler == null) init();
-        Message msg = sHandler.obtainMessage(MSG_ABS_DRAG);
+        Message msg = sHandler.obtainMessage(MSG_ABS_RELEASE_XY);
         msg.arg1 = (int) (x * 1000);
         msg.arg2 = (int) (y * 1000);
+        sHandler.sendMessage(msg);
+    }
+
+    /**
+     * Send BT mouse absolute move with pre-converted HID coordinates [0, 4095].
+     * Bypasses Handler's view→HID scaling - sends HID coords directly.
+     */
+    public static void sendBtMouseHidAbsData(float hidX, float hidY) {
+        if (sHandler == null) init();
+        Message msg = sHandler.obtainMessage(MSG_BT_MOUSE_HID_MOVE);
+        msg.arg1 = (int) hidX;
+        msg.arg2 = (int) hidY;
+        sHandler.sendMessage(msg);
+    }
+
+    /**
+     * Send BT mouse button click with pre-converted HID coordinates [0, 4095].
+     * Bypasses Handler's view→HID scaling - sends HID coords directly.
+     */
+    public static void sendBtMouseHidAbsButtonClickData(String mouseClick, float hidX, float hidY) {
+        if (sHandler == null) init();
+        Message msg = sHandler.obtainMessage(MSG_BT_MOUSE_HID_CLICK);
+        msg.arg1 = (int) hidX;
+        msg.arg2 = (int) hidY;
+        msg.obj = mouseClick;
+        sHandler.sendMessage(msg);
+    }
+
+    /**
+     * BT mouse release with pre-converted HID coordinates [0, 4095].
+     */
+    public static void sendBtMouseHidAbsReleaseData(float hidX, float hidY) {
+        if (sHandler == null) init();
+        Message msg = sHandler.obtainMessage(MSG_BT_MOUSE_HID_RELEASE);
+        msg.arg1 = (int) hidX;
+        msg.arg2 = (int) hidY;
         sHandler.sendMessage(msg);
     }
 
@@ -140,27 +223,49 @@ public class MouseManagerCore {
             super(looper);
         }
 
+        /**
+         * Convert view coordinate to HID absolute coordinate.
+         * Uses 4095 (12-bit max) instead of 4096 to prevent overflow/wrapping at right/bottom edges.
+         * Clamps result to [0, 4095] range.
+         */
+        private int viewToHid(float viewCoord, float screenSize) {
+            if (screenSize <= 0) return 0;
+            int hid = (int) ((viewCoord / screenSize) * 4095f);
+            return Math.max(0, Math.min(4095, hid));
+        }
+
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case MSG_ABS_MOVE:
                     doSendHexAbsData(
-                            (int) ((msg.arg1 / 1000f) * 4096 / screenWidth),
-                            (int) ((msg.arg2 / 1000f) * 4096 / screenHeight));
+                            viewToHid(msg.arg1 / 1000f, screenWidth),
+                            viewToHid(msg.arg2 / 1000f, screenHeight));
                     break;
                 case MSG_ABS_CLICK:
                     doSendHexAbsButtonClickData((String) msg.obj,
-                            (int) ((msg.arg1 / 1000f) * 4096 / screenWidth),
-                            (int) ((msg.arg2 / 1000f) * 4096 / screenHeight));
+                            viewToHid(msg.arg1 / 1000f, screenWidth),
+                            viewToHid(msg.arg2 / 1000f, screenHeight));
                     break;
-                case MSG_ABS_DRAG:
-                    doSendHexAbsData(
-                            (int) ((msg.arg1 / 1000f) * 4096 / screenWidth),
-                            (int) ((msg.arg2 / 1000f) * 4096 / screenHeight));
+                case MSG_ABS_RELEASE_XY:
+                    doSendHexAbsReleaseData(
+                            viewToHid(msg.arg1 / 1000f, screenWidth),
+                            viewToHid(msg.arg2 / 1000f, screenHeight));
                     break;
                 case MSG_REL_MOVE:
                     RelData d = (RelData) msg.obj;
                     doSendHexRelData(d.click, d.sx, d.sy, d.lx, d.ly);
+                    break;
+                // BT mouse HID events - receive pre-converted HID coords [0,4095], send directly
+                // No scaling - normalizeBtMouseToHid in CustomTouchListener already did the conversion
+                case MSG_BT_MOUSE_HID_MOVE:
+                    doSendHexAbsData(msg.arg1, msg.arg2);
+                    break;
+                case MSG_BT_MOUSE_HID_CLICK:
+                    doSendHexAbsButtonClickData((String) msg.obj, msg.arg1, msg.arg2);
+                    break;
+                case MSG_BT_MOUSE_HID_RELEASE:
+                    doSendHexAbsReleaseData(msg.arg1, msg.arg2);
                     break;
             }
         }
@@ -169,14 +274,22 @@ public class MouseManagerCore {
     // ====== Core HID Implementation ======
 
     private static void doSendHexAbsData(int x1, int y1) {
+        // Keep the buttons that are currently held (locked keycap / ongoing drag).
         byte[] packet = KeymodJNI.buildMouseAbsPacket(
-                KeymodJNI.MS_BTN_NONE, x1, y1, 0);
+                gestureButtons | lockedButtons, x1, y1, 0);
         sendToDevice(packet, "absMove");
+    }
+
+    private static void doSendHexAbsReleaseData(int x1, int y1) {
+        gestureButtons = KeymodJNI.MS_BTN_NONE;
+        doSendHexAbsData(x1, y1);
     }
 
     private static void doSendHexAbsButtonClickData(String mouseClick, int x1, int y1) {
         int buttons = parseButtonMask(mouseClick);
-        byte[] packet = KeymodJNI.buildMouseAbsPacket(buttons, x1, y1, 0);
+        gestureButtons = buttons;
+        byte[] packet = KeymodJNI.buildMouseAbsPacket(
+                buttons | lockedButtons, x1, y1, 0);
         sendToDevice(packet, "absClick");
     }
 
@@ -190,6 +303,10 @@ public class MouseManagerCore {
         int dy = Math.max(-128, Math.min(127, yMovement));
 
         int buttons = parseButtonMask(mouseClick);
+        if (buttons == KeymodJNI.MS_BTN_NONE) {
+            // A move frame must not drop a held button (locked keycap / BT mouse drag).
+            buttons = gestureButtons | lockedButtons;
+        }
         byte[] packet = KeymodJNI.buildMouseRelPacket(buttons, dx, dy, 0);
         sendToDevice(packet, "relMove");
     }
@@ -200,6 +317,8 @@ public class MouseManagerCore {
             case "SecLeftData": return KeymodJNI.MS_BTN_LEFT;
             case "SecRightData": return KeymodJNI.MS_BTN_RIGHT;
             case "SecMiddleData": return KeymodJNI.MS_BTN_MIDDLE;
+            case "SecBackData": return KeymodJNI.MS_BTN_BACK;
+            case "SecForwardData": return KeymodJNI.MS_BTN_FORWARD;
             default: return KeymodJNI.MS_BTN_NONE;
         }
     }
@@ -230,30 +349,41 @@ public class MouseManagerCore {
 
     public static void handleDoubleClickAbs(float x, float y) {
         sendHexAbsButtonClickData("SecLeftData", x, y);
+        // The press above latched the left button; send the matching release at the same
+        // position so the click does not leave the host button down.
+        if (sHandler == null) init();
+        Message msg = sHandler.obtainMessage(MSG_ABS_RELEASE_XY);
+        msg.arg1 = (int) (x * 1000);
+        msg.arg2 = (int) (y * 1000);
+        sHandler.sendMessage(msg);
     }
 
     public static void handleTwoPress() {
-        // Right button press
-        byte[] packet = KeymodJNI.buildMouseRelPacket(KeymodJNI.MS_BTN_RIGHT, 0, 0, 0);
+        // Right button press - a locked keycap keeps its button held
+        byte[] packet = KeymodJNI.buildMouseRelPacket(
+                KeymodJNI.MS_BTN_RIGHT | gestureButtons | lockedButtons, 0, 0, 0);
         sendToDevice(packet, "twoPress");
     }
 
     public static void handleDoubleFingerPan(float startY, float lastY) {
         int dy = (int) (startY - lastY);
         dy = Math.max(-1, Math.min(1, dy)); // Clamp to -1, 0, 1
-        byte[] packet = KeymodJNI.buildMouseRelPacket(KeymodJNI.MS_BTN_MIDDLE, 0, dy, 0);
+        byte[] packet = KeymodJNI.buildMouseRelPacket(
+                KeymodJNI.MS_BTN_MIDDLE | gestureButtons | lockedButtons, 0, dy, 0);
         sendToDevice(packet, "pan");
     }
 
-    public static void releaseMSAbsData() {
-        // Release by sending null button at current position
-        byte[] packet = KeymodJNI.buildMouseAbsPacket(KeymodJNI.MS_BTN_NONE, 0, 0, 0);
+    public static void releaseMSAbsData(float x, float y) {
+        // Release by sending null button at the given position
+        gestureButtons = KeymodJNI.MS_BTN_NONE;
+        byte[] packet = KeymodJNI.buildMouseAbsPacket(lockedButtons, (int) x, (int) y, 0);
         sendToDevice(packet, "releaseAbs");
     }
 
     public static void releaseMSRelData() {
-        // Release by sending null button
-        byte[] packet = KeymodJNI.buildMouseRelPacket(KeymodJNI.MS_BTN_NONE, 0, 0, 0);
+        // Release by sending null button; a locked keycap keeps its button pressed
+        gestureButtons = KeymodJNI.MS_BTN_NONE;
+        byte[] packet = KeymodJNI.buildMouseRelPacket(lockedButtons, 0, 0, 0);
         sendToDevice(packet, "releaseRel");
     }
 }

@@ -39,11 +39,16 @@ import com.openterface.AOS.manager.LocaleManager;
 import com.openterface.AOS.serial.UsbDeviceManager;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Map;
 
 public class KeyBoardManager {
     private static final String TAG = "OP-KB";
+
+    /**
+     * Verbose per-key logging. Keyboard sends happen on every key press, so the
+     * trace output stays off unless someone is actively debugging the HID path.
+     */
+    private static final boolean DEBUG_KEY_LOG = false;
     private static Context context;
     private static Map<Object, String> currentKeyCodeMap;
     private static UsbDeviceManager usbDeviceManager; // Add static reference for enhanced FE0C support
@@ -77,11 +82,10 @@ public class KeyBoardManager {
             resolvedLocale;
         if (baseLang.equals("de")) {
             currentKeyCodeMap = KeyMapConfig_De.getKeyCodeMap();
-            Log.d(TAG, "language is de");
         } else {
             currentKeyCodeMap = CH9329MSKBMap.getKeyCodeMap();
-            Log.d(TAG, "language is us");
         }
+        Log.d(TAG, "Keyboard layout: " + baseLang);
     }
 
     /**
@@ -93,27 +97,30 @@ public class KeyBoardManager {
     }
 
     public static String getFunctionKey(KeyEvent event, int keyCode) {
-        boolean isCtrlPressed = (event.getMetaState() & KeyEvent.META_CTRL_ON) != 0;
-        boolean isShiftPressed = (event.getMetaState() & KeyEvent.META_SHIFT_ON) != 0;
-        boolean isAltPressed = (event.getMetaState() & KeyEvent.META_ALT_ON) != 0;
+        int metaState = event.getMetaState();
+        int modifier = 0;
 
-        if (isCtrlPressed) {
-            if (keyCode != KeyEvent.KEYCODE_CTRL_LEFT && keyCode != KeyEvent.KEYCODE_CTRL_RIGHT) {
-                Log.d(TAG, "click ctrl and other click");
-                return "01";
-            }
-        } else if (isShiftPressed) {
-            if (keyCode != KeyEvent.KEYCODE_SHIFT_LEFT && keyCode != KeyEvent.KEYCODE_SHIFT_RIGHT) {
-                Log.d(TAG, "click shift and other click");
-                return "02";
-            }
-        } else if (isAltPressed) {
-            if (keyCode != KeyEvent.KEYCODE_ALT_LEFT && keyCode != KeyEvent.KEYCODE_ALT_RIGHT) {
-                Log.d(TAG, "click alt and other click");
-                return "04";
-            }
+        // Bits match the CH9329 modifier byte: Ctrl, Shift, Alt, Win. Each is
+        // assembled independently so that combinations such as Ctrl+Shift keep
+        // both bits instead of only the first one matched.
+        if ((metaState & KeyEvent.META_CTRL_ON) != 0
+                && keyCode != KeyEvent.KEYCODE_CTRL_LEFT && keyCode != KeyEvent.KEYCODE_CTRL_RIGHT) {
+            modifier |= 0x01;
         }
-        return "00";
+        if ((metaState & KeyEvent.META_SHIFT_ON) != 0
+                && keyCode != KeyEvent.KEYCODE_SHIFT_LEFT && keyCode != KeyEvent.KEYCODE_SHIFT_RIGHT) {
+            modifier |= 0x02;
+        }
+        if ((metaState & KeyEvent.META_ALT_ON) != 0
+                && keyCode != KeyEvent.KEYCODE_ALT_LEFT && keyCode != KeyEvent.KEYCODE_ALT_RIGHT) {
+            modifier |= 0x04;
+        }
+        if ((metaState & KeyEvent.META_META_ON) != 0
+                && keyCode != KeyEvent.KEYCODE_META_LEFT && keyCode != KeyEvent.KEYCODE_META_RIGHT) {
+            modifier |= 0x08;
+        }
+
+        return String.format("%02X", modifier);
     }
 
     public static String getKeyName(int keyCode) {
@@ -126,7 +133,9 @@ public class KeyBoardManager {
 
     public static void DetectedCharacter(String functionKey, String pressedChar, String targetChars){
         if (targetChars.contains(pressedChar)) {
-            Log.d(TAG, "Detected special character: " + pressedChar);
+            if (DEBUG_KEY_LOG) {
+                Log.d(TAG, "Detected special character: " + pressedChar);
+            }
             sendKeyboardRequest(functionKey, pressedChar);
             new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                 @Override
@@ -153,20 +162,20 @@ public class KeyBoardManager {
         }
         
         try {
-            Log.d(TAG, "=== ENHANCED KEYBOARD DEBUG ===");
-            Log.d(TAG, "Input - functionKey: '" + functionKey + "', keyName: '" + keyName + "'");
-            Log.d(TAG, "Device Type: " + (usbDeviceManager.isFE0CDevice() ? "FE0C" : "Other"));
-            
+            if (DEBUG_KEY_LOG) {
+                Log.d(TAG, "Enhanced keyboard: functionKey='" + functionKey + "' keyName='" + keyName
+                        + "' device=" + (usbDeviceManager.isFE0CDevice() ? "FE0C" : "Other"));
+            }
+
             // Get the individual key code from the mapping
             String keyCode = currentKeyCodeMap.get(keyName);
             if (keyCode == null) {
-                Log.w(TAG, "❌ Key '" + keyName + "' not found in mapping");
-                Log.d(TAG, "Available keys in map: " + currentKeyCodeMap.keySet().toString());
+                Log.w(TAG, "Key '" + keyName + "' not found in mapping");
+                if (DEBUG_KEY_LOG) {
+                    Log.d(TAG, "Available keys in map: " + currentKeyCodeMap.keySet());
+                }
                 return false;
             }
-            
-            Log.d(TAG, "✅ Found key code for '" + keyName + "': " + keyCode);
-            
             // Build the complete keyboard command like the original method
             String prefix1 = CH9329MSKBMap.getKeyCodeMap().get("prefix1");
             String prefix2 = CH9329MSKBMap.getKeyCodeMap().get("prefix2");
@@ -175,32 +184,25 @@ public class KeyBoardManager {
             String dataLen = CH9329MSKBMap.DataLen().get("DataLenKB");
             String dataNull = CH9329MSKBMap.DataNull().get("DataNull");
             
-            Log.d(TAG, "Command components:");
-            Log.d(TAG, "  prefix1: " + prefix1);
-            Log.d(TAG, "  prefix2: " + prefix2);
-            Log.d(TAG, "  address: " + address);
-            Log.d(TAG, "  cmdKB: " + cmdKB);
-            Log.d(TAG, "  dataLen: " + dataLen);
-            Log.d(TAG, "  functionKey: " + functionKey);
-            Log.d(TAG, "  keyCode: " + keyCode);
-            Log.d(TAG, "  dataNull: " + dataNull);
-            
+            // Command components are constant per key map and were logged on every
+            // key press before; only the assembled frame is worth a trace line.
             String sendKBData = prefix1 + prefix2 + address + cmdKB + dataLen +
                     functionKey + dataNull + keyCode + dataNull + dataNull + dataNull + dataNull + dataNull;
-            
-            Log.d(TAG, "Command before checksum: " + sendKBData);
-            
+
             // Add checksum
             sendKBData = sendKBData + CH9329Function.makeChecksum(sendKBData);
-            
-            Log.d(TAG, "✅ Final command with checksum: " + sendKBData);
+
+            if (DEBUG_KEY_LOG) {
+                Log.d(TAG, "Keyboard frame: " + sendKBData);
+            }
             CH9329Function.checkSendLogData(sendKBData);
-            
+
             byte[] keyboardDataBytes = CH9329Function.hexStringToByteArray(sendKBData);
-            Log.d(TAG, "Command as bytes: " + java.util.Arrays.toString(keyboardDataBytes));
-            
+
             boolean result = usbDeviceManager.sendKeyboardCommandFE0C(keyboardDataBytes);
-            Log.d(TAG, "Send result: " + (result ? "SUCCESS" : "FAILED"));
+            if (DEBUG_KEY_LOG) {
+                Log.d(TAG, "Send result: " + (result ? "SUCCESS" : "FAILED"));
+            }
             return result;
             
         } catch (Exception e) {
@@ -212,7 +214,9 @@ public class KeyBoardManager {
 
     public static void sendKeyBoardData(String functionKey, String keyName) {
         if (keyName != null) {
-            Log.d(TAG, "keyName: " + keyName);
+            if (DEBUG_KEY_LOG) {
+                Log.d(TAG, "sendKeyBoardData keyName=" + keyName);
+            }
             sendKeyboardRequest(functionKey, keyName);
             new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
                 @Override
@@ -230,19 +234,19 @@ public class KeyBoardManager {
      */
     public static void sendKeyBoardPress(String functionKey, String keyName) {
         if (keyName == null) {
-            Log.w(TAG, "❌ sendKeyBoardPress: keyName is null");
+            Log.w(TAG, "sendKeyBoardPress: keyName is null");
             return;
         }
-        
-        Log.e(TAG, "🔵 ========== KEY PRESS START ==========");
-        Log.e(TAG, "🔵 Thread: " + Thread.currentThread().getName());
-        Log.e(TAG, "🔵 functionKey: '" + functionKey + "', keyName: '" + keyName + "'");
-        Log.e(TAG, "🔵 Time: " + System.currentTimeMillis());
+
+        if (DEBUG_KEY_LOG) {
+            Log.d(TAG, "Key press: functionKey='" + functionKey + "' keyName='" + keyName
+                    + "' thread=" + Thread.currentThread().getName());
+        }
         
         new Thread(() -> {
             try {
                 if (usbDeviceManager == null || !usbDeviceManager.isConnected()) {
-                    Log.e(TAG, "❌ sendKeyBoardPress USB device not connected");
+                    Log.e(TAG, "sendKeyBoardPress: USB device not connected");
                     return;
                 }
 
@@ -262,28 +266,25 @@ public class KeyBoardManager {
 
                 sendKBData = sendKBData + CH9329Function.makeChecksum(sendKBData);
 
-                Log.e(TAG, "🔵 Full command: " + sendKBData);
+                if (DEBUG_KEY_LOG) {
+                    Log.d(TAG, "Key press frame: " + sendKBData);
+                }
                 CH9329Function.checkSendLogData(sendKBData);
 
                 byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendKBData);
 
                 try {
-                    long startTime = System.currentTimeMillis();
                     boolean result = usbDeviceManager.writeData(sendKBDataBytes);
-                    long endTime = System.currentTimeMillis();
-                    if (result) {
-                        Log.e(TAG, "✅ Key press sent successfully in " + (endTime - startTime) + "ms (no auto-release)");
-                    } else {
-                        Log.e(TAG, "❌ Key press write returned false");
+                    if (!result) {
+                        Log.e(TAG, "Key press write returned false");
                     }
                 } catch (Exception e) {
-                    Log.e(TAG, "❌ Error writing key press: " + e.getMessage(), e);
+                    Log.e(TAG, "Error writing key press: " + e.getMessage(), e);
                 }
 
             } catch (Exception e) {
-                Log.e(TAG, "❌ Exception in sendKeyBoardPress: " + e.getMessage(), e);
+                Log.e(TAG, "Exception in sendKeyBoardPress: " + e.getMessage(), e);
             }
-            Log.e(TAG, "🔵 ========== KEY PRESS END ==========");
         }).start();
     }
 
@@ -305,50 +306,35 @@ public class KeyBoardManager {
      */
     public static void sendKeyBoardPressAndRelease(String functionKey, String keyName) {
         if (keyName == null) {
-            Log.w(TAG, "❌ sendKeyBoardPressAndRelease: keyName is null");
+            Log.w(TAG, "sendKeyBoardPressAndRelease: keyName is null");
             return;
         }
 
         // Skip if key is already pressed (prevents duplicate from browser double-firing)
         if (!currentlyPressedKeys.add(keyName)) {
-            Log.w(TAG, "🟣 Key '" + keyName + "' already pressed, ignoring duplicate");
             return;
         }
 
-        Log.e(TAG, "🟣 ========== KEY PRESS+RELEASE START ==========");
-        Log.e(TAG, "🟣 functionKey: '" + functionKey + "', keyName: '" + keyName + "'");
-
         keyboardExecutor.execute(() -> {
             try {
-                long startTime = System.currentTimeMillis();
-
-                // Step 1: Send press
-                Log.e(TAG, "🟣 Step 1: Sending PRESS...");
-                boolean pressSent = sendKeyBoardPressSync(functionKey, keyName);
-                if (!pressSent) {
-                    Log.e(TAG, "❌ Press failed, aborting release");
+                if (!sendKeyBoardPressSync(functionKey, keyName)) {
+                    Log.e(TAG, "sendKeyBoardPressAndRelease: press failed, aborting release");
                     currentlyPressedKeys.remove(keyName);
                     return;
                 }
 
-                // Step 2: Small delay to ensure target registers the press
-                Log.e(TAG, "🟣 Step 2: Waiting 50ms for target to register...");
+                // Give the target time to register the press before releasing it.
                 Thread.sleep(50);
 
-                // Step 3: Send release
-                Log.e(TAG, "🟣 Step 3: Sending RELEASE...");
                 sendKeyBoardReleaseSync();
-
                 currentlyPressedKeys.remove(keyName);
-
-                long endTime = System.currentTimeMillis();
-                Log.e(TAG, "✅ Key press+release completed in " + (endTime - startTime) + "ms");
-
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                currentlyPressedKeys.remove(keyName);
             } catch (Exception e) {
-                Log.e(TAG, "❌ Exception in sendKeyBoardPressAndRelease: " + e.getMessage(), e);
+                Log.e(TAG, "sendKeyBoardPressAndRelease failed: " + e.getMessage(), e);
                 currentlyPressedKeys.remove(keyName);
             }
-            Log.e(TAG, "🟣 ========== KEY PRESS+RELEASE END ==========");
         });
     }
 
@@ -358,29 +344,22 @@ public class KeyBoardManager {
      */
     public static void sendKeyBoardPressQueued(String functionKey, String keyName) {
         if (keyName == null) {
-            Log.w(TAG, "❌ sendKeyBoardPressQueued: keyName is null");
+            Log.w(TAG, "sendKeyBoardPressQueued: keyName is null");
             return;
         }
 
         // Skip if key is already pressed (prevents duplicate from browser double-firing)
         if (!currentlyPressedKeys.add(keyName)) {
-            Log.w(TAG, "🟣 Key '" + keyName + "' already pressed, ignoring duplicate");
             return;
         }
 
-        Log.e(TAG, "🔵 ========== QUEUED KEY PRESS START ==========");
-        Log.e(TAG, "🔵 functionKey: '" + functionKey + "', keyName: '" + keyName + "'");
-
         keyboardExecutor.execute(() -> {
             try {
-                Log.e(TAG, "🔵 Sending PRESS...");
-                boolean result = sendKeyBoardPressSync(functionKey, keyName);
-                Log.e(TAG, "🔵 Press result: " + (result ? "SUCCESS" : "FAILED"));
+                sendKeyBoardPressSync(functionKey, keyName);
             } catch (Exception e) {
-                Log.e(TAG, "❌ Exception in sendKeyBoardPressQueued: " + e.getMessage(), e);
+                Log.e(TAG, "sendKeyBoardPressQueued failed: " + e.getMessage(), e);
                 currentlyPressedKeys.remove(keyName);
             }
-            Log.e(TAG, "🔵 ========== QUEUED KEY PRESS END ==========");
         });
     }
 
@@ -390,18 +369,13 @@ public class KeyBoardManager {
      * This ensures release always happens AFTER all queued press operations.
      */
     public static void sendKeyBoardReleaseQueued() {
-        Log.e(TAG, "🔴 ========== QUEUED KEY RELEASE START ==========");
-
         keyboardExecutor.execute(() -> {
             try {
-                Log.e(TAG, "🔴 Sending RELEASE...");
                 sendKeyBoardReleaseSync();
                 currentlyPressedKeys.clear();
-                Log.e(TAG, "✅ Release sent, cleared all pressed keys");
             } catch (Exception e) {
-                Log.e(TAG, "❌ Exception in sendKeyBoardReleaseQueued: " + e.getMessage(), e);
+                Log.e(TAG, "sendKeyBoardReleaseQueued failed: " + e.getMessage(), e);
             }
-            Log.e(TAG, "🔴 ========== QUEUED KEY RELEASE END ==========");
         });
     }
 
@@ -431,17 +405,19 @@ public class KeyBoardManager {
 
             sendKBData = sendKBData + CH9329Function.makeChecksum(sendKBData);
 
-            Log.e(TAG, "🟣 Sync press command: " + sendKBData);
+            if (DEBUG_KEY_LOG) {
+                Log.d(TAG, "Sync press command: " + sendKBData);
+            }
 
             byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendKBData);
 
             long writeStart = System.currentTimeMillis();
             boolean result = usbDeviceManager.writeData(sendKBDataBytes);
             long writeEnd = System.currentTimeMillis();
-            if (result) {
-                Log.e(TAG, "✅ Sync press sent in " + (writeEnd - writeStart) + "ms");
-            } else {
-                Log.e(TAG, "❌ Sync press write returned false");
+            if (!result) {
+                Log.e(TAG, "Sync press write returned false");
+            } else if (DEBUG_KEY_LOG) {
+                Log.d(TAG, "Sync press sent in " + (writeEnd - writeStart) + "ms");
             }
             return result;
 
@@ -462,7 +438,9 @@ public class KeyBoardManager {
                 return;
             }
 
-            Log.e(TAG, "🟣 Sync release command: " + releaseKBData);
+            if (DEBUG_KEY_LOG) {
+                Log.d(TAG, "Sync release command: " + releaseKBData);
+            }
 
             byte[] releaseKBDataBytes = CH9329Function.hexStringToByteArray(releaseKBData);
 
@@ -471,10 +449,10 @@ public class KeyBoardManager {
                 long writeStart = System.currentTimeMillis();
                 boolean result = usbDeviceManager.writeData(releaseKBDataBytes);
                 long writeEnd = System.currentTimeMillis();
-                if (result) {
-                    Log.e(TAG, "✅ Sync release sent in " + (writeEnd - writeStart) + "ms");
-                } else {
-                    Log.e(TAG, "❌ Sync release write returned false");
+                if (!result) {
+                    Log.e(TAG, "Sync release write returned false");
+                } else if (DEBUG_KEY_LOG) {
+                    Log.d(TAG, "Sync release sent in " + (writeEnd - writeStart) + "ms");
                 }
             } else {
                 Log.e(TAG, "❌ sendKeyBoardReleaseSync: USB device not connected");
@@ -488,24 +466,23 @@ public class KeyBoardManager {
      * Send keyboard release event (key up) - releases all keys
      */
     public static void sendKeyBoardRelease() {
-        Log.e(TAG, "🔴 ========== KEY RELEASE START ==========");
-        Log.e(TAG, "🔴 Thread: " + Thread.currentThread().getName());
-        Log.e(TAG, "🔴 Time: " + System.currentTimeMillis());
+        if (DEBUG_KEY_LOG) {
+            Log.d(TAG, "Key release start, thread=" + Thread.currentThread().getName());
+        }
 
         new Thread(() -> {
             // Small delay to ensure press was sent before release
             // This prevents release from overtaking press in the serial queue
             try {
-                Log.e(TAG, "🔴 Waiting 20ms before release...");
                 Thread.sleep(20);
-                Log.e(TAG, "🔴 Now sending release command");
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                Log.e(TAG, "🔴 Release delay interrupted: " + e.getMessage());
+                if (DEBUG_KEY_LOG) {
+                    Log.d(TAG, "Release delay interrupted: " + e.getMessage());
+                }
             }
 
             EmptyKeyboard();
-            Log.e(TAG, "🔴 ========== KEY RELEASE END ==========");
         }).start();
     }
 
@@ -519,7 +496,9 @@ public class KeyBoardManager {
             return;
         }
 
-        Log.d(TAG, "Modifier press: " + modifierKey);
+        if (DEBUG_KEY_LOG) {
+            Log.d(TAG, "Modifier press: " + modifierKey);
+        }
 
         new Thread(() -> {
             try {
@@ -550,12 +529,16 @@ public class KeyBoardManager {
                         CH9329MSKBMap.DataNull().get("DataNull");
 
                 sendKBData = sendKBData + CH9329Function.makeChecksum(sendKBData);
-                Log.d(TAG, "Modifier press command: " + sendKBData);
+                if (DEBUG_KEY_LOG) {
+                    Log.d(TAG, "Modifier press command: " + sendKBData);
+                }
                 CH9329Function.checkSendLogData(sendKBData);
 
                 byte[] sendKBDataBytes = CH9329Function.hexStringToByteArray(sendKBData);
                 boolean result = usbDeviceManager.writeData(sendKBDataBytes);
-                Log.d(TAG, "Modifier press sent: " + modifierKey + " result=" + result);
+                if (!result) {
+                    Log.e(TAG, "Modifier press write returned false");
+                }
             } catch (Exception e) {
                 Log.e(TAG, "Error sending modifier press: " + e.getMessage(), e);
             }
@@ -566,7 +549,6 @@ public class KeyBoardManager {
      * Send modifier key release — sends release command to clear all modifiers.
      */
     public static void sendModifierRelease() {
-        Log.d(TAG, "Modifier release");
         sendKeyBoardRelease();
     }
 
@@ -576,7 +558,7 @@ public class KeyBoardManager {
             public void run() {
                 try {
                     if (usbDeviceManager == null || !usbDeviceManager.isConnected()) {
-                        Log.d(TAG, "sendKeyBoardShortCut USB device not connected");
+                        Log.e(TAG, "sendKeyBoardShortCut USB device not connected");
                         return;
                     }
 
@@ -626,7 +608,7 @@ public class KeyBoardManager {
             public void run() {
                 try {
                     if (usbDeviceManager == null || !usbDeviceManager.isConnected()){
-                        Log.d(TAG, "sendKeyBoardFunction USB device not connected");
+                        Log.e(TAG, "sendKeyBoardFunction USB device not connected");
                         return;
                     }
 
@@ -675,7 +657,7 @@ public class KeyBoardManager {
             public void run() {
                 try {
                     if (usbDeviceManager == null || !usbDeviceManager.isConnected()){
-                        Log.d(TAG, "sendKeyBoardFunction USB device not connected");
+                        Log.e(TAG, "sendKeyBoardFunction USB device not connected");
                         return;
                     }
 
@@ -711,9 +693,6 @@ public class KeyBoardManager {
                             CH9329MSKBMap.DataNull().get("DataNull") +
                             CH9329MSKBMap.DataNull().get("DataNull") +
                             CH9329MSKBMap.DataNull().get("DataNull");
-                    Log.d(TAG, "FunctionKeyPress: " + CH9329MSKBMap.KBShortCutKey().get(combinationFunctionKey));
-                    Log.e(TAG, "successful send keyboard data: " + keyName);
-                    Log.e(TAG, "successful send keyboard data currentKeyCodeMap: " + currentKeyCodeMap);
                     sendKBData = sendKBData + CH9329Function.makeChecksum(sendKBData);
 
                     CH9329Function.checkSendLogData(sendKBData);
@@ -723,7 +702,6 @@ public class KeyBoardManager {
                     try {
                         boolean result = usbDeviceManager.writeData(sendKBDataBytes);
                         if (result) {
-                            Log.e(TAG, "successful send keyboard data ");
                             EmptyKeyboard();
                         } else {
                             Log.e(TAG, "Failed to write keyboard function data");
@@ -733,7 +711,7 @@ public class KeyBoardManager {
                     }
 
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "sendKeyBoardFunction failed: " + e.getMessage(), e);
                 }
             }
         }).start();
@@ -752,8 +730,8 @@ public class KeyBoardManager {
             @Override
             public void run() {
                 try {
-                    if (usbDeviceManager == null || !usbDeviceManager.isConnected()){
-                        Log.d(TAG, "sendKeyBoardFunctionPress USB device not connected");
+                    if (usbDeviceManager == null || !usbDeviceManager.isConnected()) {
+                        Log.e(TAG, "sendKeyBoardFunctionPress USB device not connected");
                         return;
                     }
 
@@ -790,7 +768,9 @@ public class KeyBoardManager {
                             CH9329MSKBMap.DataNull().get("DataNull") +
                             CH9329MSKBMap.DataNull().get("DataNull");
                     
-                    Log.d(TAG, "=== KEY PRESS === FunctionKey: " + combinationFunctionKey + ", keyName: " + keyName);
+                    if (DEBUG_KEY_LOG) {
+                        Log.d(TAG, "=== KEY PRESS === FunctionKey: " + combinationFunctionKey + ", keyName: " + keyName);
+                    }
                     
                     sendKBData = sendKBData + CH9329Function.makeChecksum(sendKBData);
 
@@ -800,9 +780,7 @@ public class KeyBoardManager {
 
                     try {
                         boolean result = usbDeviceManager.writeData(sendKBDataBytes);
-                        if (result) {
-                            Log.d(TAG, "Key press sent successfully (no auto-release)");
-                        } else {
+                        if (!result) {
                             Log.e(TAG, "Failed to write keyboard function press data");
                         }
                     } catch (Exception e) {
@@ -822,15 +800,9 @@ public class KeyBoardManager {
             public void run() {
                 try {
                     if (usbDeviceManager == null || !usbDeviceManager.isConnected()) {
-                        Log.d(TAG, "sendKeyboardRequest USB device not connected");
+                        Log.e(TAG, "sendKeyboardRequest USB device not connected");
                         return;
                     }
-
-                    Log.d(TAG, "keyName: " + keyName);
-                    Log.d(TAG, "currentKeyCodeMap class: " + currentKeyCodeMap.getClass().getName());
-                    Log.d(TAG, "currentKeyCodeMap size: " + currentKeyCodeMap.size());
-                    String lookedUpCode = currentKeyCodeMap.get(keyName);
-                    Log.d(TAG, "lookedUpCode for '" + keyName + "': " + lookedUpCode);
 
                     String sendKBData = "";
                     sendKBData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
@@ -855,9 +827,7 @@ public class KeyBoardManager {
 
                     try {
                         boolean result = usbDeviceManager.writeData(sendKBDataBytes);
-                        if (result) {
-                            Log.d(TAG, "Key press sent successfully");
-                        } else {
+                        if (!result) {
                             Log.e(TAG, "Key press write returned false");
                         }
 
@@ -875,7 +845,7 @@ public class KeyBoardManager {
                     }
 
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "sendKeyboardRequest failed: " + e.getMessage(), e);
                 }
             }
         }).start();
@@ -886,12 +856,10 @@ public class KeyBoardManager {
             @Override
             public void run() {
                 try {
-                    if (usbDeviceManager == null || !usbDeviceManager.isConnected()){
-                        Log.d(TAG, "sendKeyboardMultiple USB device not connected");
+                    if (usbDeviceManager == null || !usbDeviceManager.isConnected()) {
+                        Log.e(TAG, "sendKeyboardMultiple USB device not connected");
                         return;
                     }
-
-                    Log.d(TAG, "keyName: " + keyName);
 
                     String sendKBData = "";
                     sendKBData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
@@ -938,40 +906,28 @@ public class KeyBoardManager {
 
     //release all keyboard button
     public static void EmptyKeyboard() {
-        Log.e(TAG, "🔴 EmptyKeyboard called - checking conditions...");
-        
-        // Check using usbDeviceManager first (consistent with press)
+        // Called on every key release, so only real failures are logged.
         if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
-            Log.e(TAG, "🔴 Using usbDeviceManager.writeData() for release");
-            
             String releaseKBData = CH9329MSKBMap.getKeyCodeMap().get("release");
             if (releaseKBData == null) {
-                Log.e(TAG, "❌ EmptyKeyboard: releaseKBData is null");
+                Log.e(TAG, "EmptyKeyboard: release command missing");
                 return;
             }
 
-            Log.e(TAG, "🔴 EmptyKeyboard: Release command: " + releaseKBData);
             CH9329Function.ReleaseSendLogData(releaseKBData);
 
             byte[] releaseKBDataBytes = CH9329Function.hexStringToByteArray(releaseKBData);
             if (releaseKBDataBytes == null || releaseKBDataBytes.length == 0) {
-                Log.e(TAG, "❌ EmptyKeyboard: releaseKBDataBytes is null or empty");
+                Log.e(TAG, "EmptyKeyboard: release bytes empty");
                 return;
             }
 
-            Log.e(TAG, "🔴 EmptyKeyboard: Writing " + releaseKBDataBytes.length + " bytes: " + Arrays.toString(releaseKBDataBytes));
-
             try {
-                long startTime = System.currentTimeMillis();
-                boolean result = usbDeviceManager.writeData(releaseKBDataBytes);
-                long endTime = System.currentTimeMillis();
-                if (result) {
-                    Log.e(TAG, "✅ EmptyKeyboard: Key release sent successfully via usbDeviceManager in " + (endTime - startTime) + "ms");
-                } else {
-                    Log.e(TAG, "❌ EmptyKeyboard: usbDeviceManager.writeData() returned false");
+                if (!usbDeviceManager.writeData(releaseKBDataBytes)) {
+                    Log.e(TAG, "EmptyKeyboard: writeData returned false");
                 }
             } catch (Exception e) {
-                Log.e(TAG, "❌ EmptyKeyboard: Exception while writing via usbDeviceManager: " + e.getMessage(), e);
+                Log.e(TAG, "EmptyKeyboard: " + e.getMessage(), e);
             }
             return;
         }
@@ -979,6 +935,6 @@ public class KeyBoardManager {
         // No fallback to direct port access — UsbDeviceManager.port is a static reference
         // that may not reflect the actual connection state, and port.write() uses
         // testConnection() which fails on some CH340 chips.
-        Log.e(TAG, "❌ EmptyKeyboard: usbDeviceManager is null or not connected, cannot send key release");
+        Log.e(TAG, "EmptyKeyboard: device not connected, cannot send key release");
     }
 }

@@ -58,4 +58,8 @@
     <color name="shortcut_btn_pressed">#FFD0D0D0</color>
     <color name="shortcut_btn_border">#FFBDBDBD</color>
     <color name="shortcut_selected">#FFFFE0B2</color>
+
+    <!-- Settings button colors -->
+    <color name="button_background">#FFFFFFFF</color>
+    <color name="button_border">#FFBDBDBD</color>
 </resources>

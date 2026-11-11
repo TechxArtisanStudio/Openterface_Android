@@ -18,6 +18,12 @@ public interface HidInputSender {
     void sendAbsMove(int x, int y);
 
     /**
+     * Send absolute mouse movement that also releases every pressed button.
+     * A plain move keeps the button pressed in the host.
+     */
+    void sendAbsRelease(int x, int y);
+
+    /**
      * Send absolute mouse button click.
      * @param clickType "SecLeftData", "SecMiddleData", "SecRightData", or "SecNullData"
      */

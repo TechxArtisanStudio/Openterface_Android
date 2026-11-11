@@ -43,6 +43,9 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Looper;
+import android.view.InputDevice;
+import com.openterface.AOS.serial.BtMouseInputHandler;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -84,6 +87,7 @@ import com.openterface.AOS.drawerLayout.ZoomLayoutDeal;
 import com.openterface.AOS.serial.CustomTouchListener;
 import com.openterface.AOS.serial.CH9329Function;
 import com.openterface.AOS.serial.UsbDeviceManager;
+import com.openterface.AOS.serial.CoordinateConverter;
 import com.openterface.AOS.target.CH9329MSKBMap;
 import com.openterface.AOS.target.HidManager;
 import com.openterface.AOS.target.KeyBoardManager;
@@ -356,6 +360,17 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
     public AspectRatioSurfaceView cameraViewSecond;
     private RelativeLayout thumbnail_container;
 
+    /**
+     * Owns the landscape drawer/PiP controller. It is created once per activity and only
+     * referenced from here, so it dies with the activity instead of leaking through a
+     * static field.
+     */
+    private ZoomLayoutDeal zoomLayoutDeal;
+
+    public ZoomLayoutDeal getZoomLayoutDeal() {
+        return zoomLayoutDeal;
+    }
+
     @SuppressLint("ClickableViewAccessibility")//add
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -375,6 +390,14 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         mBinding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(mBinding.getRoot());
 
+        // Ensure Activity can receive focus for hardware keyboard events
+        getWindow().getDecorView().setFocusable(true);
+        getWindow().getDecorView().setFocusableInTouchMode(true);
+        getWindow().getDecorView().requestFocus();
+
+        // Detect connected input devices (for debugging)
+        detectInputDevices();
+
         checkCameraHelper();
 
         setListeners();
@@ -393,9 +416,14 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         // Initialize the mouse event worker thread
         HidManager.initMouse();
 
-        // Load saved mouse speed multiplier (default 50 → 1.0x)
-        int initialMouseSpeed = getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).getInt(KEY_MOUSE_SPEED, 50);
-        HidManager.setMouseSpeedMultiplier(progressToMouseSpeed(initialMouseSpeed));
+        // Initialize mouse mode at startup using MouseModeManager
+        com.openterface.AOS.target.MouseMode savedMode =
+            com.openterface.AOS.utils.MouseModePreferences.loadMode(this);
+        boolean trackpadSensitivity =
+            com.openterface.AOS.utils.MouseModePreferences.loadTrackpadSensitivity(this);
+        com.openterface.AOS.target.MouseModeManager.setMode(savedMode);
+        com.openterface.AOS.target.MouseModeManager.setTrackpadSensitivity(trackpadSensitivity);
+        Log.d(TAG, "Mouse mode initialized: " + savedMode + ", trackpad sensitivity: " + trackpadSensitivity);
 
         // Initialize VNC server components
         vncConfig = new VncServerConfig(this);
@@ -418,6 +446,26 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         mCustomTouchListener = new CustomTouchListener(this, usbDeviceManager);
 
         mBinding.viewMainPreview.setOnTouchListener(mCustomTouchListener);
+
+        // Portrait preview is a centered aspect-ratio band, so pinches landing on the
+        // black area around it need their own zoom handler (no-op in landscape layout)
+        CustomTouchListener.attachVideoAreaZoomFallback(
+                findViewById(R.id.video_area_container));
+
+        // Register BT mouse connection listener to hide/show cursor
+        CustomTouchListener.setOnBtMouseConnectionListener(new CustomTouchListener.OnBtMouseConnectionListener() {
+            @Override
+            public void onBtMouseConnected(boolean connected) {
+                runOnUiThread(() -> {
+                    // When reconnecting, explicitly cancel any pending cursor restore
+                    // and re-hide cursor to prevent flash from system auto-restore
+                    if (connected) {
+                        CustomTouchListener.cancelBtMouseCursorRestore();
+                    }
+                    applyBtMousePointerCapture(connected);
+                });
+            }
+        });
 
         // Setting up the gesture detector
         gestureDetector = new GestureDetector(this, new GestureListener());
@@ -529,7 +577,7 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
 
         //Zoom layout deal
         setCameraViewSecond();
-        ZoomLayoutDeal ZoomLayoutDeal = new ZoomLayoutDeal(this, mCameraHelper, mBinding);
+        zoomLayoutDeal = new ZoomLayoutDeal(this, mCameraHelper, mBinding);
 
         HidManager.setKeyBoardLanguage();
 
@@ -688,9 +736,219 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
     }
 
 
+    /**
+     * Detect connected input devices for debugging
+     */
+    private void detectInputDevices() {
+        int[] deviceIds = InputDevice.getDeviceIds();
+        Log.d(TAG, "=== Connected Input Devices ===");
+        for (int deviceId : deviceIds) {
+            InputDevice device = InputDevice.getDevice(deviceId);
+            if (device != null) {
+                boolean isKeyboard = (device.getSources() & InputDevice.SOURCE_KEYBOARD) != 0;
+                Log.d(TAG, "Device: " + device.getName()
+                    + ", sources: " + device.getSources()
+                    + ", isKeyboard: " + isKeyboard
+                    + ", vendorId: " + device.getVendorId()
+                    + ", productId: " + device.getProductId());
+            }
+        }
+        Log.d(TAG, "=== End Input Devices ===");
+    }
+
+    // Key state tracking for hardware keyboard
+    private int mLastHardwareKeyCode = 0;
+    private boolean mHardwareKeyPressed = false;  // Track if key is currently pressed
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        // Check if this is a hardware keyboard or mouse (Bluetooth, USB, etc.)
+        if (event.getDevice() != null) {
+            int sources = event.getDevice().getSources();
+
+            // ---- Hardware Keyboard ----
+            if ((sources & InputDevice.SOURCE_KEYBOARD) != 0) {
+                int keyCode = event.getKeyCode();
+
+                if (event.getAction() == KeyEvent.ACTION_DOWN) {
+                    // Only process if this is the first press (not auto-repeat)
+                    // and the same key is not already pressed
+                    if (event.getRepeatCount() == 0 && (!mHardwareKeyPressed || keyCode != mLastHardwareKeyCode)) {
+                        mLastHardwareKeyCode = keyCode;
+                        mHardwareKeyPressed = true;
+                        Log.d(TAG, "Hardware key down: " + keyCode + " (" + KeyEvent.keyCodeToString(keyCode) + ")");
+                        return handleHardwareKeyDown(event);
+                    } else {
+                        // Auto-repeat from the keyboard. The target already repeats on
+                        // its own because the key stays down, so there is nothing to send.
+                        return true;
+                    }
+                } else if (event.getAction() == KeyEvent.ACTION_UP) {
+                    if (keyCode == mLastHardwareKeyCode) {
+                        mHardwareKeyPressed = false;
+                    }
+                    return handleHardwareKeyUp(event);
+                }
+                return true;
+            }
+
+            // ---- Bluetooth Mouse side buttons (BACK / FORWARD) ----
+            if ((sources & InputDevice.SOURCE_MOUSE) != 0) {
+                int keyCode = event.getKeyCode();
+                if (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_FORWARD) {
+                    if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
+                        Log.d(TAG, "BT Mouse side button DOWN: " + KeyEvent.keyCodeToString(keyCode));
+                        // Map BACK → mouse button 4 (browser back), FORWARD → button 5
+                        String buttonKey = (keyCode == KeyEvent.KEYCODE_BACK) ? "SecBackData" : "SecForwardData";
+                        try {
+                            com.openterface.AOS.target.HidManager.sendHexRelData(buttonKey, 0, 0, 0, 0);
+                        } catch (Exception e) {
+                            Log.e(TAG, "BT Mouse side button error: " + e.getMessage());
+                        }
+                        return true;
+                    } else if (event.getAction() == KeyEvent.ACTION_UP) {
+                        Log.d(TAG, "BT Mouse side button UP: " + KeyEvent.keyCodeToString(keyCode));
+                        try {
+                            com.openterface.AOS.target.HidManager.releaseMSRelData();
+                        } catch (Exception e) {
+                            Log.e(TAG, "BT Mouse side button release error: " + e.getMessage());
+                        }
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // Non-hardware keyboard events, let parent handle
+        return super.dispatchKeyEvent(event);
+    }
+
+    /**
+     * Handle hardware keyboard key down event.
+     * Sends a press only. The target OS generates its own auto-repeat while the
+     * key stays down, which is what makes holding a key repeat. The matching
+     * release is sent from handleHardwareKeyUp().
+     */
+    private boolean handleHardwareKeyDown(KeyEvent event) {
+        int keyCode = event.getKeyCode();
+
+        // Ctrl/Shift/Alt/Meta have no key slot of their own: their state travels in
+        // the modifier byte of the next real key press. Sending one on its own puts
+        // E0/E1/E2 into the key field, and the target then sees the following key
+        // arrive while that bogus key is still held, so it drops it.
+        if (isModifierOnlyKey(keyCode)) {
+            return true;
+        }
+
+        // Use HidManager path (same as on-screen keyboard buttons)
+        String functionKey = HidManager.getFunctionKey(event, keyCode);
+        String keyName = HidManager.getKeyName(keyCode);
+
+        if (keyName != null && usbDeviceManager != null) {
+            HidManager.sendKeyBoardPressQueued(functionKey, keyName);
+            return true;
+        }
+        Log.w(TAG, "Cannot send key - keyName: " + keyName
+                + ", usbDeviceManager: " + (usbDeviceManager != null));
+
+        return true;
+    }
+
+    /**
+     * Modifier keys only contribute to the modifier byte of other keys.
+     */
+    private static boolean isModifierOnlyKey(int keyCode) {
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_CTRL_LEFT:
+            case KeyEvent.KEYCODE_CTRL_RIGHT:
+            case KeyEvent.KEYCODE_SHIFT_LEFT:
+            case KeyEvent.KEYCODE_SHIFT_RIGHT:
+            case KeyEvent.KEYCODE_ALT_LEFT:
+            case KeyEvent.KEYCODE_ALT_RIGHT:
+            case KeyEvent.KEYCODE_META_LEFT:
+            case KeyEvent.KEYCODE_META_RIGHT:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Handle hardware keyboard key up event.
+     * Releases every key, pairing with the press sent on ACTION_DOWN.
+     */
+    private boolean handleHardwareKeyUp(KeyEvent event) {
+        HidManager.sendKeyBoardReleaseQueued();
+        return true;
+    }
+
     @Override
     public boolean onGenericMotionEvent(MotionEvent event) {
         return CustomTouchListener.handleGenericMotionEvent(event) || super.onGenericMotionEvent(event);
+    }
+
+    // Catch BT mouse events at dispatch level (before view consumes them)
+    @Override
+    public boolean dispatchGenericMotionEvent(MotionEvent event) {
+        int source = event.getSource();
+        boolean isMouse = (source & android.view.InputDevice.SOURCE_MOUSE) != 0;
+        boolean isTouchpad = (source & android.view.InputDevice.SOURCE_TOUCHPAD) != 0;
+        boolean isTouchscreen = (source & android.view.InputDevice.SOURCE_TOUCHSCREEN) != 0;
+        int toolType = event.getPointerCount() > 0 ? event.getToolType(0) : -1;
+
+        // Log ALL motion events to diagnose event routing (throttle via action filter)
+        if (isMouse || isTouchpad) {
+            Log.d(TAG, "dispatchGenericMotionEvent: isMouse=" + isMouse + " isTouchpad=" + isTouchpad
+                    + " action=" + event.getAction()
+                    + " source=0x" + Integer.toHexString(source)
+                    + " toolType=" + toolType
+                    + " pointerCount=" + event.getPointerCount());
+        }
+
+        if (isMouse) {
+            if (CustomTouchListener.handleGenericMotionEvent(event)) {
+                return true;
+            }
+        }
+        return super.dispatchGenericMotionEvent(event);
+    }
+
+    // Capture touch events during BT mouse button hold
+    // Android may send move events as ACTION_MOVE (touch events) when button is pressed
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        int source = event.getSource();
+        int toolType = event.getPointerCount() > 0 ? event.getToolType(0) : -1;
+        int action = event.getActionMasked();
+        boolean isMouseTool = (toolType == MotionEvent.TOOL_TYPE_MOUSE);
+
+        // Log ALL touch events when BT mouse is connected or button is pressed
+        if (isMouseTool || BtMouseInputHandler.isBtMouseConnected()) {
+            Log.d(TAG, "dispatchTouchEvent: toolType=" + toolType
+                    + " action=" + action
+                    + " source=0x" + Integer.toHexString(source)
+                    + " x=" + event.getX() + " y=" + event.getY()
+                    + " buttonState=" + event.getButtonState()
+                    + " btMouseButtonPressed=" + BtMouseInputHandler.isBtMouseButtonPressed());
+        }
+
+        // Forward mouse-tool touch events to BT mouse handler during drag
+        // Some Android versions send BT mouse drag moves as ACTION_MOVE with TOOL_TYPE_MOUSE
+        // instead of ACTION_HOVER_MOVE generic motion events
+        if (isMouseTool && BtMouseInputHandler.isBtMouseButtonPressed()
+                && action == MotionEvent.ACTION_MOVE) {
+            if (CustomTouchListener.handleGenericMotionEvent(event)) {
+                return true;
+            }
+        }
+
+        return super.dispatchTouchEvent(event);
+    }
+
+    // API 31+: Captured pointer events from BT mouse (system cursor hidden)
+    public boolean onCapturedPointerEvent(MotionEvent event) {
+        Log.d(TAG, "onCapturedPointerEvent: action=" + event.getAction() + " source=0x" + Integer.toHexString(event.getSource()));
+        return CustomTouchListener.handleGenericMotionEvent(event);
     }
 
     @Override
@@ -871,12 +1129,21 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
     protected void onStart() {
         super.onStart();
 
+        // Request focus to ensure Activity can receive hardware keyboard events
+        getWindow().getDecorView().requestFocus();
+
         initPreviewView();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
+        // Focus can be lost before ACTION_UP arrives. Drop any held key so the
+        // target does not keep repeating while the app sits in the background.
+        HidManager.sendKeyBoardReleaseQueued();
+        // A locked keycap keeps a mouse button down in the host for the same reason.
+        HidManager.unlockAll();
+        HidManager.releaseMSRelData();
         if (mIsRecording) {
             toggleVideoRecord(false);
         }
@@ -902,6 +1169,9 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         // Release the mouse event worker thread
         HidManager.releaseMouse();
 
+        // Stop the keycap frame queue
+        mouseStripExecutor.shutdownNow();
+
         // Cleanup debug broadcast receiver
         if (debugReceiver != null) {
             unregisterReceiver(debugReceiver);
@@ -923,6 +1193,11 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
 
         Log.d(TAG, "Configuration changed: " + (isPortraitMode ? "PORTRAIT" : "LANDSCAPE"));
 
+        // The layout is rebuilt below, so the new keycaps are all unlocked. Release the
+        // buttons the old ones kept pressed, otherwise every later move is a drag.
+        HidManager.unlockAll();
+        HidManager.releaseMSRelData();
+
         // Reload layout for new orientation
         reloadLayoutForOrientation();
 
@@ -935,6 +1210,9 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         if (mCameraHelper != null && mIsCameraConnected) {
             resizePreviewView(mCameraHelper.getPreviewSize());
         }
+
+        // Notify CustomTouchListener about configuration change (for black border overlay)
+        CustomTouchListener.onConfigurationChanged();
 
         Log.d(TAG, "Layout reloaded, module state: " + currentModule);
     }
@@ -984,6 +1262,14 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         // Re-attach CustomTouchListener to the new preview view after layout re-inflation
         mCustomTouchListener = new CustomTouchListener(this, usbDeviceManager);
         mBinding.viewMainPreview.setOnTouchListener(mCustomTouchListener);
+        CustomTouchListener.attachVideoAreaZoomFallback(
+                findViewById(R.id.video_area_container));
+
+        // Update black border overlay for new orientation
+        // This will show overlay if BT mouse is connected, and update video rect
+        if (mBinding.blackBorderOverlay != null) {
+            CustomTouchListener.updateBlackBorderOverlayVisibility();
+        }
 
         // Re-setup DrawerLayoutDeal for new layout (only in landscape)
         if (!nowPortrait) {
@@ -996,9 +1282,11 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
                 Log.w(TAG, "reloadLayoutForOrientation: DrawerLayoutDeal failed (expected in portrait): " + e.getMessage());
             }
         }
+        // Replace the controller of the previous layout: it still points at the views of
+        // the tree that was just thrown away.
+        zoomLayoutDeal = null;
         try {
-            com.openterface.AOS.drawerLayout.ZoomLayoutDeal zoomLayoutDeal =
-                    new com.openterface.AOS.drawerLayout.ZoomLayoutDeal(this, mCameraHelper, mBinding);
+            zoomLayoutDeal = new com.openterface.AOS.drawerLayout.ZoomLayoutDeal(this, mCameraHelper, mBinding);
             Log.d(TAG, "reloadLayoutForOrientation: ZoomLayoutDeal created");
         } catch (Exception e) {
             Log.w(TAG, "reloadLayoutForOrientation: ZoomLayoutDeal failed: " + e.getMessage());
@@ -1070,6 +1358,14 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
 
         // Update UI controls to reflect current state
         updateUIControls();
+
+        // Re-install the captured-pointer hook after layout reload (BT mouse state persists
+        // across rotation)
+        if (com.openterface.AOS.serial.CustomTouchListener.isBtMouseConnected()) {
+            applyBtMousePointerCapture(true);
+            Log.d(TAG, "reloadLayoutForOrientation: BT mouse pointer capture re-applied");
+        }
+
         Log.d(TAG, "reloadLayoutForOrientation: COMPLETE");
     }
 
@@ -1116,7 +1412,9 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
                         @Override
                         public void onGlobalLayout() {
                             Log.d(TAG,"keyBoardView.getWidth():"+keyBoardView.getWidth() + "keyBoardView.getHeight():"+keyBoardView.getHeight());
-                            ZoomLayoutDeal.getViewWidthHeight(keyBoardView.getWidth(), keyBoardView.getHeight());
+                            if (zoomLayoutDeal != null) {
+                                zoomLayoutDeal.getViewWidthHeight(keyBoardView.getWidth(), keyBoardView.getHeight());
+                            }
                         }
                     });
                     keyBoardView.setVisibility(View.VISIBLE);
@@ -1289,23 +1587,52 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
             Log.w(TAG, "initPreviewView: mBinding or viewMainPreview is null, skipping");
             return;
         }
-        // Portrait mode: disable aspect ratio constraint, TextureView fills container, Matrix handles display transform
-        // Landscape mode: keep original aspect ratio constraint behavior
-        if (!isPortraitMode) {
-            mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
-        } else {
-            mBinding.viewMainPreview.setAspectRatioEnabled(false);
+        // Both portrait and landscape: set aspect ratio to match camera buffer.
+        // Portrait mode: view will be centered with black bars top/bottom (landscape aspect in portrait screen)
+        // Landscape mode: view will fill width with correct height
+        mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
+        if (isPortraitMode) {
+            // In portrait, ensure TextureView uses MATCH_PARENT width so aspect ratio calculates from width
             ViewGroup.LayoutParams lp = mBinding.viewMainPreview.getLayoutParams();
             lp.width = ViewGroup.LayoutParams.MATCH_PARENT;
-            lp.height = ViewGroup.LayoutParams.MATCH_PARENT;
+            lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
             mBinding.viewMainPreview.setLayoutParams(lp);
         }
         Log.d(TAG, "initPreviewView: mPreviewWidth=" + mPreviewWidth + " mPreviewHeight=" + mPreviewHeight + " isPortrait=" + isPortraitMode);
+
+        // Add layout listener to update HID mapping when the view size changes
+        mBinding.viewMainPreview.addOnLayoutChangeListener((v, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
+            if (left != oldLeft || top != oldTop || right != oldRight || bottom != oldBottom) {
+                // CRITICAL: Update HID coordinate mapping with actual displayed dimensions
+                // NOT the SurfaceTexture buffer dimensions (which are video resolution)
+                int viewWidth = right - left;
+                int viewHeight = bottom - top;
+                if (viewWidth > 0 && viewHeight > 0) {
+                    HidManager.width_height(viewWidth, viewHeight);
+                    Log.d(TAG, "Layout changed: updating HID dimensions to " + viewWidth + "x" + viewHeight
+                            + " (was buffer size, now actual display size)");
+                }
+            }
+        });
+
         mBinding.viewMainPreview.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
             @Override
             public void onSurfaceTextureAvailable(@NonNull SurfaceTexture surface, int width, int height) {
-                HidManager.width_height(width, height);
-                Log.d(TAG, "onSurfaceTextureAvailable: width=" + width + " height=" + height + " mIsCameraConnected=" + mIsCameraConnected + " mMainSurfaceAdded=" + mMainSurfaceAdded);
+                // Use actual TextureView display dimensions for HID coordinate mapping,
+                // NOT the SurfaceTexture buffer dimensions (which are video resolution like 1920x1080)
+                // In portrait mode, TextureView displays at ~1080x607, not 1920x1080
+                int viewWidth = mBinding.viewMainPreview.getWidth();
+                int viewHeight = mBinding.viewMainPreview.getHeight();
+                if (viewWidth > 0 && viewHeight > 0) {
+                    HidManager.width_height(viewWidth, viewHeight);
+                    Log.d(TAG, "onSurfaceTextureAvailable: using TextureView display dimensions " + viewWidth + "x" + viewHeight
+                            + " (buffer=" + width + "x" + height + ")");
+                } else {
+                    // View not laid out yet, OnLayoutChangeListener will update dimensions
+                    HidManager.width_height(width, height);
+                    Log.d(TAG, "onSurfaceTextureAvailable: TextureView not laid out yet, using buffer " + width + "x" + height
+                            + " (will update on layout)");
+                }
                 if (mCameraHelper != null && mIsCameraConnected && !mMainSurfaceAdded) {
                     // Camera is already connected but surface hasn't been added yet.
                     // This happens when app launches in portrait and onCameraOpen fired
@@ -1328,10 +1655,8 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
                     // fires AFTER this method returns. Setting the buffer here ensures the Surface
                     // is created with the correct camera resolution.
                     setSurfaceTextureBufferSize(surface, mPreviewWidth, mPreviewHeight);
-                    // Portrait mode: skip setAspectRatio, Matrix handles display transform
-                    if (!isPortraitMode) {
-                        mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
-                    }
+                    // Set aspect ratio for correct proportions in both modes
+                    mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
 
                     // Create Surface from SurfaceTexture
                     android.view.Surface previewSurface = new android.view.Surface(surface);
@@ -1370,10 +1695,8 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
 
                     // Set buffer size BEFORE creating Surface - ensures Surface uses camera resolution
                     setSurfaceTextureBufferSize(surface, mPreviewWidth, mPreviewHeight);
-                    // Portrait mode: skip setAspectRatio, Matrix handles display transform
-                    if (!isPortraitMode) {
-                        mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
-                    }
+                    // Set aspect ratio for correct proportions in both modes
+                    mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
                     android.view.Surface previewSurface = new android.view.Surface(surface);
                     // Use RendererHolder pipeline to enable frame distribution to multiple surfaces (including PIP)
                     mCameraHelper.addSurface(previewSurface, false);
@@ -1431,6 +1754,8 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
                         // Still need to set buffer size to camera native resolution to ensure clarity when zoomed.
                         Log.d(TAG, "onSurfaceTextureSizeChanged: portrait mode, updating buffer size without surface recreation");
                         setSurfaceTextureBufferSize(surface, mPreviewWidth, mPreviewHeight);
+                        // Reset learned cursor range since TextureView size changed
+                        CoordinateConverter.resetLearnedRange();
                         // Update Matrix to recalculate stretch correction
                         if (mCustomTouchListener != null) {
                             mBinding.viewMainPreview.post(() -> mCustomTouchListener.applyPortraitZoomTransform());
@@ -1685,10 +2010,8 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
                 }
 
                 // Step 2: Set aspect ratio on the view (controls how the view is measured)
-                // Portrait mode: skip setAspectRatio, Matrix handles display transform
-                if (!isPortraitMode) {
-                    mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
-                }
+                // Both modes: use aspect ratio to ensure correct proportions
+                mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
 
                 // Step 3: Set SurfaceTexture buffer size to camera resolution BEFORE creating
                 // the Surface. This is the critical step - the buffer size is read by
@@ -1781,7 +2104,9 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
 
             closeAllDialogFragment();
 
-            ZoomLayoutDeal.zoomOut();
+            if (zoomLayoutDeal != null) {
+                zoomLayoutDeal.zoomOut();
+            }
         }
 
         @Override
@@ -1841,10 +2166,8 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         }
         Log.d(TAG, "resizePreviewView: " + mPreviewWidth + "x" + mPreviewHeight + " (mMainSurfaceAdded=" + mMainSurfaceAdded + " isPortrait=" + isPortraitMode + ")");
         // Set the aspect ratio of TextureView to match the aspect ratio of the camera
-        // Portrait mode: skip setAspectRatio, Matrix handles display transform
-        if (!isPortraitMode) {
-            mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
-        }
+        // Both modes: use aspect ratio to ensure correct proportions
+        mBinding.viewMainPreview.setAspectRatio(mPreviewWidth, mPreviewHeight);
         // Update SurfaceTexture buffer to chip resolution for better zoom quality.
         // IMPORTANT: Only update buffer size if no Surface has been created from this
         // SurfaceTexture yet. Once a Surface is created (mMainSurfaceAdded=true), the
@@ -2335,11 +2658,12 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
             }
         }
 
-        // Store VNC resolution for mouse coordinate mapping
+        // Store VNC resolution for VNC mouse coordinate mapping (NOT for HID mouse)
         vncServerWidth = width;
         vncServerHeight = height;
-        Log.e(TAG, "VNC resolution set to: " + width + "x" + height);
-        HidManager.width_height(width, height);
+        Log.d(TAG, "VNC resolution set to: " + width + "x" + height);
+        // DO NOT call HidManager.width_height() here - it would override TextureView dimensions
+        // and break touch screen coordinate mapping. VNC uses its own vncServerWidth/Height.
 
         boolean started = vncService.startServer(vncConfig.getPassword(), vncConfig.getPort(), width, height, vncConfig.getEncoding(), vncConfig.getQualityLevel(), vncConfig.getCompressLevel());
         if (started && mCameraHelper != null) {
@@ -2404,12 +2728,10 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
     private int lastVncButtonMask = 0;
 
     private void handleVncMouseEvent(int buttonMask, int x, int y) {
-        // Set MouseManager dimensions to VNC resolution for proper normalization
-        if (vncServerWidth > 0 && vncServerHeight > 0) {
-            HidManager.width_height(vncServerWidth, vncServerHeight);
-        }
+        // DO NOT call HidManager.width_height() here - it would override TextureView dimensions
+        // and break touch screen coordinate mapping. VNC uses its own vncServerWidth/Height.
 
-        Log.e(TAG, "VNC mouse: button=" + buttonMask + " pos=" + x + "," + y);
+        Log.d(TAG, "VNC mouse: button=" + buttonMask + " pos=" + x + "," + y);
 
         // Button state change detection
         if (buttonMask != lastVncButtonMask) {
@@ -2423,9 +2745,9 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
                 Log.e(TAG, "VNC mouse click: " + mouseClick);
                 HidManager.sendHexAbsButtonClickData(mouseClick, x, y);
             } else {
-                // Button release - send release (null click at position)
+                // Button release - a plain move would keep the held button pressed
                 Log.e(TAG, "VNC mouse release");
-                HidManager.sendHexAbsData(x, y);
+                HidManager.sendHexAbsReleaseData(x, y);
             }
             lastVncButtonMask = buttonMask;
         } else if (buttonMask == 0) {
@@ -2569,11 +2891,12 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         // No rotation needed - the device orientation doesn't affect the captured content.
         int rotation = 0;
 
-        // Store WebRTC resolution for mouse coordinate mapping
+        // Store WebRTC resolution for WebRTC mouse coordinate mapping (NOT for HID mouse)
         webRtcServerWidth = width;
         webRtcServerHeight = height;
-        Log.i(TAG, "WebRTC resolution set to: " + width + "x" + height);
-        HidManager.width_height(width, height);
+        Log.d(TAG, "WebRTC resolution set to: " + width + "x" + height);
+        // DO NOT call HidManager.width_height() here - it would override TextureView dimensions
+        // and break touch screen coordinate mapping. WebRTC uses its own webRtcServerWidth/Height.
 
         boolean started = webRtcService.startServer(
                 config.getSignallingPort(),
@@ -3184,24 +3507,12 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
                             default:
                                 clickType = "SecNullData";
                         }
-                        sendMouseClick(clickType);
+                        sendMouseStripPress(clickType);
                     }
 
                     @Override
                     public void onMouseRelease() {
-                        String releaseData = com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
-                            com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
-                            com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("address") +
-                            com.openterface.AOS.target.CH9329MSKBMap.CmdData().get("CmdMS_REL") +
-                            com.openterface.AOS.target.CH9329MSKBMap.DataLen().get("DataLenRelMS") +
-                            com.openterface.AOS.target.CH9329MSKBMap.MSRelData().get("FirstData") +
-                            com.openterface.AOS.target.CH9329MSKBMap.MSRelData().get("SecNullData") +
-                            "00" + "00" + "00";
-                        releaseData += com.openterface.AOS.serial.CH9329Function.makeChecksum(releaseData);
-                        byte[] bytes = com.openterface.AOS.serial.CH9329Function.hexStringToByteArray(releaseData);
-                        if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
-                            usbDeviceManager.writeData(bytes);
-                        }
+                        sendMouseStripRelease();
                     }
 
                     @Override
@@ -3219,6 +3530,10 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
                         // Deprecated: scroll handled by BasicPortraitScrollStripView
                     }
                 });
+
+            // A locked keycap has to keep its button pressed across gestures; report the
+            // lock state separately from the press/release callbacks.
+            portraitMouseStrip.setOnLockChangeListener(this::applyKeycapLock);
         }
 
         // Setup scroll strip
@@ -3245,42 +3560,77 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
     }
 
     /**
-     * Send a mouse click via CH9329 HID protocol
+     * Keycap press/release frames share one queue: they used to run on two independent
+     * threads, so a fast tap could deliver the release before the press and leave the
+     * button down in the host.
      */
-    private void sendMouseClick(String clickType) {
-        new Thread(() -> {
-            try {
-                String clickData = com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
-                    com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
-                    com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("address") +
-                    com.openterface.AOS.target.CH9329MSKBMap.CmdData().get("CmdMS_REL") +
-                    com.openterface.AOS.target.CH9329MSKBMap.DataLen().get("DataLenRelMS") +
-                    com.openterface.AOS.target.CH9329MSKBMap.MSRelData().get("FirstData") +
-                    clickType + "00" + "00" + "00";
-                clickData += com.openterface.AOS.serial.CH9329Function.makeChecksum(clickData);
-                byte[] bytes = com.openterface.AOS.serial.CH9329Function.hexStringToByteArray(clickData);
-                if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
-                    usbDeviceManager.writeData(bytes);
-                }
-                // Auto release after 30ms
-                Thread.sleep(30);
-                String releaseData = com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
-                    com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
-                    com.openterface.AOS.target.CH9329MSKBMap.getKeyCodeMap().get("address") +
-                    com.openterface.AOS.target.CH9329MSKBMap.CmdData().get("CmdMS_REL") +
-                    com.openterface.AOS.target.CH9329MSKBMap.DataLen().get("DataLenRelMS") +
-                    com.openterface.AOS.target.CH9329MSKBMap.MSRelData().get("FirstData") +
-                    com.openterface.AOS.target.CH9329MSKBMap.MSRelData().get("SecNullData") +
-                    "00" + "00" + "00";
-                releaseData += com.openterface.AOS.serial.CH9329Function.makeChecksum(releaseData);
-                bytes = com.openterface.AOS.serial.CH9329Function.hexStringToByteArray(releaseData);
-                if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
-                    usbDeviceManager.writeData(bytes);
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Error sending mouse click: " + e.getMessage());
+    private final java.util.concurrent.ExecutorService mouseStripExecutor =
+            java.util.concurrent.Executors.newSingleThreadExecutor();
+
+    /**
+     * Press a keycap button. The button stays pressed until sendMouseStripRelease(): the
+     * long-press lock and the "hold L and drag" gesture both rely on it. Releasing it
+     * from this side after 30 ms made every hold-to-drag impossible.
+     */
+    private void sendMouseStripPress(String clickType) {
+        HidManager.setHeldButton(clickType);
+        String hex = CH9329MSKBMap.MSAbsData().get(clickType);
+        final String buttonByte = (hex == null) ? "00" : hex;
+        mouseStripExecutor.execute(() -> writeMouseStripFrame(buttonByte));
+    }
+
+    /**
+     * Release the keycap buttons. Only the buttons that are still locked stay pressed,
+     * so unlocking one keycap does not drop another one.
+     */
+    private void sendMouseStripRelease() {
+        HidManager.setHeldButton(null);
+        final String buttonByte = String.format("%02X", HidManager.getLockedMask());
+        mouseStripExecutor.execute(() -> writeMouseStripFrame(buttonByte));
+    }
+
+    /** One relative-mode frame carrying a raw CH9329 button byte. */
+    private void writeMouseStripFrame(String buttonHex) {
+        try {
+            String data = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
+                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
+                    CH9329MSKBMap.getKeyCodeMap().get("address") +
+                    CH9329MSKBMap.CmdData().get("CmdMS_REL") +
+                    CH9329MSKBMap.DataLen().get("DataLenRelMS") +
+                    CH9329MSKBMap.MSRelData().get("FirstData") +
+                    buttonHex + "00" + "00" + "00";
+            data += CH9329Function.makeChecksum(data);
+            byte[] bytes = CH9329Function.hexStringToByteArray(data);
+            if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
+                usbDeviceManager.writeData(bytes);
             }
-        }).start();
+        } catch (Exception e) {
+            Log.e(TAG, "Error sending keycap frame: " + e.getMessage());
+        }
+    }
+
+    /** Keep a locked keycap pressed in the host independently of the touch gestures. */
+    private void applyKeycapLock(int buttonMask, boolean locked) {
+        String button = keycapName(buttonMask);
+        if (button == null) return;
+        if (locked) {
+            HidManager.lockButton(button);
+        } else {
+            HidManager.unlockButton(button);
+        }
+    }
+
+    private static String keycapName(int buttonMask) {
+        switch (buttonMask) {
+            case com.openterface.AOS.view.MouseControlStripView.BTN_LEFT:
+                return "SecLeftData";
+            case com.openterface.AOS.view.MouseControlStripView.BTN_MIDDLE:
+                return "SecMiddleData";
+            case com.openterface.AOS.view.MouseControlStripView.BTN_RIGHT:
+                return "SecRightData";
+            default:
+                return null;
+        }
     }
 
     /**
@@ -3903,48 +4253,13 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
                             clickType = "SecNullData";
                     }
                     Log.d(TAG, "Mouse strip button click: " + clickType);
-                    new Thread(() -> {
-                        try {
-                            String clickData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
-                                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
-                                    CH9329MSKBMap.getKeyCodeMap().get("address") +
-                                    CH9329MSKBMap.CmdData().get("CmdMS_REL") +
-                                    CH9329MSKBMap.DataLen().get("DataLenRelMS") +
-                                    CH9329MSKBMap.MSRelData().get("FirstData") +
-                                    clickType + "00" + "00" + "00";
-                            clickData += CH9329Function.makeChecksum(clickData);
-                            byte[] bytes = CH9329Function.hexStringToByteArray(clickData);
-                            if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
-                                usbDeviceManager.writeData(bytes);
-                            }
-                        } catch (Exception e) {
-                            Log.e(TAG, "Error sending mouse click: " + e.getMessage());
-                        }
-                    }).start();
+                    sendMouseStripPress(clickType);
                 }
 
                 @Override
                 public void onMouseRelease() {
                     Log.d(TAG, "Mouse strip button release");
-                    new Thread(() -> {
-                        try {
-                            String releaseData = CH9329MSKBMap.getKeyCodeMap().get("prefix1") +
-                                    CH9329MSKBMap.getKeyCodeMap().get("prefix2") +
-                                    CH9329MSKBMap.getKeyCodeMap().get("address") +
-                                    CH9329MSKBMap.CmdData().get("CmdMS_REL") +
-                                    CH9329MSKBMap.DataLen().get("DataLenRelMS") +
-                                    CH9329MSKBMap.MSRelData().get("FirstData") +
-                                    CH9329MSKBMap.MSRelData().get("SecNullData") +
-                                    "00" + "00" + "00";
-                            releaseData += CH9329Function.makeChecksum(releaseData);
-                            byte[] bytes = CH9329Function.hexStringToByteArray(releaseData);
-                            if (usbDeviceManager != null && usbDeviceManager.isConnected()) {
-                                usbDeviceManager.writeData(bytes);
-                            }
-                        } catch (Exception e) {
-                            Log.e(TAG, "Error releasing mouse button: " + e.getMessage());
-                        }
-                    }).start();
+                    sendMouseStripRelease();
                 }
 
                 @Override
@@ -3962,6 +4277,9 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
                     // Deprecated: scroll handled by BasicPortraitScrollStripView
                 }
             });
+
+            // A locked keycap has to keep its button pressed across gestures.
+            mouseControlStripView.setOnLockChangeListener(this::applyKeycapLock);
         }
 
         // Setup landscape scroll strip
@@ -4066,8 +4384,6 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
     private final String KEY_SOUND_VOLUME = "key_sound_volume";
     private final String KEY_VIBRATE_ENABLED = "key_vibrate_enabled";
     private final String KEY_VIBRATE_INTENSITY = "key_vibrate_intensity";
-    private final String KEY_SCROLL_SPEED = "scroll_speed";
-    private final String KEY_MOUSE_SPEED = "mouse_speed";
     private final String KEY_PRE_VALIDATE = "pre_validate_enabled";
     private final String KEY_AUTO_SAVE = "auto_save_enabled";
 
@@ -4083,12 +4399,6 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         LinearLayout vibrateIntensityLayout = view.findViewById(R.id.settings_vibrate_intensity_layout);
         SeekBar vibrateSeekbar = view.findViewById(R.id.settings_vibrate_intensity_seekbar);
 
-        // === Mouse Settings ===
-        SeekBar scrollSpeedSeekbar = view.findViewById(R.id.settings_scroll_speed_seekbar);
-        TextView scrollSpeedValue = view.findViewById(R.id.settings_scroll_speed_value);
-        SeekBar mouseSpeedSeekbar = view.findViewById(R.id.settings_mouse_speed_seekbar);
-        TextView mouseSpeedValue = view.findViewById(R.id.settings_mouse_speed_value);
-
         // === IME Settings ===
         androidx.appcompat.widget.SwitchCompat preValidateSwitch = view.findViewById(R.id.settings_pre_validate_switch);
         androidx.appcompat.widget.SwitchCompat autoSaveSwitch = view.findViewById(R.id.settings_auto_save_switch);
@@ -4098,8 +4408,6 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         int soundVolume = prefs.getInt(KEY_SOUND_VOLUME, 80);
         boolean vibrateEnabled = prefs.getBoolean(KEY_VIBRATE_ENABLED, true);
         int vibrateIntensity = prefs.getInt(KEY_VIBRATE_INTENSITY, 60);
-        int scrollSpeed = prefs.getInt(KEY_SCROLL_SPEED, 50);
-        int mouseSpeed = prefs.getInt(KEY_MOUSE_SPEED, 50);
         boolean preValidate = prefs.getBoolean(KEY_PRE_VALIDATE, true);
         boolean autoSave = prefs.getBoolean(KEY_AUTO_SAVE, false);
 
@@ -4110,12 +4418,6 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         if (vibrateSwitch != null) vibrateSwitch.setChecked(vibrateEnabled);
         if (vibrateSeekbar != null) vibrateSeekbar.setProgress(vibrateIntensity);
         if (vibrateIntensityLayout != null) vibrateIntensityLayout.setVisibility(vibrateEnabled ? View.VISIBLE : View.GONE);
-        if (scrollSpeedSeekbar != null) scrollSpeedSeekbar.setProgress(scrollSpeed);
-        if (scrollSpeedValue != null) scrollSpeedValue.setText(getScrollSpeedLabel(scrollSpeed));
-        if (mouseSpeedSeekbar != null) mouseSpeedSeekbar.setProgress(mouseSpeed);
-        if (mouseSpeedValue != null) mouseSpeedValue.setText(getMouseSpeedLabel(mouseSpeed));
-        // Apply saved mouse speed multiplier to both Java and Core mouse implementations
-        com.openterface.AOS.target.HidManager.setMouseSpeedMultiplier(progressToMouseSpeed(mouseSpeed));
         if (preValidateSwitch != null) preValidateSwitch.setChecked(preValidate);
         if (autoSaveSwitch != null) autoSaveSwitch.setChecked(autoSave);
 
@@ -4157,35 +4459,32 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
             });
         }
 
-        // === Scroll Speed ===
-        if (scrollSpeedSeekbar != null) {
-            scrollSpeedSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                @Override
-                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    if (fromUser) {
-                        prefs.edit().putInt(KEY_SCROLL_SPEED, progress).apply();
-                        if (scrollSpeedValue != null) scrollSpeedValue.setText(getScrollSpeedLabel(progress));
-                    }
-                }
-                @Override public void onStartTrackingTouch(SeekBar seekBar) {}
-                @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+        // === Mouse Control Mode Buttons ===
+        Button btnAbsoluteMode = view.findViewById(R.id.settings_mouse_mode_absolute);
+        Button btnRelativeMode = view.findViewById(R.id.settings_mouse_mode_relative);
+
+        // Load current mouse mode from MouseModeManager
+        com.openterface.AOS.target.MouseMode currentMode = com.openterface.AOS.target.MouseModeManager.getMode();
+        updateMouseModeButtons(btnAbsoluteMode, btnRelativeMode, currentMode);
+
+        if (btnAbsoluteMode != null) {
+            btnAbsoluteMode.setOnClickListener(v -> {
+                com.openterface.AOS.target.MouseModeManager.setMode(com.openterface.AOS.target.MouseMode.ABSOLUTE);
+                com.openterface.AOS.utils.MouseModePreferences.save(MainActivity.this,
+                    com.openterface.AOS.target.MouseMode.ABSOLUTE,
+                    com.openterface.AOS.target.MouseModeManager.isTrackpadSensitivityEnabled());
+                updateMouseModeButtons(btnAbsoluteMode, btnRelativeMode, com.openterface.AOS.target.MouseMode.ABSOLUTE);
+                Log.d(TAG, "Switched to absolute mode from settings panel");
             });
         }
-
-        // === Mouse Move Speed ===
-        if (mouseSpeedSeekbar != null) {
-            mouseSpeedSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                @Override
-                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    if (fromUser) {
-                        prefs.edit().putInt(KEY_MOUSE_SPEED, progress).apply();
-                        if (mouseSpeedValue != null) mouseSpeedValue.setText(getMouseSpeedLabel(progress));
-                        // Apply multiplier immediately so it takes effect on next movement
-                        com.openterface.AOS.target.HidManager.setMouseSpeedMultiplier(progressToMouseSpeed(progress));
-                    }
-                }
-                @Override public void onStartTrackingTouch(SeekBar seekBar) {}
-                @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+        if (btnRelativeMode != null) {
+            btnRelativeMode.setOnClickListener(v -> {
+                com.openterface.AOS.target.MouseModeManager.setMode(com.openterface.AOS.target.MouseMode.RELATIVE);
+                com.openterface.AOS.utils.MouseModePreferences.save(MainActivity.this,
+                    com.openterface.AOS.target.MouseMode.RELATIVE,
+                    com.openterface.AOS.target.MouseModeManager.isTrackpadSensitivityEnabled());
+                updateMouseModeButtons(btnAbsoluteMode, btnRelativeMode, com.openterface.AOS.target.MouseMode.RELATIVE);
+                Log.d(TAG, "Switched to relative mode from settings panel");
             });
         }
 
@@ -4291,8 +4590,10 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         LinearLayout baudrateLayout = view.findViewById(R.id.settings_baudrate_layout);
         TextView baudrateValue = view.findViewById(R.id.settings_baudrate_value);
         if (baudrateLayout != null && baudrateValue != null) {
-            int currentBaudrate = usbDeviceManager != null ? usbDeviceManager.getCurrentBaudrate() : 0;
-            baudrateValue.setText(String.valueOf(currentBaudrate > 0 ? currentBaudrate : 115200));
+            // Use preferredBaudrate (user's selection) as the source of truth for UI display
+            // getCurrentBaudrate() returns -1 when disconnected, which would show wrong value
+            int preferredBaudrate = usbDeviceManager != null ? usbDeviceManager.getPreferredBaudrate() : 115200;
+            baudrateValue.setText(String.valueOf(preferredBaudrate > 0 ? preferredBaudrate : 115200));
             baudrateLayout.setOnClickListener(v -> showBaudrateDialogInPortrait(baudrateValue));
         }
 
@@ -4356,38 +4657,65 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         }
     }
 
-    private String getScrollSpeedLabel(int progress) {
-        if (progress <= 20) return getString(R.string.speed_very_slow);
-        if (progress <= 40) return getString(R.string.speed_slow);
-        if (progress <= 60) return getString(R.string.speed_medium);
-        if (progress <= 80) return getString(R.string.speed_fast);
-        return getString(R.string.speed_very_fast);
-    }
-
     /**
-     * Convert SeekBar progress (0-100) to mouse speed multiplier (0.25x-3.0x).
-     * Uses piecewise linear mapping:
-     *   0-50   → 0.25x to 1.0x  (slow range, finer control)
-     *   50-100 → 1.0x to 3.0x   (fast range, wider spread)
-     * Default progress=50 maps to multiplier=1.0x.
+     * Update mouse mode button states (selected/unselected).
+     * Uses MouseMode enum for clear state representation.
      */
-    private float progressToMouseSpeed(int progress) {
-        if (progress <= 50) {
-            return 0.25f + (progress / 50f) * 0.75f;
-        } else {
-            return 1.0f + ((progress - 50) / 50f) * 2.0f;
+    private void updateMouseModeButtons(Button btnAbsolute, Button btnRelative, com.openterface.AOS.target.MouseMode mode) {
+        int selectedColor = getResources().getColor(R.color.primary);
+        int defaultColor = getResources().getColor(R.color.text_primary);
+
+        if (btnAbsolute != null) {
+            boolean isAbs = (mode == com.openterface.AOS.target.MouseMode.ABSOLUTE);
+            btnAbsolute.setSelected(isAbs);
+            btnAbsolute.setTextColor(isAbs ? 0xFFFFFFFF : defaultColor);
+        }
+        if (btnRelative != null) {
+            boolean isRel = (mode == com.openterface.AOS.target.MouseMode.RELATIVE);
+            btnRelative.setSelected(isRel);
+            btnRelative.setTextColor(isRel ? 0xFFFFFFFF : defaultColor);
         }
     }
 
-    private String getMouseSpeedLabel(int progress) {
-        float multiplier = progressToMouseSpeed(progress);
-        String speed;
-        if (progress <= 15) speed = getString(R.string.speed_very_slow);
-        else if (progress <= 35) speed = getString(R.string.speed_slow);
-        else if (progress <= 65) speed = getString(R.string.speed_normal);
-        else if (progress <= 85) speed = getString(R.string.speed_fast);
-        else speed = getString(R.string.speed_very_fast);
-        return speed + " " + String.format("%.1f", multiplier) + "x";
+    /**
+     * Hook the Bluetooth mouse into the preview while it is in use: it installs the
+     * captured-pointer listener that forwards relative motion to the target.
+     *
+     * The green viewport indicator in the PiP is deliberately left alone. It used to be
+     * hidden from here, and because "connected" is really a ten second activity window,
+     * every mouse move made the indicator disappear and every pause brought it back.
+     */
+    private void applyBtMousePointerCapture(boolean btMouseConnected) {
+        Log.d(TAG, "applyBtMousePointerCapture: btMouseConnected=" + btMouseConnected
+                + " screenWidth=" + MouseManager.screenWidth
+                + " screenHeight=" + MouseManager.screenHeight);
+
+        // NOTE: System cursor is now visible intentionally.
+        // Users watch the phone screen - seeing the local cursor enter black borders
+        // makes the Clamp behavior (remote cursor stops at edge) intuitive.
+        // Dual cursor is not a problem: remote cursor is inside video, local cursor
+        // is on phone screen, visually distinguishable.
+
+        // Use OnCapturedPointerListener to handle BT mouse events that may be
+        // captured by the system (API 24+). This replaces requestPointerCapture()
+        // which caused phone reboots on some devices (kernel USB/BT driver conflict).
+        if (mBinding != null && mBinding.viewMainPreview != null
+                && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            if (btMouseConnected) {
+                mBinding.viewMainPreview.setOnCapturedPointerListener((view, event) -> {
+                    Log.d(TAG, "OnCapturedPointerListener: action=" + event.getAction()
+                            + " source=0x" + Integer.toHexString(event.getSource()));
+                    return CustomTouchListener.handleGenericMotionEvent(event);
+                });
+                // Ensure view can receive captured pointer events
+                mBinding.viewMainPreview.setFocusable(true);
+                mBinding.viewMainPreview.requestFocus();
+                Log.d(TAG, "OnCapturedPointerListener set for BT mouse events");
+            } else {
+                mBinding.viewMainPreview.setOnCapturedPointerListener(null);
+                Log.d(TAG, "OnCapturedPointerListener removed");
+            }
+        }
     }
 
     /**
@@ -4499,14 +4827,6 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         return getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).getInt(KEY_VIBRATE_INTENSITY, 60);
     }
 
-    public int getScrollSpeed() {
-        return getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).getInt(KEY_SCROLL_SPEED, 50);
-    }
-
-    public int getMouseSpeed() {
-        return getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).getInt(KEY_MOUSE_SPEED, 50);
-    }
-
     // ============================================================
     // SettingsFloatingFragment.SettingsCallback implementation
     // ============================================================
@@ -4547,17 +4867,6 @@ public class MainActivity extends BaseActivity implements SettingsFloatingFragme
         if (keyboardSettingsManager != null) {
             keyboardSettingsManager.setVibrateStrength(intensity);
         }
-    }
-
-    @Override
-    public void setScrollSpeed(int speed) {
-        getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).edit().putInt(KEY_SCROLL_SPEED, speed).apply();
-    }
-
-    @Override
-    public void setMouseSpeed(int speed) {
-        getSharedPreferences(PREF_SETTINGS, MODE_PRIVATE).edit().putInt(KEY_MOUSE_SPEED, speed).apply();
-        HidManager.setMouseSpeedMultiplier(progressToMouseSpeed(speed));
     }
 
     /**

@@ -71,13 +71,16 @@ public class UsbDeviceManager {
     private TextView tvReceivedData;
     private int currentBaudrate = -1; // Track the working baudrate
     private int preferredBaudrate = DEFAULT_BAUDRATE;
+    private boolean userSelectedBaudrate = false; // Track if user explicitly selected baudrate
     private UsbDevice pendingDevice; // Device waiting for connection
     private volatile boolean isConnecting = false; // Prevents double-connect from fallback + onDeviceOpen
+    private volatile boolean isReconnecting = false; // Single-flight guard for baudrate reconnects
     private volatile long isConnectingTimestamp = 0; // Tracks when isConnecting was set — used to detect stuck state
 
     // Stored for bulkTransfer fallback when port.write()'s testConnection fails on CH340
     private UsbDeviceConnection serialConnection;
     private UsbEndpoint outEndpoint;
+    private UsbEndpoint inEndpoint;
 
     private static final int WRITE_WAIT_MILLIS = 2000;
     private static final int READ_WAIT_MILLIS = 2000;
@@ -138,10 +141,19 @@ public class UsbDeviceManager {
             {0x1A86, 0xFE0C}   // Openterface Mini-KVM v2 Serial (supports 115200 only)
         };
 
+        // CH9329 HID keyboard/mouse devices
+        int[][] ch9329Ids = {
+            {0x1A86, 0xE016},  // CH9329 HID Keyboard/Mouse
+            {0x1A86, 0xE017},  // CH9329 variant
+            {0x1A86, 0xE018},  // CH9329 variant
+            {0x1A86, 0xE019},  // CH9329 variant
+        };
+
         // Log supported device types
         Log.d(TAG, "Supported Openterface Serial Devices:");
         Log.d(TAG, "  - 1A86:7523 (Mini-KVM v1 - supports 9600 and 115200 baud)");
         Log.d(TAG, "  - 1A86:FE0C (Mini-KVM v2 - supports 115200 baud only)");
+        Log.d(TAG, "  - CH9329 HID: 1A86:E016/E017/E018/E019");
         Log.d(TAG, "  - Composite UVC+serial devices (345F:2109, 345F:2132, 534D:2109)");
 
         UsbDevice compositeCandidate = null;
@@ -183,6 +195,17 @@ public class UsbDeviceManager {
             for (int[] ids : serialIds) {
                 if (vid == ids[0] && pid == ids[1]) {
                     Log.i(TAG, "✅ Found supported Openterface serial device: " +
+                        String.format("%04X:%04X", vid, pid) + " - " + productName);
+                    boolean hasPermission = usbManager.hasPermission(device);
+                    Log.d(TAG, "Permission status for " + String.format("%04X:%04X", vid, pid) + ": " + hasPermission);
+                    return device;
+                }
+            }
+
+            // Priority 1.5: Check CH9329 HID keyboard/mouse devices
+            for (int[] ids : ch9329Ids) {
+                if (vid == ids[0] && pid == ids[1]) {
+                    Log.i(TAG, "✅ Found CH9329 HID device: " +
                         String.format("%04X:%04X", vid, pid) + " - " + productName);
                     boolean hasPermission = usbManager.hasPermission(device);
                     Log.d(TAG, "Permission status for " + String.format("%04X:%04X", vid, pid) + ": " + hasPermission);
@@ -258,26 +281,37 @@ public class UsbDeviceManager {
      */
     private void storeBulkTransferResources(UsbDeviceConnection connection, UsbDevice device) {
         serialConnection = connection;
-        // Find the bulk OUT endpoint on the serial interface (class 255 / CDC / CDC-data)
+        // Find the bulk OUT and IN endpoints on the serial interface (class 255 / CDC / CDC-data)
         for (int i = 0; i < device.getInterfaceCount(); i++) {
             UsbInterface intf = device.getInterface(i);
             int intfClass = intf.getInterfaceClass();
             if (intfClass == 255 || intfClass == 2 || intfClass == 10) {
                 for (int j = 0; j < intf.getEndpointCount(); j++) {
                     UsbEndpoint ep = intf.getEndpoint(j);
-                    if (ep.getDirection() == UsbConstants.USB_DIR_OUT
-                        && ep.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK) {
-                        outEndpoint = ep;
-                        Log.d(TAG, "Found OUT endpoint: addr=0x" +
-                            Integer.toHexString(ep.getAddress()) +
-                            " maxPacket=" + ep.getMaxPacketSize() +
-                            " on interface class=" + intfClass);
-                        return;
+                    if (ep.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK) {
+                        if (ep.getDirection() == UsbConstants.USB_DIR_OUT) {
+                            outEndpoint = ep;
+                            Log.d(TAG, "Found OUT endpoint: addr=0x" +
+                                Integer.toHexString(ep.getAddress()) +
+                                " maxPacket=" + ep.getMaxPacketSize() +
+                                " on interface class=" + intfClass);
+                        } else if (ep.getDirection() == UsbConstants.USB_DIR_IN) {
+                            inEndpoint = ep;
+                            Log.d(TAG, "Found IN endpoint: addr=0x" +
+                                Integer.toHexString(ep.getAddress()) +
+                                " maxPacket=" + ep.getMaxPacketSize() +
+                                " on interface class=" + intfClass);
+                        }
                     }
                 }
             }
         }
-        Log.w(TAG, "No bulk OUT endpoint found — bulkTransfer fallback unavailable");
+        if (outEndpoint == null) {
+            Log.w(TAG, "No bulk OUT endpoint found — bulkTransfer fallback unavailable");
+        }
+        if (inEndpoint == null) {
+            Log.w(TAG, "No bulk IN endpoint found — bulkTransfer read fallback unavailable");
+        }
     }
 
     /**
@@ -1312,35 +1346,30 @@ public class UsbDeviceManager {
             }
             
             Log.d(TAG, "✅ FE0C interface claimed successfully");
-            
+
             // Store connection parameters for direct USB communication
             fe0cConnection = connection;
             fe0cInterface = dataInterface;
             currentBaudrate = baudrate;
 
+            // Reset FE0C safety counters on new connection
+            fe0cWriteCount = 0;
+            fe0cLastWriteTimeMs = 0;
+            fe0cOutEndpoint = null;  // Force re-scan on first write
+            fe0cConsecutiveFailures = 0;  // Reset circuit breaker
+            fe0cCircuitBreakerTrippedTimeMs = 0;
+
             // Set up port reference (we still need this for compatibility)
             port = driver.getPorts().get(0);
 
-            Log.d(TAG, "Testing FE0C communication capability...");
-            
-            // Test with a simple reset command that FE0C should handle
-            byte[] testCommand = {0x57, (byte)0xAB, 0x00, 0x02, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07}; // Reset command with checksum
-            
-            Log.d(TAG, "Sending FE0C test command: " + bytesToHex(testCommand));
-            
-            // Test the connection with our special FE0C write method
-            boolean testResult = testFE0CConnection(testCommand);
-            
-            if (testResult) {
-                Log.i(TAG, "✅ FE0C device initialized successfully for command-only operation");
-                Log.i(TAG, "Note: FE0C uses direct USB communication, not standard serial");
-                return true;
-            } else {
-                Log.w(TAG, "⚠️ FE0C test command failed, but continuing anyway");
-                Log.w(TAG, "FE0C device may still work for actual keyboard commands");
-                // Don't fail here - FE0C might not respond to test commands but still work for keyboard data
-                return true;
-            }
+            // CRITICAL: Skip test command on REDMI 17C and similar devices
+            // The bulkTransfer() call during test can trigger kernel panic on some devices
+            // Instead, we trust the connection is valid and let the circuit breaker
+            // in writeFE0CData() handle any issues during actual data transfer
+            Log.i(TAG, "✅ FE0C device initialized successfully (skipping test command for safety)");
+            Log.i(TAG, "Note: FE0C uses direct USB communication, not standard serial");
+            Log.i(TAG, "Note: Test command skipped to prevent kernel panic on REDMI/similar devices");
+            return true;
             
         } catch (Exception e) {
             Log.e(TAG, "❌ FE0C initialization failed: " + e.getMessage(), e);
@@ -1361,6 +1390,20 @@ public class UsbDeviceManager {
     // Add fields to store FE0C direct connection
     private UsbDeviceConnection fe0cConnection = null;
     private UsbInterface fe0cInterface = null;
+    private UsbEndpoint fe0cOutEndpoint = null;  // Cached output endpoint
+
+    // USB safety: rate limiting and connection health tracking
+    private volatile long fe0cLastWriteTimeMs = 0;
+    private volatile int fe0cWriteCount = 0;
+    private static final long FE0C_MIN_WRITE_INTERVAL_MS = 5;  // Min 5ms between writes
+    private static final int FE0C_WARMUP_WRITES = 3;  // First few writes use longer timeout
+
+    // CRITICAL: Circuit breaker for REDMI 17C and similar devices with kernel USB bugs
+    // If we detect consecutive write failures, stop all USB writes to prevent kernel panic
+    private volatile int fe0cConsecutiveFailures = 0;
+    private static final int MAX_CONSECUTIVE_FAILURES = 3;  // Trip circuit breaker after 3 failures
+    private volatile long fe0cCircuitBreakerTrippedTimeMs = 0;
+    private static final long CIRCUIT_BREAKER_COOLDOWN_MS = 30000;  // 30 seconds before retry
     
     /**
      * Test FE0C connection by sending a test command
@@ -1413,67 +1456,109 @@ public class UsbDeviceManager {
                 Log.e(TAG, "❌ FE0C direct connection not available");
                 return false;
             }
-            
-            // Enhanced logging for FE0C
-            Log.d(TAG, "=== FE0C DIRECT USB WRITE ===");
-            Log.d(TAG, "Data Length: " + data.length + " bytes");
-            Log.d(TAG, "Timeout: " + timeout + "ms");
-            Log.d(TAG, "Raw Hex Data: " + bytesToHex(data));
-            
-            // Decode keyboard data if it looks like CH9329 keyboard command
-            if (data.length >= 5 && data[0] == 0x57 && data[1] == (byte)0xAB) {
-                Log.d(TAG, ">>> FE0C CH9329 Keyboard Command <<<");
-                Log.d(TAG, "Header: " + String.format("%02X %02X", data[0] & 0xFF, data[1] & 0xFF));
-                if (data.length >= 13) {
-                    Log.d(TAG, "Address: " + String.format("%02X", data[2] & 0xFF));
-                    Log.d(TAG, "Command: " + String.format("%02X", data[3] & 0xFF));
-                    Log.d(TAG, "Length: " + String.format("%02X", data[4] & 0xFF));
-                    Log.d(TAG, "Modifier: " + String.format("%02X", data[5] & 0xFF));
-                    Log.d(TAG, "Reserved: " + String.format("%02X", data[6] & 0xFF));
-                    Log.d(TAG, "Key Code: " + String.format("%02X", data[7] & 0xFF));
-                    Log.d(TAG, "Key 2-6: " + String.format("%02X %02X %02X %02X %02X", 
-                        data[8] & 0xFF, data[9] & 0xFF, data[10] & 0xFF, data[11] & 0xFF, data[12] & 0xFF));
-                    if (data.length > 13) {
-                        Log.d(TAG, "Checksum: " + String.format("%02X", data[13] & 0xFF));
+
+            // CRITICAL: Circuit breaker check - prevent kernel panic on REDMI 17C
+            // If circuit breaker tripped, refuse all writes until cooldown expires
+            if (fe0cConsecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+                long timeSinceTripped = System.currentTimeMillis() - fe0cCircuitBreakerTrippedTimeMs;
+                if (timeSinceTripped < CIRCUIT_BREAKER_COOLDOWN_MS) {
+                    // Still in cooldown period - refuse write
+                    return false;
+                } else {
+                    // Cooldown expired - reset and allow retry
+                    Log.w(TAG, "⚠️ FE0C circuit breaker cooldown expired, resetting for retry");
+                    fe0cConsecutiveFailures = 0;
+                    fe0cOutEndpoint = null;  // Force endpoint re-scan
+                }
+            }
+
+            // Safety: validate data before sending
+            if (data == null || data.length == 0) {
+                Log.w(TAG, "FE0C write skipped: data is null or empty");
+                return false;
+            }
+
+            // Safety: rate limiting to prevent USB driver overload on some devices
+            long now = System.currentTimeMillis();
+            long elapsed = now - fe0cLastWriteTimeMs;
+            if (elapsed < FE0C_MIN_WRITE_INTERVAL_MS) {
+                // Throttle: sleep briefly to maintain minimum interval
+                try { Thread.sleep(FE0C_MIN_WRITE_INTERVAL_MS - elapsed); }
+                catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+            }
+            fe0cLastWriteTimeMs = System.currentTimeMillis();
+            fe0cWriteCount++;
+
+            // Cache the output endpoint on first use
+            if (fe0cOutEndpoint == null) {
+                for (int i = 0; i < fe0cInterface.getEndpointCount(); i++) {
+                    UsbEndpoint endpoint = fe0cInterface.getEndpoint(i);
+                    if (endpoint.getType() == UsbConstants.USB_ENDPOINT_XFER_BULK &&
+                        endpoint.getDirection() == UsbConstants.USB_DIR_OUT) {
+                        fe0cOutEndpoint = endpoint;
+                        Log.d(TAG, "✅ FE0C bulk out endpoint cached: maxPacketSize=" + endpoint.getMaxPacketSize());
+                        break;
                     }
                 }
-            }
-            
-            // Find the bulk out endpoint
-            android.hardware.usb.UsbEndpoint outEndpoint = null;
-            for (int i = 0; i < fe0cInterface.getEndpointCount(); i++) {
-                android.hardware.usb.UsbEndpoint endpoint = fe0cInterface.getEndpoint(i);
-                if (endpoint.getType() == android.hardware.usb.UsbConstants.USB_ENDPOINT_XFER_BULK &&
-                    endpoint.getDirection() == android.hardware.usb.UsbConstants.USB_DIR_OUT) {
-                    outEndpoint = endpoint;
-                    break;
+                if (fe0cOutEndpoint == null) {
+                    Log.e(TAG, "❌ Could not find bulk out endpoint for FE0C");
+                    return false;
                 }
             }
-            
-            if (outEndpoint == null) {
-                Log.e(TAG, "❌ Could not find bulk out endpoint for FE0C");
-                return false;
+
+            // Safety: for warmup writes (first few after connection), use shorter timeout
+            // to fail fast if the USB connection is unstable
+            int effectiveTimeout = timeout;
+            if (fe0cWriteCount <= FE0C_WARMUP_WRITES) {
+                effectiveTimeout = Math.min(timeout, 500);  // 500ms max for first writes
+                Log.d(TAG, "FE0C warmup write #" + fe0cWriteCount + ", timeout=" + effectiveTimeout + "ms");
             }
-            
+
             // Send data directly via USB bulk transfer
             long startTime = System.currentTimeMillis();
-            int result = fe0cConnection.bulkTransfer(outEndpoint, data, data.length, timeout);
+            int result = fe0cConnection.bulkTransfer(fe0cOutEndpoint, data, data.length, effectiveTimeout);
             long endTime = System.currentTimeMillis();
-            
+
             if (result >= 0) {
-                Log.d(TAG, "✅ FE0C direct write successful: " + result + " bytes in " + (endTime - startTime) + "ms");
+                // Success - reset failure counter
+                fe0cConsecutiveFailures = 0;
+                if (fe0cWriteCount <= FE0C_WARMUP_WRITES) {
+                    Log.d(TAG, "✅ FE0C write #" + fe0cWriteCount + ": " + result + " bytes in " + (endTime - startTime) + "ms");
+                }
                 return true;
             } else {
-                Log.e(TAG, "❌ FE0C direct write failed: " + result);
+                // Failure - increment failure counter
+                fe0cConsecutiveFailures++;
+                Log.e(TAG, "❌ FE0C write failed (result=" + result + "), write #" + fe0cWriteCount +
+                      ", consecutive failures=" + fe0cConsecutiveFailures);
+
+                // Trip circuit breaker if too many consecutive failures
+                if (fe0cConsecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+                    fe0cCircuitBreakerTrippedTimeMs = System.currentTimeMillis();
+                    Log.e(TAG, "🚨 FE0C circuit breaker TRIPPED! " + fe0cConsecutiveFailures +
+                          " consecutive failures. Stopping all USB writes for " +
+                          (CIRCUIT_BREAKER_COOLDOWN_MS / 1000) + " seconds to prevent kernel panic.");
+                }
+
+                // Invalidate cached endpoint on error
+                fe0cOutEndpoint = null;
                 return false;
             }
-            
+
         } catch (Exception e) {
             Log.e(TAG, "❌ FE0C direct write error: " + e.getMessage(), e);
+            // Increment failure counter on exception
+            fe0cConsecutiveFailures++;
+            if (fe0cConsecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+                fe0cCircuitBreakerTrippedTimeMs = System.currentTimeMillis();
+                Log.e(TAG, "🚨 FE0C circuit breaker TRIPPED due to exception!");
+            }
+            // Invalidate cached endpoint on error
+            fe0cOutEndpoint = null;
             return false;
         }
     }
-    
+
     /**
      * Convert byte array to hex string for logging
      */
@@ -1711,6 +1796,9 @@ public class UsbDeviceManager {
 
                     if (isOurDevice) {
                         Log.i(TAG, "Openterface device detached — cleaning up connection state");
+                        // A locked keycap would otherwise keep the left button pressed on
+                        // the host after the next reconnect.
+                        com.openterface.AOS.target.HidManager.unlockAll();
                         if (onConnectionStatusListener != null) {
                             onConnectionStatusListener.onDisconnected();
                         }
@@ -2004,34 +2092,42 @@ public class UsbDeviceManager {
 
         Log.d(TAG, "Applying configuration for device " + String.format("%04X:%04X", vid, pid));
 
-        if (vid == 0x1A86) {
-            // CH340/CH341 based devices
-            if (pid == 0xFE0C) {
+        // Only set default baudrate if user hasn't explicitly selected one
+        if (!userSelectedBaudrate) {
+            if (vid == 0x1A86) {
+                // CH340/CH341 based devices
+                if (pid == 0xFE0C) {
+                    preferredBaudrate = BAUDRATE_HIGHSPEED;
+                    Log.d(TAG, "Device 1A86:FE0C - Mini-KVM v2: Default to 115200 baud");
+                } else if (pid == 0x7523) {
+                    // CH340 based devices - CH32V208 or CH9329
+                    // Qt auto-detects: tries 115200 first, then 9600
+                    // But this CH9329 firmware needs 115200 for config commands AND mouse to work
+                    preferredBaudrate = BAUDRATE_HIGHSPEED;  // 115200
+                    Log.d(TAG, "Device 1A86:7523 - Mini-KVM v1: Default to 115200 baud (CH9329 needs it)");
+                } else {
+                    Log.w(TAG, "Unknown 1A86 device PID: " + String.format("%04X", pid));
+                    preferredBaudrate = DEFAULT_BAUDRATE;
+                }
+                Log.d(TAG, "Will configure CH340 flow control after connection");
+            } else if (vid == 0x345F && pid == 0x2109) {
+                // KVMGO-VGA (MS2109S) — composite UVC+serial device
                 preferredBaudrate = BAUDRATE_HIGHSPEED;
-                Log.d(TAG, "Device 1A86:FE0C - Mini-KVM v2: Default to 115200 baud");
-            } else if (pid == 0x7523) {
-                preferredBaudrate = BAUDRATE_LOWSPEED;
-                Log.d(TAG, "Device 1A86:7523 - Mini-KVM v1: Default to 9600 baud");
+                Log.d(TAG, "Device 345F:2109 - KVMGO-VGA (MS2109S): Default to 115200 baud");
+            } else if (vid == 0x345F && pid == 0x2132) {
+                // KVMGO — composite UVC+serial device
+                preferredBaudrate = BAUDRATE_HIGHSPEED;
+                Log.d(TAG, "Device 345F:2132 - KVMGO: Default to 115200 baud");
+            } else if (vid == 0x534D && pid == 0x2109) {
+                // Mini-KVM v1 UVC interface — composite UVC+serial device
+                preferredBaudrate = BAUDRATE_HIGHSPEED;
+                Log.d(TAG, "Device 534D:2109 - Mini-KVM v1 UVC: Default to 115200 baud");
             } else {
-                Log.w(TAG, "Unknown 1A86 device PID: " + String.format("%04X", pid));
+                Log.w(TAG, "Non-standard device VID: " + String.format("%04X", vid) + " — using default baudrate");
                 preferredBaudrate = DEFAULT_BAUDRATE;
             }
-            Log.d(TAG, "Will configure CH340 flow control after connection");
-        } else if (vid == 0x345F && pid == 0x2109) {
-            // KVMGO-VGA (MS2109S) — composite UVC+serial device
-            preferredBaudrate = BAUDRATE_HIGHSPEED;
-            Log.d(TAG, "Device 345F:2109 - KVMGO-VGA (MS2109S): Default to 115200 baud");
-        } else if (vid == 0x345F && pid == 0x2132) {
-            // KVMGO — composite UVC+serial device
-            preferredBaudrate = BAUDRATE_HIGHSPEED;
-            Log.d(TAG, "Device 345F:2132 - KVMGO: Default to 115200 baud");
-        } else if (vid == 0x534D && pid == 0x2109) {
-            // Mini-KVM v1 UVC interface — composite UVC+serial device
-            preferredBaudrate = BAUDRATE_HIGHSPEED;
-            Log.d(TAG, "Device 534D:2109 - Mini-KVM v1 UVC: Default to 115200 baud");
         } else {
-            Log.w(TAG, "Non-standard device VID: " + String.format("%04X", vid) + " — using default baudrate");
-            preferredBaudrate = DEFAULT_BAUDRATE;
+            Log.d(TAG, "User has selected baudrate, keeping: " + preferredBaudrate);
         }
 
         Log.d(TAG, "Preferred baudrate set to: " + preferredBaudrate);
@@ -2175,6 +2271,7 @@ public class UsbDeviceManager {
                 if (onConnectionStatusListener != null) {
                     onConnectionStatusListener.onConnected(preferredBaudrate);
                 }
+
                 startReading();
                 return;
             } else {
@@ -2197,7 +2294,9 @@ public class UsbDeviceManager {
                 if (onConnectionStatusListener != null) {
                     onConnectionStatusListener.onConnected(baudrate);
                 }
+
                 startReading();
+
                 break;
             }
             
@@ -2287,17 +2386,7 @@ public class UsbDeviceManager {
     private void closeDevice() {
         try {
             // Clean up FE0C direct connection if exists
-            if (fe0cConnection != null && fe0cInterface != null) {
-                Log.d(TAG, "Cleaning up FE0C direct connection");
-                try {
-                    fe0cConnection.releaseInterface(fe0cInterface);
-                    Log.d(TAG, "FE0C interface released");
-                } catch (Exception e) {
-                    Log.w(TAG, "FE0C interface release warning: " + e.getMessage());
-                }
-                fe0cConnection = null;
-                fe0cInterface = null;
-            }
+            releaseFe0cConnection();
 
             // Clean up regular serial port
             if (port != null && port.isOpen()) {
@@ -2312,7 +2401,36 @@ public class UsbDeviceManager {
             isReading = false;     // Stop reading loop
             serialConnection = null;
             outEndpoint = null;
+            inEndpoint = null;
         }
+    }
+
+    /**
+     * Release the FE0C direct USB connection.
+     *
+     * The references must be dropped only after releaseInterface(); otherwise the interface
+     * stays claimed and the next claimInterface() call fails. Kept in sync with the cleanup
+     * used by closeDevice() — no extra close() call, to stay consistent with the FE0C path.
+     */
+    private void releaseFe0cConnection() {
+        if (fe0cConnection == null) {
+            fe0cInterface = null;
+            fe0cOutEndpoint = null;
+            return;
+        }
+        if (fe0cInterface != null) {
+            try {
+                fe0cConnection.releaseInterface(fe0cInterface);
+                Log.d(TAG, "FE0C interface released");
+            } catch (Exception e) {
+                Log.w(TAG, "FE0C interface release warning: " + e.getMessage());
+            }
+        }
+        fe0cConnection = null;
+        fe0cInterface = null;
+        fe0cOutEndpoint = null;  // Clear cached endpoint
+        fe0cConsecutiveFailures = 0;  // Reset circuit breaker
+        fe0cCircuitBreakerTrippedTimeMs = 0;
     }
 
     public void release() {
@@ -2370,6 +2488,7 @@ public class UsbDeviceManager {
             if (onConnectionStatusListener != null) {
                 onConnectionStatusListener.onConnected(preferredBaudrate);
             }
+
             startReading();
         } else {
             Log.e(TAG, "Failed to establish serial connection with baudrate: " + preferredBaudrate);
@@ -2434,16 +2553,25 @@ public class UsbDeviceManager {
             return true;
         }
         // For standard serial devices
-        return port != null && port.isOpen();
+        if (port != null && port.isOpen()) {
+            return true;
+        }
+        // For CH9329 and other devices using USB bulk transfer (CH340 serial chip)
+        if (serialConnection != null && outEndpoint != null) {
+            return true;
+        }
+        return false;
     }
 
     /**
      * Set the preferred baudrate for serial communication
+     * This is called when user explicitly selects a baudrate
      * @param baudrate the preferred baudrate (9600 or 115200)
      */
     public void setPreferredBaudrate(int baudrate) {
         this.preferredBaudrate = baudrate;
-        Log.d(TAG, "Preferred baudrate set to: " + baudrate);
+        this.userSelectedBaudrate = true; // Mark that user has made an explicit choice
+        Log.d(TAG, "Preferred baudrate set to: " + baudrate + " (user selected)");
     }
 
     /**
@@ -2455,28 +2583,73 @@ public class UsbDeviceManager {
     }
 
     /**
-     * Reconnect with the specified baudrate
+     * Reconnect with the specified baudrate.
+     *
+     * The teardown and reconnect run on the serial worker thread, so callers (usually UI
+     * event handlers) return immediately. connect() posts its own work to the same looper,
+     * so the two steps stay serialized.
+     *
      * @param baudrate the baudrate to use for reconnection
-     * @return true if reconnection successful, false otherwise
      */
-    public boolean reconnectWithBaudrate(int baudrate) {
-        if (port != null && port.isOpen()) {
+    public void reconnectWithBaudrate(int baudrate) {
+        if (isReconnecting) {
+            Log.d(TAG, "reconnectWithBaudrate ignored: reconnect already in progress");
+            return;
+        }
+        isReconnecting = true;
+
+        // Camera is already open at this point, so we can connect serial immediately
+        setPreferredBaudrate(baudrate);
+
+        mSerialAsyncHandler.post(() -> {
             try {
-                port.close();
-                Log.d(TAG, "Closed existing connection for baudrate change");
+                Log.d(TAG, "reconnectWithBaudrate: closing existing connection and clearing state...");
+
+                // Stop reading thread first
+                isReading = false;
+
+                // Close serial port
+                if (port != null && port.isOpen()) {
+                    try {
+                        port.close();
+                        Log.d(TAG, "Closed serial port for baudrate change");
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error closing port for reconnection", e);
+                    }
+                }
+
+                // Release the FE0C interface before dropping the reference — otherwise it
+                // stays claimed and the next claimInterface() call fails.
+                releaseFe0cConnection();
+
+                // Clear ALL connection state so isConnected() returns false
+                // This is critical - otherwise connect() will skip reconnection!
+                port = null;
+                driver = null;
+                serialConnection = null;
+                outEndpoint = null;
+                inEndpoint = null;
+                isConnecting = false;
+
+                // Notify disconnection
                 if (onConnectionStatusListener != null) {
                     onConnectionStatusListener.onDisconnected();
                 }
-            } catch (Exception e) {
-                Log.e(TAG, "Error closing port for reconnection", e);
+
+                // Small delay to ensure device is ready for reconnection
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+
+                Log.d(TAG, "reconnectWithBaudrate: calling connect() with new baudrate " + baudrate);
+                connect();
+            } finally {
+                isReconnecting = false;
             }
-        }
-        
-        // Set the preferred baudrate and reconnect
-        // Camera is already open at this point, so we can connect serial immediately
-        setPreferredBaudrate(baudrate);
-        connect();
-        return true;
+        });
     }
     
     /**
@@ -3122,4 +3295,5 @@ public class UsbDeviceManager {
         
         return modifiers;
     }
+
 }

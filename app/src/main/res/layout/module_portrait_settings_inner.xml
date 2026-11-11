@@ -636,63 +636,41 @@
             android:textColor="@color/text_primary"
             android:layout_marginBottom="8dp" />
 
-        <!-- Scroll Speed -->
+        <!-- Mouse Control Mode -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/settings_mouse_control_mode"
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary"
+            android:layout_marginBottom="4dp" />
+
+        <!-- Mouse mode buttons. Absolute is what the touch pad drives; relative is only
+             used by the on-screen pointer controls, so the switcher is always visible. -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingVertical="4dp">
+            android:orientation="horizontal">
 
-            <TextView
-                android:layout_width="wrap_content"
+            <android.widget.Button
+                android:id="@+id/settings_mouse_mode_absolute"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="@string/settings_scroll_speed"
-                android:textSize="12sp"
-                android:textColor="@color/text_secondary" />
-
-            <SeekBar
-                android:id="@+id/settings_scroll_speed_seekbar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:max="100"
-                android:progress="50" />
-
-            <TextView
-                android:id="@+id/settings_scroll_speed_value"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/settings_speed_medium"
+                android:layout_weight="1"
+                android:layout_marginEnd="4dp"
+                android:text="@string/settings_mouse_mode_absolute"
                 android:textSize="11sp"
-                android:textColor="@color/text_secondary" />
-        </LinearLayout>
+                android:background="@drawable/settings_button_selector" />
 
-        <!-- Mouse Move Speed -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingVertical="4dp">
-
-            <TextView
-                android:layout_width="wrap_content"
+            <android.widget.Button
+                android:id="@+id/settings_mouse_mode_relative"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="@string/settings_mouse_speed"
-                android:textSize="12sp"
-                android:textColor="@color/text_secondary" />
-
-            <SeekBar
-                android:id="@+id/settings_mouse_speed_seekbar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:max="100"
-                android:progress="50" />
-
-            <TextView
-                android:id="@+id/settings_mouse_speed_value"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:text="@string/settings_mouse_mode_relative"
                 android:textSize="11sp"
-                android:textColor="@color/text_secondary" />
+                android:background="@drawable/settings_button_selector" />
         </LinearLayout>
 
     </LinearLayout>

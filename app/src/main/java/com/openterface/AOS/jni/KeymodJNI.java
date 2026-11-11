@@ -22,6 +22,8 @@ public class KeymodJNI {
     public static final int MS_BTN_LEFT = 0x01;
     public static final int MS_BTN_RIGHT = 0x02;
     public static final int MS_BTN_MIDDLE = 0x04;
+    public static final int MS_BTN_BACK = 0x08;
+    public static final int MS_BTN_FORWARD = 0x10;
 
     // Packet sizes
     public static final int PKT_KEYBOARD_SIZE = 14;
