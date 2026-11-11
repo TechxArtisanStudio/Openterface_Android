@@ -1,9 +1,0 @@
-[submodule "libvncserver/src/main/jni/libvnc"]
-	path = libvncserver/src/main/jni/libvnc
-	url = https://github.com/LibVNC/libvncserver.git
-[submodule "Openterface_WebUI"]
-	path = Openterface_WebUI
-	url = https://github.com/TechxArtisanStudio/Openterface_WebUI.git
-[submodule "app/src/main/jni/Openterface_Core"]
-	path = app/src/main/jni/Openterface_Core
-	url = https://github.com/TechxArtisanStudio/Openterface_Core.git
